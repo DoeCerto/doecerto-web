@@ -1,5 +1,6 @@
 import ActionCard from "@/components/ui/HelpCenterActionCard";
-import { X } from "lucide-react";
+import InfoCard from "@/components/ui/InfoCard";
+import { X, ClipboardList, Star, Heart, User, LockKeyhole } from "lucide-react";
 import { FiSearch } from "react-icons/fi";
 
 export default function HelpCenterPage() {
@@ -25,12 +26,12 @@ export default function HelpCenterPage() {
             placeholder="Pesquise uma ONG, cidade ou causa"
             className="w-full outline-none text-base text-gray-400"
           />
-        </div>
+         </div>
 
       </div>
 
       <div className="p-[25px]">
-      <h1 className="text-[20px] font-extrabold mb-4 text-[#6B39A7]">
+      <h1 className="text-[20px] font-extrabold mb-3 text-[#6B39A7]">
         DOAÇÕES
       </h1>
 
@@ -49,6 +50,75 @@ export default function HelpCenterPage() {
             </>
           }
           description="Ração, roupas e mais"
+        />
+      </div>
+
+      <div className="flex flex-col mt-[30px]">
+        <h1 className="text-[20px] font-extrabold mb-3 text-[#6B39A7]">
+          HISTÓRICO E AVALIAÇÕES
+        </h1>
+        
+        <InfoCard
+          icon={<ClipboardList className="w-[30px] h-[25px] fill-[#FFFFFF]" />}
+          title="Ver histórico de doações"
+          description="Tudo que você já doou"
+        />
+        <InfoCard
+          icon={<Star className="w-[30px] h-[25px] fill-[#FFD700]" />}
+          title="Avaliar uma ONG"
+          description="Comentários e estrelas"
+        />
+      </div>
+
+      <div className="flex flex-col mt-[22px]">
+        <h1 className="text-[20px] font-extrabold mb-3 text-[#6B39A7]">
+          ONGS E DESCOBERTAS
+        </h1>
+        
+        <InfoCard
+          icon={<FiSearch className="w-[30px] h-[25px]" strokeWidth={3} />}
+          title="Buscar e filtrar ONGs"
+          description="Encontre a causa certa"
+        />
+        <InfoCard
+          icon={<Heart className="w-[30px] h-[25px] fill-[#FF0000]" />}
+          title="Favoritar ONGs"
+          description="Salve as que você mais gosta"
+        />
+      </div>
+
+      <div className="flex flex-col mt-[22px]">
+        <h1 className="text-[20px] font-extrabold mb-3 text-[#6B39A7]">
+          CONTA
+        </h1>
+        
+        <InfoCard
+          icon={<User className="w-[30px] h-[25px]" />}
+          title="Perfil e configurações"
+          description="Dados pessoais e senha"
+        />
+        <InfoCard
+          icon={<svg width="30" height="25" viewBox="0 0 24 24">
+                {/* Alça */}
+                <path
+                  d="M7 10V7a5 5 0 0110 0v3"
+                  stroke="#333333"
+                  strokeWidth="3"
+                  fill="none"
+                />
+
+                {/* Corpo */}
+                <rect
+                  x="2"
+                  y="10"
+                  width="20"
+                  height="15"
+                  rx="2"
+                  fill="#FFA500"
+                />
+                </svg>}
+          title="Segurança e privacidade"
+          description="Como seus dados são usados"
         />
       </div>
       </div>
