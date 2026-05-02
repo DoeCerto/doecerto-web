@@ -1,0 +1,35 @@
+type StepHeaderProps = {
+  currentStep: number;
+  totalSteps: number;
+  onSkip?: () => void;
+};
+
+export default function StepHeader({
+  currentStep,
+  totalSteps,
+  onSkip,
+}: StepHeaderProps) {
+  return (
+    <div className="w-full flex items-center justify-between bg-white">
+      {/* Texto */}
+      <span className="text-[#6B39A7] text-base font-semibold">
+        {currentStep} DE {totalSteps}
+      </span>
+
+      {/* Botão */}
+      <button
+        onClick={onSkip}
+        className="
+          bg-[#EBD2FF]
+          text-[#6B39A7]
+          px-4
+          py-2
+          rounded-[10px]
+          shadow-[0px_8px_20px_0px_rgba(0,0,0,0.12)]
+        "
+      >
+        Pular
+      </button>
+    </div>
+  );
+}
