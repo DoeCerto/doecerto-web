@@ -1,7 +1,8 @@
 import ActionCard from "@/components/ui/HelpCenterActionCard";
 import InfoCard from "@/components/ui/InfoCard";
-import { X, ClipboardList, Star, Heart, User, LockKeyhole } from "lucide-react";
+import { X, ClipboardList, Star, Heart, User } from "lucide-react";
 import { FiSearch } from "react-icons/fi";
+import Link from "next/link";
 
 export default function HelpCenterPage() {
   return (
@@ -35,12 +36,15 @@ export default function HelpCenterPage() {
         DOAÇÕES
       </h1>
 
+     
       <div className="flex gap-4 flex-row">
+        <Link href="/donation-guide">
         <ActionCard
           icon="💰"
           title="Como doar dinheiro"
           description="Pix e boleto"
         />
+        </Link>
 
         <ActionCard
           icon="📦"

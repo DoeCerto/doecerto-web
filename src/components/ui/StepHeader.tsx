@@ -20,6 +20,8 @@ export default function StepHeader({
       <button
         onClick={onSkip}
         className="
+          text-base
+          font-semibold
           bg-[#EBD2FF]
           text-[#6B39A7]
           px-4
