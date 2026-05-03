@@ -24,7 +24,7 @@ export default function StepHeader({
           font-semibold
           bg-[#EBD2FF]
           text-[#6B39A7]
-          px-4
+          px-5
           py-2
           rounded-[10px]
           shadow-[0px_8px_20px_0px_rgba(0,0,0,0.12)]
