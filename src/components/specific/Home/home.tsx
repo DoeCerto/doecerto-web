@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import { useRef, useState, useEffect } from "react";
-import { FiSearch, FiMenu, FiX, FiUser, FiLogOut, FiGlobe } from "react-icons/fi";
-import { FaMapMarkerAlt } from "react-icons/fa";
+import { FiSearch, FiMenu, FiX, FiUser, FiLogOut, FiGlobe, } from "react-icons/fi";
+import { FaMapMarkerAlt, FaStar } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import DonateModal from "@/components/specific/DonateModal";
 import { api } from "@/services/api";
@@ -14,9 +14,16 @@ type Ong = {
   id: number;
   name: string;
   img: string;
-  distance: string;
+  distance?: string;
+  rating?: number | string;
   categories: string[];
 };
+
+interface CatalogSection {
+  title: string;
+  type: string;
+  items: any[];
+}
 
 const TAKE = 8;
 
@@ -53,9 +60,11 @@ export default function HomePage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userAvatar, setUserAvatar] = useState<string>("https://placehold.co/80x80/ddd/aaa.png");
 
-  const [ongs, setOngs] = useState<Ong[]>([]);
+  const [recommendedOngs, setRecommendedOngs] = useState<Ong[]>([]);
+  const [nearbyOngs, setNearbyOngs] = useState<Ong[]>([]);
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [page, setPage] = useState(0);
+
 
   useEffect(() => {
     async function loadUserProfile() {
@@ -81,58 +90,57 @@ export default function HomePage() {
     }
     loadUserProfile();
   }, []);
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    }
-    if (isMenuOpen) document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isMenuOpen]);
+
 
   useEffect(() => {
-    async function loadOngs() {
+    async function loadCatalog() {
       try {
-        const res = await api<any>(`/catalog?offset=${page * TAKE}&limit=${TAKE}`);
-        const sections = res.data;
-        if (!sections || !Array.isArray(sections)) return;
+        const { data: catalog } = await api<CatalogSection[]>('/catalog');
 
-        const allOngsFromApi = sections.flatMap((section: any) => section.items || []);
+        const recommendedSection = catalog.find((section) => section.type === 'topRated');
+        const nearbySection = catalog.find((section) => section.type === 'nearby');
 
-        const mapped: Ong[] = allOngsFromApi.map((ong: any) => {
-          const rawPath = ong.avatarUrl || (ong.user && ong.user.avatarUrl);
-          const cats = ong.categories?.map((c: any) => c.name) || [];
+        if (recommendedSection) {
+          setRecommendedOngs(recommendedSection.items.map((ong: any) => ({
+            id: ong.id,
+            name: ong.name,
+            img: OngsProfileService._formatImageUrl(ong.avatarUrl),
+            rating: ong.averageRating || 0.0,
+            categories: ong.categories.map((c: any) => c.name),
+          })));
+        }
 
-          return {
-            id: ong.userId || ong.id,
-            name: ong.name || (ong.user && ong.user.name) || "ONG sem nome",
-            img: rawPath ? OngsProfileService._formatImageUrl(rawPath) : "",
-            distance: "7.2 km",
-            categories: cats.length > 0 ? cats : ["Outros"],
-          };
-        });
+        if (nearbySection) {
+          setNearbyOngs(nearbySection.items.map((ong: any) => ({
+            id: ong.id,
+            name: ong.name,
+            img: OngsProfileService._formatImageUrl(ong.avatarUrl),
+            distance: `${ong.distance} km`,
+            categories: ong.categories.map((c: any) => c.name),
+          })));
+        }
 
-        setOngs((prev) => {
-          const combined = [...prev, ...mapped];
-          const uniqueMap = new Map();
-          combined.forEach(o => uniqueMap.set(o.id, o));
-          const newList = Array.from(uniqueMap.values()) as Ong[];
+        const allCats = catalog.flatMap(section =>
+          section.items.flatMap(ong => ong.categories.map((c: any) => c.name))
+        );
+        const uniqueCats = Array.from(new Set(allCats)).sort();
+        setAvailableCategories(uniqueCats);
 
-          const allCats = newList.flatMap(o => o.categories);
-          const uniqueCats = Array.from(new Set(allCats)).sort();
-          setAvailableCategories(uniqueCats);
-
-          return newList;
-        });
       } catch (err) {
-        console.error("Erro ao buscar ONGs:", err);
+        console.error("Erro ao carregar catálogo:", err);
       }
     }
-    loadOngs();
+
+    loadCatalog();
   }, [page]);
 
-  const filteredOngs = ongs.filter((ong) => {
+  const filteredRecommended = recommendedOngs.filter((ong) => {
+    const matchesSearch = query === "" || ong.name.toLowerCase().includes(query.toLowerCase());
+    const matchesCategory = selectedCategory === null || ong.categories.includes(selectedCategory);
+    return matchesSearch && matchesCategory;
+  });
+
+  const filteredNearby = nearbyOngs.filter((ong) => {
     const matchesSearch = query === "" || ong.name.toLowerCase().includes(query.toLowerCase());
     const matchesCategory = selectedCategory === null || ong.categories.includes(selectedCategory);
     return matchesSearch && matchesCategory;
@@ -145,7 +153,9 @@ export default function HomePage() {
 
   function goToDonateItems() {
     if (!selectedOng) return;
-    const ong = filteredOngs.find((o) => o.id === selectedOng);
+
+    const allOngs = [...recommendedOngs, ...nearbyOngs];
+    const ong = allOngs.find((o) => o.id === selectedOng);
     if (!ong) return;
     router.push(`/donation?ongId=${selectedOng}&ong=${encodeURIComponent(ong.name)}`);
   }
@@ -261,7 +271,7 @@ export default function HomePage() {
       {(query || selectedCategory) && (
         <div className="px-5 mt-3">
           <p className="text-sm text-gray-600">
-            {filteredOngs.length} {filteredOngs.length === 1 ? 'ONG encontrada' : 'ONGs encontradas'}
+            {filteredRecommended.length} {filteredRecommended.length === 1 ? 'ONG encontrada' : 'ONGs encontradas'}
             {query && ` para "${query}"`}
             {selectedCategory && ` em ${selectedCategory}`}
           </p>
@@ -273,10 +283,10 @@ export default function HomePage() {
           <h2 className="text-lg font-semibold text-gray-800">ONGs recomendadas</h2>
         </div>
         <div className="flex gap-4 overflow-x-auto pb-3 no-scrollbar">
-          {filteredOngs.length === 0 ? (
+          {filteredRecommended.length === 0 ? (
             <div className="w-full text-center py-8 text-gray-500">Nenhuma ONG encontrada</div>
           ) : (
-            filteredOngs.map((ong) => (
+            filteredRecommended.map((ong) => (
               <div
                 key={`carousel-${ong.id}`}
                 onClick={() => router.push(`/ong-public-profile?id=${ong.id}`)}
@@ -296,9 +306,11 @@ export default function HomePage() {
                       <span className="text-[10px] text-gray-400 font-medium self-center">+{ong.categories.length - 1}</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-gray-500 mt-2">
-                    <FaMapMarkerAlt size={12} />
-                    <span className="text-xs">{ong.distance}</span>
+                  <div className="flex items-center gap-1 text-yellow-500 mt-2">
+                    <FaStar size={12} />
+                    <span className="text-xs font-semibold text-gray-700">
+                      {ong.rating}
+                    </span>
                   </div>
                   <button
                     onClick={(e) => {
@@ -318,12 +330,12 @@ export default function HomePage() {
 
       <section className="mt-6 px-5 mb-10 space-y-4">
         <h2 className="text-xl font-semibold mb-4 text-gray-800">Mais próximas de você</h2>
-        {filteredOngs.length === 0 ? (
+        {filteredNearby.length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center shadow-sm">
             <p className="text-gray-600 text-lg">Nenhuma ONG encontrada</p>
           </div>
         ) : (
-          filteredOngs.map((ong) => (
+          filteredNearby.map((ong) => (
             <div
               key={`list-${ong.id}`}
               onClick={() => router.push(`/ong-public-profile?id=${ong.id}`)}
