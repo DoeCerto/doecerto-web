@@ -11,7 +11,6 @@ import {
   Heart,
   Package,
   Calendar,
-  Clock,
   DollarSign,
   History,
   Edit2,
@@ -19,13 +18,28 @@ import {
   X,
   Loader2,
   AlertCircle,
-  FileText
+  FileText,
+  MapPin
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { MonetaryDonationDetails } from "@/components/ui/MonetaryDonationDetails";
 import { MaterialDonationDetails } from "@/components/ui/MaterialDonationDetails";
 import { DonorService, type UpdateProfileDTO, type DonationHistory } from "@/services/donor.service";
 
+interface AddressData {
+  id: number;
+  donorId: number | null;
+  ongId: number | null;
+  createdAt: string;
+  updatedAt: string;
+  street: string;
+  number: string;
+  complement: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  zipCode: string;
+}
 
 export default function DonorProfile() {
   const router = useRouter();
@@ -45,18 +59,55 @@ export default function DonorProfile() {
     cpf: "",
     phone: "",
     description: "",
+    address: {
+      id: 0,
+      donorId: null,
+      ongId: null,
+      createdAt: "",
+      updatedAt: "",
+      street: "",
+      number: "",
+      complement: "",
+      neighborhood: "",
+      city: "",
+      state: "",
+      zipCode: "",
+    } as AddressData
   });
 
-  // CARREGAR PERFIL E HISTÓRICO
+  const normalizeAddress = (addr: any): AddressData => {
+    return {
+      id: addr?.id || 0,
+      donorId: addr?.donorId || null,
+      ongId: addr?.ongId || null,
+      createdAt: addr?.createdAt || "",
+      updatedAt: addr?.updatedAt || "",
+      street: addr?.street || "",
+      number: addr?.number || "",
+      complement: addr?.complement || "",
+      neighborhood: addr?.neighborhood || "",
+      city: addr?.city || "",
+      state: addr?.state || "",
+      zipCode: addr?.zipCode || "",
+    };
+  };
+
+  const getCleanAddress = (address: AddressData) => {
+    const { id, createdAt, updatedAt, donorId, ongId, ...rest } = address;
+    return rest;
+  };
+
+  // CARREGAR PERFIL, HISTÓRICO E ENDEREÇO
   useEffect(() => {
     async function loadAllData() {
       try {
         setIsLoading(true);
         setIsHistoryLoading(true);
-
-        const [profile, history] = await Promise.all([
+        
+        const [profile, history, address] = await Promise.all([
           DonorService.getMyProfile(),
-          DonorService.getDonationHistory()
+          DonorService.getDonationHistory(),
+          DonorService.getMyAddress() 
         ]);
 
         setDonorData({
@@ -65,6 +116,7 @@ export default function DonorProfile() {
           cpf: profile.cpf || "",
           phone: profile.phone || "",
           description: profile.description || "",
+          address: normalizeAddress(address || profile.address)
         });
 
         setDonationHistory(history);
@@ -86,6 +138,7 @@ export default function DonorProfile() {
     try {
       setIsLoading(true);
 
+      // 1. Atualizar Nome
       const isNameValid = donorData.name &&
         donorData.name !== "Carregando..." &&
         donorData.name.trim().length >= 2;
@@ -94,20 +147,38 @@ export default function DonorProfile() {
         await DonorService.updateAccountName(donorData.name.trim());
       }
 
+      // 2. Atualizar Perfil
       const profilePayload: UpdateProfileDTO = {
         contactNumber: donorData.phone,
-        description: donorData.description || "", 
+        description: donorData.description || "",
       };
       await DonorService.updateProfile(profilePayload);
 
-      const freshData = await DonorService.getMyProfile();
+      // 3. Atualizar/Criar Endereço com Validação
+      if (donorData.address && donorData.address.street) {
+        const { street, number, neighborhood, city, state, zipCode } = donorData.address;
 
+        // Verifica se os campos obrigatórios estão preenchidos antes de enviar
+        if (!street || !number || !neighborhood || !city || !state || !zipCode) {
+          alert("Por favor, preencha todos os campos do endereço.");
+          setIsLoading(false);
+          return;
+        }
+
+        const cleanAddress = getCleanAddress(donorData.address);
+
+        if (donorData.address.id > 0) {
+          await DonorService.updateAddress(donorData.address.id, cleanAddress as any);
+        } else {
+          await DonorService.createAddress(cleanAddress as any);
+        }
+      }
+
+      // 4. Recarregar dados
+      const freshData = await DonorService.getMyProfile();
       setDonorData({
-        name: freshData.name || "",
-        email: freshData.email || "",
-        cpf: freshData.cpf || "",
-        phone: freshData.phone || "",
-        description: freshData.description || "",
+        ...freshData,
+        address: normalizeAddress(freshData.address || donorData.address)
       });
 
       setIsEditingProfile(false);
@@ -133,7 +204,7 @@ export default function DonorProfile() {
       setIsUploading(true);
       const formData = new FormData();
       formData.append("file", file);
-      const updatedProfile = await DonorService.updateProfile(formData);
+      const updatedProfile = await DonorService.updateProfile(formData as any);
       setProfileImage(updatedProfile.avatarUrl ?? null);
     } catch (error) {
       alert("Erro ao salvar imagem.");
@@ -142,7 +213,6 @@ export default function DonorProfile() {
     }
   };
 
-  // HELPERS DE FORMATAÇÃO
   const getStatusColor = (status: string) => {
     const s = status?.toLowerCase();
     switch (s) {
@@ -325,6 +395,7 @@ export default function DonorProfile() {
               </div>
 
               <div className="space-y-6">
+                {/* Biografia */}
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-gray-50 rounded-lg"><FileText size={20} className="text-gray-400" /></div>
                   <div className="flex-1">
@@ -346,6 +417,7 @@ export default function DonorProfile() {
 
                 <hr className="border-gray-50" />
 
+                {/* Nome e Telefone */}
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-gray-50 rounded-lg"><User size={20} className="text-gray-400" /></div>
                   <div className="flex-1">
@@ -366,6 +438,31 @@ export default function DonorProfile() {
                       <input className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100" value={donorData.phone} onChange={(e) => setDonorData({ ...donorData, phone: e.target.value })} />
                     ) : (
                       <p className="font-medium text-gray-900">{donorData.phone || "Não informado"}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* ENDEREÇO */}
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-gray-50 rounded-lg"><MapPin size={20} className="text-gray-400" /></div>
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Endereço</p>
+                    {isEditingProfile ? (
+                      <div className="grid grid-cols-2 gap-3">
+                        <input className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100 col-span-2" placeholder="Rua" value={donorData.address.street} onChange={(e) => setDonorData({ ...donorData, address: { ...donorData.address, street: e.target.value } })} />
+                        <input className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100" placeholder="Número" value={donorData.address.number} onChange={(e) => setDonorData({ ...donorData, address: { ...donorData.address, number: e.target.value } })} />
+                        <input className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100" placeholder="Complemento" value={donorData.address.complement} onChange={(e) => setDonorData({ ...donorData, address: { ...donorData.address, complement: e.target.value } })} />
+                        <input className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100 col-span-2" placeholder="Bairro" value={donorData.address.neighborhood} onChange={(e) => setDonorData({ ...donorData, address: { ...donorData.address, neighborhood: e.target.value } })} />
+                        <input className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100" placeholder="Cidade" value={donorData.address.city} onChange={(e) => setDonorData({ ...donorData, address: { ...donorData.address, city: e.target.value } })} />
+                        <input className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100" placeholder="UF" value={donorData.address.state} onChange={(e) => setDonorData({ ...donorData, address: { ...donorData.address, state: e.target.value } })} />
+                        <input className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100 col-span-2" placeholder="CEP" value={donorData.address.zipCode} onChange={(e) => setDonorData({ ...donorData, address: { ...donorData.address, zipCode: e.target.value } })} />
+                      </div>
+                    ) : (
+                      <p className="font-medium text-gray-900 leading-relaxed">
+                        {donorData.address.street
+                          ? `${donorData.address.street}, ${donorData.address.number} ${donorData.address.complement ? '- ' + donorData.address.complement : ''}\n${donorData.address.neighborhood}, ${donorData.address.city}/${donorData.address.state} - CEP: ${donorData.address.zipCode}`
+                          : "Endereço não informado"}
+                      </p>
                     )}
                   </div>
                 </div>
