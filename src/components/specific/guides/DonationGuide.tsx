@@ -1,4 +1,5 @@
 import StepHeader from "@/components/ui/StepHeader";
+import StepIntro from "@/components/ui/StepIntro";
 import { Star } from "lucide-react";
 
 export default function DonationGuide() {
@@ -48,8 +49,17 @@ export default function DonationGuide() {
         text-[16px] font-bold w-full rounded-[10px] flex justify-center items-center">
           Doar para SOS Gatinhos
         </div>
-
       </div>
+
+      <StepIntro 
+          label="ENCONTRE E AJUDE"
+          title={
+            <>
+            Encontre uma ONG e <br />toque em Doar
+            </>
+            }
+          description="Cada ONG tem seu botão de doação na página de perfil"
+      />
     </main>
   );
 }

@@ -1,5 +1,6 @@
 import ActionCard from "@/components/ui/HelpCenterActionCard";
 import InfoCard from "@/components/ui/InfoCard";
+import StepIntro from "@/components/ui/StepIntro"
 import { X, ClipboardList, Star, Heart, User } from "lucide-react";
 import { FiSearch } from "react-icons/fi";
 import Link from "next/link";
