@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 import { Darker_Grotesque } from "next/font/google"
 import "./globals.css"
-import HelpButton from "@/components/specific/Help/HelpButton"
 
 const darker = Darker_Grotesque({
   subsets: ["latin"],
@@ -22,7 +21,6 @@ export default function RootLayout({
     <html lang="pt-br">
       <body className={darker.className}>
         {children}
-        <HelpButton />
       </body>
     </html>
   )

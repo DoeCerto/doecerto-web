@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
-import { Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, ArrowLeft } from "lucide-react";
 import { registerDonor } from "@/services/register.service";
 import { formatCPF, removeFormatting, validateCPF } from "@/utils/documentValidation";
 
@@ -21,7 +21,7 @@ export default function Register() {
 
   const [showSenha, setShowSenha] = useState(false);
   const [showConfirmar, setShowConfirmar] = useState(false);
-  
+
   // Estados para validação do CPF
   const [cpfError, setCpfError] = useState("");
   const [cpfShake, setCpfShake] = useState(false);
@@ -34,7 +34,7 @@ export default function Register() {
   function handleCPFChange(value: string) {
     const formatted = formatCPF(value);
     setCpf(formatted);
-    
+
     // Limpa erro ao digitar
     if (cpfError) {
       setCpfError("");
@@ -81,7 +81,7 @@ export default function Register() {
     try {
       // Remove formatação antes de enviar para API
       const cpfNumbers = removeFormatting(cpf);
-      
+
       await registerDonor({
         name: nome,
         email,
@@ -103,6 +103,16 @@ export default function Register() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#6B39A7] text-white font-sans px-6 py-12">
       <Toaster position="top-center" />
+      
+      <div className="absolute top-6 left-6 z-10">
+        <Link
+          href="/login"
+          className="flex items-center gap-2 text-white font-bold text-base hover:opacity-80 transition-opacity"
+        >
+          <ArrowLeft size={24} strokeWidth={3} />
+          <span className="hidden xs:inline">Voltar</span>
+        </Link>
+      </div>
 
       <div className="w-full max-w-xs flex flex-col items-center">
         <div className="mb-4">
@@ -140,11 +150,10 @@ export default function Register() {
                 value={cpf}
                 onChange={(e) => handleCPFChange(e.target.value)}
                 maxLength={14}
-                className={`w-full bg-white p-2 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
-                  cpfError 
-                    ? "ring-2 ring-red-400 shake" 
+                className={`w-full bg-white p-2 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${cpfError
+                    ? "ring-2 ring-red-400 shake"
                     : "focus:ring-purple-300"
-                } ${cpfShake ? "shake" : ""}`}
+                  } ${cpfShake ? "shake" : ""}`}
               />
               {cpfError && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -189,9 +198,8 @@ export default function Register() {
                 placeholder="Mínimo de 8 caracteres"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
-                className={`w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
-                  senhasCoincidem ? "ring-2 ring-green-400" : "focus:ring-purple-300"
-                }`}
+                className={`w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${senhasCoincidem ? "ring-2 ring-green-400" : "focus:ring-purple-300"
+                  }`}
               />
               <button
                 type="button"
@@ -214,10 +222,9 @@ export default function Register() {
                 placeholder="Repita sua senha"
                 value={confirmarSenha}
                 onChange={(e) => setConfirmarSenha(e.target.value)}
-                className={`w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
-                  senhasCoincidem ? "ring-2 ring-green-400" : 
-                  senhasDiferentes ? "ring-2 ring-red-400" : "focus:ring-purple-300"
-                }`}
+                className={`w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${senhasCoincidem ? "ring-2 ring-green-400" :
+                    senhasDiferentes ? "ring-2 ring-red-400" : "focus:ring-purple-300"
+                  }`}
               />
               <button
                 type="button"

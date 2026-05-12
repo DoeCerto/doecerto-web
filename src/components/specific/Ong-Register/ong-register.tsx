@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
-import { Eye, EyeOff, AlertCircle } from "lucide-react"; 
+import { Eye, EyeOff, AlertCircle, ArrowLeft } from "lucide-react"; 
 import { registerOng } from "@/services/register-ong.service";
 import { formatCNPJ, removeFormatting, validateCNPJ } from "@/utils/documentValidation";
 
@@ -103,6 +103,16 @@ export default function OngRegisterPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#6B39A7] text-white font-sans px-6 py-12">
       <Toaster position="top-center" />
+
+       <div className="absolute top-6 left-6 z-10">
+        <Link
+          href="/login"
+          className="flex items-center gap-2 text-white font-bold text-base hover:opacity-80 transition-opacity"
+        >
+          <ArrowLeft size={24} strokeWidth={3} />
+          <span className="hidden xs:inline">Voltar</span>
+        </Link>
+      </div>
 
       <div className="w-full max-w-xs flex flex-col items-center">
         <div className="mb-4">
