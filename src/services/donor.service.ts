@@ -15,7 +15,6 @@ export interface DonorProfileData {
   avatarUrl: string | null;
   description: string;
   isNewProfile?: boolean;
-  address?: AddressData;
 }
 
 export interface DonationHistory {
@@ -30,27 +29,6 @@ export interface DonationHistory {
       name: string;
     };
   };
-}
-
-export interface AddressDTO {
-  street: string;
-  number: string;
-  complement?: string | null; // Adicione o | null para maior segurança
-  neighborhood: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country?: string;
-  latitude?: number;
-  longitude?: number;
-}
-
-export interface AddressData extends AddressDTO {
-  id: number;
-  donorId: number | null;
-  ongId: number | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export const DonorService = {
@@ -133,43 +111,6 @@ export const DonorService = {
     }
   },
 
-  async getMyAddress(): Promise<AddressData | null> {
-    try {
-      const { data } = await api<any>("/addresses", { method: "GET" });
-
-      const rawArray = data?.data || data || [];
-      if (Array.isArray(rawArray) && rawArray.length > 0) {
-        return rawArray[0];
-      }
-      return null;
-    } catch (error) {
-      console.error("Erro ao buscar endereço do doador:", error);
-      return null;
-    }
-  },
-
-  async createAddress(payload: AddressDTO): Promise<AddressData> {
-    const defaultPayload = { country: "Brasil", ...payload };
-
-    const { data } = await api<any>("/addresses", {
-      method: "POST",
-      body: JSON.stringify(defaultPayload),
-      headers: { "Content-Type": "application/json" }
-    });
-
-    return data;
-  },
-
-  async updateAddress(addressId: number, payload: Partial<AddressDTO>): Promise<AddressData> {
-    const { data } = await api<any>(`/addresses/${addressId}`, {
-      method: "PATCH",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" }
-    });
-
-    return data;
-  },
-
   _mapProfileData(data: any): DonorProfileData {
     if (!data) return { name: "", email: "", cpf: "", phone: "", avatarUrl: null, description: "" };
 
@@ -183,7 +124,6 @@ export const DonorService = {
       phone: data.contactNumber || donor.contactNumber || "",
       avatarUrl: this._formatImageUrl(data.avatarUrl || donor.profile?.avatarUrl),
       description: data.description || "",
-      address: data.address ? (data.address as AddressData) : undefined
     };
   }
 };

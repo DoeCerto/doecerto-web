@@ -65,27 +65,29 @@ export default function HomePage() {
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [page, setPage] = useState(0);
 
+  const [showProfileModal, setShowProfileModal] = useState(false);
+
 
   useEffect(() => {
     async function loadUserProfile() {
       try {
         const userRole = localStorage.getItem("userRole")?.toUpperCase();
-        let profile;
+        if (userRole !== "ONG") {
+          const profile = await DonorService.getMyProfile();
 
-        if (userRole === "ONG") {
-          profile = await OngsProfileService.getMyProfile();
-        } else {
-          profile = await DonorService.getMyProfile();
-        }
+          // Verifica se faltam dados básicos
+          const isIncomplete = !profile.name || profile.name === "Doador" || !profile.phone;
 
-        if (profile?.avatarUrl) {
-          const formattedUrl = OngsProfileService._formatImageUrl(profile.avatarUrl);
-          setUserAvatar(formattedUrl);
+          if (isIncomplete) {
+            setShowProfileModal(true);
+          }
+
+          if (profile?.avatarUrl) {
+            setUserAvatar(OngsProfileService._formatImageUrl(profile.avatarUrl));
+          }
         }
       } catch (err) {
-        console.error("Erro ao carregar avatar:", err);
-        const saved = localStorage.getItem('userAvatar');
-        if (saved) setUserAvatar(saved);
+        console.error("Erro ao verificar perfil:", err);
       }
     }
     loadUserProfile();
@@ -388,6 +390,46 @@ export default function HomePage() {
           onDonateMoney={goToDonateMoney}
           onDonateItems={goToDonateItems}
         />
+      )}
+
+      {showProfileModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 animate-fadeIn">
+          {/* Overlay Escuro (Fundo) */}
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+          {/* Card do Modal */}
+          <div className="relative bg-white w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl p-8 flex flex-col items-center text-center animate-scaleIn">
+
+            {/* Ícone de Perfil/User */}
+            <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mb-6">
+              <FiUser size={40} className="text-[#6B21A8]" />
+            </div>
+
+            <h2 className="text-2xl font-extrabold text-gray-900 mb-2">
+              Complete seu Perfil
+            </h2>
+
+            <p className="text-gray-500 text-sm mb-8 leading-relaxed">
+              Para realizar doações no **DoeCerto**, precisamos que você finalize seu cadastro com telefone e foto.
+            </p>
+
+            <div className="w-full space-y-3">
+              <button
+                onClick={() => router.push("/dashboard")}
+                className="w-full bg-[#6B21A8] text-white font-bold py-4 rounded-2xl shadow-lg shadow-purple-200 active:scale-95 transition-all"
+              >
+                Ir para meu Perfil
+              </button>
+
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="w-full py-3 text-gray-400 font-semibold text-sm hover:text-gray-600 transition-colors"
+              >
+                Agora não, obrigado
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

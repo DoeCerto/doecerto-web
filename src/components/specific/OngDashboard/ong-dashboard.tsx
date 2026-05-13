@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin, Heart, Award, X, Instagram, Phone, Home, Star, Pencil,
   History, Package, CheckCircle2, Clock, FileText, ArrowLeft,
-  Loader2, Camera, AlertCircle, ArrowRight, Tag, MessageSquare, AlertTriangle, ExternalLink
+  Loader2, Camera, AlertCircle, ArrowRight, Tag, MessageSquare, AlertTriangle, ExternalLink,
+  LogOut
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { OngsProfileService } from "@/services/ongs-profile.service";
@@ -37,6 +38,14 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
   const message = encodeURIComponent(
     `Olá! Sou da ONG ${ong?.name}. Sobre a doação de itens que você enviou.`
   );
+
+  const handleLogout = () => {
+
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    router.push("/login");
+  };
 
   const cleanPhone = donorPhone.replace(/\D/g, "");
 
@@ -139,21 +148,22 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
           <div className="absolute inset-0 bg-gradient-to-tr from-purple-100 via-violet-50 to-pink-100" />
         )}
 
-        {/* Botão Voltar */}
-        <button
-          onClick={() => router.push('/home')}
-          className="absolute top-4 left-4 bg-white/90 p-2 rounded-full z-30 shadow-md text-gray-900 hover:bg-white transition-colors"
-        >
-          <ArrowLeft size={20} />
-        </button>
+        {/* Botões de Ação no Topo */}
+        <div className="absolute top-4 right-4 z-50 flex gap-2">
+          <motion.button
+            onClick={() => router.push(`/ong-profilesetup`)}
+            className="flex items-center gap-2 bg-white border-2 border-[#4a1d7a] px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold text-[#4a1d7a] shadow-sm hover:bg-purple-50 transition-colors text-xs sm:text-base"
+          >
+            <Pencil size={16} /> <span>Editar Perfil</span>
+          </motion.button>
 
-        {/* Botão Editar Perfil */}
-        <motion.button
-          onClick={() => router.push(`/ong-profilesetup`)}
-          className="absolute top-4 right-4 z-50 flex items-center gap-2 bg-white border-2 border-[#4a1d7a] px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold text-[#4a1d7a] shadow-sm hover:bg-purple-50 transition-colors text-xs sm:text-base"
-        >
-          <Pencil size={16} /> <span>Editar Perfil</span>
-        </motion.button>
+          <motion.button
+            onClick={handleLogout}
+            className="flex items-center gap-2 bg-red-50 border-2 border-red-200 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold text-red-600 shadow-sm hover:bg-red-100 transition-colors text-xs sm:text-base"
+          >
+            <LogOut size={16} /> <span>Sair</span>
+          </motion.button>
+        </div>
 
         {/* Foto de Perfil */}
         <motion.div
