@@ -7,6 +7,18 @@ export interface UpdateProfileDTO {
   description?: string;
 }
 
+export interface Address {
+  id?: string;
+  zipCode: string;
+  street: string;
+  number: string;
+  complement: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  country: string;
+}
+
 export interface DonorProfileData {
   name: string;
   email: string;
@@ -80,6 +92,36 @@ export const DonorService = {
       body: JSON.stringify({ name }),
       headers: { "Content-Type": "application/json" }
     });
+  },
+
+  async getMyAddress(): Promise<Address | null> {
+    try {
+      const { data } = await api<any>("/addresses/me");
+      return data || null;
+    } catch (error) {
+      console.warn("Erro ao buscar endereço:", error);
+      return null;
+    }
+  },
+
+  async updateAddress(payload: Partial<Address>): Promise<Address> {
+    const { data } = await api<any>("/addresses", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      headers: { "Content-Type": "application/json" }
+    });
+
+    return data;
+  },
+
+  async createOrUpdateAddress(payload: Partial<Address>): Promise<Address> {
+    const { data } = await api<any>("/addresses", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      headers: { "Content-Type": "application/json" }
+    });
+
+    return data;
   },
 
   async getDonationHistory(): Promise<DonationHistory[]> {

@@ -19,12 +19,13 @@ import {
   X,
   Loader2,
   AlertCircle,
-  FileText
+  FileText,
+  MapPin
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { MonetaryDonationDetails } from "@/components/ui/MonetaryDonationDetails";
 import { MaterialDonationDetails } from "@/components/ui/MaterialDonationDetails";
-import { DonorService, type UpdateProfileDTO, type DonationHistory } from "@/services/donor.service";
+import { DonorService, type UpdateProfileDTO, type DonationHistory, Address } from "@/services/donor.service";
 
 export default function DonorProfile() {
   const router = useRouter();
@@ -37,6 +38,16 @@ export default function DonorProfile() {
   const [isLoading, setIsLoading] = useState(false);
   const [donationHistory, setDonationHistory] = useState<DonationHistory[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [address, setAddress] = useState<Address>({
+    zipCode: "",
+    street: "",
+    number: "",
+    complement: "",
+    neighborhood: "",
+    city: "",
+    state: "",
+    country: "Brasil",
+  });
 
   const [donorData, setDonorData] = useState({
     name: "Carregando...",
@@ -46,30 +57,98 @@ export default function DonorProfile() {
     description: "",
   });
 
+  const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const cep = e.target.value.replace(/\D/g, "");
+
+    setAddress(prev => ({
+      ...prev,
+      zipCode: cep
+    }));
+
+    if (cep.length !== 8) return;
+
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const data = await res.json();
+
+      if (data.erro) {
+        toast.error("CEP não encontrado");
+        return;
+      }
+
+      setAddress(prev => ({
+        ...prev,
+        street: data.logradouro || "",
+        neighborhood: data.bairro || "",
+        city: data.localidade || "",
+        state: data.uf || "",
+        country: "Brasil"
+      }));
+
+      toast.success("Endereço preenchido automaticamente!");
+    } catch {
+      toast.error("Erro ao buscar CEP");
+    }
+  };
+
   // CARREGAR PERFIL E HISTÓRICO
   useEffect(() => {
     async function loadAllData() {
       try {
         setIsLoading(true);
         setIsHistoryLoading(true);
-        
-        const [profile, history] = await Promise.all([
+
+        const [profile, history, addressRes] = await Promise.allSettled([
           DonorService.getMyProfile(),
-          DonorService.getDonationHistory()
+          DonorService.getDonationHistory(),
+          DonorService.getMyAddress(),
         ]);
 
-        setDonorData({
-          name: profile.name || "",
-          email: profile.email || "",
-          cpf: profile.cpf || "",
-          phone: profile.phone || "",
-          description: profile.description || "",
-        });
+        const profileData =
+          profile.status === "fulfilled" ? profile.value : null;
 
-        setDonationHistory(history);
+        const historyData =
+          history.status === "fulfilled" ? history.value : [];
 
-        if (profile.avatarUrl) setProfileImage(profile.avatarUrl);
-        if (!profile.phone) setShowCompleteModal(true);
+        const addressData =
+          addressRes.status === "fulfilled" ? addressRes.value : null;
+
+        // PROFILE
+        if (profileData) {
+          setDonorData({
+            name: profileData.name || "",
+            email: profileData.email || "",
+            cpf: profileData.cpf || "",
+            phone: profileData.phone || "",
+            description: profileData.description || "",
+          });
+
+          if (profileData.avatarUrl) {
+            setProfileImage(profileData.avatarUrl);
+          }
+
+          if (!profileData.phone) {
+            setShowCompleteModal(true);
+          }
+        }
+
+        // HISTORY
+        setDonationHistory(historyData);
+
+        // ADDRESS 
+        if (addressData) {
+          setAddress({
+            zipCode: addressData.zipCode || "",
+            street: addressData.street || "",
+            number: addressData.number || "",
+            complement: addressData.complement || "",
+            neighborhood: addressData.neighborhood || "",
+            city: addressData.city || "",
+            state: addressData.state || "",
+            country: addressData.country || "Brasil",
+          });
+        }
+
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
         toast.error("Erro ao carregar os dados do perfil.");
@@ -78,6 +157,7 @@ export default function DonorProfile() {
         setIsHistoryLoading(false);
       }
     }
+
     loadAllData();
   }, []);
 
@@ -93,6 +173,10 @@ export default function DonorProfile() {
 
       if (isNameValid) {
         await DonorService.updateAccountName(donorData.name.trim());
+      }
+
+      if (address) {
+        await DonorService.createOrUpdateAddress(address);
       }
 
       // 2. Atualizar Perfil
@@ -312,6 +396,97 @@ export default function DonorProfile() {
                       <input className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100" value={donorData.name} onChange={(e) => setDonorData({ ...donorData, name: e.target.value })} />
                     ) : (
                       <p className="font-medium text-gray-900">{donorData.name}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-gray-50 rounded-lg">
+                    <MapPin size={20} className="text-gray-400" />
+                  </div>
+
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2">
+                      Endereço
+                    </p>
+
+                    {isEditingProfile ? (
+                      <div className="grid grid-cols-2 gap-3">
+                        {/* CEP */}
+                        <input
+                          placeholder="CEP"
+                          className="col-span-2 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
+                          value={address.zipCode}
+                          onChange={handleCepChange}
+                        />
+
+                        {/* Rua */}
+                        <input
+                          placeholder="Rua"
+                          className="col-span-2 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
+                          value={address.street}
+                          onChange={(e) =>
+                            setAddress({ ...address, street: e.target.value })
+                          }
+                        />
+
+                        {/* Número */}
+                        <input
+                          placeholder="Número"
+                          className="px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
+                          value={address.number}
+                          onChange={(e) =>
+                            setAddress({ ...address, number: e.target.value })
+                          }
+                        />
+
+                        {/* Complemento */}
+                        <input
+                          placeholder="Complemento"
+                          className="px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
+                          value={address.complement}
+                          onChange={(e) =>
+                            setAddress({ ...address, complement: e.target.value })
+                          }
+                        />
+
+                        {/* Bairro */}
+                        <input
+                          placeholder="Bairro"
+                          className="col-span-2 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
+                          value={address.neighborhood}
+                          onChange={(e) =>
+                            setAddress({ ...address, neighborhood: e.target.value })
+                          }
+                        />
+
+                        {/* Cidade */}
+                        <input
+                          placeholder="Cidade"
+                          className="px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
+                          value={address.city}
+                          onChange={(e) =>
+                            setAddress({ ...address, city: e.target.value })
+                          }
+                        />
+
+                        {/* Estado */}
+                        <input
+                          placeholder="Estado"
+                          className="px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
+                          value={address.state}
+                          onChange={(e) =>
+                            setAddress({ ...address, state: e.target.value })
+                          }
+                        />
+                      </div>
+                    ) : address.street ? (
+                      <p className="text-gray-900 leading-relaxed">
+                        {address.street}, {address.number || "S/N"} <br />
+                        {address.neighborhood} - {address.city}/{address.state}
+                      </p>
+                    ) : (
+                      <p className="text-gray-400">Não informado</p>
                     )}
                   </div>
                 </div>
