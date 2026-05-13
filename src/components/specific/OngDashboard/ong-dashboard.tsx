@@ -221,7 +221,28 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
             <p className="mt-3 text-gray-700 text-sm sm:text-lg leading-relaxed">{ong.description || "Nenhuma descrição informada ainda."}</p>
             <div className="mt-5 pt-5 border-t border-gray-50 space-y-4">
               <div className="flex items-center gap-3 text-gray-600"><Phone size={18} className="text-[#4a1d7a]" /><span className="text-sm sm:text-base font-bold">{ong.contactNumber || "Não informado"}</span></div>
-              <div className="flex items-center gap-3 text-gray-600"><Instagram size={18} className="text-pink-600" /><span className="text-sm sm:text-base font-bold text-gray-900 break-all">{ong.website || "Não informado"}</span></div>
+              <div className="flex items-center gap-3 text-gray-600">
+                <ExternalLink size={16} className="text-pink-600" />
+
+                {ong.website ? (
+                  <a
+                    href={
+                      ong.website.startsWith("http")
+                        ? ong.website
+                        : `https://${ong.website}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm sm:text-base font-bold text-[#4a1d7a] underline break-all"
+                  >
+                    {ong.website.replace(/^https?:\/\//, "")}
+                  </a>
+                ) : (
+                  <span className="text-sm sm:text-base font-bold text-gray-900">
+                    Não informado
+                  </span>
+                )}
+              </div>
               <div className="flex items-start gap-3 text-gray-600"><Home size={18} className="text-blue-600 mt-0.5" /><span className="text-sm sm:text-base font-bold">{ong.address ? `${ong.address.city} - ${ong.address.state}` : "Endereço não informado"}</span></div>
             </div>
           </div>

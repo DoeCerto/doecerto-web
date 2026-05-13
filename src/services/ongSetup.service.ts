@@ -48,7 +48,7 @@ export const OngSetupService = {
     const profilePayload = {
       description: data.description || '',
       contactNumber: data.contactNumber || '',
-      website: url ? [url] : [], 
+      website: url ? [url] : undefined,
       categoryIds: data.categoryIds ? data.categoryIds.map(Number) : [],
       yearsOfOperation: data.yearsOfOperation || null,
     };

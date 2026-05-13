@@ -19,7 +19,8 @@ import {
   Milestone,
   Info,
   Navigation,
-  Flag
+  Flag,
+  ExternalLink
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
@@ -224,14 +225,16 @@ export default function OngSetupProfile() {
 
     setLoading(true);
     try {
-      await OngSetupService.updateProfileData({
+      const payload = {
         description,
         contactNumber: phone,
-        websiteUrls: website ? [website] : [],
+        websiteUrls: website?.trim() ? [website.trim()] : undefined,
         categoryIds: selectedCategoryIds,
         yearsOfOperation: years ? Number(years) : undefined,
         address: { street, number, complement, neighborhood, city, state, zipCode, country },
-      });
+      };
+
+      await OngSetupService.updateProfileData(payload);
 
       if (logoFile || bannerFile) {
         await OngSetupService.updateProfileImages(
@@ -338,8 +341,8 @@ export default function OngSetupProfile() {
             <div className="space-y-3 sm:space-y-4">
               <InputGroup icon={Phone} placeholder="WhatsApp (Obrigatório)" value={phone} onChange={(e) => setPhone(e.target.value)} />
               <InputGroup
-                icon={Instagram}
-                placeholder="Instagram ou Website (Opcional)"
+                icon={ExternalLink}
+                placeholder="Ex: https://site.org ou instagram.com/suaong"
                 iconColor="text-pink-400"
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
