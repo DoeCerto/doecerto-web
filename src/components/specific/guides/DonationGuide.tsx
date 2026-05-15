@@ -1,5 +1,6 @@
 import StepHeader from "@/components/ui/StepHeader";
 import StepIntro from "@/components/ui/StepIntro";
+import NextButton from "@/components/ui/NextButton";
 import { Star } from "lucide-react";
 
 export default function DonationGuide() {
@@ -51,12 +52,12 @@ export default function DonationGuide() {
         </div>
       </div>
 
-      <StepIntro
-        label="ENCONTRE E AJUDE"
-        title="Encontre uma ONG e toque em Doar"
-
-      description="Cada ONG tem seu botão de doação na página de perfil"
+      <StepIntro 
+          label="ENCONTRE E AJUDE"
+          title="Encontre uma ONG e toque em Doar"
+          description="Cada ONG tem seu botão de doação na página de perfil"
       />
+      <NextButton onClick={() => console.log("Próxima etapa")} />
     </main>
   );
 }
