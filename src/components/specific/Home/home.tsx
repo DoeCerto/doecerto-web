@@ -59,7 +59,7 @@ export default function HomePage() {
   const [selectedOng, setSelectedOng] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [userAvatar, setUserAvatar] = useState<string>("https://placehold.co/80x80/ddd/aaa.png");
+  const [userAvatar, setUserAvatar] = useState<string>("/default-avatar.png");
   const [user, setUser] = useState<{ name?: string } | null>(null);
 
   const [recommendedOngs, setRecommendedOngs] = useState<Ong[]>([]);
@@ -180,7 +180,7 @@ export default function HomePage() {
     } finally {
       document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       localStorage.clear();
-      setUserAvatar("https://placehold.co/80x80/ddd/aaa.png");
+      setUserAvatar("/default-avatar.png");
       router.push("/login");
     }
   }
@@ -200,11 +200,10 @@ export default function HomePage() {
         <Image src="/logo_roxa.svg" alt="DoeCerto" width={120} height={120} priority />
 
         <div className="flex items-center gap-3 relative" ref={menuRef}>
-          {/* Removido o botão de hambúrguer daqui */}
 
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="flex items-center gap-2 bg-white px-3 py-2 rounded-full shadow-md border border-gray-100 hover:shadow-lg transition-all active:scale-95 max-w-[190px]"
+            className="flex items-center gap-1.5 min-[340px]:gap-2 bg-white px-2 py-1.5 min-[340px]:px-3 min-[340px]:py-2 rounded-full shadow-md border border-gray-100 hover:shadow-lg transition-all active:scale-95 max-w-[130px] min-[340px]:max-w-[190px]"
           >
             {/* seta */}
             <motion.div
@@ -214,36 +213,42 @@ export default function HomePage() {
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="3"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="text-[#6B21A8]"
+                className="text-[#6B21A8] min-[340px]:w-[18px] min-[340px]:h-[18px]"
               >
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </motion.div>
 
-            {/* nome */}
-            <span className="flex-1 min-w-0 truncate text-[#6B21A8] font-semibold text-sm">
+            {/* nome do usuário */}
+            <span className="hidden min-[340px]:block flex-1 min-w-0 truncate text-[#6B21A8] font-semibold text-sm">
               {user?.name || "Usuário"}
             </span>
 
             {/* avatar */}
-            <div className="w-10 h-10 shrink-0 rounded-full bg-gray-200 overflow-hidden ring-2 ring-purple-100">
-              <img
-                src={userAvatar}
-                alt="avatar"
-                className="w-full h-full object-cover"
-              />
+            <div className="w-8 h-8 min-[340px]:w-10 min-[340px]:h-10 shrink-0 rounded-full overflow-hidden ring-2 ring-purple-100">
+              {userAvatar && userAvatar !== "/default-avatar.png" ? (
+                <img
+                  src={userAvatar}
+                  alt="avatar"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-[#EBD2FF] to-[#D6B4FF] flex items-center justify-center">
+                  <FiUser size={16} className="text-[#6B21A8] min-[340px]:size-[18px]" />
+                </div>
+              )}
             </div>
           </button>
 
-          {/* O menu dropdown continua funcionando ao clicar na imagem */}
+          {/* O menu dropdown */}
           {isMenuOpen && (
             <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 animate-fadeIn">
 
