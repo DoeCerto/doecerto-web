@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import { useRef, useState, useEffect } from "react";
-import { FiSearch, FiMenu, FiX, FiUser, FiLogOut, FiGlobe, } from "react-icons/fi";
+import { FiSearch, FiMenu, FiX, FiUser, FiLogOut, FiGlobe, FiHelpCircle, } from "react-icons/fi";
 import { FaMapMarkerAlt, FaStar } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import DonateModal from "@/components/specific/DonateModal";
 import { api } from "@/services/api";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { DonorService } from "@/services/donor.service";
+import { motion } from "framer-motion";
 
 type Ong = {
   id: number;
@@ -59,6 +60,7 @@ export default function HomePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userAvatar, setUserAvatar] = useState<string>("https://placehold.co/80x80/ddd/aaa.png");
+  const [user, setUser] = useState<{ name?: string } | null>(null);
 
   const [recommendedOngs, setRecommendedOngs] = useState<Ong[]>([]);
   const [nearbyOngs, setNearbyOngs] = useState<Ong[]>([]);
@@ -74,6 +76,8 @@ export default function HomePage() {
         const userRole = localStorage.getItem("userRole")?.toUpperCase();
         if (userRole !== "ONG") {
           const profile = await DonorService.getMyProfile();
+
+          setUser(profile);
 
           // Verifica se faltam dados básicos
           const isIncomplete = !profile.name || profile.name === "Doador" || !profile.phone;
@@ -198,29 +202,72 @@ export default function HomePage() {
         <div className="flex items-center gap-3 relative" ref={menuRef}>
           {/* Removido o botão de hambúrguer daqui */}
 
-          <div
+          <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden cursor-pointer ring-2 ring-white shadow-sm hover:ring-purple-500 transition-all"
+            className="flex items-center gap-2 bg-white px-3 py-2 rounded-full shadow-md border border-gray-100 hover:shadow-lg transition-all active:scale-95 max-w-[190px]"
           >
-            <img
-              src={userAvatar}
-              alt="avatar"
-              className="w-full h-full object-cover"
-              onError={(e) => (e.currentTarget.src = "https://placehold.co/80x80/ddd/aaa.png")}
-            />
-          </div>
+            {/* seta */}
+            <motion.div
+              className="shrink-0"
+              animate={{ rotate: isMenuOpen ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-[#6B21A8]"
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </motion.div>
+
+            {/* nome */}
+            <span className="flex-1 min-w-0 truncate text-[#6B21A8] font-semibold text-sm">
+              {user?.name || "Usuário"}
+            </span>
+
+            {/* avatar */}
+            <div className="w-10 h-10 shrink-0 rounded-full bg-gray-200 overflow-hidden ring-2 ring-purple-100">
+              <img
+                src={userAvatar}
+                alt="avatar"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </button>
 
           {/* O menu dropdown continua funcionando ao clicar na imagem */}
           {isMenuOpen && (
             <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 animate-fadeIn">
+
               <button
                 onClick={goToProfile}
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition text-left"
               >
-                <FiUser size={18} className="text-purple-600" />
+                <FiUser size={18} className="text-blue-600" />
                 <span className="font-medium text-gray-700">Meu Perfil</span>
               </button>
+
+              <button
+                onClick={() => {
+                  router.push("/help-center");
+                  setIsMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition text-left"
+              >
+                <FiHelpCircle size={18} className="text-purple-600" />
+                <span className="font-medium text-gray-700">Central de Ajuda</span>
+              </button>
+
               <div className="border-t border-gray-100 my-1"></div>
+
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition text-left"
