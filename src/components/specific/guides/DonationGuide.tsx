@@ -1,3 +1,5 @@
+"use client";
+
 import StepHeader from "@/components/ui/StepHeader";
 import StepIntro from "@/components/ui/StepIntro";
 import NextButton from "@/components/ui/NextButton";
@@ -21,8 +23,7 @@ export default function DonationGuide() {
 
         <hr className="border border-t border-[#3D3D3D] w-full h-[1px] mb-[px]"></hr>
 
-        <div className="w-full flex flex-row justify-between mb-[20px]
-        mx-[10px]">
+        <div className="w-full flex flex-row justify-between mb-[20px] mx-[10px]">
 
           <div className="flex flex-col items-center">
             <h1 className="text-[32px] font-bold">
@@ -46,16 +47,15 @@ export default function DonationGuide() {
           </div>
         </div>
 
-        <div className="mx-[5px] py-[18px] bg-[#6B39A7] text-[#FFFFFF]
-        text-[16px] font-bold w-full rounded-[10px] flex justify-center items-center">
+        <div className="mx-[5px] py-[18px] bg-[#6B39A7] text-[#FFFFFF] text-[16px] font-bold w-full rounded-[10px] flex justify-center items-center">
           Doar para SOS Gatinhos
         </div>
       </div>
 
-      <StepIntro 
-          label="ENCONTRE E AJUDE"
-          title="Encontre uma ONG e toque em Doar"
-          description="Cada ONG tem seu botão de doação na página de perfil"
+      <StepIntro
+        label="ENCONTRE E AJUDE"
+        title="Encontre uma ONG e toque em Doar"
+        description="Cada ONG tem seu botão de doação na página de perfil"
       />
       <NextButton onClick={() => console.log("Próxima etapa")} />
     </main>
