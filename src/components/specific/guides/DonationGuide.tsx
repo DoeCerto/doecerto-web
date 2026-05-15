@@ -1,16 +1,20 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import StepHeader from "@/components/ui/StepHeader";
 import StepIntro from "@/components/ui/StepIntro";
 import NextButton from "@/components/ui/NextButton";
 import { Star } from "lucide-react";
 
 export default function DonationGuide() {
+  const router = useRouter();
+
   return (
     <main className="p-[25px]">
       <StepHeader
         currentStep={1}
         totalSteps={5}
+        onSkip={() => router.push("/help-center")}
       />
 
       <div className="w-full bg-white border border-[#6B39A7] rounded-[20px] mt-[30px] pt-[45px] px-[30px] pb-[33px] mb-[25px] shadow-[0px_8px_16px_rgba(0,0,0,0.12)] flex flex-col items-center">

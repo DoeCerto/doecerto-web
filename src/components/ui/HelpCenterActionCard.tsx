@@ -1,3 +1,5 @@
+"use client";
+
 type ActionCardProps = {
   icon: React.ReactNode;
   title: React.ReactNode;
@@ -14,19 +16,7 @@ export default function ActionCard({
   return (
     <button
       onClick={onClick}
-      className="
-        w-[165px]
-        px-[15px]
-        py-[9px]
-        flex
-        flex-col
-        text-left
-        bg-white
-        rounded-[10px]
-        shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
-        hover:shadow-[0px_10px_20px_rgba(0,0,0,0.15)]
-        transition
-      "
+      className="w-[165px] px-[15px] py-[9px] flex flex-col text-left bg-white rounded-[10px] shadow-[0px_8px_16px_rgba(0,0,0,0.12)] hover:shadow-[0px_10px_20px_rgba(0,0,0,0.15)] transition"
     >
       <div className="text-xl mb-1">{icon}</div>
 
