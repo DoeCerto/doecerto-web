@@ -80,7 +80,9 @@ export default function HomePage() {
           setUser(profile);
 
           // Verifica se faltam dados básicos
-          const isIncomplete = !profile.name || profile.name === "Doador" || !profile.phone;
+          const isIncomplete =
+            profile.isNewProfile ||
+            !profile.phone;
 
           if (isIncomplete) {
             setShowProfileModal(true);
@@ -114,7 +116,7 @@ export default function HomePage() {
             rating: ong.averageRating || 0.0,
             categories: ong.categories.map((c: any) => c.name),
           })));
-        } 
+        }
 
         if (nearbySection) {
           setNearbyOngs(nearbySection.items.map((ong: any) => ({
