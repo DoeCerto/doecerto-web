@@ -462,7 +462,7 @@ export default function HomePage() {
             </h2>
 
             <p className="text-gray-500 text-sm mb-8 leading-relaxed">
-              Para realizar doações no **DoeCerto**, precisamos que você finalize seu cadastro com telefone e foto.
+              Para realizar doações no DoeCerto, precisamos que você finalize seu cadastro com telefone e foto.
             </p>
 
             <div className="w-full space-y-3">
