@@ -50,29 +50,35 @@ export const DonorService = {
     return `${API_URL}${cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`}`;
   },
 
-  async getMyProfile(): Promise<DonorProfileData> {
-    try {
-      const { data } = await api<any>("/donors/me/profile");
+async getMyProfile(): Promise<DonorProfileData> {
+  try {
+    const { data } = await api<any>("/donors/me/profile");
+
+    if (!data) {
+      const { data: userData } = await api<any>("/users/me");
+
       return {
-        ...this._mapProfileData(data),
-        isNewProfile: false
+        name: userData?.name || "",
+        email: userData?.email || "",
+        cpf: userData?.cpf || "",
+        phone: "",
+        avatarUrl: null,
+        description: "",
+        isNewProfile: true
       };
-    } catch (error: any) {
-      if (error.status === 404 || error.message?.includes("404")) {
-        console.warn("Doador novo detectado (sem perfil no banco).");
-        return {
-          name: "",
-          email: "",
-          cpf: "",
-          phone: "",
-          avatarUrl: null,
-          description: "",
-          isNewProfile: true
-        };
-      }
-      throw error;
     }
-  },
+
+    return {
+      ...this._mapProfileData(data),
+      isNewProfile: false
+    };
+
+  } catch (error: any) {
+    console.error(error);
+
+    throw error;
+  }
+},
 
   async updateProfile(payload: FormData | UpdateProfileDTO): Promise<DonorProfileData> {
     const isFormData = payload instanceof FormData;
@@ -153,19 +159,30 @@ export const DonorService = {
     }
   },
 
-  _mapProfileData(data: any): DonorProfileData {
-    if (!data) return { name: "", email: "", cpf: "", phone: "", avatarUrl: null, description: "" };
-
-    const donor = data.donor || data;
-    const user = donor.user || data.user || {};
-
+_mapProfileData(data: any): DonorProfileData {
+  if (!data) {
     return {
-      name: user.name || donor.name || "",
-      email: user.email || donor.email || "",
-      cpf: donor.cpf || "",
-      phone: data.contactNumber || donor.contactNumber || "",
-      avatarUrl: this._formatImageUrl(data.avatarUrl || donor.profile?.avatarUrl),
-      description: data.description || "",
+      name: "",
+      email: "",
+      cpf: "",
+      phone: "",
+      avatarUrl: null,
+      description: ""
     };
   }
+
+  const donor = data.donor || data;
+  const user = donor.user || data.user || {};
+
+  return {
+    name: user.name || donor.name || "",
+    email: user.email || donor.email || "",
+    cpf: donor.cpf || "",
+    phone: data.contactNumber || donor.contactNumber || "",
+    avatarUrl: this._formatImageUrl(
+      data.avatarUrl || donor.profile?.avatarUrl
+    ),
+    description: data.description || "",
+  };
+}
 };

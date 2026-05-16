@@ -314,7 +314,7 @@ export default function DonorProfile() {
             <p className="text-2xl font-bold text-gray-900">
               R$ {totalAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
-            <p className="text-xs text-gray-500 uppercase font-bold tracking-tight">Investido</p>
+            <p className="text-xs text-gray-500 uppercase font-bold tracking-tight">Doado</p>
           </motion.div>
         </div>
       </div>
