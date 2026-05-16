@@ -4,7 +4,9 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin, Heart, Award, Instagram, Phone, Home,
-  Star, ArrowLeft, Image as ImageIcon, MessageSquare, X, Tag
+  Star, ArrowLeft, Image as ImageIcon, MessageSquare, X, Tag,
+  Globe,
+  ExternalLink
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import DonateModal from "@/components/specific/DonateModal";
@@ -140,7 +142,26 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
             <p className="mt-2 text-gray-700 leading-relaxed">{ong.description}</p>
             <div className="mt-4 pt-4 border-t border-gray-50 space-y-3">
               <ContactInfo icon={<Phone size={16} className="text-[#4a1d7a]" />} text={ong.phone} />
-              <ContactInfo icon={<Instagram size={16} className="text-pink-600" />} text={ong.instagram} />
+              {ong.instagram ? (
+                <a
+                  href={
+                    ong.instagram.startsWith("http")
+                      ? ong.instagram
+                      : `https://${ong.instagram}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 text-sm sm:text-base font-bold text-[#4a1d7a] underline break-all"
+                >
+                  <ExternalLink size={16} className="text-pink-600" />
+                  Acessar site
+                </a>
+              ) : (
+                <div className="flex items-center gap-3 text-gray-600 text-sm font-bold">
+                  <ExternalLink size={16} className="text-gray-400" />
+                  <span>Site não informado</span>
+                </div>
+              )}
               <ContactInfo icon={<Home size={16} className="text-blue-600" />} text={ong.address} />
             </div>
           </div>

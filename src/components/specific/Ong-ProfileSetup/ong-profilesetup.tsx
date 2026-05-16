@@ -19,9 +19,11 @@ import {
   Milestone,
   Info,
   Navigation,
-  Flag
+  Flag,
+  ExternalLink
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import toast, { Toaster } from "react-hot-toast";
 import { FormSection } from "@/components/ui/form-section";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { InputGroup } from "@/components/ui/input-group";
@@ -39,6 +41,7 @@ export default function OngSetupProfile() {
   const [ongName, setOngName] = useState("Minha ONG");
   const [availableCategories, setAvailableCategories] = useState<any[]>([]);
 
+  // Campos do Perfil
   const [description, setDescription] = useState("");
   const [phone, setPhone] = useState("");
   const [website, setWebsite] = useState("");
@@ -50,20 +53,22 @@ export default function OngSetupProfile() {
   const [state, setState] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [country, setCountry] = useState("Brasil");
-  const [address, setAddress] = useState("");
   const [years, setYears] = useState("");
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
 
+  // Imagens
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState("");
   const [bannerPreview, setBannerPreview] = useState("");
   const [bannerCrop, setBannerCrop] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
 
+  // Lista de Desejos
   const [newItem, setNewItem] = useState("");
   const [items, setItems] = useState<any[]>([]);
   const [ongId, setOngId] = useState<number | null>(null);
 
+  // Dados Bancários
   const [bankName, setBankName] = useState("");
   const [agencyNumber, setAgencyNumber] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
@@ -76,7 +81,6 @@ export default function OngSetupProfile() {
     async function loadInitialData() {
       try {
         setInitialLoading(true);
-
         const categories = await OngSetupService.getCategories();
         setAvailableCategories(categories || []);
 
@@ -85,7 +89,6 @@ export default function OngSetupProfile() {
         if (profile) {
           setOngId(profile.id);
           setOngName(profile.name || "Minha ONG");
-
           setDescription(profile.description || "");
           setPhone(profile.contactNumber || "");
           setWebsite(profile.website || "");
@@ -94,7 +97,7 @@ export default function OngSetupProfile() {
             const wishlistData = await WishlistService.getItems(profile.id);
             setItems(wishlistData || []);
           } catch (err) {
-            console.error("Erro ao carregar wishlist:", err);
+            console.error("Erro ao carregar wishlist");
           }
 
           if (profile.address && typeof profile.address === 'object') {
@@ -108,19 +111,10 @@ export default function OngSetupProfile() {
             setCountry(profile.address.country || "Brasil");
           }
 
-          if (profile.yearsOfOperation) {
-            setYears(profile.yearsOfOperation.toString());
-          } else if (profile.createdAt) {
-            const diff = new Date().getFullYear() - new Date(profile.createdAt).getFullYear();
-            setYears(diff.toString());
-          }
-
+          if (profile.yearsOfOperation) setYears(profile.yearsOfOperation.toString());
           if (profile.avatarUrl) setLogoPreview(profile.avatarUrl);
           if (profile.bannerUrl) setBannerPreview(profile.bannerUrl);
-
-          if (profile.categories) {
-            setSelectedCategoryIds(profile.categories.map((c: any) => c.id));
-          }
+          if (profile.categories) setSelectedCategoryIds(profile.categories.map((c: any) => c.id));
         }
 
         const bankData = await BankAccountService.getMyAccount();
@@ -133,7 +127,7 @@ export default function OngSetupProfile() {
         }
 
       } catch (error) {
-        console.error("Erro ao carregar dados iniciais:", error);
+        toast.error("Erro ao sincronizar dados com o servidor.");
       } finally {
         setInitialLoading(false);
       }
@@ -158,13 +152,19 @@ export default function OngSetupProfile() {
   };
 
   const handleAddItems = async () => {
-    if (!newItem.trim() || !ongId) return;
+    if (!newItem.trim()) {
+      toast.error("Digite o nome do item para adicionar.");
+      return;
+    }
+    if (!ongId) return;
+
     try {
       const addedItem = await WishlistService.addItem(ongId, newItem.trim(), 1);
       setItems(prev => [...prev, addedItem]);
       setNewItem("");
+      toast.success("Item adicionado à lista!");
     } catch (error) {
-      alert("Erro ao salvar item na lista de desejos.");
+      toast.error("Não foi possível salvar o item.");
     }
   };
 
@@ -173,8 +173,9 @@ export default function OngSetupProfile() {
     try {
       await WishlistService.deleteItem(ongId, itemId);
       setItems(prev => prev.filter(item => item.id !== itemId));
+      toast.success("Item removido.");
     } catch (error) {
-      alert("Erro ao remover item do servidor.");
+      toast.error("Erro ao excluir item.");
     }
   };
 
@@ -185,38 +186,55 @@ export default function OngSetupProfile() {
     try {
       const res = await fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`);
       const data = await res.json();
-
-      if (!data.erro) {
-        setStreet(data.logradouro);
-        setNeighborhood(data.bairro);
-        setCity(data.localidade);
-        setState(data.uf);
+      if (data.erro) {
+        toast.error("CEP inválido ou não encontrado.");
+        return;
       }
+      setStreet(data.logradouro);
+      setNeighborhood(data.bairro);
+      setCity(data.localidade);
+      setState(data.uf);
+      toast.success("Endereço localizado!");
     } catch (error) {
-      console.error("Erro ao buscar CEP:", error);
+      toast.error("Erro ao consultar o serviço de CEP.");
     }
   };
 
+  const validateForm = () => {
+    if (!description.trim()) { toast.error("A descrição da ONG é obrigatória."); return false; }
+    if (!years) { toast.error("Informe os anos de atuação."); return false; }
+    if (!phone.trim()) { toast.error("O número de contato é obrigatório."); return false; }
+    if (!zipCode.trim()) { toast.error("O CEP é obrigatório."); return false; }
+    if (!street.trim()) { toast.error("O nome da rua é obrigatório."); return false; }
+    if (!number.trim()) { toast.error("O número do endereço é obrigatório."); return false; }
+    if (!neighborhood.trim()) { toast.error("O bairro é obrigatório."); return false; }
+    if (!city.trim()) { toast.error("A cidade é obrigatória."); return false; }
+    if (!state.trim()) { toast.error("O estado (UF) é obrigatório."); return false; }
+    if (selectedCategoryIds.length === 0) { toast.error("Selecione pelo menos uma categoria."); return false; }
+
+    if (!bankName.trim() || !pixKey.trim()) {
+      toast.error("Complete os dados bancários para receber doações.");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleFinalize = async () => {
+    if (!validateForm()) return;
+
     setLoading(true);
     try {
-      await OngSetupService.updateProfileData({
-        description: description,
+      const payload = {
+        description,
         contactNumber: phone,
-        websiteUrls: website ? [website] : [],
+        websiteUrls: website?.trim() ? [website.trim()] : undefined,
         categoryIds: selectedCategoryIds,
         yearsOfOperation: years ? Number(years) : undefined,
-        address: {
-          street,
-          number,
-          complement,
-          neighborhood,
-          city,
-          state,
-          zipCode,
-          country,
-        },
-      });
+        address: { street, number, complement, neighborhood, city, state, zipCode, country },
+      };
+
+      await OngSetupService.updateProfileData(payload);
 
       if (logoFile || bannerFile) {
         await OngSetupService.updateProfileImages(
@@ -234,13 +252,15 @@ export default function OngSetupProfile() {
         pixKey
       });
 
-      router.push("/ong-dashboard");
+      toast.success("Perfil atualizado com sucesso!");
+      setTimeout(() => {
+        router.push("/ong-dashboard");
+      }, 1500);
     } catch (error: any) {
-      console.error("Erro ao salvar perfil:", error);
-      const errorMessage = error.message?.includes("avatar")
-        ? "Erro ao processar a imagem. Tente usar um formato .jpg ou .png menor."
-        : error.message || "Houve um erro ao salvar seu perfil.";
-      alert(errorMessage);
+      const msg = error.message?.includes("avatar")
+        ? "A imagem da logo é muito grande ou inválida."
+        : "Ocorreu um erro ao salvar os dados. Verifique sua conexão.";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -256,13 +276,15 @@ export default function OngSetupProfile() {
 
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-32">
+      <Toaster position="top-center" reverseOrder={false} />
+
       <div className="relative w-full">
         <ImageUploader
           variant="banner"
           image={bannerPreview}
           onImageChange={handleBannerChange}
           onCropChange={setBannerCrop}
-          label="Adicionar Foto de Capa"
+          label="Capa do Perfil"
         />
 
         <button
@@ -288,23 +310,23 @@ export default function OngSetupProfile() {
             {ongName}
           </h1>
           <p className="text-[#4a1d7a] text-[10px] sm:text-xs mt-1 uppercase font-black tracking-widest opacity-70">
-            Configuração de Perfil
+            Configure as informações públicas da sua ONG
           </p>
         </header>
 
         <div className="mt-8 grid grid-cols-1 gap-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <FormSection title="Sobre a ONG" className="md:col-span-2">
+            <FormSection title="Sobre a ONG *" className="md:col-span-2">
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Descreva a história da sua ONG..."
+                placeholder="Conte sobre a missão e o impacto da sua organização..."
                 className="w-full text-base leading-relaxed text-gray-700 bg-gray-50 p-4 rounded-xl outline-none focus:ring-2 focus:ring-purple-200 border-none transition-all"
                 rows={4}
               />
             </FormSection>
 
-            <FormSection title="Anos de Atuação" icon={Award} className="flex flex-col justify-center">
+            <FormSection title="Atuação (Anos) *" icon={Award} className="flex flex-col justify-center">
               <input
                 type="number"
                 value={years}
@@ -315,12 +337,12 @@ export default function OngSetupProfile() {
             </FormSection>
           </div>
 
-          <FormSection title="Canais de Contato" italicTitle>
+          <FormSection title="Canais de Contato *" italicTitle>
             <div className="space-y-3 sm:space-y-4">
-              <InputGroup icon={Phone} placeholder="WhatsApp" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              <InputGroup icon={Phone} placeholder="WhatsApp (Obrigatório)" value={phone} onChange={(e) => setPhone(e.target.value)} />
               <InputGroup
-                icon={Instagram}
-                placeholder="Link do Instagram ou Site"
+                icon={ExternalLink}
+                placeholder="Ex: https://site.org ou instagram.com/suaong"
                 iconColor="text-pink-400"
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
@@ -328,7 +350,7 @@ export default function OngSetupProfile() {
             </div>
           </FormSection>
 
-          <FormSection title="Endereço Completo" italicTitle>
+          <FormSection title="Localização *" italicTitle>
             <div className="space-y-3 sm:space-y-4">
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <InputGroup
@@ -355,38 +377,18 @@ export default function OngSetupProfile() {
 
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <div className="w-full sm:w-1/3">
-                  <InputGroup
-                    icon={Milestone}
-                    placeholder="Nº"
-                    value={number}
-                    onChange={(e) => setNumber(e.target.value)}
-                  />
+                  <InputGroup icon={Milestone} placeholder="Nº" value={number} onChange={(e) => setNumber(e.target.value)} />
                 </div>
                 <div className="w-full sm:w-2/3">
-                  <InputGroup
-                    icon={Info}
-                    placeholder="Complemento (Apto, Bloco...)"
-                    value={complement}
-                    onChange={(e) => setComplement(e.target.value)}
-                  />
+                  <InputGroup icon={Info} placeholder="Complemento" value={complement} onChange={(e) => setComplement(e.target.value)} />
                 </div>
               </div>
 
-              <InputGroup
-                icon={Navigation}
-                placeholder="Bairro"
-                value={neighborhood}
-                onChange={(e) => setNeighborhood(e.target.value)}
-              />
+              <InputGroup icon={Navigation} placeholder="Bairro" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} />
 
               <div className="grid grid-cols-3 gap-3 sm:gap-4">
                 <div className="col-span-2">
-                  <InputGroup
-                    icon={Building2}
-                    placeholder="Cidade"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                  />
+                  <InputGroup icon={Building2} placeholder="Cidade" value={city} onChange={(e) => setCity(e.target.value)} />
                 </div>
                 <div className="col-span-1">
                   <InputGroup
@@ -394,17 +396,14 @@ export default function OngSetupProfile() {
                     placeholder="UF"
                     value={state}
                     maxLength={2}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/[^a-zA-Z]/g, ""); 
-                      setState(value.toUpperCase());
-                    }}
+                    onChange={(e) => setState(e.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase())}
                   />
                 </div>
               </div>
             </div>
           </FormSection>
 
-          <FormSection title="Categorias de Atuação" icon={Tag}>
+          <FormSection title="Categorias de Causa * (Selecione pelo menos uma)" icon={Tag}>
             <div className="flex flex-wrap gap-2">
               {availableCategories.map((cat) => (
                 <button
@@ -422,31 +421,26 @@ export default function OngSetupProfile() {
             </div>
           </FormSection>
 
-          <FormSection title="Dados para Recebimento" icon={Wallet} className="bg-gradient-to-br from-white to-purple-50">
+          <FormSection title="Dados de Recebimento *" icon={Wallet} className="bg-gradient-to-br from-white to-purple-50">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
               <div className="md:col-span-2">
-                <label className="text-[10px] font-black uppercase text-purple-400 mb-1 block ml-1">Instituição Bancária</label>
+                <label className="text-[10px] font-black uppercase text-purple-400 mb-1 block ml-1">Instituição Bancária *</label>
                 <input
                   value={bankName}
                   onChange={(e) => setBankName(e.target.value)}
-                  placeholder="Ex: Nubank, Itaú, Banco do Brasil..."
+                  placeholder="Ex: Nubank, Itaú..."
                   className="w-full bg-white p-4 rounded-xl border border-gray-100 outline-none text-sm focus:border-purple-300 transition-colors shadow-sm"
                 />
               </div>
 
-              <CustomSelect
-                label="Tipo de Conta"
-                value={accountType}
-                options={accountTypeOptions}
-                onChange={setAccountType}
-              />
+              <CustomSelect label="Tipo de Conta *" value={accountType} options={accountTypeOptions} onChange={setAccountType} />
 
               <div className="flex flex-col">
-                <label className="text-[10px] font-black uppercase text-purple-400 mb-1 block ml-1">Chave PIX</label>
+                <label className="text-[10px] font-black uppercase text-purple-400 mb-1 block ml-1">Chave PIX *</label>
                 <input
                   value={pixKey}
                   onChange={(e) => setPixKey(e.target.value)}
-                  placeholder="CPF, E-mail, Telefone ou Chave"
+                  placeholder="E-mail, CPF ou Aleatória"
                   className="w-full bg-white p-4 rounded-xl border border-gray-100 outline-none text-sm focus:border-purple-300 transition-colors shadow-sm"
                 />
               </div>
@@ -466,20 +460,20 @@ export default function OngSetupProfile() {
                 <input
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
-                  placeholder="123456-7"
+                  placeholder="12345-6"
                   className="w-full bg-white p-4 rounded-xl border border-gray-100 outline-none text-sm focus:border-purple-300 transition-colors shadow-sm"
                 />
               </div>
             </div>
           </FormSection>
 
-          <FormSection title="Itens que aceitamos">
+          <FormSection title="Lista de Desejos (O que a ONG precisa?)">
             <div className="grid grid-cols-[1fr_48px] gap-2 mb-4">
               <input
                 value={newItem}
                 onChange={(e) => setNewItem(e.target.value)}
-                placeholder="Ex: Ração..."
-                className="w-full bg-gray-50 p-3 rounded-xl outline-none text-sm min-w-0 border-none focus:ring-1 focus:ring-purple-100"
+                placeholder="Ex: Alimentos, Cobertores..."
+                className="w-full bg-gray-50 p-3 rounded-xl outline-none text-sm border-none focus:ring-1 focus:ring-purple-100"
               />
               <button
                 type="button"
@@ -492,16 +486,9 @@ export default function OngSetupProfile() {
 
             <div className="flex flex-wrap gap-2">
               {items.map((item) => (
-                <span
-                  key={item.id}
-                  className="flex items-center gap-2 bg-purple-50 text-[#4a1d7a] px-3 py-1.5 rounded-full text-[11px] font-black border border-purple-100"
-                >
+                <span key={item.id} className="flex items-center gap-2 bg-purple-50 text-[#4a1d7a] px-3 py-1.5 rounded-full text-[11px] font-black border border-purple-100">
                   {item.description}
-                  <Trash2
-                    size={12}
-                    className="cursor-pointer text-red-400 hover:text-red-600 transition-colors"
-                    onClick={() => handleDeleteItem(item.id)}
-                  />
+                  <Trash2 size={12} className="cursor-pointer text-red-400 hover:text-red-600 transition-colors" onClick={() => handleDeleteItem(item.id)} />
                 </span>
               ))}
             </div>
@@ -517,7 +504,7 @@ export default function OngSetupProfile() {
             disabled={loading}
             className="w-full py-4 rounded-2xl text-lg font-black text-white bg-gradient-to-r from-pink-500 to-purple-600 shadow-xl flex items-center justify-center gap-3 active:scale-[0.98] transition-all disabled:opacity-70"
           >
-            {loading ? <Loader2 className="animate-spin" /> : "Finalizar meu Perfil"}
+            {loading ? <Loader2 className="animate-spin" /> : "Salvar Perfil e Continuar"}
           </button>
         </div>
       </motion.div>

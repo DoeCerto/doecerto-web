@@ -106,7 +106,7 @@ export default function OngRegisterPage() {
 
        <div className="absolute top-6 left-6 z-10">
         <Link
-          href="/login"
+          href="/register-choice"
           className="flex items-center gap-2 text-white font-bold text-base hover:opacity-80 transition-opacity"
         >
           <ArrowLeft size={24} strokeWidth={3} />

@@ -1,13 +1,20 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import StepHeader from "@/components/ui/StepHeader";
 import StepIntro from "@/components/ui/StepIntro";
+import NextButton from "@/components/ui/NextButton";
 import { Star } from "lucide-react";
 
 export default function DonationGuide() {
+  const router = useRouter();
+
   return (
     <main className="p-[25px]">
-      <StepHeader 
-      currentStep={1}
-      totalSteps={5}
+      <StepHeader
+        currentStep={1}
+        totalSteps={5}
+        onSkip={() => router.push("/help-center")}
       />
 
       <div className="w-full bg-white border border-[#6B39A7] rounded-[20px] mt-[30px] pt-[45px] px-[30px] pb-[33px] mb-[25px] shadow-[0px_8px_16px_rgba(0,0,0,0.12)] flex flex-col items-center">
@@ -20,8 +27,7 @@ export default function DonationGuide() {
 
         <hr className="border border-t border-[#3D3D3D] w-full h-[1px] mb-[px]"></hr>
 
-        <div className="w-full flex flex-row justify-between mb-[20px]
-        mx-[10px]">
+        <div className="w-full flex flex-row justify-between mb-[20px] mx-[10px]">
 
           <div className="flex flex-col items-center">
             <h1 className="text-[32px] font-bold">
@@ -45,21 +51,17 @@ export default function DonationGuide() {
           </div>
         </div>
 
-        <div className="mx-[5px] py-[18px] bg-[#6B39A7] text-[#FFFFFF]
-        text-[16px] font-bold w-full rounded-[10px] flex justify-center items-center">
+        <div className="mx-[5px] py-[18px] bg-[#6B39A7] text-[#FFFFFF] text-[16px] font-bold w-full rounded-[10px] flex justify-center items-center">
           Doar para SOS Gatinhos
         </div>
       </div>
 
-      <StepIntro 
-          label="ENCONTRE E AJUDE"
-          title={
-            <>
-            Encontre uma ONG e <br />toque em Doar
-            </>
-            }
-          description="Cada ONG tem seu botão de doação na página de perfil"
+      <StepIntro
+        label="ENCONTRE E AJUDE"
+        title="Encontre uma ONG e toque em Doar"
+        description="Cada ONG tem seu botão de doação na página de perfil"
       />
+      <NextButton onClick={() => console.log("Próxima etapa")} />
     </main>
   );
 }

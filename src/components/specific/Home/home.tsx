@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import { useRef, useState, useEffect } from "react";
-import { FiSearch, FiMenu, FiX, FiUser, FiLogOut, FiGlobe, } from "react-icons/fi";
+import { FiSearch, FiMenu, FiX, FiUser, FiLogOut, FiGlobe, FiHelpCircle, } from "react-icons/fi";
 import { FaMapMarkerAlt, FaStar } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import DonateModal from "@/components/specific/DonateModal";
 import { api } from "@/services/api";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { DonorService } from "@/services/donor.service";
+import { motion } from "framer-motion";
 
 type Ong = {
   id: number;
@@ -58,34 +59,39 @@ export default function HomePage() {
   const [selectedOng, setSelectedOng] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [userAvatar, setUserAvatar] = useState<string>("https://placehold.co/80x80/ddd/aaa.png");
+  const [userAvatar, setUserAvatar] = useState<string>("/default-avatar.png");
+  const [user, setUser] = useState<{ name?: string } | null>(null);
 
   const [recommendedOngs, setRecommendedOngs] = useState<Ong[]>([]);
   const [nearbyOngs, setNearbyOngs] = useState<Ong[]>([]);
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [page, setPage] = useState(0);
 
+  const [showProfileModal, setShowProfileModal] = useState(false);
+
 
   useEffect(() => {
     async function loadUserProfile() {
       try {
         const userRole = localStorage.getItem("userRole")?.toUpperCase();
-        let profile;
+        if (userRole !== "ONG") {
+          const profile = await DonorService.getMyProfile();
 
-        if (userRole === "ONG") {
-          profile = await OngsProfileService.getMyProfile();
-        } else {
-          profile = await DonorService.getMyProfile();
-        }
+          setUser(profile);
 
-        if (profile?.avatarUrl) {
-          const formattedUrl = OngsProfileService._formatImageUrl(profile.avatarUrl);
-          setUserAvatar(formattedUrl);
+          // Verifica se faltam dados básicos
+          const isIncomplete = !profile.name || profile.name === "Doador" || !profile.phone;
+
+          if (isIncomplete) {
+            setShowProfileModal(true);
+          }
+
+          if (profile?.avatarUrl) {
+            setUserAvatar(OngsProfileService._formatImageUrl(profile.avatarUrl));
+          }
         }
       } catch (err) {
-        console.error("Erro ao carregar avatar:", err);
-        const saved = localStorage.getItem('userAvatar');
-        if (saved) setUserAvatar(saved);
+        console.error("Erro ao verificar perfil:", err);
       }
     }
     loadUserProfile();
@@ -174,7 +180,7 @@ export default function HomePage() {
     } finally {
       document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       localStorage.clear();
-      setUserAvatar("https://placehold.co/80x80/ddd/aaa.png");
+      setUserAvatar("/default-avatar.png");
       router.push("/login");
     }
   }
@@ -194,31 +200,79 @@ export default function HomePage() {
         <Image src="/logo_roxa.svg" alt="DoeCerto" width={120} height={120} priority />
 
         <div className="flex items-center gap-3 relative" ref={menuRef}>
-          {/* Removido o botão de hambúrguer daqui */}
 
-          <div
+          <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden cursor-pointer ring-2 ring-white shadow-sm hover:ring-purple-500 transition-all"
+            className="flex items-center gap-1.5 min-[340px]:gap-2 bg-white px-2 py-1.5 min-[340px]:px-3 min-[340px]:py-2 rounded-full shadow-md border border-gray-100 hover:shadow-lg transition-all active:scale-95 max-w-[130px] min-[340px]:max-w-[190px]"
           >
-            <img
-              src={userAvatar}
-              alt="avatar"
-              className="w-full h-full object-cover"
-              onError={(e) => (e.currentTarget.src = "https://placehold.co/80x80/ddd/aaa.png")}
-            />
-          </div>
+            {/* seta */}
+            <motion.div
+              className="shrink-0"
+              animate={{ rotate: isMenuOpen ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-[#6B21A8] min-[340px]:w-[18px] min-[340px]:h-[18px]"
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </motion.div>
 
-          {/* O menu dropdown continua funcionando ao clicar na imagem */}
+            {/* nome do usuário */}
+            <span className="hidden min-[340px]:block flex-1 min-w-0 truncate text-[#6B21A8] font-semibold text-sm">
+              {user?.name || "Usuário"}
+            </span>
+
+            {/* avatar */}
+            <div className="w-8 h-8 min-[340px]:w-10 min-[340px]:h-10 shrink-0 rounded-full overflow-hidden ring-2 ring-purple-100">
+              {userAvatar && userAvatar !== "/default-avatar.png" ? (
+                <img
+                  src={userAvatar}
+                  alt="avatar"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-[#EBD2FF] to-[#D6B4FF] flex items-center justify-center">
+                  <FiUser size={16} className="text-[#6B21A8] min-[340px]:size-[18px]" />
+                </div>
+              )}
+            </div>
+          </button>
+
+          {/* O menu dropdown */}
           {isMenuOpen && (
             <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 animate-fadeIn">
+
               <button
                 onClick={goToProfile}
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition text-left"
               >
-                <FiUser size={18} className="text-purple-600" />
+                <FiUser size={18} className="text-blue-600" />
                 <span className="font-medium text-gray-700">Meu Perfil</span>
               </button>
+
+              <button
+                onClick={() => {
+                  router.push("/help-center");
+                  setIsMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition text-left"
+              >
+                <FiHelpCircle size={18} className="text-purple-600" />
+                <span className="font-medium text-gray-700">Central de Ajuda</span>
+              </button>
+
               <div className="border-t border-gray-100 my-1"></div>
+
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition text-left"
@@ -388,6 +442,46 @@ export default function HomePage() {
           onDonateMoney={goToDonateMoney}
           onDonateItems={goToDonateItems}
         />
+      )}
+
+      {showProfileModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 animate-fadeIn">
+          {/* Overlay Escuro (Fundo) */}
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+          {/* Card do Modal */}
+          <div className="relative bg-white w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl p-8 flex flex-col items-center text-center animate-scaleIn">
+
+            {/* Ícone de Perfil/User */}
+            <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mb-6">
+              <FiUser size={40} className="text-[#6B21A8]" />
+            </div>
+
+            <h2 className="text-2xl font-extrabold text-gray-900 mb-2">
+              Complete seu Perfil
+            </h2>
+
+            <p className="text-gray-500 text-sm mb-8 leading-relaxed">
+              Para realizar doações no DoeCerto, precisamos que você finalize seu cadastro com telefone e foto.
+            </p>
+
+            <div className="w-full space-y-3">
+              <button
+                onClick={() => router.push("/dashboard")}
+                className="w-full bg-[#6B21A8] text-white font-bold py-4 rounded-2xl shadow-lg shadow-purple-200 active:scale-95 transition-all"
+              >
+                Ir para meu Perfil
+              </button>
+
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="w-full py-3 text-gray-400 font-semibold text-sm hover:text-gray-600 transition-colors"
+              >
+                Agora não, obrigado
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

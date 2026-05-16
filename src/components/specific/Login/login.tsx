@@ -47,8 +47,7 @@ export default function LoginPage() {
         
         toast.success("Login realizado com sucesso!");
 
-        // 2. Lógica de Redirecionamento
-        // Se a API não mandou o role, tentamos extrair do token como backup
+        // 2. Lógica de Redirecionamento Atualizada
         let finalRole = apiUserRole;
 
         if (!finalRole) {
@@ -60,8 +59,14 @@ export default function LoginPage() {
           }
         }
 
-        // Define a rota baseada no cargo (Admin vs Outros)
-        const redirectPath = finalRole?.toLowerCase() === 'admin' ? '/adm-dashboard' : '/home';
+        let redirectPath = "/home";
+        const roleLower = finalRole?.toLowerCase();
+
+        if (roleLower === 'admin') {
+          redirectPath = '/adm-dashboard';
+        } else if (roleLower === 'ong') {
+          redirectPath = '/ong-dashboard';
+        }
 
         setTimeout(() => {
           router.push(redirectPath);
