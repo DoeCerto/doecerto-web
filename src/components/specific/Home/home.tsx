@@ -114,7 +114,7 @@ export default function HomePage() {
             rating: ong.averageRating || 0.0,
             categories: ong.categories.map((c: any) => c.name),
           })));
-        }
+        } 
 
         if (nearbySection) {
           setNearbyOngs(nearbySection.items.map((ong: any) => ({
