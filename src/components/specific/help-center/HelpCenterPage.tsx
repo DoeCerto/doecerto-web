@@ -49,9 +49,8 @@ export default function HelpCenterPage() {
           DOAÇÕES
         </h1>
 
-
-        <div className="flex gap-4 flex-row">
-          <Link href="/donation-guide">
+        <div className="flex gap-4 items-stretch">
+          <Link href="/donation-guide" className="flex-1">
             <ActionCard
               icon="💰"
               title="Como doar dinheiro"
@@ -59,15 +58,13 @@ export default function HelpCenterPage() {
             />
           </Link>
 
-          <ActionCard
-            icon="📦"
-            title={
-              <>
-                Como doar <br /> dinheiro
-              </>
-            }
-            description="Ração, roupas e mais"
-          />
+          <Link href="/donation-guide" className="flex-1">
+            <ActionCard
+              icon="📦"
+              title="Como doar itens"
+              description="Ração, roupas e mais"
+            />
+          </Link>
         </div>
 
         <div className="flex flex-col mt-[30px]">
