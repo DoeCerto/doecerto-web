@@ -11,9 +11,26 @@ import {
   FaCheckCircle,
 } from "react-icons/fa";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import { useState, Suspense, useEffect } from "react";
+import { useState, Suspense, useEffect, useMemo } from "react";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { api } from "@/services/api";
+import { QRCodeSVG } from "qrcode.react";
+
+function calculateCRC16(str: string): string {
+  let crc = 0xffff;
+  for (let i = 0; i < str.length; i++) {
+    let charCode = str.charCodeAt(i);
+    crc ^= charCode << 8;
+    for (let j = 0; j < 8; j++) {
+      if ((crc & 0x8000) !== 0) {
+        crc = (crc << 1) ^ 0x1021;
+      } else {
+        crc <<= 1;
+      }
+    }
+  }
+  return (crc & 0xffff).toString(16).toUpperCase().padStart(4, "0");
+}
 
 function PixPageContent() {
   const searchParams = useSearchParams();
@@ -38,7 +55,6 @@ function PixPageContent() {
         setInitialLoading(true);
         const idNum = Number(ongId);
 
-        // 1. Busca perfil da ONG
         const profile = await OngsProfileService.getPublicProfile(idNum).catch(() => null);
         if (profile) setOngData(profile);
 
@@ -62,8 +78,69 @@ function PixPageContent() {
     fetchData();
   }, [ongId, router]);
 
+
+  const pixCopiaECola = useMemo(() => {
+    const key = bankData?.pixKey;
+    if (!key) return "";
+
+    const name = ongData?.name
+      ?.normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9 ]/g, "")
+      .substring(0, 25) || "ONG DoeCerto";
+
+    const rawCity = ongData?.address?.city || bankData?.city || "ITAPISSUMA";
+
+    const city = rawCity
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9 ]/g, "")
+      .substring(0, 15)
+      .toUpperCase();
+
+    const parsedAmount = parseFloat(valor);
+    const amountStr = isNaN(parsedAmount) || parsedAmount <= 0
+      ? ""
+      : parsedAmount.toFixed(2);
+
+    try {
+      const payloadFormat = "000201";
+      const merchantAccountInfo = `26${(22 + key.length).toString().padStart(2, "0")}0014br.gov.bcb.pix01${key.length.toString().padStart(2, "0")}${key}`;
+      const merchantCategoryCode = "52040000";
+      const transactionCurrency = "5303986";
+
+      const transactionAmount = amountStr
+        ? `54${amountStr.length.toString().padStart(2, "0")}${amountStr}`
+        : "";
+
+      const countryCode = "5802BR";
+      const merchantNameField = `59${name.length.toString().padStart(2, "0")}${name}`;
+      const merchantCityField = `60${city.length.toString().padStart(2, "0")}${city}`;
+      const additionalDataField = "62180514DoacaoDoeCerto";
+
+      const partialPayload =
+        payloadFormat +
+        merchantAccountInfo +
+        merchantCategoryCode +
+        transactionCurrency +
+        transactionAmount +
+        countryCode +
+        merchantNameField +
+        merchantCityField +
+        additionalDataField +
+        "6304";
+
+      const crc16 = calculateCRC16(partialPayload);
+      return partialPayload + crc16;
+    } catch (error) {
+      console.error("Erro ao gerar string do Pix:", error);
+      return "";
+    }
+
+  }, [bankData?.pixKey, ongData?.name, ongData?.address?.city, bankData?.city, valor]);
+
   const copyKey = () => {
-    const textToCopy = bankData?.pixKey || "";
+    const textToCopy = pixCopiaECola || bankData?.pixKey || "";
     if (!textToCopy) return;
     navigator.clipboard.writeText(textToCopy).then(() => {
       setCopied(true);
@@ -85,7 +162,6 @@ function PixPageContent() {
       formData.append("monetaryAmount", valor);
       formData.append("monetaryCurrency", "BRL");
       formData.append("proofFile", file);
-
 
       await api("/donations", {
         method: "POST",
@@ -111,7 +187,6 @@ function PixPageContent() {
   }
 
   const pixKeyVisual = bankData?.pixKey || "Chave não configurada";
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(pixKeyVisual)}`;
 
   return (
     <div className="min-h-screen bg-[#F8F9FD] text-[#3b1a66] pb-12 font-sans relative">
@@ -128,6 +203,8 @@ function PixPageContent() {
 
       <main className="max-w-6xl mx-auto px-4 lg:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
+
+          {/* COLUNA DA ESQUERDA: Dados da ONG e o novo campo de valor */}
           <div className="flex flex-col gap-6">
             <div className="bg-white rounded-[1.5rem] lg:rounded-[2rem] p-5 lg:p-8 shadow-xl shadow-purple-100/50 border border-purple-50">
               <div className="flex items-center gap-3 lg:gap-4 mb-6 lg:mb-8">
@@ -153,35 +230,17 @@ function PixPageContent() {
                   { label: "Tipo", value: bankData?.accountType }
                 ].map((item, idx) => (
                   <div key={idx} className="min-w-0">
-                    <p className="text-gray-400 uppercase text-[9px] lg:text-[10px] font-black tracking-widest mb-1 truncate">{item.label}</p>
+                    <p className="text-gray-400 uppercase text-[9px] lg:text-[10px] font-black tracking-widest mb-1 truncate">
+                      {item.label}
+                    </p>
                     <p className="font-bold text-xs lg:text-sm truncate text-[#3b1a66]">{item.value || "---"}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="bg-white rounded-[1.5rem] lg:rounded-[2rem] p-6 lg:p-8 shadow-xl shadow-purple-100/50 border border-purple-50 flex flex-col items-center justify-center">
-              <p className="font-black text-[#3b1a66] mb-4 uppercase text-[10px] lg:text-xs tracking-widest">Escaneie o QR Code</p>
-              <div className="bg-purple-50 p-4 lg:p-6 rounded-2xl lg:rounded-3xl border-2 border-purple-100 mb-6">
-                <Image src={qrCodeUrl} alt="QR Code PIX" width={150} height={150} className="rounded-xl lg:w-[180px]" unoptimized />
-              </div>
-
-              <div className="w-full">
-                <div className={`flex items-center justify-between bg-gray-50 p-3 lg:p-4 rounded-xl lg:rounded-2xl border-2 transition-all duration-300 ${copied ? 'border-green-500 bg-green-50' : 'border-transparent'}`}>
-                  <div className="flex items-center gap-2 lg:gap-3 min-w-0">
-                    <FaKey className={`flex-shrink-0 ${copied ? "text-green-600" : "text-purple-600"}`} />
-                    <span className="text-[11px] lg:text-sm font-bold truncate tracking-tight">{pixKeyVisual}</span>
-                  </div>
-                  <button onClick={copyKey} className="flex-shrink-0 ml-2 bg-white shadow-md p-2 lg:p-3 rounded-lg lg:rounded-xl hover:scale-110 active:scale-95 transition-all text-purple-600">
-                    {copied ? <FaCheckCircle className="text-green-600" /> : <FaCopy size={14} />}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:h-full">
-            <section className="bg-white rounded-[1.5rem] lg:rounded-[2rem] p-6 lg:p-8 shadow-xl shadow-purple-100/50 border border-purple-50 flex flex-col h-full lg:min-h-[620px]">
+            {/* SEÇÃO DE VALOR DA DOAÇÃO */}
+            <div className="bg-white rounded-[1.5rem] lg:rounded-[2rem] p-6 lg:p-8 shadow-xl shadow-purple-100/50 border border-purple-50 flex flex-col">
               <div className="flex items-center gap-3 mb-6 lg:mb-8">
                 <div className="bg-green-100 p-2 rounded-lg"><FaDollarSign className="text-green-600" /></div>
                 <h3 className="font-black text-base lg:text-lg text-[#3b1a66] uppercase tracking-tighter">Valor da Doação</h3>
@@ -196,12 +255,52 @@ function PixPageContent() {
                   <span className="absolute left-4 lg:left-6 top-1/2 -translate-y-1/2 font-black text-purple-300 text-base lg:text-lg">R$</span>
                 </div>
               </div>
+            </div>
+          </div>
 
-              <div className="hidden lg:block lg:flex-grow"></div>
+          {/* COLUNA DA DIREITA: QR Code, Chave Pix e Bloco do Comprovante acoplado */}
+          <div className="flex flex-col gap-6">
+            <div className="bg-white rounded-[1.5rem] lg:rounded-[2rem] p-6 lg:p-8 shadow-xl shadow-purple-100/50 border border-purple-50 flex flex-col items-center justify-center">
+              <p className="font-black text-[#3b1a66] mb-4 uppercase text-[10px] lg:text-xs tracking-widest">Escaneie o QR Code</p>
 
-              <div className="space-y-4 lg:space-y-6 pt-6 lg:pt-8 border-t border-gray-100 mt-4 lg:mt-0">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 lg:mb-4">📎 Comprovante do Pix</label>
-                <div className={`relative border-2 border-dashed rounded-xl lg:rounded-[1.5rem] p-6 lg:p-10 transition-all text-center ${file ? 'border-green-400 bg-green-50' : 'border-purple-100 bg-purple-50/30 hover:bg-purple-50'}`}>
+              <div className="bg-white p-4 lg:p-6 rounded-2xl lg:rounded-3xl border-2 border-purple-100 mb-6">
+                {pixCopiaECola ? (
+                  <QRCodeSVG
+                    value={pixCopiaECola}
+                    size={180}
+                    level="M"
+                    includeMargin={false}
+                  />
+                ) : (
+                  <div className="w-[180px] h-[180px] flex items-center justify-center text-xs text-red-400 font-bold">
+                    Aguardando chave Pix...
+                  </div>
+                )}
+              </div>
+
+              <div className="w-full mb-6">
+                <div className={`flex items-center justify-between bg-gray-50 p-3 lg:p-4 rounded-xl lg:rounded-2xl border-2 transition-all duration-300 ${copied ? 'border-green-500 bg-green-50' : 'border-transparent'}`}>
+                  <div className="flex items-center gap-2 lg:gap-3 min-w-0">
+                    <FaKey className={`flex-shrink-0 ${copied ? "text-green-600" : "text-purple-600"}`} />
+                    <span className="text-[11px] lg:text-sm font-bold truncate tracking-tight">{pixKeyVisual}</span>
+                  </div>
+                  <button
+                    onClick={copyKey}
+                    title="Copiar Pix Copia e Cola"
+                    className="flex-shrink-0 ml-2 bg-white shadow-md p-2 lg:p-3 rounded-lg lg:rounded-xl hover:scale-110 active:scale-95 transition-all text-purple-600"
+                  >
+                    {copied ? <FaCheckCircle className="text-green-600" /> : <FaCopy size={14} />}
+                  </button>
+                </div>
+                <p className="text-[10px] text-center text-gray-400 mt-2 font-medium">
+                  {copied ? "Código Copia e Cola copiado!" : "O botão copia o código Pix Copia e Cola completo"}
+                </p>
+              </div>
+
+              {/* BLOCO DE COMPROVANTE: Acoplado diretamente junto ao QR Code */}
+              <div className="w-full space-y-4 pt-6 border-t border-gray-100">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">📎 Comprovante do Pix</label>
+                <div className={`relative border-2 border-dashed rounded-xl lg:rounded-[1.5rem] p-6 lg:p-8 transition-all text-center ${file ? 'border-green-400 bg-green-50' : 'border-purple-100 bg-purple-50/30 hover:bg-purple-50'}`}>
                   {!file ? (
                     <>
                       <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer" />
@@ -218,13 +317,15 @@ function PixPageContent() {
                 <button
                   onClick={handleConfirmarDoacao}
                   disabled={!file || loading}
-                  className={`w-full py-4 lg:py-6 rounded-xl lg:rounded-2xl font-black text-xs lg:text-sm uppercase tracking-[0.2em] transition-all ${!file || loading ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-[#00C897] text-white hover:bg-[#00B085] shadow-lg shadow-green-100 active:scale-95"}`}
+                  className={`w-full py-4 lg:py-5 rounded-xl lg:rounded-2xl font-black text-xs lg:text-sm uppercase tracking-[0.2em] transition-all ${!file || loading ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-[#00C897] text-white hover:bg-[#00B085] shadow-lg shadow-green-100 active:scale-95"}`}
                 >
                   {loading ? "Enviando..." : "Confirmar Doação"}
                 </button>
               </div>
-            </section>
+
+            </div>
           </div>
+
         </div>
       </main>
 
