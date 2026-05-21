@@ -9,6 +9,8 @@ import {
   FaIdCard,
   FaDollarSign,
   FaCheckCircle,
+  FaFilePdf,
+  FaFileImage,
 } from "react-icons/fa";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useState, Suspense, useEffect, useMemo } from "react";
@@ -30,6 +32,43 @@ function calculateCRC16(str: string): string {
     }
   }
   return (crc & 0xffff).toString(16).toUpperCase().padStart(4, "0");
+}
+
+// Identificação simplificada e direta sem travar o gerador de QR Code
+function getPixKeyType(key: string): "email" | "cpf" | "cnpj" | "phone" | "random" {
+  const cleanKey = key.trim();
+  
+  // 1. E-mail (Se tem @, não tem erro)
+  if (cleanKey.includes("@")) return "email";
+  
+  // 2. Chave Aleatória (padrão de UUID com hífens)
+  const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanKey);
+  if (isUuid) return "random";
+
+  const digits = cleanKey.replace(/\D/g, "");
+
+  // 3. CNPJ (14 dígitos)
+  if (digits.length === 14) return "cnpj";
+
+  // 4. CPF vs Celular (Ambos têm 11 dígitos)
+  if (digits.length === 11) {
+    // Se conter pontuação explícita de CPF (ex: 000.000.000-00), garante que é CPF
+    if (cleanKey.includes(".") || cleanKey.includes("-")) {
+      return "cpf";
+    }
+    // Se o terceiro dígito não for o 9 do celular, assumimos que é um CPF digitado limpo
+    if (cleanKey.length === 11 && cleanKey.charAt(2) !== "9") {
+      return "cpf";
+    }
+    return "phone";
+  }
+
+  // 5. Se sobrou e tem cara de telefone/celular (pode ter 10 dígitos com fixo, ou código de país já embutido)
+  if (digits.length >= 10 && digits.length <= 13) {
+    return "phone";
+  }
+
+  return "random";
 }
 
 function PixPageContent() {
@@ -78,23 +117,55 @@ function PixPageContent() {
     fetchData();
   }, [ongId, router]);
 
-
   const pixCopiaECola = useMemo(() => {
-    const key = bankData?.pixKey;
-    if (!key) return "";
+    let baseKey = bankData?.pixKey?.trim();
+    if (!baseKey) return "";
 
-    const name = ongData?.name
-      ?.normalize("NFD")
+    let treatedKey = baseKey;
+    const digitsOnly = baseKey.replace(/\D/g, "");
+    const keyType = getPixKeyType(baseKey);
+
+    switch (keyType) {
+      case "cpf":
+      case "cnpj":
+        // Mantém estritamente apenas números para documentos
+        treatedKey = digitsOnly;
+        break;
+
+      case "phone":
+        let rawDigits = digitsOnly;
+        // Injeta o 55 dinamicamente se o usuário salvou apenas o DDD + Número (10 ou 11 dígitos)
+        if (rawDigits.length === 10 || rawDigits.length === 11) {
+          rawDigits = `55${rawDigits}`;
+        }
+        // Exigência estrita do BACEN para chaves de telefone no payload estático
+        treatedKey = `+${rawDigits}`;
+        break;
+
+      case "email":
+      case "random":
+      default:
+        // E-mail e UUID não sofrem alteração de caracteres
+        treatedKey = baseKey;
+        break;
+    }
+
+    // Tratamento ultra seguro do Nome (impede quebras por dados nulos ou assíncronos)
+    const nameRaw = ongData?.name || "ONG DOE CERTO";
+    const name = nameRaw
+      .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-zA-Z0-9 ]/g, "")
-      .substring(0, 25) || "ONG DoeCerto";
+      .trim()
+      .substring(0, 25);
 
+    // Tratamento ultra seguro da Cidade (Garante fallback se a API atrasar ou não entregar)
     const rawCity = ongData?.address?.city || bankData?.city || "ITAPISSUMA";
-
     const city = rawCity
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-zA-Z0-9 ]/g, "")
+      .trim()
       .substring(0, 15)
       .toUpperCase();
 
@@ -104,45 +175,54 @@ function PixPageContent() {
       : parsedAmount.toFixed(2);
 
     try {
-      const payloadFormat = "000201";
-      const merchantAccountInfo = `26${(22 + key.length).toString().padStart(2, "0")}0014br.gov.bcb.pix01${key.length.toString().padStart(2, "0")}${key}`;
-      const merchantCategoryCode = "52040000";
-      const transactionCurrency = "5303986";
+      const pfi = "000201";
+      const gui = "0014br.gov.bcb.pix";
+      
+      const keyTag = `01${treatedKey.length.toString().padStart(2, "0")}${treatedKey}`;
+      const merchantAccountContent = gui + keyTag;
+      const merchantAccountInfo = `26${merchantAccountContent.length.toString().padStart(2, "0")}${merchantAccountContent}`;
 
-      const transactionAmount = amountStr
+      const mcc = "52040000";
+      const currency = "5303986";
+
+      const amountField = amountStr
         ? `54${amountStr.length.toString().padStart(2, "0")}${amountStr}`
         : "";
 
-      const countryCode = "5802BR";
+      const country = "5802BR";
       const merchantNameField = `59${name.length.toString().padStart(2, "0")}${name}`;
       const merchantCityField = `60${city.length.toString().padStart(2, "0")}${city}`;
-      const additionalDataField = "62180514DoacaoDoeCerto";
+
+      const txIdContent = "0503***"; 
+      const additionalDataField = `62${txIdContent.length.toString().padStart(2, "0")}${txIdContent}`;
+
+      const crcIndicator = "6304";
 
       const partialPayload =
-        payloadFormat +
+        pfi +
         merchantAccountInfo +
-        merchantCategoryCode +
-        transactionCurrency +
-        transactionAmount +
-        countryCode +
+        mcc +
+        currency +
+        amountField +
+        country +
         merchantNameField +
         merchantCityField +
         additionalDataField +
-        "6304";
+        crcIndicator;
 
       const crc16 = calculateCRC16(partialPayload);
       return partialPayload + crc16;
     } catch (error) {
       console.error("Erro ao gerar string do Pix:", error);
-      return "";
+      // Fallback estruturado completo caso ocorra um imprevisto bizarro no try
+      return `00020126${(22 + treatedKey.length).toString().padStart(2, "0")}0014br.gov.bcb.pix01${treatedKey.length.toString().padStart(2, "0")}${treatedKey}5204000053039865802BR5913ONG DOE CERTO6010ITAPISSUMA62070503***63040000`;
     }
 
   }, [bankData?.pixKey, ongData?.name, ongData?.address?.city, bankData?.city, valor]);
 
   const copyKey = () => {
-    const textToCopy = pixCopiaECola || bankData?.pixKey || "";
-    if (!textToCopy) return;
-    navigator.clipboard.writeText(textToCopy).then(() => {
+    if (!pixCopiaECola) return;
+    navigator.clipboard.writeText(pixCopiaECola).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -204,7 +284,7 @@ function PixPageContent() {
       <main className="max-w-6xl mx-auto px-4 lg:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
 
-          {/* COLUNA DA ESQUERDA: Dados da ONG e o novo campo de valor */}
+          {/* COLUNA DA ESQUERDA */}
           <div className="flex flex-col gap-6">
             <div className="bg-white rounded-[1.5rem] lg:rounded-[2rem] p-5 lg:p-8 shadow-xl shadow-purple-100/50 border border-purple-50">
               <div className="flex items-center gap-3 lg:gap-4 mb-6 lg:mb-8">
@@ -239,7 +319,7 @@ function PixPageContent() {
               </div>
             </div>
 
-            {/* SEÇÃO DE VALOR DA DOAÇÃO */}
+            {/* SEÇÃO DE VALOR */}
             <div className="bg-white rounded-[1.5rem] lg:rounded-[2rem] p-6 lg:p-8 shadow-xl shadow-purple-100/50 border border-purple-50 flex flex-col">
               <div className="flex items-center gap-3 mb-6 lg:mb-8">
                 <div className="bg-green-100 p-2 rounded-lg"><FaDollarSign className="text-green-600" /></div>
@@ -258,7 +338,7 @@ function PixPageContent() {
             </div>
           </div>
 
-          {/* COLUNA DA DIREITA: QR Code, Chave Pix e Bloco do Comprovante acoplado */}
+          {/* COLUNA DA DIREITA */}
           <div className="flex flex-col gap-6">
             <div className="bg-white rounded-[1.5rem] lg:rounded-[2rem] p-6 lg:p-8 shadow-xl shadow-purple-100/50 border border-purple-50 flex flex-col items-center justify-center">
               <p className="font-black text-[#3b1a66] mb-4 uppercase text-[10px] lg:text-xs tracking-widest">Escaneie o QR Code</p>
@@ -269,7 +349,6 @@ function PixPageContent() {
                     value={pixCopiaECola}
                     size={180}
                     level="M"
-                    includeMargin={false}
                   />
                 ) : (
                   <div className="w-[180px] h-[180px] flex items-center justify-center text-xs text-red-400 font-bold">
@@ -297,19 +376,31 @@ function PixPageContent() {
                 </p>
               </div>
 
-              {/* BLOCO DE COMPROVANTE: Acoplado diretamente junto ao QR Code */}
+              {/* BLOCO DE COMPROVANTE */}
               <div className="w-full space-y-4 pt-6 border-t border-gray-100">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">📎 Comprovante do Pix</label>
                 <div className={`relative border-2 border-dashed rounded-xl lg:rounded-[1.5rem] p-6 lg:p-8 transition-all text-center ${file ? 'border-green-400 bg-green-50' : 'border-purple-100 bg-purple-50/30 hover:bg-purple-50'}`}>
                   {!file ? (
                     <>
-                      <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer" />
-                      <p className="text-[11px] lg:text-sm font-bold text-purple-400">Clique para anexar</p>
+                      <input 
+                        type="file" 
+                        accept="image/*,application/pdf" 
+                        onChange={(e) => setFile(e.target.files?.[0] || null)} 
+                        className="absolute inset-0 opacity-0 cursor-pointer" 
+                      />
+                      <p className="text-[11px] lg:text-sm font-bold text-purple-400">Clique para anexar imagem ou PDF</p>
                     </>
                   ) : (
                     <div className="flex items-center justify-between text-green-700 font-bold text-xs lg:text-sm">
-                      <span className="truncate flex items-center gap-2"><FaCheckCircle className="flex-shrink-0" /> Arquivo anexado</span>
-                      <button onClick={() => setFile(null)} className="text-red-500 p-1 ml-2">✕</button>
+                      <span className="truncate flex items-center gap-2 max-w-[85%]">
+                        {file.type === "application/pdf" ? (
+                          <FaFilePdf className="flex-shrink-0 text-red-500 text-base" />
+                        ) : (
+                          <FaFileImage className="flex-shrink-0 text-green-600 text-base" />
+                        )}
+                        <span className="truncate" title={file.name}>{file.name}</span>
+                      </span>
+                      <button onClick={() => setFile(null)} className="text-red-500 hover:text-red-700 p-1 ml-2 transition-colors">✕</button>
                     </div>
                   )}
                 </div>
