@@ -203,7 +203,14 @@ export default function OngSetupProfile() {
   const validateForm = () => {
     if (!description.trim()) { toast.error("A descrição da ONG é obrigatória."); return false; }
     if (!years) { toast.error("Informe os anos de atuação."); return false; }
-    if (!phone.trim()) { toast.error("O número de contato é obrigatório."); return false; }
+    
+    // TRAVA DE VALIDAÇÃO DO WHATSAPP (Impede apenas o "55" ou campo incompleto)
+    const rawPhone = phone.replace(/\D/g, "");
+    if (!rawPhone || rawPhone === "55" || rawPhone.length < 12) { 
+      toast.error("O número de contato válido com o DDD é obrigatório."); 
+      return false; 
+    }
+
     if (!zipCode.trim()) { toast.error("O CEP é obrigatório."); return false; }
     if (!street.trim()) { toast.error("O nome da rua é obrigatório."); return false; }
     if (!number.trim()) { toast.error("O número do endereço é obrigatório."); return false; }
@@ -225,9 +232,11 @@ export default function OngSetupProfile() {
 
     setLoading(true);
     try {
+      const cleanPhone = phone.replace(/\D/g, "");
+
       const payload = {
         description,
-        contactNumber: phone,
+        contactNumber: cleanPhone,
         websiteUrls: website?.trim() ? [website.trim()] : undefined,
         categoryIds: selectedCategoryIds,
         yearsOfOperation: years ? Number(years) : undefined,
@@ -252,7 +261,7 @@ export default function OngSetupProfile() {
         pixKey
       });
 
-      toast.success("Perfil atualizado com sucesso!");
+      toast.success("Perfil updated com sucesso!");
       setTimeout(() => {
         router.push("/ong-dashboard");
       }, 1500);
@@ -266,13 +275,14 @@ export default function OngSetupProfile() {
     }
   };
 
-  if (initialLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <Loader2 className="animate-spin text-[#4a1d7a]" size={40} />
-      </div>
-    );
-  }
+  // Helper para exibir no campo apenas os dígitos que vêm depois do 55
+  const getDisplayPhone = (fullPhone: string) => {
+    const clean = fullPhone.replace(/\D/g, "");
+    if (clean.startsWith("55")) {
+      return clean.substring(2);
+    }
+    return clean;
+  };
 
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-32">
@@ -339,7 +349,26 @@ export default function OngSetupProfile() {
 
           <FormSection title="Canais de Contato *" italicTitle>
             <div className="space-y-3 sm:space-y-4">
-              <InputGroup icon={Phone} placeholder="WhatsApp (Obrigatório)" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              
+              {/* CONTAINER COM O PREFIXO +55 FIXO VISUALMENTE */}
+              <div className="flex rounded-xl bg-gray-50 overflow-hidden border border-transparent focus-within:border-purple-200 focus-within:ring-2 focus-within:ring-purple-100 transition-all">
+                <div className="flex items-center justify-center bg-gray-100 text-gray-500 px-4 text-sm font-bold select-none border-r border-gray-200/60 gap-2">
+                  <Phone size={16} className="text-gray-400" />
+                  <span>+55</span>
+                </div>
+                <input
+                  type="text"
+                  placeholder="(DDD) 99999-9999"
+                  value={getDisplayPhone(phone)}
+                  className="w-full bg-transparent p-4 outline-none text-sm text-gray-700"
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, "");
+                    // Mantém o '55' guardado de forma transparente no state
+                    setPhone(`55${digits}`);
+                  }}
+                />
+              </div>
+
               <InputGroup
                 icon={ExternalLink}
                 placeholder="Ex: https://site.org ou instagram.com/suaong"

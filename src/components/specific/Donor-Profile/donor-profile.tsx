@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import toast, { Toaster } from "react-hot-toast"; // Importação adicionada
+import toast, { Toaster } from "react-hot-toast";
 import {
   User,
   Mail,
@@ -53,7 +53,7 @@ export default function DonorProfile() {
     name: "Carregando...",
     email: "",
     cpf: "",
-    phone: "",
+    phone: "", 
     description: "",
   });
 
@@ -163,6 +163,13 @@ export default function DonorProfile() {
 
   // SALVAR ALTERAÇÕES
   const handleUpdateInfo = async () => {
+    const rawPhone = donorData.phone.replace(/\D/g, "");
+
+    if (!rawPhone || rawPhone === "55" || rawPhone.length < 12) {
+      toast.error("Por favor, informe um número de telefone válido com o DDD.");
+      return;
+    }
+
     try {
       setIsLoading(true);
 
@@ -181,7 +188,7 @@ export default function DonorProfile() {
 
       // 2. Atualizar Perfil
       const profilePayload: UpdateProfileDTO = {
-        contactNumber: donorData.phone,
+        contactNumber: rawPhone,
         description: donorData.description || "",
       };
       await DonorService.updateProfile(profilePayload);
@@ -254,9 +261,17 @@ export default function DonorProfile() {
     .filter(d => d.donationType === "monetary" && d.donationStatus === "completed")
     .reduce((sum, d) => sum + (Number(d.monetaryAmount) || 0), 0);
 
+  // Helper para exibir no input apenas o número sem o prefixo 55
+  const getDisplayPhone = (fullPhone: string) => {
+    const clean = fullPhone.replace(/\D/g, "");
+    if (clean.startsWith("55")) {
+      return clean.substring(2);
+    }
+    return clean;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 pb-20">
-      {/* Componente que renderiza os toasts na tela */}
       <Toaster position="top-center" reverseOrder={false} />
 
       {/* HEADER */}
@@ -412,7 +427,6 @@ export default function DonorProfile() {
 
                     {isEditingProfile ? (
                       <div className="grid grid-cols-2 gap-3">
-                        {/* CEP */}
                         <input
                           placeholder="CEP"
                           className="col-span-2 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
@@ -420,7 +434,6 @@ export default function DonorProfile() {
                           onChange={handleCepChange}
                         />
 
-                        {/* Rua */}
                         <input
                           placeholder="Rua"
                           className="col-span-2 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
@@ -430,7 +443,6 @@ export default function DonorProfile() {
                           }
                         />
 
-                        {/* Número */}
                         <input
                           placeholder="Número"
                           className="px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
@@ -440,7 +452,6 @@ export default function DonorProfile() {
                           }
                         />
 
-                        {/* Complemento */}
                         <input
                           placeholder="Complemento"
                           className="px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
@@ -450,7 +461,6 @@ export default function DonorProfile() {
                           }
                         />
 
-                        {/* Bairro */}
                         <input
                           placeholder="Bairro"
                           className="col-span-2 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
@@ -460,7 +470,6 @@ export default function DonorProfile() {
                           }
                         />
 
-                        {/* Cidade */}
                         <input
                           placeholder="Cidade"
                           className="px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
@@ -470,7 +479,6 @@ export default function DonorProfile() {
                           }
                         />
 
-                        {/* Estado */}
                         <input
                           placeholder="Estado"
                           className="px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
@@ -492,13 +500,35 @@ export default function DonorProfile() {
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="p-2 bg-gray-50 rounded-lg"><Phone size={20} className="text-gray-400" /></div>
+                  <div className="p-2 bg-gray-50 rounded-lg">
+                    <Phone size={20} className="text-gray-400" />
+                  </div>
                   <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Telefone / WhatsApp</p>
+                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">
+                      Telefone / WhatsApp
+                    </p>
                     {isEditingProfile ? (
-                      <input className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100" value={donorData.phone} onChange={(e) => setDonorData({ ...donorData, phone: e.target.value })} />
+                      /* CONTAINER COM O +55 FIXADO DO LADO */
+                      <div className="flex mt-1 rounded-xl border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-purple-500 transition-all bg-white">
+                        <span className="flex items-center justify-center bg-gray-100 text-gray-500 px-3 border-r border-gray-200 text-sm font-semibold select-none">
+                          +55
+                        </span>
+                        <input
+                          type="text"
+                          className="w-full px-3 py-2 outline-none border-none text-sm bg-transparent"
+                          value={getDisplayPhone(donorData.phone)}
+                          placeholder="(DDD) 99999-9999"
+                          onChange={(e) => {
+                            const digits = e.target.value.replace(/\D/g, "");
+                            // Salva internamente concatenando o prefixo país '55'
+                            setDonorData({ ...donorData, phone: `55${digits}` });
+                          }}
+                        />
+                      </div>
                     ) : (
-                      <p className="font-medium text-gray-900">{donorData.phone || "Não informado"}</p>
+                      <p className="font-medium text-gray-900">
+                        {donorData.phone ? `+${donorData.phone}` : "Não informado"}
+                      </p>
                     )}
                   </div>
                 </div>

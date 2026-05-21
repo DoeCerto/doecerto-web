@@ -31,13 +31,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
   const [confirmModal, setConfirmModal] = useState<{ id: number; type: 'accept' | 'reject' } | null>(null);
   const [selectedDonation, setSelectedDonation] = useState<any | null>(null);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL
-
-  const donorPhone = selectedDonation?.donor?.profile?.contactNumber ?? "";
-
-  const message = encodeURIComponent(
-    `Olá! Sou da ONG ${ong?.name}. Sobre a doação de itens que você enviou.`
-  );
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const handleLogout = () => {
 
@@ -47,10 +41,27 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
     router.push("/login");
   };
 
+  const donorPhone = selectedDonation?.donor?.profile?.contactNumber ?? "";
   const cleanPhone = donorPhone.replace(/\D/g, "");
 
+  const generateDynamicMessage = () => {
+    if (!selectedDonation) return "";
+
+    const ongName = ong?.name || "Nossa ONG";
+    const donorName = selectedDonation.donor?.user?.name || "Doador";
+    const donationId = selectedDonation.id;
+
+    if (selectedDonation.type === "monetary") {
+      return `Olá, ${donorName}! Sou da ONG ${ongName}. Confirmamos o recebimento do comprovante da sua doação financeira (Protocolo #${donationId}) no valor de R$ ${selectedDonation.amount}. Muito obrigado pelo apoio!`;
+    } else {
+      const description = selectedDonation.materialDescription || "itens";
+      const quantity = selectedDonation.materialQuantity ? ` (Quantidade: ${selectedDonation.materialQuantity})` : "";
+      return `Olá, ${donorName}! Sou da ONG ${ongName}. Gostaria de alinhar a entrega da sua doação de material (Protocolo #${donationId}): ${description}${quantity}.`;
+    }
+  };
+
   const whatsappLink = cleanPhone
-    ? `https://wa.me/${cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`}?text=${message}`
+    ? `https://wa.me/${cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`}?text=${encodeURIComponent(generateDynamicMessage())}`
     : null;
 
   async function loadData() {
@@ -398,7 +409,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                 )}
 
                 <div className="space-y-4 mb-8">
-                  {selectedDonation?.type !== "monetary" && whatsappLink && (
+                  {whatsappLink && (
                     <a
                       href={whatsappLink}
                       target="_blank"
