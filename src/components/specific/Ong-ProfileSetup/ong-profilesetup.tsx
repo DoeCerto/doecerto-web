@@ -74,8 +74,15 @@ export default function OngSetupProfile() {
   const [accountNumber, setAccountNumber] = useState("");
   const [pixKey, setPixKey] = useState("");
   const [accountType, setAccountType] = useState("Corrente");
+  const [pixKeyType, setPixKeyType] = useState("CPF");
 
   const accountTypeOptions = ["Corrente", "Poupança", "Aplicação"];
+
+  useEffect(() => {
+    if (!pixKeyType) {
+      setPixKeyType("CPF");
+    }
+  }, []);
 
   useEffect(() => {
     async function loadInitialData() {
@@ -203,12 +210,12 @@ export default function OngSetupProfile() {
   const validateForm = () => {
     if (!description.trim()) { toast.error("A descrição da ONG é obrigatória."); return false; }
     if (!years) { toast.error("Informe os anos de atuação."); return false; }
-    
+
     // TRAVA DE VALIDAÇÃO DO WHATSAPP (Impede apenas o "55" ou campo incompleto)
     const rawPhone = phone.replace(/\D/g, "");
-    if (!rawPhone || rawPhone === "55" || rawPhone.length < 12) { 
-      toast.error("O número de contato válido com o DDD é obrigatório."); 
-      return false; 
+    if (!rawPhone || rawPhone === "55" || rawPhone.length < 12) {
+      toast.error("O número de contato válido com o DDD é obrigatório.");
+      return false;
     }
 
     if (!zipCode.trim()) { toast.error("O CEP é obrigatório."); return false; }
@@ -349,7 +356,7 @@ export default function OngSetupProfile() {
 
           <FormSection title="Canais de Contato *" italicTitle>
             <div className="space-y-3 sm:space-y-4">
-              
+
               {/* CONTAINER COM O PREFIXO +55 FIXO VISUALMENTE */}
               <div className="flex rounded-xl bg-gray-50 overflow-hidden border border-transparent focus-within:border-purple-200 focus-within:ring-2 focus-within:ring-purple-100 transition-all">
                 <div className="flex items-center justify-center bg-gray-100 text-gray-500 px-4 text-sm font-bold select-none border-r border-gray-200/60 gap-2">
@@ -450,10 +457,19 @@ export default function OngSetupProfile() {
             </div>
           </FormSection>
 
-          <FormSection title="Dados de Recebimento *" icon={Wallet} className="bg-gradient-to-br from-white to-purple-50">
+          <FormSection
+            title="Dados de Recebimento *"
+            icon={Wallet}
+            className="bg-gradient-to-br from-white to-purple-50"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+
+              {/* BANCO */}
               <div className="md:col-span-2">
-                <label className="text-[10px] font-black uppercase text-purple-400 mb-1 block ml-1">Instituição Bancária *</label>
+                <label className="text-[10px] font-black uppercase text-purple-400 mb-1 block ml-1">
+                  Instituição Bancária *
+                </label>
+
                 <input
                   value={bankName}
                   onChange={(e) => setBankName(e.target.value)}
@@ -462,20 +478,111 @@ export default function OngSetupProfile() {
                 />
               </div>
 
-              <CustomSelect label="Tipo de Conta *" value={accountType} options={accountTypeOptions} onChange={setAccountType} />
+              {/* TIPO DE CONTA */}
+              <CustomSelect
+                label="Tipo de Conta *"
+                value={accountType}
+                options={accountTypeOptions}
+                onChange={setAccountType}
+              />
 
-              <div className="flex flex-col">
-                <label className="text-[10px] font-black uppercase text-purple-400 mb-1 block ml-1">Chave PIX *</label>
-                <input
-                  value={pixKey}
-                  onChange={(e) => setPixKey(e.target.value)}
-                  placeholder="E-mail, CPF ou Aleatória"
-                  className="w-full bg-white p-4 rounded-xl border border-gray-100 outline-none text-sm focus:border-purple-300 transition-colors shadow-sm"
+              {/* TIPO DE CHAVE PIX */}
+              <div className="relative">
+                <CustomSelect
+                  label="Tipo de Chave PIX *"
+                  value={pixKeyType || "CPF"}
+                  options={[
+                    "CPF",
+                    "CNPJ",
+                    "Telefone",
+                    "E-mail",
+                    "Chave Aleatória",
+                  ]}
+                  onChange={(value) => {
+                    setPixKeyType(value);
+
+                    // telefone já começa com 55
+                    setPixKey(value === "Telefone" ? "55" : "");
+                  }}
                 />
               </div>
 
+              {/* CHAVE PIX */}
+              {pixKeyType && (
+                <div className="flex flex-col md:col-span-2">
+                  <label className="text-[10px] font-black uppercase text-purple-400 mb-1 block ml-1">
+                    Chave PIX *
+                  </label>
+
+                  {/* TELEFONE */}
+                  {pixKeyType === "Telefone" ? (
+                    <div className="flex items-center bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden focus-within:border-purple-300 transition-colors">
+
+                      {/* PREFIXO FIXO */}
+                      <div className="px-4 py-4 bg-purple-50 text-purple-600 font-black text-sm border-r border-gray-100">
+                        +55
+                      </div>
+
+                      {/* INPUT */}
+                      <input
+                        value={pixKey.replace(/^55/, "")}
+                        onChange={(e) => {
+                          let value = e.target.value.replace(/\D/g, "");
+
+                          // DDD + número
+                          value = value.slice(0, 11);
+
+                          setPixKey(`55${value}`);
+                        }}
+                        placeholder="81999999999"
+                        className="w-full bg-white p-4 outline-none text-sm"
+                      />
+                    </div>
+                  ) : (
+                    <input
+                      value={pixKey}
+                      onChange={(e) => {
+                        let value = e.target.value;
+
+                        // CPF
+                        if (pixKeyType === "CPF") {
+                          value = value.replace(/\D/g, "").slice(0, 11);
+                        }
+
+                        // CNPJ
+                        if (pixKeyType === "CNPJ") {
+                          value = value.replace(/\D/g, "").slice(0, 14);
+                        }
+
+                        setPixKey(value);
+                      }}
+                      placeholder={
+                        pixKeyType === "CPF"
+                          ? "Somente números do CPF"
+                          : pixKeyType === "CNPJ"
+                            ? "Somente números do CNPJ"
+                            : pixKeyType === "E-mail"
+                              ? "email@exemplo.com"
+                              : "Cole sua chave aleatória"
+                      }
+                      className="w-full bg-white p-4 rounded-xl border border-gray-100 outline-none text-sm focus:border-purple-300 transition-colors shadow-sm"
+                    />
+                  )}
+
+                  {pixKeyType === "Telefone" && (
+                    <span className="text-[10px] text-gray-400 mt-1 ml-1">
+                      O código do Brasil (+55) é fixo e não pode ser removido.
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* AGÊNCIA */}
               <div className="flex flex-col">
-                <label className="text-[10px] font-black uppercase text-purple-400 mb-1 block ml-1">Agência</label>
+                <label className="text-[10px] font-black uppercase text-purple-400 mb-1 block ml-1">
+                  Agência
+                </label>
+
                 <input
                   value={agencyNumber}
                   onChange={(e) => setAgencyNumber(e.target.value)}
@@ -484,8 +591,12 @@ export default function OngSetupProfile() {
                 />
               </div>
 
+              {/* CONTA */}
               <div className="flex flex-col">
-                <label className="text-[10px] font-black uppercase text-purple-400 mb-1 block ml-1">Conta com Dígito</label>
+                <label className="text-[10px] font-black uppercase text-purple-400 mb-1 block ml-1">
+                  Conta com Dígito
+                </label>
+
                 <input
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
@@ -493,6 +604,7 @@ export default function OngSetupProfile() {
                   className="w-full bg-white p-4 rounded-xl border border-gray-100 outline-none text-sm focus:border-purple-300 transition-colors shadow-sm"
                 />
               </div>
+
             </div>
           </FormSection>
 
