@@ -34,38 +34,42 @@ function calculateCRC16(str: string): string {
   return (crc & 0xffff).toString(16).toUpperCase().padStart(4, "0");
 }
 
-// Identificação simplificada e direta sem travar o gerador de QR Code
-function getPixKeyType(key: string): "email" | "cpf" | "cnpj" | "phone" | "random" {
+function getPixKeyType(
+  key: string
+): "email" | "cpf" | "cnpj" | "phone" | "random" {
   const cleanKey = key.trim();
-  
-  // 1. E-mail (Se tem @, não tem erro)
-  if (cleanKey.includes("@")) return "email";
-  
-  // 2. Chave Aleatória (padrão de UUID com hífens)
-  const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanKey);
-  if (isUuid) return "random";
+
+  // Email
+  if (cleanKey.includes("@")) {
+    return "email";
+  }
+
+  // UUID aleatório
+  const isUuid =
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+      cleanKey
+    );
+
+  if (isUuid) {
+    return "random";
+  }
 
   const digits = cleanKey.replace(/\D/g, "");
 
-  // 3. CNPJ (14 dígitos)
-  if (digits.length === 14) return "cnpj";
+  if (digits.length === 14) {
+    return "cnpj";
+  }
 
-  // 4. CPF vs Celular (Ambos têm 11 dígitos)
-  if (digits.length === 11) {
-    // Se conter pontuação explícita de CPF (ex: 000.000.000-00), garante que é CPF
-    if (cleanKey.includes(".") || cleanKey.includes("-")) {
-      return "cpf";
-    }
-    // Se o terceiro dígito não for o 9 do celular, assumimos que é um CPF digitado limpo
-    if (cleanKey.length === 11 && cleanKey.charAt(2) !== "9") {
-      return "cpf";
-    }
+  if (
+    digits.startsWith("55") &&
+    (digits.length === 12 || digits.length === 13)
+  ) {
     return "phone";
   }
 
-  // 5. Se sobrou e tem cara de telefone/celular (pode ter 10 dígitos com fixo, ou código de país já embutido)
-  if (digits.length >= 10 && digits.length <= 13) {
-    return "phone";
+  // CPF → exatamente 11 dígitos
+  if (digits.length === 11) {
+    return "cpf";
   }
 
   return "random";
@@ -128,29 +132,27 @@ function PixPageContent() {
     switch (keyType) {
       case "cpf":
       case "cnpj":
-        // Mantém estritamente apenas números para documentos
         treatedKey = digitsOnly;
         break;
 
       case "phone":
         let rawDigits = digitsOnly;
-        // Injeta o 55 dinamicamente se o usuário salvou apenas o DDD + Número (10 ou 11 dígitos)
-        if (rawDigits.length === 10 || rawDigits.length === 11) {
+
+        if (!rawDigits.startsWith("55")) {
           rawDigits = `55${rawDigits}`;
         }
-        // Exigência estrita do BACEN para chaves de telefone no payload estático
+
         treatedKey = `+${rawDigits}`;
         break;
 
       case "email":
       case "random":
       default:
-        // E-mail e UUID não sofrem alteração de caracteres
         treatedKey = baseKey;
         break;
     }
 
-    // Tratamento ultra seguro do Nome (impede quebras por dados nulos ou assíncronos)
+    // Tratamento do Nome
     const nameRaw = ongData?.name || "ONG DOE CERTO";
     const name = nameRaw
       .normalize("NFD")
@@ -159,7 +161,7 @@ function PixPageContent() {
       .trim()
       .substring(0, 25);
 
-    // Tratamento ultra seguro da Cidade (Garante fallback se a API atrasar ou não entregar)
+    // Tratamento da Cidade
     const rawCity = ongData?.address?.city || bankData?.city || "ITAPISSUMA";
     const city = rawCity
       .normalize("NFD")
@@ -177,7 +179,7 @@ function PixPageContent() {
     try {
       const pfi = "000201";
       const gui = "0014br.gov.bcb.pix";
-      
+
       const keyTag = `01${treatedKey.length.toString().padStart(2, "0")}${treatedKey}`;
       const merchantAccountContent = gui + keyTag;
       const merchantAccountInfo = `26${merchantAccountContent.length.toString().padStart(2, "0")}${merchantAccountContent}`;
@@ -193,7 +195,7 @@ function PixPageContent() {
       const merchantNameField = `59${name.length.toString().padStart(2, "0")}${name}`;
       const merchantCityField = `60${city.length.toString().padStart(2, "0")}${city}`;
 
-      const txIdContent = "0503***"; 
+      const txIdContent = "0503***";
       const additionalDataField = `62${txIdContent.length.toString().padStart(2, "0")}${txIdContent}`;
 
       const crcIndicator = "6304";
@@ -214,7 +216,6 @@ function PixPageContent() {
       return partialPayload + crc16;
     } catch (error) {
       console.error("Erro ao gerar string do Pix:", error);
-      // Fallback estruturado completo caso ocorra um imprevisto bizarro no try
       return `00020126${(22 + treatedKey.length).toString().padStart(2, "0")}0014br.gov.bcb.pix01${treatedKey.length.toString().padStart(2, "0")}${treatedKey}5204000053039865802BR5913ONG DOE CERTO6010ITAPISSUMA62070503***63040000`;
     }
 
@@ -382,11 +383,11 @@ function PixPageContent() {
                 <div className={`relative border-2 border-dashed rounded-xl lg:rounded-[1.5rem] p-6 lg:p-8 transition-all text-center ${file ? 'border-green-400 bg-green-50' : 'border-purple-100 bg-purple-50/30 hover:bg-purple-50'}`}>
                   {!file ? (
                     <>
-                      <input 
-                        type="file" 
-                        accept="image/*,application/pdf" 
-                        onChange={(e) => setFile(e.target.files?.[0] || null)} 
-                        className="absolute inset-0 opacity-0 cursor-pointer" 
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        onChange={(e) => setFile(e.target.files?.[0] || null)}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
                       />
                       <p className="text-[11px] lg:text-sm font-bold text-purple-400">Clique para anexar imagem ou PDF</p>
                     </>
