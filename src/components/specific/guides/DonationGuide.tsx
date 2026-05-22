@@ -400,7 +400,7 @@ function SuccessCard({ step }: any) {
         rounded-[20px]
         mt-[30px]
         pt-[45px]
-        px-[30px]
+        px-[25px]
         pb-[33px]
         mb-[25px]
         shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
@@ -422,37 +422,77 @@ function SuccessCard({ step }: any) {
         </div>
 
         <h1 className="font-semibold text-[32px] mt-[3px] text-center">
-          {step.organization}
+          {step.titleCard}
         </h1>
 
-        <p className="text-[16px] text-center mb-[25px]">
-          {step.organizationDescription}
+        <p className="text-[16px] text-center text-[#6B39A7] mb-[25px]">
+          {step.titleDescription}
         </p>
-      </div>
 
-      <div className="flex flex-col gap-4">
-        <div className="bg-[#F8F4FC] p-[16px] rounded-[14px]">
-          <div className="flex items-center gap-2 mb-2">
-            <Star className="w-[18px] h-[18px] fill-black" />
-            <span className="font-bold">4.9</span>
+        <div className="gap-2 w-full flex flex-col">
+
+          <div className="rounded-[10px] py-[10px] px-[20px] border border-[#6B39A7] text-[16px] font-extrabold bg-[#EBD2FF]">
+            {step.labelCard1}
+            <div className="flex flex-row justify-between items-center">
+              <div className="bg-white py-[5px] px-[10px] w-[35%] rounded-[10px] flex justify-center items-center border border-[#6B39A7]">
+                <p className="font-semibold text-[16px]">{step.itensCard1}</p>
+              </div>
+
+              <div className="gap-2 flex flex-row justify-center items-center">
+                <div className="bg-white rounded-[10px] max-h-[20px] px-[7px] py-[10px] border border-[#6B39A7] flex items-center justify-center">
+                  <div className="w-[12px] h-[3px] bg-[#6B39A7] rounded-full"></div>
+                </div>
+                <p className="text-[16px] font-extrabold">2</p>
+                <div className="bg-white rounded-[10px] max-h-[20px] px-[7px] py-[10px] border border-[#6B39A7] flex items-center justify-center">
+                  <div className="relative w-[10px] h-[10px]">
+                    <div className="absolute top-1/2 left-0.10 -translate-y-1/2 w-[10px] h-[2px] bg-[#6B39A7] rounded-full"></div>
+
+                    <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[2px] h-[10px] bg-[#6B39A7] rounded-full"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
 
-          <p className="text-[14px]">
-            "Projeto incrível! Meu dinheiro realmente ajudou."
-          </p>
-        </div>
+          <div className="rounded-[10px] py-[10px] px-[20px] border border-[#6B39A7] text-[16px] font-extrabold bg-[#EBD2FF]">
+            {step.labelCard2}
+            <div className="flex flex-row justify-between items-center">
+              <div className="bg-white py-[5px] px-[10px] w-[35%] rounded-[10px] flex justify-center items-center border border-[#6B39A7]">
+                <p className="font-semibold text-[16px] text-[#838383]">{step.itensCard2}</p>
+              </div>
 
-        <div className="bg-[#F8F4FC] p-[16px] rounded-[14px]">
-          <div className="flex items-center gap-2 mb-2">
-            <Star className="w-[18px] h-[18px] fill-black" />
-            <span className="font-bold">5.0</span>
+              <div className="gap-2 flex flex-row justify-center items-center">
+                <div className="bg-white rounded-[10px] max-h-[20px] px-[7px] py-[10px] border border-[#6B39A7] flex items-center justify-center">
+                  <div className="w-[12px] h-[3px] bg-[#6B39A7] rounded-full"></div>
+                </div>
+                <p className="text-[16px] font-extrabold">0</p>
+                <div className="bg-white rounded-[10px] max-h-[20px] px-[7px] py-[10px] border border-[#6B39A7] flex items-center justify-center">
+                  <div className="relative w-[10px] h-[10px]">
+                    <div className="absolute top-1/2 left-0.10 -translate-y-1/2 w-[10px] h-[2px] bg-[#6B39A7] rounded-full"></div>
+
+                    <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[2px] h-[10px] bg-[#6B39A7] rounded-full"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
 
-          <p className="text-[14px]">
-            "Muito transparente e confiável."
-          </p>
+          <div className="mt-[10px] rounded-[10px] w-full border border-[#6B39A7] py-[10px] flex justify-center items-center">
+            <div className="flex flex-row justify-center items-center gap-4">
+              <div className="relative w-[20px] h-[20px] flex justify-center items-center">
+                  <div className="absolute top-1/2 left-0 -translate-y-1/2 w-full h-[3px] bg-[#6B39A7] rounded-full"></div>
+
+                  <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[3px] h-full bg-[#6B39A7] rounded-full"></div>
+              </div>
+              <p className="font-semibold text-[20px] text-[#6B39A7]">{step.buttonAdd}</p>
+              </div>
+          </div>
         </div>
       </div>
+
+
     </div>
   );
 }
@@ -498,33 +538,11 @@ function FinishCard({ step }: any) {
         </h1>
 
         <p className="text-[16px] text-center mb-[25px]">
-          {step.organizationDescription}
+          {step.titleDescription}
         </p>
       </div>
 
-      <div className="flex flex-col gap-4">
-        <div className="bg-[#F8F4FC] p-[16px] rounded-[14px]">
-          <div className="flex items-center gap-2 mb-2">
-            <Star className="w-[18px] h-[18px] fill-black" />
-            <span className="font-bold">4.9</span>
-          </div>
 
-          <p className="text-[14px]">
-            "Projeto incrível! Meu dinheiro realmente ajudou."
-          </p>
-        </div>
-
-        <div className="bg-[#F8F4FC] p-[16px] rounded-[14px]">
-          <div className="flex items-center gap-2 mb-2">
-            <Star className="w-[18px] h-[18px] fill-black" />
-            <span className="font-bold">5.0</span>
-          </div>
-
-          <p className="text-[14px]">
-            "Muito transparente e confiável."
-          </p>
-        </div>
-      </div>
     </div>
   );
 }
@@ -602,21 +620,24 @@ export default function DonationGuide() {
 
     {
       id: 4,
-      organization: "Casa Esperança",
-      organizationDescription:
-        "Ajuda para famílias em vulnerabilidade",
+      titleCard: "O que você vai doar?",
+      titleDescription:
+        "Adicione os itens que deseja enviar para SOS Gatinhos",
 
-      label: "AVALIAÇÕES",
+      labelCard1: "Item 1",
+      itensCard1: "Ração e shampoo",
 
-      title: (
-        <>
-          Veja comentários e <br />
-          avaliações reais
-        </>
-      ),
+      labelCard2: "Item 2",
+      itensCard2: "Ex: remédios, coberto...",
+
+      label: "ITENS QUE FAZEM DIFERENÇA",
+
+      title: "Doe itens para quem mais precisa",
 
       description:
-        "Descubra como outras pessoas avaliam cada ONG",
+        "Adicione ração, remédios ou qualquer item da lista da ONG",
+
+      buttonAdd: "Adicionar Item",
     },
 
     {
