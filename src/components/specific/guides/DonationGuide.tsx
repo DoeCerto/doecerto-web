@@ -2,14 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Barcode } from "lucide-react";
 
 import StepHeader from "@/components/ui/StepHeader";
 import StepIntro from "@/components/ui/StepIntro";
 import NextButton from "@/components/ui/NextButton";
 import BackButton from "@/components/ui/BackButton";
 
-import { Star } from "lucide-react";
+import {
+  Star,
+  Cat,
+  Heart,
+  Package,
+  Check
+} from "lucide-react";
 
 /* =========================
    CARD PADRÃO
@@ -46,7 +51,7 @@ function DefaultCard({ step }: any) {
           justify-center
         "
       >
-        {step.id}
+        {step.icon}
       </div>
 
       <h1 className="font-semibold text-[32px] mt-[3px] text-center">
@@ -178,7 +183,7 @@ function DonationTypeCard({ step }: any) {
           justify-center
         "
       >
-        {step.id}
+        {step.icon}
       </div>
 
       <h1 className="font-semibold text-[32px] mt-[3px] text-center">
@@ -303,7 +308,7 @@ function ReviewCard({ step }: any) {
             justify-center
           "
         >
-          {step.id}
+          {step.icon}
         </div>
 
         <h1 className="font-semibold text-[32px] mt-[3px] text-center">
@@ -418,7 +423,7 @@ function SuccessCard({ step }: any) {
             justify-center
           "
         >
-          {step.id}
+          {step.icon}
         </div>
 
         <h1 className="font-semibold text-[32px] mt-[3px] text-center">
@@ -530,7 +535,7 @@ function FinishCard({ step }: any) {
             justify-center
           "
         >
-          {step.id}
+          {step.icon}
         </div>
 
         <h1 className="font-semibold text-[32px] text-[#6B39A7] mt-[3px] text-center">
@@ -575,6 +580,7 @@ export default function DonationGuide() {
   const steps = [
     {
       id: 1,
+      icon: <span className="text-[28px]">🐱</span>,
       organization: "SOS Gatinhos",
       organizationDescription:
         "Resgate e cuidados de gatos abandonados",
@@ -595,6 +601,7 @@ export default function DonationGuide() {
 
     {
       id: 2,
+      icon: <span className="text-[28px]">🐱</span>,
       organization: "Sos Gatinhos",
       organizationDescription:
         "Como você quer ajudar?",
@@ -620,6 +627,7 @@ export default function DonationGuide() {
 
     {
       id: 3,
+      icon: <Heart className="w-[28px] h-[28px] fill-[#6B39A7] text-[#6B39A7]" />,
       money: "R$ 50,00",
       organizationDescription:
         "para SOS Gatinhos",
@@ -642,6 +650,7 @@ export default function DonationGuide() {
 
     {
       id: 4,
+      icon: <span className="text-[28px]">📦</span>,
       titleCard: "O que você vai doar?",
       titleDescription:
         "Adicione os itens que deseja enviar para SOS Gatinhos",
@@ -664,6 +673,7 @@ export default function DonationGuide() {
 
     {
       id: 5,
+      icon: <Check className="w-[30px] h-[30px] text-[#6B39A7] stroke-[3]" />,
       confirmDonation: "Doação Confirmada!",
       confirmOrganization:
         "para SOS Gatinhos",
@@ -742,7 +752,11 @@ export default function DonationGuide() {
             <BackButton onClick={handleBack} />
           )}
 
-          <NextButton onClick={handleNext} />
+          <NextButton
+            onClick={handleNext}
+            text={currentStep === steps.length - 1 ? "Concluir" : "Próximo"}
+            isFinish={currentStep === steps.length - 1}
+          />
         </div>
       </main>
     </div>
