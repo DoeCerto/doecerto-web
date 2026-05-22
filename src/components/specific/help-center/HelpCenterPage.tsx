@@ -28,19 +28,9 @@ export default function HelpCenterPage() {
           </button>
         </div>
 
-        <h1 className="text-2xl font-semibold mt-3 mb-3">
+        <h1 className="text-2xl font-semibold mt-3">
           Como podemos te ajudar?
         </h1>
-
-        <div className="flex items-center gap-3 bg-white shadow-sm rounded-xl px-3 py-2">
-          <FiSearch className="text-gray-400" />
-          <input
-            // value={query}
-            // onChange={(e) => setQuery(e.target.value)}
-            placeholder="Pesquise uma ONG, cidade ou causa"
-            className="w-full outline-none text-base text-gray-400"
-          />
-        </div>
 
       </div>
 
