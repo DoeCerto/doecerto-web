@@ -482,12 +482,12 @@ function SuccessCard({ step }: any) {
           <div className="mt-[10px] rounded-[10px] w-full border border-[#6B39A7] py-[10px] flex justify-center items-center">
             <div className="flex flex-row justify-center items-center gap-4">
               <div className="relative w-[20px] h-[20px] flex justify-center items-center">
-                  <div className="absolute top-1/2 left-0 -translate-y-1/2 w-full h-[3px] bg-[#6B39A7] rounded-full"></div>
+                <div className="absolute top-1/2 left-0 -translate-y-1/2 w-full h-[3px] bg-[#6B39A7] rounded-full"></div>
 
-                  <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[3px] h-full bg-[#6B39A7] rounded-full"></div>
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[3px] h-full bg-[#6B39A7] rounded-full"></div>
               </div>
               <p className="font-semibold text-[20px] text-[#6B39A7]">{step.buttonAdd}</p>
-              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -533,13 +533,35 @@ function FinishCard({ step }: any) {
           {step.id}
         </div>
 
-        <h1 className="font-semibold text-[32px] mt-[3px] text-center">
-          {step.organization}
+        <h1 className="font-semibold text-[32px] text-[#6B39A7] mt-[3px] text-center">
+          {step.confirmDonation}
         </h1>
 
         <p className="text-[16px] text-center mb-[25px]">
-          {step.titleDescription}
+          {step.confirmOrganization}
         </p>
+
+        <div className="flex flex-col border border-[#6B39A7] bg-[#EBD2FF] rounded-[14px] w-full py-[15px] px-[30px]">
+          <div className="flex flex-row justify-between">
+            <p className="text-[16px]">Para</p>
+            <p className="font-semibold text-[#6B39A7] text-[16px]">{step.to}</p>
+          </div>
+          <div className="flex flex-row justify-between">
+            <p className="text-[16px]">Valor</p>
+            <p className="font-semibold text-[#6B39A7] text-[16px]">{step.value}</p>
+          </div>
+          <div className="flex flex-row justify-between">
+            <p className="text-[16px]">Método</p>
+            <p className="font-semibold text-[#6B39A7] text-[16px]">{step.method}</p>
+          </div>
+          <div className="flex flex-row justify-between">
+            <p className="text-[16px]">Data</p>
+            <p className="font-semibold text-[#6B39A7] text-[16px]">{step.date}</p>
+          </div>
+        </div>
+        <div className="mt-[20px]">
+          <p className="text-[16px] text-center text-[#6B39A7]">{step.confirmDescription}</p>
+        </div>
       </div>
 
 
@@ -642,21 +664,23 @@ export default function DonationGuide() {
 
     {
       id: 5,
-      organization: "Casa Esperança",
-      organizationDescription:
-        "Ajuda para famílias em vulnerabilidade",
+      confirmDonation: "Doação Confirmada!",
+      confirmOrganization:
+        "para SOS Gatinhos",
 
-      label: "AVALIAÇÕES",
+      to: "SOS Gatinhos",
+      value: "R$ 50,00",
+      method: "Pix",
+      date: "Hoje, 14h32",
 
-      title: (
-        <>
-          Veja comentários e <br />
-          avaliações reais
-        </>
-      ),
+      confirmDescription: "Recibo enviado para o seu e-mail. Obrigado por fazer a diferença!",
+
+      label: "TUDO CERTO!",
+
+      title: "Sua doação foi um confirmada!",
 
       description:
-        "Descubra como outras pessoas avaliam cada ONG",
+        "Recibo e comprovante chegam na hora no seu e-mail",
     },
   ];
 
