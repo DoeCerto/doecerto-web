@@ -3,16 +3,17 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  MapPin, Heart, Award, X, Instagram, Phone, Home, Star, Pencil,
-  History, Package, CheckCircle2, Clock, FileText, ArrowLeft,
-  Loader2, Camera, AlertCircle, ArrowRight, Tag, MessageSquare, AlertTriangle, ExternalLink,
-  LogOut
+  MapPin, Heart, Award, X, Phone, Home, Star, Pencil,
+  History, Package, CheckCircle2, Clock, FileText, ArrowRight,
+  Camera, AlertCircle, Tag, MessageSquare, AlertTriangle, ExternalLink,
+  LogOut, Download
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { DonationService } from "@/services/donations.service";
 import { api } from "@/services/api";
-
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface OngDashboardProps {
   ong?: any;
@@ -27,17 +28,14 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
   const [reviews, setReviews] = useState<any[]>([]);
   const [donations, setDonations] = useState<any[]>([]);
 
-
   const [confirmModal, setConfirmModal] = useState<{ id: number; type: 'accept' | 'reject' } | null>(null);
   const [selectedDonation, setSelectedDonation] = useState<any | null>(null);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const handleLogout = () => {
-
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-
     router.push("/login");
   };
 
@@ -63,6 +61,64 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
   const whatsappLink = cleanPhone
     ? `https://wa.me/${cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`}?text=${encodeURIComponent(generateDynamicMessage())}`
     : null;
+
+  const getFileExtension = (url: string) => {
+    if (!url) return "";
+    return url.split(/[#?]/)[0].split('.').pop()?.toLowerCase() || "";
+  };
+
+  // --- GERADOR DE PDF DA DOAÇÃO ÚNICA ---
+  const exportSingleDonationPDF = (donation: any) => {
+    const doc = new jsPDF();
+    const primaryColor = "#4a1d7a";
+    
+    doc.setFillColor(74, 29, 122);
+    doc.rect(0, 0, 210, 40, "F");
+    
+    doc.setTextColor("#FFFFFF");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.text(ong?.name || "Comprovante de Doação", 15, 25);
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-BR')}`, 155, 25);
+
+    doc.setTextColor(primaryColor);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text(`Recibo de Doação - Protocolo #${donation.id}`, 15, 55);
+
+    const tableRows = [
+      ["Doador", donation.donor?.user?.name || "Não identificado"],
+      ["Contato do Doador", donation.donor?.profile?.contactNumber || "Não informado"],
+      ["Tipo de Doação", donation.type === "monetary" ? "Financeira (Dinheiro)" : "Material / Insumos"],
+      ["Status", donation.status === "COMPLETED" ? "Recebido" : donation.status === "CANCELED" ? "Rejeitado" : "Pendente"],
+      ["Data de Cadastro", new Date(donation.createdAt).toLocaleDateString('pt-BR')],
+      [
+        donation.type === "monetary" ? "Valor Destinado" : "Descrição dos Itens",
+        donation.type === "monetary" ? `R$ ${donation.amount}` : `${donation.materialDescription} ${donation.materialQuantity ? `(Qtd: ${donation.materialQuantity})` : ''}`
+      ]
+    ];
+
+    autoTable(doc, {
+      startY: 65,
+      head: [["Campo", "Detalhes"]],
+      body: tableRows,
+      headStyles: { fillColor: [74, 29, 122], fontStyle: "bold" },
+      styles: { fontSize: 11, cellPadding: 5 },
+      theme: "striped"
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY + 20;
+    doc.setTextColor("#555555");
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(12);
+    doc.text("Este documento confirma o registro de intenção ou recebimento da doação através da plataforma DoeCerto.", 15, finalY);
+    doc.text("Agradecemos imensamente o apoio e a solidariedade de todos os envolvidos.", 15, finalY + 7);
+
+    doc.save(`doacao_protocolo_${donation.id}.pdf`);
+  };
 
   async function loadData() {
     try {
@@ -91,12 +147,10 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
 
   const handleConfirmAction = async () => {
     if (!confirmModal) return;
-
     const { id, type } = confirmModal;
 
     try {
       setLoading(true);
-
       if (type === 'accept') {
         await DonationService.acceptDonation(id);
       } else {
@@ -104,18 +158,11 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
       }
 
       setConfirmModal(null);
-
       setSelectedDonation(null);
-
       setIsHistoryOpen(false);
-
       await loadData();
-
-      console.log(`Doação ${type === 'accept' ? 'aceita' : 'rejeitada'} com sucesso!`);
-
     } catch (error: any) {
       console.error("Erro ao processar ação:", error);
-
       const errorMessage = error.response?.data?.message || "Não foi possível atualizar o status da doação.";
       alert(errorMessage);
     } finally {
@@ -148,9 +195,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
           <motion.img
             src={ong.bannerUrl}
             className="absolute inset-0 w-full h-full object-cover"
-            style={{
-              objectPosition: ong.bannerPosition || "50% 50%"
-            }}
+            style={{ objectPosition: ong.bannerPosition || "50% 50%" }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             alt="Banner da ONG"
@@ -159,7 +204,6 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
           <div className="absolute inset-0 bg-gradient-to-tr from-purple-100 via-violet-50 to-pink-100" />
         )}
 
-        {/* Botões de Ação no Topo */}
         <div className="absolute top-4 right-4 z-50 flex gap-2">
           <motion.button
             onClick={() => router.push(`/ong-profilesetup`)}
@@ -176,21 +220,12 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
           </motion.button>
         </div>
 
-        {/* Foto de Perfil */}
-        <motion.div
-          className="absolute -bottom-14 left-6 sm:left-10 z-50 w-28 h-28 sm:w-40 sm:h-40 rounded-2xl sm:rounded-3xl overflow-hidden border-4 border-white shadow-xl bg-white flex items-center justify-center"
-        >
+        <motion.div className="absolute -bottom-14 left-6 sm:left-10 z-50 w-28 h-28 sm:w-40 sm:h-40 rounded-2xl sm:rounded-3xl overflow-hidden border-4 border-white shadow-xl bg-white flex items-center justify-center">
           {ong.avatarUrl ? (
-            <img
-              src={ong.avatarUrl}
-              className="w-full h-full object-cover"
-              alt={ong.name}
-            />
+            <img src={ong.avatarUrl} className="w-full h-full object-cover" alt={ong.name} />
           ) : (
             <div className="w-full h-full bg-[#4a1d7a] flex items-center justify-center">
-              <span className="text-white text-4xl sm:text-5xl font-black">
-                {ong.name?.charAt(0) || 'O'}
-              </span>
+              <span className="text-white text-4xl sm:text-5xl font-black">{ong.name?.charAt(0) || 'O'}</span>
             </div>
           )}
         </motion.div>
@@ -198,24 +233,18 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
 
       {/* Conteúdo Abaixo do Header */}
       <div className="px-4 sm:px-10 mt-16 sm:mt-20">
-        <h1 className="text-2xl sm:text-4xl font-black text-gray-900">
-          {ong.name || "Minha ONG"}
-        </h1>
+        <h1 className="text-2xl sm:text-4xl font-black text-gray-900">{ong.name || "Minha ONG"}</h1>
 
         <div className="text-gray-500 mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm sm:text-lg font-medium">
           <span className="flex items-center gap-1.5">
-            <MapPin size={18} className="text-red-400" />
-            {ong.address?.city || "Localização não definida"}
+            <MapPin size={18} className="text-red-400" /> {ong.address?.city || "Localização não definida"}
           </span>
           <span className="flex items-center gap-1.5">
             <Award size={18} className="text-blue-400" />
-            {ong.yearsOfOperation
-              ? `${ong.yearsOfOperation} ${ong.yearsOfOperation === 1 ? 'ano' : 'anos'} de atuação`
-              : (ong.displayYears || "Tempo não informado")}
+            {ong.yearsOfOperation ? `${ong.yearsOfOperation} ${ong.yearsOfOperation === 1 ? 'ano' : 'anos'} de atuação` : (ong.displayYears || "Tempo não informado")}
           </span>
         </div>
 
-        {/* --- CATEGORIAS --- */}
         {ong.categories && ong.categories.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-3">
             {ong.categories.map((cat: any, idx: number) => (
@@ -234,24 +263,12 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
               <div className="flex items-center gap-3 text-gray-600"><Phone size={18} className="text-[#4a1d7a]" /><span className="text-sm sm:text-base font-bold">{ong.contactNumber || "Não informado"}</span></div>
               <div className="flex items-center gap-3 text-gray-600">
                 <ExternalLink size={16} className="text-pink-600" />
-
                 {ong.website ? (
-                  <a
-                    href={
-                      ong.website.startsWith("http")
-                        ? ong.website
-                        : `https://${ong.website}`
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm sm:text-base font-bold text-[#4a1d7a] underline break-all"
-                  >
+                  <a href={ong.website.startsWith("http") ? ong.website : `https://${ong.website}`} target="_blank" rel="noopener noreferrer" className="text-sm sm:text-base font-bold text-[#4a1d7a] underline break-all">
                     {ong.website.replace(/^https?:\/\//, "")}
                   </a>
                 ) : (
-                  <span className="text-sm sm:text-base font-bold text-gray-900">
-                    Não informado
-                  </span>
+                  <span className="text-sm sm:text-base font-bold text-gray-900">Não informado</span>
                 )}
               </div>
               <div className="flex items-start gap-3 text-gray-600"><Home size={18} className="text-blue-600 mt-0.5" /><span className="text-sm sm:text-base font-bold">{ong.address ? `${ong.address.city} - ${ong.address.state}` : "Endereço não informado"}</span></div>
@@ -293,7 +310,9 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
           <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm">
             <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="bg-white w-full max-w-lg rounded-t-[24px] md:rounded-[32px] overflow-hidden shadow-2xl">
               <div className="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h3 className="text-lg font-bold">Doações Recebidas</h3>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Doações Recebidas</h3>
+                </div>
                 <button onClick={() => setIsHistoryOpen(false)} className="p-2 bg-white rounded-full shadow-sm text-gray-900"><X size={18} /></button>
               </div>
               <div className="p-4 sm:p-6 max-h-[60vh] overflow-y-auto space-y-4">
@@ -313,12 +332,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                       </span>
                     </div>
                     <div className="mt-4 pt-3 border-t border-gray-50 flex gap-2">
-                      <button
-                        onClick={() => {
-                          console.log("DOACAO:", item);
-                          setSelectedDonation(item);
-                        }}
-                        className="flex-1 py-2 bg-purple-50 text-[#4a1d7a] text-xs font-bold rounded-lg hover:bg-purple-100 transition-colors flex items-center justify-center gap-1">
+                      <button onClick={() => setSelectedDonation(item)} className="flex-1 py-2 bg-purple-50 text-[#4a1d7a] text-xs font-bold rounded-lg hover:bg-purple-100 transition-colors flex items-center justify-center gap-1">
                         <FileText size={14} /> Ver Detalhes
                       </button>
                     </div>
@@ -335,20 +349,12 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
         )}
       </AnimatePresence>
 
-      {/* --- MODAL DE DETALHES DA DOAÇÃO (COMPROVANTE) --- */}
+      {/* --- MODAL DE DETALHES DA DOAÇÃO --- */}
       <AnimatePresence>
         {selectedDonation && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 sm:p-6 text-gray-900">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl relative"
-            >
-              <button
-                onClick={() => setSelectedDonation(null)}
-                className="absolute top-4 right-4 z-10 p-2 bg-black/10 hover:bg-black/20 rounded-full transition-colors"
-              >
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl relative">
+              <button onClick={() => setSelectedDonation(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/10 hover:bg-black/20 rounded-full transition-colors">
                 <X size={20} className="text-gray-700" />
               </button>
 
@@ -363,43 +369,54 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                   </div>
                 </div>
 
-                {/* PARTE DO COMPROVANTE CONFIGURADA PARA ZOOM INTERNO (MELHOR PARA CELULAR) */}
+                {/* Bloco Refatorado e Simplificado de Visualização / Ação do Comprovante */}
                 {selectedDonation.type === 'monetary' && (
                   <div className="bg-gray-50 rounded-[24px] border-2 border-dashed border-gray-200 p-2 mb-6">
-                    {selectedDonation.proofUrl ? (
-                      <div className="relative group">
-                        <img
-                          src={
-                            selectedDonation.proofUrl.startsWith('http')
-                              ? selectedDonation.proofUrl
-                              : `${API_URL}/${selectedDonation.proofUrl.replace(/\\/g, '/').replace(/^\/+/, '')}`
-                          }
-                          alt="Comprovante"
-                          className="w-full h-48 object-cover rounded-[18px] shadow-sm cursor-zoom-in"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = "https://placehold.co/400x200?text=Erro+ao+carregar+imagem";
-                          }}
-                          onClick={() => {
-                            const fullUrl = selectedDonation.proofUrl.startsWith('http')
-                              ? selectedDonation.proofUrl
-                              : `${API_URL}/${selectedDonation.proofUrl.replace(/\\/g, '/').replace(/^\/+/, '')}`;
-                            setZoomImage(fullUrl);
-                          }}
-                        />
+                    {selectedDonation.proofUrl ? (() => {
+                      const sanitizedPath = selectedDonation.proofUrl
+                        .replace(/\\/g, '/')
+                        .replace(/^\/+/, '');
 
-                        <button
-                          onClick={() => {
-                            const fullUrl = selectedDonation.proofUrl.startsWith('http')
-                              ? selectedDonation.proofUrl
-                              : `${API_URL}/${selectedDonation.proofUrl.replace(/\\/g, '/').replace(/^\/+/, '')}`;
-                            setZoomImage(fullUrl);
-                          }}
-                          className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white font-bold rounded-[18px] backdrop-blur-[2px]"
-                        >
-                          <ExternalLink size={20} /> Ver em tela cheia
-                        </button>
-                      </div>
-                    ) : (
+                      const fullUrl = selectedDonation.proofUrl.startsWith('http')
+                        ? selectedDonation.proofUrl
+                        : `${API_URL?.replace(/\/+$/, '')}/${sanitizedPath}`;
+                      
+                      const ext = getFileExtension(fullUrl);
+
+                      if (ext === "pdf") {
+                        return (
+                          <div className="h-48 flex flex-col items-center justify-center bg-purple-50/50 rounded-[18px] border border-purple-100 p-4 text-center">
+                            <FileText size={48} className="text-[#4a1d7a] mb-2" />
+                            <p className="text-sm font-bold text-gray-800 break-all line-clamp-1">
+                              Comprovante_#{selectedDonation.id}.pdf
+                            </p>
+                            <p className="text-xs text-gray-500">Documento Digital PDF</p>
+                          </div>
+                        );
+                      } else {
+                        return (
+                          <div className="relative group">
+                            <img
+                              src={fullUrl}
+                              alt="Comprovante de Doação"
+                              className="w-full h-48 object-cover rounded-[18px] shadow-sm cursor-zoom-in"
+                              onError={(e) => { 
+                                const target = e.target as HTMLImageElement;
+                                if (target.src !== fullUrl) return; 
+                                target.src = "https://placehold.co/400x200?text=Erro+ao+carregar+imagem"; 
+                              }}
+                              onClick={() => setZoomImage(fullUrl)}
+                            />
+                            <button
+                              onClick={() => setZoomImage(fullUrl)}
+                              className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white font-bold rounded-[18px] backdrop-blur-[2px]"
+                            >
+                              <ExternalLink size={20} /> Ver em tela cheia
+                            </button>
+                          </div>
+                        );
+                      }
+                    })() : (
                       <div className="h-48 flex flex-col items-center justify-center text-gray-400 gap-2">
                         <Camera size={40} strokeWidth={1} />
                         <p className="text-xs font-medium">Comprovante não enviado</p>
@@ -408,18 +425,44 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                   </div>
                 )}
 
-                <div className="space-y-4 mb-8">
+                <div className="space-y-3 mb-6">
                   {whatsappLink && (
-                    <a
-                      href={whatsappLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full flex items-center justify-center gap-2 py-3 mb-4 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition"
-                    >
-                      <ExternalLink size={18} />
-                      Falar com o doador no WhatsApp
+                    <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2 py-3 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition text-sm">
+                      <MessageSquare size={18} /> Falar com o doador no WhatsApp
                     </a>
                   )}
+
+                  {/* Condicional Refatorada: Oculta o botão de PDF se o comprovante for imagem */}
+                  {selectedDonation.type === 'monetary' && selectedDonation.proofUrl ? (
+                    (() => {
+                      const ext = getFileExtension(selectedDonation.proofUrl);
+                      const fullUrl = selectedDonation.proofUrl.startsWith('http')
+                        ? selectedDonation.proofUrl
+                        : `${API_URL?.replace(/\/+$/, '')}/${selectedDonation.proofUrl.replace(/\\/g, '/').replace(/^\/+/, '')}`;
+
+                      if (ext === 'pdf') {
+                        return (
+                          <a
+                            href={fullUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full flex items-center justify-center gap-2 py-3 bg-purple-50 text-[#4a1d7a] border border-purple-200 font-bold rounded-xl hover:bg-purple-100 transition text-sm"
+                          >
+                            <ExternalLink size={18} /> Visualizar / Baixar Comprovante PDF
+                          </a>
+                        );
+                      }
+                      return null; // Some com o botão se for imagem png/jpg
+                    })()
+                  ) : (
+                    <button
+                      onClick={() => exportSingleDonationPDF(selectedDonation)}
+                      className="w-full flex items-center justify-center gap-2 py-3 bg-purple-50 text-[#4a1d7a] border border-purple-200 font-bold rounded-xl hover:bg-purple-100 transition text-sm"
+                    >
+                      <Download size={18} /> Baixar Relatório PDF
+                    </button>
+                  )}
+
                   <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
                     <span className="text-sm text-gray-500 font-bold">Doador</span>
                     <span className="text-sm text-gray-900 font-black">{selectedDonation.donor?.user?.name || 'Não identificado'}</span>
@@ -430,9 +473,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                       {selectedDonation.type === 'monetary' ? 'Descrição do Pagamento' : 'Itens Doados'}
                     </span>
                     <p className="text-sm text-gray-900 font-medium leading-relaxed">
-                      {selectedDonation.type === 'monetary'
-                        ? `Transferência de R$ ${selectedDonation.amount}`
-                        : selectedDonation.materialDescription}
+                      {selectedDonation.type === 'monetary' ? `Transferência de R$ ${selectedDonation.amount}` : selectedDonation.materialDescription}
                     </p>
                   </div>
 
@@ -444,29 +485,13 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                   )}
                 </div>
 
-                {/* LÓGICA DOS BOTÕES DE AÇÃO */}
                 {selectedDonation.status === 'PENDING' ? (
                   <div className="flex gap-3">
-                    <button
-                      onClick={() => setConfirmModal({ id: selectedDonation.id, type: 'reject' })}
-                      className="flex-1 py-4 bg-red-50 text-red-600 font-bold rounded-2xl hover:bg-red-100 transition-colors"
-                    >
-                      Recusar
-                    </button>
-                    <button
-                      onClick={() => setConfirmModal({ id: selectedDonation.id, type: 'accept' })}
-                      className="flex-1 py-4 bg-[#4a1d7a] text-white font-bold rounded-2xl shadow-lg shadow-purple-200 hover:bg-[#3a1661] transition-all"
-                    >
-                      Aceitar Doação
-                    </button>
+                    <button onClick={() => setConfirmModal({ id: selectedDonation.id, type: 'reject' })} className="flex-1 py-4 bg-red-50 text-red-600 font-bold rounded-2xl hover:bg-red-100 transition-colors">Recusar</button>
+                    <button onClick={() => setConfirmModal({ id: selectedDonation.id, type: 'accept' })} className="flex-1 py-4 bg-[#4a1d7a] text-white font-bold rounded-2xl shadow-lg shadow-purple-200 hover:bg-[#3a1661] transition-all">Aceitar Doação</button>
                   </div>
                 ) : (
-                  <button
-                    onClick={() => setSelectedDonation(null)}
-                    className="w-full py-4 bg-gray-100 text-gray-600 font-bold rounded-2xl hover:bg-gray-200 transition-colors"
-                  >
-                    Fechar
-                  </button>
+                  <button onClick={() => setSelectedDonation(null)} className="w-full py-4 bg-gray-100 text-gray-600 font-bold rounded-2xl hover:bg-gray-200 transition-colors">Fechar</button>
                 )}
               </div>
             </motion.div>
@@ -493,39 +518,13 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
         )}
       </AnimatePresence>
 
-      {/* --- OVERLAY DE ZOOM (TELA CHEIA PARA CELULAR) --- */}
+      {/* --- OVERLAY DE ZOOM --- */}
       <AnimatePresence>
         {zoomImage && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setZoomImage(null)}
-            className="fixed inset-0 z-[300] bg-black/95 flex items-center justify-center p-2 backdrop-blur-sm"
-          >
-            <button
-              className="absolute top-6 right-6 text-white bg-white/10 p-3 rounded-full hover:bg-white/20 transition-colors z-50"
-              onClick={(e) => {
-                e.stopPropagation();
-                setZoomImage(null);
-              }}
-            >
-              <X size={32} />
-            </button>
-
-            <motion.img
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              src={zoomImage}
-              className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
-              alt="Comprovante ampliado"
-              onClick={(e) => e.stopPropagation()}
-            />
-
-            <p className="absolute bottom-10 text-white/60 font-medium text-sm">
-              Toque fora para fechar
-            </p>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setZoomImage(null)} className="fixed inset-0 z-[300] bg-black/95 flex items-center justify-center p-2 backdrop-blur-sm">
+            <button className="absolute top-6 right-6 text-white bg-white/10 p-3 rounded-full hover:bg-white/20 transition-colors z-50" onClick={(e) => { e.stopPropagation(); setZoomImage(null); }}><X size={32} /></button>
+            <motion.img initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }} src={zoomImage} className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" alt="Comprovante ampliado" onClick={(e) => e.stopPropagation()} />
+            <p className="absolute bottom-10 text-white/60 font-medium text-sm">Toque fora para fechar</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -543,18 +542,17 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                 {reviews.length > 0 ? reviews.map((r, index) => (
                   <div key={r.id || index} className="p-4 rounded-2xl border border-gray-100 bg-gray-50/50">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="font-bold text-[#4a1d7a]">{r.donor?.user?.name || "Doador"}</span>
-                      <div className="flex">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} size={10} fill={i < (r.score || 0) ? "#facc15" : "transparent"} className={i < (r.score || 0) ? "text-yellow-400" : "text-gray-300"} />
+                      <span className="font-bold text-sm text-gray-900">{r.donor?.user?.name || "Doador Anônimo"}</span>
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star key={star} size={12} fill={star <= r.stars ? "#facc15" : "transparent"} className={star <= r.stars ? "text-yellow-400" : "text-gray-200"} />
                         ))}
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600 leading-relaxed italic">"{r.comment || "Sem comentário."}"</p>
+                    <p className="text-sm text-gray-600 leading-relaxed">{r.comment || "Sem comentário enviado."}</p>
                   </div>
                 )) : (
-                  <div className="text-center py-12 text-gray-500">
-                    <MessageSquare size={48} className="mx-auto mb-4 opacity-20" />
+                  <div className="text-center py-10 text-gray-500">
                     <p>Sua ONG ainda não recebeu avaliações.</p>
                   </div>
                 )}
