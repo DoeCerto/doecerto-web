@@ -230,7 +230,7 @@ export default function HomePage() {
             </motion.div>
 
             {/* nome do usuário */}
-            <span className="hidden min-[340px]:block flex-1 min-w-0 truncate text-[#6B21A8] font-semibold text-sm">
+            <span className="hidden min-[370px]:block flex-1 min-w-0 truncate text-[#6B21A8] font-semibold text-sm">
               {user?.name || "Usuário"}
             </span>
 
@@ -354,7 +354,7 @@ export default function HomePage() {
                   <div className="flex flex-wrap gap-1 mt-1">
 
                     {ong.categories.slice(0, 1).map((cat, idx) => (
-                      <span key={idx} className="px-2 py-0.5 bg-purple-50 text-purple-800 border border-purple-100 text-[10px] font-bold rounded-full truncate max-w-[120px]">
+                      <span key={idx} className="px-3 py-1 bg-purple-50 text-purple-800 border border-purple-100 text-xs font-bold rounded-full truncate max-w-[140px]">
                         {cat}
                       </span>
                     ))}
@@ -405,7 +405,7 @@ export default function HomePage() {
                 <div className="flex flex-wrap gap-1 mt-1">
 
                   {ong.categories.slice(0, 2).map((cat, idx) => (
-                    <span key={idx} className="px-2 py-0.5 bg-purple-50 text-purple-800 border border-purple-100 text-[10px] font-bold rounded-full">
+                    <span key={idx} className="px-3 py-1 bg-purple-50 text-purple-800 border border-purple-100 text-xs font-bold rounded-full">
                       {cat}
                     </span>
                   ))}
