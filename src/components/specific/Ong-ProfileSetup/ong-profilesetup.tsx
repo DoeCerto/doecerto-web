@@ -278,7 +278,7 @@ export default function OngSetupProfile() {
         pixKey,
       });
 
-      toast.success("Perfil updated com sucesso!");
+      toast.success("Perfil atualizado com sucesso!");
       setTimeout(() => {
         router.push("/ong-dashboard");
       }, 1500);
