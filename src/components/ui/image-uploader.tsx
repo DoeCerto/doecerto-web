@@ -100,7 +100,7 @@ export function ImageUploader({ image, onImageChange, onCropChange, variant, lab
             <div className="bg-white/90 p-3 rounded-full shadow-lg mb-2 group-hover:scale-110 transition-transform">
               <Camera className="text-purple-600" size={24} />
             </div>
-            <span className="text-[#4a1d7a] font-black text-[10px] sm:text-xs uppercase tracking-widest bg-white/60 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/40">
+            <span className="text-[#6B39A7] font-black text-[10px] sm:text-xs uppercase tracking-widest bg-white/60 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/40">
               {(preview || image) ? "Alterar Capa" : (label || "Adicionar Capa")}
             </span>
             <input

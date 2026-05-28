@@ -67,7 +67,7 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
   if (!data) return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="flex flex-col items-center gap-2">
-        <div className="w-8 h-8 border-4 border-[#4a1d7a] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-[#6B39A7] border-t-transparent rounded-full animate-spin"></div>
         <span className="text-gray-500 font-medium">Carregando perfil...</span>
       </div>
     </div>
@@ -101,7 +101,7 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
           {ong.logo && !errors.logo ? (
             <img src={ong.logo} className="w-full h-full object-cover" alt="Logo" onError={() => setErrors(prev => ({ ...prev, logo: true }))} />
           ) : (
-            <span className="text-3xl font-black text-[#4a1d7a]">{ong.name?.charAt(0).toUpperCase() || "O"}</span>
+            <span className="text-3xl font-black text-[#6B39A7]">{ong.name?.charAt(0).toUpperCase() || "O"}</span>
           )}
         </motion.div>
       </div>
@@ -120,7 +120,7 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
         {ong.categories && ong.categories.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-4">
             {ong.categories.map((cat, idx) => (
-              <span key={idx} className="px-3 py-1.5 bg-purple-50 text-[#4a1d7a] border border-purple-100 text-[11px] sm:text-xs font-bold rounded-full flex items-center gap-1.5 shadow-sm">
+              <span key={idx} className="px-3 py-1.5 bg-purple-50 text-[#6B39A7] border border-purple-100 text-[11px] sm:text-xs font-bold rounded-full flex items-center gap-1.5 shadow-sm">
                 <Tag size={12} className="text-purple-400" />
                 {cat}
               </span>
@@ -138,10 +138,10 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
 
         <div className="mt-10 grid grid-cols-1 gap-4">
           <div className="p-6 rounded-2xl bg-white shadow-md border border-gray-100">
-            <h2 className="text-xl font-bold text-[#4a1d7a]">Sobre</h2>
+            <h2 className="text-xl font-bold text-[#6B39A7]">Sobre</h2>
             <p className="mt-2 text-gray-700 leading-relaxed">{ong.description}</p>
             <div className="mt-4 pt-4 border-t border-gray-50 space-y-3">
-              <ContactInfo icon={<Phone size={16} className="text-[#4a1d7a]" />} text={ong.phone} />
+              <ContactInfo icon={<Phone size={16} className="text-[#6B39A7]" />} text={ong.phone} />
               {ong.instagram ? (
                 <a
                   href={
@@ -151,7 +151,7 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
                   }
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-sm sm:text-base font-bold text-[#4a1d7a] underline break-all"
+                  className="flex items-center gap-3 text-sm sm:text-base font-bold text-[#6B39A7] underline break-all"
                 >
                   <ExternalLink size={16} className="text-pink-600" />
                   Acessar site
@@ -167,7 +167,7 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
           </div>
 
           <div className="p-6 rounded-2xl bg-white shadow-md border border-gray-100">
-            <h3 className="text-lg font-bold text-[#4a1d7a] mb-3">Estatísticas</h3>
+            <h3 className="text-lg font-bold text-[#6B39A7] mb-3">Estatísticas</h3>
             <div className="grid grid-cols-3 gap-3">
               <StatItem icon={<MessageSquare size={18} className="text-blue-500" />} value={ong.numberOfRatings} label="Feedbacks" />
               <StatItem icon={<Heart size={18} className="text-pink-500" fill="currentColor" />} value={ong.donations} label="Doações" />
@@ -179,7 +179,7 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
           </div>
 
           <div className="p-6 rounded-2xl bg-white shadow-md border border-gray-100">
-            <h3 className="text-lg font-bold text-[#4a1d7a] mb-4">Comentários de Doadores</h3>
+            <h3 className="text-lg font-bold text-[#6B39A7] mb-4">Comentários de Doadores</h3>
             <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
               {reviews.length > 0 ? reviews.map((rev, i) => (
                 <div key={i} className="border-b border-gray-50 pb-3 last:border-0">
@@ -264,14 +264,14 @@ function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose
     <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={20} /></button>
-        <h3 className="text-xl font-black text-center text-[#4a1d7a] mb-2">Sua Nota</h3>
+        <h3 className="text-xl font-black text-center text-[#6B39A7] mb-2">Sua Nota</h3>
         <div className="flex justify-center gap-2 mb-6">
           {[1, 2, 3, 4, 5].map((s) => (
             <Star key={s} size={32} onClick={() => setScore(s)} fill={s <= score ? "#facc15" : "transparent"} className={`${s <= score ? "text-yellow-400" : "text-gray-200"} cursor-pointer transition-colors`} />
           ))}
         </div>
         <textarea className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm h-28 focus:ring-2 focus:ring-purple-500 outline-none mb-4 resize-none" placeholder="Escreva um breve depoimento..." value={comment} onChange={(e) => setComment(e.target.value)} />
-        <button onClick={handleSubmit} disabled={loading} className="w-full py-4 bg-[#4a1d7a] text-white font-bold rounded-2xl shadow-lg flex items-center justify-center">
+        <button onClick={handleSubmit} disabled={loading} className="w-full py-4 bg-[#6B39A7] text-white font-bold rounded-2xl shadow-lg flex items-center justify-center">
           {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : "Enviar Avaliação"}
         </button>
       </motion.div>

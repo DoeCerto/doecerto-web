@@ -9,7 +9,7 @@ export default function PrivacidadePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-[#4a1d7a] text-white px-6 py-5">
+      <div className="bg-[#6B39A7] text-white px-6 py-5">
         <div className="max-w-3xl mx-auto flex items-center gap-4">
           <Link href="/" className="text-purple-300 hover:text-white transition-colors">
             <ArrowLeft size={20} />
@@ -146,7 +146,7 @@ export default function PrivacidadePage() {
         </Section>
 
         <Section numero="9" titulo="Seus direitos (LGPD)">
-          <p>Escreva para <span className="font-bold text-[#4a1d7a]">privacidade@doecerto.net.br</span> para exercer seus direitos:</p>
+          <p>Escreva para <span className="font-bold text-[#6B39A7]">privacidade@doecerto.net.br</span> para exercer seus direitos:</p>
           <ul>
             <Li bold="I. Confirmação:">saber se tratamos dados seus.</Li>
             <Li bold="II. Acesso:">obter cópia dos dados que temos sobre você.</Li>
@@ -198,7 +198,7 @@ export default function PrivacidadePage() {
 function Section({ numero, titulo, children }: { numero: string; titulo: string; children: React.ReactNode }) {
   return (
     <section className="space-y-3">
-      <h2 className="text-xl font-bold text-[#4a1d7a] border-b border-purple-100 pb-2">
+      <h2 className="text-xl font-bold text-[#6B39A7] border-b border-purple-100 pb-2">
         {numero}. {titulo.toUpperCase()}
       </h2>
       <div className="space-y-3 text-gray-700 text-lg leading-relaxed">

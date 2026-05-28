@@ -17,7 +17,7 @@ export function FormSection({ title, icon: Icon, children, className = "", itali
       className={`p-6 md:p-8 rounded-2xl bg-white shadow-md border border-gray-100 ${className}`}
     >
       {title && (
-        <h2 className={`text-lg font-bold text-[#4a1d7a] mb-6 flex items-center gap-2 ${italicTitle ? 'italic border-l-4 border-purple-200 pl-4' : ''}`}>
+        <h2 className={`text-lg font-bold text-[#6B39A7] mb-6 flex items-center gap-2 ${italicTitle ? 'italic border-l-4 border-purple-200 pl-4' : ''}`}>
           {Icon && <Icon size={20} className="text-purple-600" />} 
           {title}
         </h2>

@@ -9,7 +9,7 @@ export default function TermosPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-[#4a1d7a] text-white px-6 py-5">
+      <div className="bg-[#6B39A7] text-white px-6 py-5">
         <div className="max-w-3xl mx-auto flex items-center gap-4">
           <Link href="/" className="text-purple-300 hover:text-white transition-colors">
             <ArrowLeft size={20} />
@@ -26,7 +26,7 @@ export default function TermosPage() {
 
         <p className="text-gray-600 text-lg leading-relaxed border-l-4 border-purple-200 pl-4">
           Leia com atenção. Ao usar o DoeCerto, você concorda integralmente com estes Termos e com nossa{" "}
-          <Link href="/privacidade" className="text-[#4a1d7a] font-bold underline">
+          <Link href="/privacy" className="text-[#6B39A7] font-bold underline">
             Política de Privacidade
           </Link>.
         </p>
@@ -214,7 +214,7 @@ export default function TermosPage() {
 function Section({ numero, titulo, children }: { numero: string; titulo: string; children: React.ReactNode }) {
   return (
     <section className="space-y-3">
-      <h2 className="text-xl font-bold text-[#4a1d7a] border-b border-purple-100 pb-2">
+      <h2 className="text-xl font-bold text-[#6B39A7] border-b border-purple-100 pb-2">
         {numero}. {titulo.toUpperCase()}
       </h2>
       <div className="space-y-3 text-gray-700 text-lg leading-relaxed">

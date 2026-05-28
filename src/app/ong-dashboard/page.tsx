@@ -26,7 +26,7 @@ export default function OngDashboardPage() {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-white">
-                <Loader2 className="animate-spin text-[#4a1d7a]" size={40} />
+                <Loader2 className="animate-spin text-[#6B39A7]" size={40} />
             </div>
         );
     }

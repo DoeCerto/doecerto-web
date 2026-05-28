@@ -45,7 +45,7 @@ export default function DonationClient() {
           <p className="text-gray-600 mb-4">Dados da ONG não encontrados.</p>
           <button
             onClick={() => router.push("/home")}
-            className="text-[#4a1d7a] font-bold underline"
+            className="text-[#6B39A7] font-bold underline"
           >
             Voltar para o Início
           </button>
@@ -80,12 +80,12 @@ export default function DonationClient() {
             </h2>
 
             <p className="text-gray-600 mb-8 leading-relaxed">
-              A ONG <span className="font-bold text-[#4a1d7a]">{ongName}</span> recebeu sua intenção de doação e entrará em contato.
+              A ONG <span className="font-bold text-[#6B39A7]">{ongName}</span> recebeu sua intenção de doação e entrará em contato.
             </p>
 
             <button
               onClick={() => router.push("/home")}
-              className="w-full bg-[#4a1d7a] text-white py-4 rounded-2xl font-bold shadow-lg shadow-purple-100 hover:bg-[#3a1661] transition-all"
+              className="w-full bg-[#6B39A7] text-white py-4 rounded-2xl font-bold shadow-lg shadow-purple-100 hover:bg-[#3a1661] transition-all"
             >
               Ok
             </button>

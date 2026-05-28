@@ -45,10 +45,10 @@ export default function TermosModal({
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
           >
             {/* Cabeçalho roxo */}
-            <div className="bg-[#4a1d7a] px-6 pt-6 pb-5 relative">
+            <div className="bg-[#6B39A7] px-6 pt-6 pb-5 relative">
               <button
                 onClick={handleCancel}
-                className="absolute top-4 right-4 text-purple-300 hover:text-white transition-colors"
+                className="absolute top-4 right-4 text-[#6B39A7] hover:text-white transition-colors"
               >
                 <X size={20} />
               </button>
@@ -83,7 +83,7 @@ export default function TermosModal({
                   <div
                     className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
                       aceitouTermos
-                        ? "bg-[#4a1d7a] border-[#4a1d7a]"
+                        ? "bg-[#6B39A7] border-[#6B39A7]"
                         : "border-gray-300 bg-white group-hover:border-purple-400"
                     }`}
                   >
@@ -110,7 +110,7 @@ export default function TermosModal({
                     href="/terms"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#4a1d7a] font-bold underline hover:text-purple-800"
+                    className="text-[#6B39A7] font-bold underline hover:text-purple-800"
                     onClick={(e) => e.stopPropagation()}
                   >
                     Termos de Uso
@@ -120,7 +120,7 @@ export default function TermosModal({
                     href="/privacy"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#4a1d7a] font-bold underline hover:text-purple-800"
+                    className="text-[#6B39A7] font-bold underline hover:text-purple-800"
                     onClick={(e) => e.stopPropagation()}
                   >
                     Política de Privacidade
@@ -144,7 +144,7 @@ export default function TermosModal({
                   <div
                     className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
                       aceitouIdade
-                        ? "bg-[#4a1d7a] border-[#4a1d7a]"
+                        ? "bg-[#6B39A7] border-[#6B39A7]"
                         : "border-gray-300 bg-white group-hover:border-purple-400"
                     }`}
                   >
@@ -189,7 +189,7 @@ export default function TermosModal({
                 disabled={!podeConfirmar || isLoading}
                 className={`w-full py-4 rounded-xl font-bold text-base flex items-center justify-center transition-all active:scale-95 ${
                   podeConfirmar && !isLoading
-                    ? "bg-[#4a1d7a] text-white shadow-md hover:bg-purple-900"
+                    ? "bg-[#6B39A7] text-white shadow-md hover:bg-purple-900"
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"
                 }`}
               >

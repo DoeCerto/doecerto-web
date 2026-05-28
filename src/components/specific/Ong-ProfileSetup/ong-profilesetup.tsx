@@ -336,7 +336,7 @@ export default function OngSetupProfile() {
           <h1 className="text-2xl sm:text-4xl font-black text-gray-900 tracking-tight break-words w-full">
             {ongName}
           </h1>
-          <p className="text-[#4a1d7a] text-[10px] sm:text-xs mt-1 uppercase font-black tracking-widest opacity-70">
+          <p className="text-[#6B39A7] text-[10px] sm:text-xs mt-1 uppercase font-black tracking-widest opacity-70">
             Configure as informações públicas da sua ONG
           </p>
         </header>
@@ -477,7 +477,7 @@ export default function OngSetupProfile() {
                   type="button"
                   onClick={() => toggleCategory(cat.id)}
                   className={`px-3 py-1.5 rounded-xl text-[11px] sm:text-sm font-bold transition-all border ${selectedCategoryIds.includes(cat.id)
-                    ? "bg-[#4a1d7a] text-white border-[#4a1d7a] shadow-md"
+                    ? "bg-[#6B39A7] text-white border-[#6B39A7] shadow-md"
                     : "bg-gray-50 text-gray-500 border-gray-100 hover:bg-purple-50"
                     }`}
                 >
@@ -649,7 +649,7 @@ export default function OngSetupProfile() {
               <button
                 type="button"
                 onClick={handleAddItems}
-                className="aspect-square bg-[#4a1d7a] text-white flex items-center justify-center rounded-xl active:scale-95 transition-transform"
+                className="aspect-square bg-[#6B39A7] text-white flex items-center justify-center rounded-xl active:scale-95 transition-transform"
               >
                 <Plus size={20} />
               </button>
@@ -657,7 +657,7 @@ export default function OngSetupProfile() {
 
             <div className="flex flex-wrap gap-2">
               {items.map((item) => (
-                <span key={item.id} className="flex items-center gap-2 bg-purple-50 text-[#4a1d7a] px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold border border-purple-100 shadow-sm">
+                <span key={item.id} className="flex items-center gap-2 bg-purple-50 text-[#6B39A7] px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold border border-purple-100 shadow-sm">
                   {item.description}
                   <Trash2 size={14} className="cursor-pointer text-red-400 hover:text-red-600 transition-colors" onClick={() => handleDeleteItem(item.id)} />
                 </span>

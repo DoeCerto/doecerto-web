@@ -24,7 +24,7 @@ export default function OngPublicPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="w-8 h-8 border-4 border-[#4a1d7a] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-[#6B39A7] border-t-transparent rounded-full animate-spin"></div>
       </div>
     }>
       <OngProfileLoader />

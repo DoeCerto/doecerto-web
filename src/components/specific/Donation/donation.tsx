@@ -108,7 +108,7 @@ export default function Donation({
       </button>
 
       <div className="mb-6 mt-12">
-        <h1 className="text-2xl font-black text-[#4a1d7a]">{`Doar Itens — ${ongName}`}</h1>
+        <h1 className="text-2xl font-black text-[#6B39A7]">{`Doar Itens — ${ongName}`}</h1>
         <p className="text-sm text-gray-500 font-medium mt-1">
           Selecione uma necessidade da ONG e descreva sua doação.
         </p>
@@ -146,7 +146,7 @@ export default function Donation({
               onChange={(e) => setSelectedItemId(e.target.value)}
               required
               disabled={fetchingData || !hasPhone}
-              className="w-full p-3.5 rounded-2xl border border-gray-200 bg-gray-50 text-gray-700 focus:border-[#4a1d7a] focus:ring-4 focus:ring-purple-50 outline-none transition-all appearance-none disabled:opacity-50"
+              className="w-full p-3.5 rounded-2xl border border-gray-200 bg-gray-50 text-gray-700 focus:border-[#6B39A7] focus:ring-4 focus:ring-purple-50 outline-none transition-all appearance-none disabled:opacity-50"
             >
               <option value="">Selecione o item</option>
               {itemsCadastrados.map((item) => (
@@ -174,7 +174,7 @@ export default function Donation({
             required
             disabled={fetchingData || !hasPhone}
             placeholder="Ex: 10"
-            className="p-3.5 rounded-2xl border border-gray-200 bg-gray-50 text-gray-700 focus:border-[#4a1d7a] focus:ring-4 focus:ring-purple-50 outline-none transition-all disabled:opacity-50"
+            className="p-3.5 rounded-2xl border border-gray-200 bg-gray-50 text-gray-700 focus:border-[#6B39A7] focus:ring-4 focus:ring-purple-50 outline-none transition-all disabled:opacity-50"
           />
         </div>
 
@@ -187,7 +187,7 @@ export default function Donation({
             required
             disabled={fetchingData || !hasPhone}
             placeholder="Conte-nos mais (ex: estado de conservação, validade...)"
-            className="p-3.5 rounded-2xl border border-gray-200 bg-gray-50 text-gray-700 focus:border-[#4a1d7a] focus:ring-4 focus:ring-purple-50 outline-none transition-all resize-none disabled:opacity-50"
+            className="p-3.5 rounded-2xl border border-gray-200 bg-gray-50 text-gray-700 focus:border-[#6B39A7] focus:ring-4 focus:ring-purple-50 outline-none transition-all resize-none disabled:opacity-50"
           />
         </div>
 
@@ -195,7 +195,7 @@ export default function Donation({
           <button
             type="submit"
             disabled={loading || fetchingData || !hasPhone}
-            className="bg-[#4a1d7a] hover:bg-[#3a1661] text-white font-black py-4 rounded-2xl shadow-lg shadow-purple-100 transition-all active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-2"
+            className="bg-[#6B39A7] hover:bg-[#3a1661] text-white font-black py-4 rounded-2xl shadow-lg shadow-purple-100 transition-all active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {loading && <Loader2 className="animate-spin" size={20} />}
             {loading ? "Processando..." : "Confirmar Doação"}

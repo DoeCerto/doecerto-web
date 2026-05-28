@@ -70,7 +70,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
   // --- GERADOR DE PDF DA DOAÇÃO ÚNICA ---
   const exportSingleDonationPDF = (donation: any) => {
     const doc = new jsPDF();
-    const primaryColor = "#4a1d7a";
+    const primaryColor = "#6B39A7";
     
     doc.setFillColor(74, 29, 122);
     doc.rect(0, 0, 210, 40, "F");
@@ -175,11 +175,11 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6 text-gray-900">
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white p-8 rounded-[32px] shadow-xl border border-gray-100 max-w-md w-full text-center">
           <div className="w-20 h-20 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-6">
-            <AlertCircle size={40} className="text-[#4a1d7a]" />
+            <AlertCircle size={40} className="text-[#6B39A7]" />
           </div>
           <h2 className="text-2xl font-black text-gray-900 mb-3">Complete seu Perfil</h2>
           <p className="text-gray-600 mb-8 leading-relaxed">Sua ONG ainda não possui as informações configuradas. Complete seu perfil para começar a receber doações.</p>
-          <button onClick={() => router.push('/ong-profilesetup')} className="w-full bg-[#4a1d7a] text-white font-bold py-4 rounded-2xl shadow-lg flex items-center justify-center gap-2">
+          <button onClick={() => router.push('/ong-profilesetup')} className="w-full bg-[#6B39A7] text-white font-bold py-4 rounded-2xl shadow-lg flex items-center justify-center gap-2">
             Configurar agora <ArrowRight size={20} />
           </button>
         </motion.div>
@@ -207,7 +207,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
         <div className="absolute top-4 right-4 z-50 flex gap-2">
           <motion.button
             onClick={() => router.push(`/ong-profilesetup`)}
-            className="flex items-center gap-2 bg-white border-2 border-[#4a1d7a] px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold text-[#4a1d7a] shadow-sm hover:bg-purple-50 transition-colors text-xs sm:text-base"
+            className="flex items-center gap-2 bg-white border-2 border-[#6B39A7] px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold text-[#6B39A7] shadow-sm hover:bg-purple-50 transition-colors text-xs sm:text-base"
           >
             <Pencil size={16} /> <span>Editar Perfil</span>
           </motion.button>
@@ -224,7 +224,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
           {ong.avatarUrl ? (
             <img src={ong.avatarUrl} className="w-full h-full object-cover" alt={ong.name} />
           ) : (
-            <div className="w-full h-full bg-[#4a1d7a] flex items-center justify-center">
+            <div className="w-full h-full bg-[#6B39A7] flex items-center justify-center">
               <span className="text-white text-4xl sm:text-5xl font-black">{ong.name?.charAt(0) || 'O'}</span>
             </div>
           )}
@@ -248,7 +248,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
         {ong.categories && ong.categories.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-3">
             {ong.categories.map((cat: any, idx: number) => (
-              <span key={cat.id || idx} className="px-3 py-1 bg-purple-50 text-[#4a1d7a] border border-purple-100 text-[11px] sm:text-xs font-bold rounded-full flex items-center gap-1.5 shadow-sm">
+              <span key={cat.id || idx} className="px-3 py-1 bg-purple-50 text-[#6B39A7] border border-purple-100 text-[11px] sm:text-xs font-bold rounded-full flex items-center gap-1.5 shadow-sm">
                 <Tag size={12} className="text-purple-400" /> {cat.name || cat}
               </span>
             ))}
@@ -257,14 +257,14 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
 
         <div className="mt-8 grid grid-cols-1 gap-4">
           <div className="p-4 sm:p-6 rounded-2xl bg-white shadow-md border border-gray-100">
-            <h2 className="text-lg sm:text-xl font-bold text-[#4a1d7a]">Sobre</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-[#6B39A7]">Sobre</h2>
             <p className="mt-3 text-gray-700 text-sm sm:text-lg leading-relaxed">{ong.description || "Nenhuma descrição informada ainda."}</p>
             <div className="mt-5 pt-5 border-t border-gray-50 space-y-4">
-              <div className="flex items-center gap-3 text-gray-600"><Phone size={18} className="text-[#4a1d7a]" /><span className="text-sm sm:text-base font-bold">{ong.contactNumber || "Não informado"}</span></div>
+              <div className="flex items-center gap-3 text-gray-600"><Phone size={18} className="text-[#6B39A7]" /><span className="text-sm sm:text-base font-bold">{ong.contactNumber || "Não informado"}</span></div>
               <div className="flex items-center gap-3 text-gray-600">
                 <ExternalLink size={16} className="text-pink-600" />
                 {ong.website ? (
-                  <a href={ong.website.startsWith("http") ? ong.website : `https://${ong.website}`} target="_blank" rel="noopener noreferrer" className="text-sm sm:text-base font-bold text-[#4a1d7a] underline break-all">
+                  <a href={ong.website.startsWith("http") ? ong.website : `https://${ong.website}`} target="_blank" rel="noopener noreferrer" className="text-sm sm:text-base font-bold text-[#6B39A7] underline break-all">
                     {ong.website.replace(/^https?:\/\//, "")}
                   </a>
                 ) : (
@@ -276,7 +276,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
           </div>
 
           <div className="p-4 sm:p-6 rounded-2xl bg-white shadow-md border border-gray-100">
-            <h3 className="text-lg sm:text-xl font-bold text-[#4a1d7a] mb-4">Gestão e Estatísticas</h3>
+            <h3 className="text-lg sm:text-xl font-bold text-[#6B39A7] mb-4">Gestão e Estatísticas</h3>
             <div className="flex flex-wrap gap-3 sm:gap-4">
               <div className="flex-1 min-w-[100px] p-3 sm:p-4 rounded-lg bg-gray-50 text-center border border-gray-200">
                 <Heart size={20} className="mx-auto text-pink-500" fill="currentColor" />
@@ -295,8 +295,8 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
               </button>
 
               <button onClick={() => setIsHistoryOpen(true)} className="w-full md:w-auto md:flex-1 p-3 sm:p-4 rounded-lg bg-purple-50 text-center border border-purple-100 hover:bg-purple-100 transition-all">
-                <History size={20} className="mx-auto text-[#4a1d7a]" />
-                <p className="mt-1 text-base sm:text-xl font-bold text-[#4a1d7a]">Histórico</p>
+                <History size={20} className="mx-auto text-[#6B39A7]" />
+                <p className="mt-1 text-base sm:text-xl font-bold text-[#6B39A7]">Histórico</p>
                 <p className="text-[10px] sm:text-sm text-purple-600 font-bold uppercase tracking-tight">Ver Doações</p>
               </button>
             </div>
@@ -332,7 +332,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                       </span>
                     </div>
                     <div className="mt-4 pt-3 border-t border-gray-50 flex gap-2">
-                      <button onClick={() => setSelectedDonation(item)} className="flex-1 py-2 bg-purple-50 text-[#4a1d7a] text-xs font-bold rounded-lg hover:bg-purple-100 transition-colors flex items-center justify-center gap-1">
+                      <button onClick={() => setSelectedDonation(item)} className="flex-1 py-2 bg-purple-50 text-[#6B39A7] text-xs font-bold rounded-lg hover:bg-purple-100 transition-colors flex items-center justify-center gap-1">
                         <FileText size={14} /> Ver Detalhes
                       </button>
                     </div>
@@ -386,7 +386,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                       if (ext === "pdf") {
                         return (
                           <div className="h-48 flex flex-col items-center justify-center bg-purple-50/50 rounded-[18px] border border-purple-100 p-4 text-center">
-                            <FileText size={48} className="text-[#4a1d7a] mb-2" />
+                            <FileText size={48} className="text-[#6B39A7] mb-2" />
                             <p className="text-sm font-bold text-gray-800 break-all line-clamp-1">
                               Comprovante_#{selectedDonation.id}.pdf
                             </p>
@@ -446,7 +446,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                             href={fullUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="w-full flex items-center justify-center gap-2 py-3 bg-purple-50 text-[#4a1d7a] border border-purple-200 font-bold rounded-xl hover:bg-purple-100 transition text-sm"
+                            className="w-full flex items-center justify-center gap-2 py-3 bg-purple-50 text-[#6B39A7] border border-purple-200 font-bold rounded-xl hover:bg-purple-100 transition text-sm"
                           >
                             <ExternalLink size={18} /> Visualizar / Baixar Comprovante PDF
                           </a>
@@ -457,7 +457,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                   ) : (
                     <button
                       onClick={() => exportSingleDonationPDF(selectedDonation)}
-                      className="w-full flex items-center justify-center gap-2 py-3 bg-purple-50 text-[#4a1d7a] border border-purple-200 font-bold rounded-xl hover:bg-purple-100 transition text-sm"
+                      className="w-full flex items-center justify-center gap-2 py-3 bg-purple-50 text-[#6B39A7] border border-purple-200 font-bold rounded-xl hover:bg-purple-100 transition text-sm"
                     >
                       <Download size={18} /> Baixar Relatório PDF
                     </button>
@@ -488,7 +488,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                 {selectedDonation.status === 'PENDING' ? (
                   <div className="flex gap-3">
                     <button onClick={() => setConfirmModal({ id: selectedDonation.id, type: 'reject' })} className="flex-1 py-4 bg-red-50 text-red-600 font-bold rounded-2xl hover:bg-red-100 transition-colors">Recusar</button>
-                    <button onClick={() => setConfirmModal({ id: selectedDonation.id, type: 'accept' })} className="flex-1 py-4 bg-[#4a1d7a] text-white font-bold rounded-2xl shadow-lg shadow-purple-200 hover:bg-[#3a1661] transition-all">Aceitar Doação</button>
+                    <button onClick={() => setConfirmModal({ id: selectedDonation.id, type: 'accept' })} className="flex-1 py-4 bg-[#6B39A7] text-white font-bold rounded-2xl shadow-lg shadow-purple-200 hover:bg-[#3a1661] transition-all">Aceitar Doação</button>
                   </div>
                 ) : (
                   <button onClick={() => setSelectedDonation(null)} className="w-full py-4 bg-gray-100 text-gray-600 font-bold rounded-2xl hover:bg-gray-200 transition-colors">Fechar</button>
