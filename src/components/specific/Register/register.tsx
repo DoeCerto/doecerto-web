@@ -8,6 +8,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { Eye, EyeOff, AlertCircle, ArrowLeft } from "lucide-react";
 import { registerDonor } from "@/services/register.service";
 import { formatCPF, removeFormatting, validateCPF } from "@/utils/documentValidation";
+import TermosModal from "@/components/shared/TermosModal"; // ← NOVO
 
 export default function Register() {
   const router = useRouter();
@@ -22,25 +23,20 @@ export default function Register() {
   const [showSenha, setShowSenha] = useState(false);
   const [showConfirmar, setShowConfirmar] = useState(false);
 
-  // Estados para validação do CPF
   const [cpfError, setCpfError] = useState("");
   const [cpfShake, setCpfShake] = useState(false);
+
+  // ← NOVO — controle do modal
+  const [modalAberto, setModalAberto] = useState(false);
 
   const senhasPreenchidas = senha.length > 0 && confirmarSenha.length > 0;
   const senhasCoincidem = senhasPreenchidas && senha === confirmarSenha;
   const senhasDiferentes = senhasPreenchidas && senha !== confirmarSenha;
 
-  // Handler do CPF com máscara e validação
   function handleCPFChange(value: string) {
     const formatted = formatCPF(value);
     setCpf(formatted);
-
-    // Limpa erro ao digitar
-    if (cpfError) {
-      setCpfError("");
-    }
-
-    // Se chegou no limite, valida
+    if (cpfError) setCpfError("");
     const numbers = removeFormatting(formatted);
     if (numbers.length === 11) {
       if (!validateCPF(formatted)) {
@@ -55,7 +51,8 @@ export default function Register() {
     setTimeout(() => setCpfShake(false), 500);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  // ← MODIFICADO — agora só valida e abre o modal, não envia ainda
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     if (!nome || !cpf || !email || !senha || !confirmarSenha) {
@@ -63,7 +60,6 @@ export default function Register() {
       return;
     }
 
-    // Valida CPF antes de submeter
     if (!validateCPF(cpf)) {
       setCpfError("CPF inválido");
       triggerShake();
@@ -76,10 +72,15 @@ export default function Register() {
       return;
     }
 
+    // Abre o modal de termos
+    setModalAberto(true);
+  }
+
+  // ← NOVO — chamado após confirmar no modal
+  async function handleConfirmarCadastro() {
     setIsPending(true);
 
     try {
-      // Remove formatação antes de enviar para API
       const cpfNumbers = removeFormatting(cpf);
 
       await registerDonor({
@@ -89,6 +90,7 @@ export default function Register() {
         cpf: cpfNumbers,
       });
 
+      setModalAberto(false);
       toast.success("Cadastro realizado com sucesso!");
 
       setTimeout(() => {
@@ -103,7 +105,15 @@ export default function Register() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#6B39A7] text-white font-sans px-6 py-12">
       <Toaster position="top-center" />
-      
+
+      {/* ← NOVO — Modal de termos */}
+      <TermosModal
+        isOpen={modalAberto}
+        onConfirm={handleConfirmarCadastro}
+        onCancel={() => setModalAberto(false)}
+        isLoading={isPending}
+      />
+
       <div className="absolute top-6 left-6 z-10">
         <Link
           href="/register-choice"
@@ -150,10 +160,9 @@ export default function Register() {
                 value={cpf}
                 onChange={(e) => handleCPFChange(e.target.value)}
                 maxLength={14}
-                className={`w-full bg-white p-2 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${cpfError
-                    ? "ring-2 ring-red-400 shake"
-                    : "focus:ring-purple-300"
-                  } ${cpfShake ? "shake" : ""}`}
+                className={`w-full bg-white p-2 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
+                  cpfError ? "ring-2 ring-red-400 shake" : "focus:ring-purple-300"
+                } ${cpfShake ? "shake" : ""}`}
               />
               {cpfError && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -198,8 +207,9 @@ export default function Register() {
                 placeholder="Mínimo de 8 caracteres"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
-                className={`w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${senhasCoincidem ? "ring-2 ring-green-400" : "focus:ring-purple-300"
-                  }`}
+                className={`w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
+                  senhasCoincidem ? "ring-2 ring-green-400" : "focus:ring-purple-300"
+                }`}
               />
               <button
                 type="button"
@@ -222,9 +232,10 @@ export default function Register() {
                 placeholder="Repita sua senha"
                 value={confirmarSenha}
                 onChange={(e) => setConfirmarSenha(e.target.value)}
-                className={`w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${senhasCoincidem ? "ring-2 ring-green-400" :
-                    senhasDiferentes ? "ring-2 ring-red-400" : "focus:ring-purple-300"
-                  }`}
+                className={`w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
+                  senhasCoincidem ? "ring-2 ring-green-400" :
+                  senhasDiferentes ? "ring-2 ring-red-400" : "focus:ring-purple-300"
+                }`}
               />
               <button
                 type="button"
@@ -254,7 +265,7 @@ export default function Register() {
             className="w-full flex justify-center items-center bg-white text-purple-700 font-bold py-3 rounded-md active:scale-95 transition-all disabled:opacity-70 shadow-md text-xl"
           >
             {isPending ? (
-              <div className="w-7 h-7 border-4 border-purple-700/30 border-t-purple-700 rounded-full animate-spin"></div>
+              <div className="w-7 h-7 border-4 border-purple-700/30 border-t-purple-700 rounded-full animate-spin" />
             ) : (
               "Cadastrar"
             )}

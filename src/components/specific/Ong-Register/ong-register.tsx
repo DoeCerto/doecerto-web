@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
-import { Eye, EyeOff, AlertCircle, ArrowLeft } from "lucide-react"; 
+import { Eye, EyeOff, AlertCircle, ArrowLeft } from "lucide-react";
 import { registerOng } from "@/services/register-ong.service";
 import { formatCNPJ, removeFormatting, validateCNPJ } from "@/utils/documentValidation";
+import TermosModal from "@/components/shared/TermosModal"; // ← NOVO
 
 export default function OngRegisterPage() {
   const router = useRouter();
@@ -21,26 +22,21 @@ export default function OngRegisterPage() {
 
   const [showSenha, setShowSenha] = useState(false);
   const [showConfirmar, setShowConfirmar] = useState(false);
-  
-  // Estados para validação do CNPJ
+
   const [cnpjError, setCnpjError] = useState("");
   const [cnpjShake, setCnpjShake] = useState(false);
+
+  // ← NOVO — controle do modal
+  const [modalAberto, setModalAberto] = useState(false);
 
   const senhasPreenchidas = senha.length > 0 && confirmarSenha.length > 0;
   const senhasCoincidem = senhasPreenchidas && senha === confirmarSenha;
   const senhasDiferentes = senhasPreenchidas && senha !== confirmarSenha;
 
-  // Handler do CNPJ com máscara e validação
   function handleCNPJChange(value: string) {
     const formatted = formatCNPJ(value);
     setCnpj(formatted);
-    
-    // Limpa erro ao digitar
-    if (cnpjError) {
-      setCnpjError("");
-    }
-
-    // Se chegou no limite, valida
+    if (cnpjError) setCnpjError("");
     const numbers = removeFormatting(formatted);
     if (numbers.length === 14) {
       if (!validateCNPJ(formatted)) {
@@ -55,7 +51,8 @@ export default function OngRegisterPage() {
     setTimeout(() => setCnpjShake(false), 500);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  // ← MODIFICADO — só valida e abre o modal
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     if (!nome || !email || !cnpj || !senha || !confirmarSenha) {
@@ -63,7 +60,6 @@ export default function OngRegisterPage() {
       return;
     }
 
-    // Valida CNPJ antes de submeter
     if (!validateCNPJ(cnpj)) {
       setCnpjError("CNPJ inválido");
       triggerShake();
@@ -76,12 +72,17 @@ export default function OngRegisterPage() {
       return;
     }
 
+    // Abre o modal de termos
+    setModalAberto(true);
+  }
+
+  // ← NOVO — chamado após confirmar no modal
+  async function handleConfirmarCadastro() {
     setIsPending(true);
 
     try {
-      // Remove formatação antes de enviar para API
       const cnpjNumbers = removeFormatting(cnpj);
-      
+
       await registerOng({
         name: nome,
         email,
@@ -89,6 +90,7 @@ export default function OngRegisterPage() {
         cnpj: cnpjNumbers,
       });
 
+      setModalAberto(false);
       toast.success("ONG cadastrada com sucesso!");
 
       setTimeout(() => {
@@ -104,7 +106,15 @@ export default function OngRegisterPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#6B39A7] text-white font-sans px-6 py-12">
       <Toaster position="top-center" />
 
-       <div className="absolute top-6 left-6 z-10">
+      {/* ← NOVO — Modal de termos */}
+      <TermosModal
+        isOpen={modalAberto}
+        onConfirm={handleConfirmarCadastro}
+        onCancel={() => setModalAberto(false)}
+        isLoading={isPending}
+      />
+
+      <div className="absolute top-6 left-6 z-10">
         <Link
           href="/register-choice"
           className="flex items-center gap-2 text-white font-bold text-base hover:opacity-80 transition-opacity"
@@ -165,9 +175,7 @@ export default function OngRegisterPage() {
                 onChange={(e) => handleCNPJChange(e.target.value)}
                 maxLength={18}
                 className={`w-full bg-white p-2 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
-                  cnpjError 
-                    ? "ring-2 ring-red-400 shake" 
-                    : "focus:ring-purple-300"
+                  cnpjError ? "ring-2 ring-red-400 shake" : "focus:ring-purple-300"
                 } ${cnpjShake ? "shake" : ""}`}
               />
               {cnpjError && (
@@ -225,7 +233,7 @@ export default function OngRegisterPage() {
                 value={confirmarSenha}
                 onChange={(e) => setConfirmarSenha(e.target.value)}
                 className={`w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
-                  senhasCoincidem ? "ring-2 ring-green-400" : 
+                  senhasCoincidem ? "ring-2 ring-green-400" :
                   senhasDiferentes ? "ring-2 ring-red-400" : "focus:ring-purple-300"
                 }`}
               />
@@ -257,7 +265,7 @@ export default function OngRegisterPage() {
             className="w-full flex justify-center items-center bg-white text-purple-700 font-bold py-3 rounded-md active:scale-95 transition-all disabled:opacity-70 shadow-md text-xl"
           >
             {isPending ? (
-              <div className="w-7 h-7 border-4 border-purple-700/30 border-t-purple-700 rounded-full animate-spin"></div>
+              <div className="w-7 h-7 border-4 border-purple-700/30 border-t-purple-700 rounded-full animate-spin" />
             ) : (
               "Cadastrar ONG"
             )}
