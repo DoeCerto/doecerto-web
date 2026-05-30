@@ -15,7 +15,7 @@ export default function StepIntro({
         {label}
       </span>
 
-      <h1 className="text-[36px] font-medium mb-[7px] leading-tight">
+      <h1 className="text-[24px] font-medium mb-[7px] leading-tight">
         {title}
       </h1>
 

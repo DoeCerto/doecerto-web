@@ -2,148 +2,51 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { ArrowRight, User, Star, Heart, Check } from "lucide-react";
 
 import StepHeader from "@/components/ui/StepHeader";
 import StepIntro from "@/components/ui/StepIntro";
 import NextButton from "@/components/ui/NextButton";
 import BackButton from "@/components/ui/BackButton";
 
-import {
-  Star,
-  Heart,
-  Check
-} from "lucide-react";
-
 /* =========================
    CARD PADRÃO
 ========================= */
 
 function DefaultCard({ step }: any) {
-  return (
-    <div
-      className="
+    return (
+        <div
+            className="
         w-full
         bg-white
         border
         border-[#6B39A7]
         rounded-[20px]
-        mt-[30px]
-        pt-[40px]
-        px-[25px]
-        pb-[28px]
-        mb-[25px]
+        p-[15px]
         shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
         flex
         flex-col
         items-center
       "
-    >
-      <div
-        className="
-          w-[60px]
-          h-[60px]
-          bg-[#EBD2FF]
-          rounded-full
-          flex
-          items-center
-          justify-center
-        "
-      >
-        {step.icon}
-      </div>
+        >
+            <div className="w-full flex flex-row justify-between items-center">
+                <div>
+                    <Image src="/logo_roxa.svg" alt="DoeCerto" width={125} height={125} priority />
+                </div>
 
-      <h1 className="font-semibold text-[24px] mt-[3px] text-center">
-        {step.organization}
-      </h1>
+                <div className="flex flex-row items-center">
+                    <ArrowRight className="w-[35px] h-[20px]" />
 
-      <p
-        className="
-          text-[16px]
-          font-normal
-          -translate-y-[8px]
-          mb-[10px]
-          text-center
-        "
-      >
-        {step.organizationDescription}
-      </p>
+                    <div className="bottom-0 border border-[#6B39A7] rounded-full w-[35px] h-[35px] flex justify-center items-center">
 
-      <hr className="border border-[#3D3D3D] w-full h-[1px]" />
+                        <User className="w-[30px] h-[25px] text-[#6B39A7]" />
+                    </div>
+                </div>
 
-      {/* Stats */}
-      <div
-        className="
-          w-full
-          flex
-          flex-row
-          justify-between
-          mb-[15px]
-          mt-[10px]
-          px-[10px]
-        "
-      >
-        <div className="flex flex-col items-center">
-          <h1 className="text-[24px] font-bold">
-            {step.donors}
-          </h1>
-
-          <p className="text-[16px] font-normal -translate-y-[8px]">
-            Doadores
-          </p>
+            </div>
         </div>
-
-        <div className="flex flex-col items-center">
-          <h1 className="text-[24px] font-bold">
-            {step.rescues}
-          </h1>
-
-          <p className="text-[16px] font-normal -translate-y-[8px]">
-            Resgates
-          </p>
-        </div>
-
-        <div className="flex flex-col items-center">
-          <h1
-            className="
-              flex
-              flex-row
-              items-center
-              gap-1
-              text-[24px]
-              font-bold
-            "
-          >
-            {step.rating}
-
-            <Star className="w-[25px] h-[25px] fill-[#000000]" />
-          </h1>
-
-          <p className="text-[16px] font-normal -translate-y-[8px]">
-            Avaliação
-          </p>
-        </div>
-      </div>
-
-      {/* Button */}
-      <div
-        className="
-          mx-[5px]
-          py-[18px]
-          bg-[#6B39A7]
-          text-white
-          text-[16px]
-          font-bold
-          w-full
-          rounded-[10px]
-          flex
-          justify-center
-          items-center
-        "
-      >
-        {step.buttonText}
-      </div>
-    </div>
-  );
+    );
 }
 
 /* =========================
@@ -573,205 +476,195 @@ function FinishCard({ step }: any) {
 }
 
 export default function DonationGuide() {
-  const router = useRouter();
+    const router = useRouter();
 
-  const steps = [
-    {
-      id: 1,
-      icon: <span className="text-[28px]">🐱</span>,
-      organization: "SOS Gatinhos",
-      organizationDescription:
-        "Resgate e cuidados de gatos abandonados",
+    const steps = [
+        {
+            id: 1,
 
-      donors: "423",
-      rescues: "1.2K",
-      rating: "4.9",
+            label: "Passo 1",
 
-      buttonText: "Doar para SOS Gatinhos",
+            title: "Acesse seu Perfil",
 
-      label: "ENCONTRE E AJUDE",
+            description:
+                "Toque no seu avatar no canto superior direito da home",
+        },
 
-      title: "Encontre uma ONG e toque em Doar",
+        {
+            id: 2,
+            icon: <span className="text-[28px]">🐱</span>,
+            organization: "SOS Gatinhos",
+            organizationDescription:
+                "Como você quer ajudar?",
 
-      description:
-        "Cada ONG tem seu botão de doação na página de perfil",
-    },
+            money: "Dinheiro",
+            DescribeMoney: "Pix ou boleto - rápido e seguro",
 
-    {
-      id: 2,
-      icon: <span className="text-[28px]">🐱</span>,
-      organization: "Sos Gatinhos",
-      organizationDescription:
-        "Como você quer ajudar?",
+            items: "Itens",
+            DescribeItems: "Ração, roupas e mais",
 
-      money: "Dinheiro",
-      DescribeMoney: "Pix ou boleto - rápido e seguro",
+            label: "VOCÊ DECIDE COMO AJUDAR",
 
-      items: "Itens",
-      DescribeItems: "Ração, roupas e mais",
+            title: (
+                <>
+                    Escolha o tipo de <br />
+                    doação
+                </>
+            ),
 
-      label: "VOCÊ DECIDE COMO AJUDAR",
+            description:
+                "Doe dinheiro ou itens físicos - do jeito que for melhor pra você",
+        },
 
-      title: (
-        <>
-          Escolha o tipo de <br />
-          doação
-        </>
-      ),
+        {
+            id: 3,
+            icon: <Heart className="w-[28px] h-[28px] fill-[#6B39A7] text-[#6B39A7]" />,
+            money: "R$ 50,00",
+            organizationDescription:
+                "para SOS Gatinhos",
 
-      description:
-        "Doe dinheiro ou itens físicos - do jeito que for melhor pra você",
-    },
+            titleCard1: "Pix",
+            descriptionCard1:
+                "Instantâneo",
 
-    {
-      id: 3,
-      icon: <Heart className="w-[28px] h-[28px] fill-[#6B39A7] text-[#6B39A7]" />,
-      money: "R$ 50,00",
-      organizationDescription:
-        "para SOS Gatinhos",
+            titleCard2: "Boleto",
 
-      titleCard1: "Pix",
-      descriptionCard1:
-        "Instantâneo",
+            buttonText: "Confirmar Doação",
 
-      titleCard2: "Boleto",
+            label: "RÁPIDO E SEGURO",
 
-      buttonText: "Confirmar Doação",
+            title: "Doe em segundos com Segurança",
 
-      label: "RÁPIDO E SEGURO",
+            description:
+                "Pix ou boleto. Recibo e confirmação chega na hora.",
+        },
 
-      title: "Doe em segundos com Segurança",
+        {
+            id: 4,
+            icon: <span className="text-[28px]">📦</span>,
+            titleCard: "O que você vai doar?",
+            titleDescription:
+                "Adicione os itens que deseja enviar para SOS Gatinhos",
 
-      description:
-        "Pix ou boleto. Recibo e confirmação chega na hora.",
-    },
+            labelCard1: "Item 1",
+            itensCard1: "Ração e shampoo",
 
-    {
-      id: 4,
-      icon: <span className="text-[28px]">📦</span>,
-      titleCard: "O que você vai doar?",
-      titleDescription:
-        "Adicione os itens que deseja enviar para SOS Gatinhos",
+            labelCard2: "Item 2",
+            itensCard2: "Ex: remédios, coberto...",
 
-      labelCard1: "Item 1",
-      itensCard1: "Ração e shampoo",
+            label: "ITENS QUE FAZEM DIFERENÇA",
 
-      labelCard2: "Item 2",
-      itensCard2: "Ex: remédios, coberto...",
+            title: "Doe itens para quem mais precisa",
 
-      label: "ITENS QUE FAZEM DIFERENÇA",
+            description:
+                "Adicione ração, remédios ou qualquer item da lista da ONG",
 
-      title: "Doe itens para quem mais precisa",
+            buttonAdd: "Adicionar Item",
+        },
 
-      description:
-        "Adicione ração, remédios ou qualquer item da lista da ONG",
+        {
+            id: 5,
+            icon: <Check className="w-[30px] h-[30px] text-[#6B39A7] stroke-[3]" />,
+            confirmDonation: "Doação Confirmada!",
+            confirmOrganization:
+                "para SOS Gatinhos",
 
-      buttonAdd: "Adicionar Item",
-    },
+            to: "SOS Gatinhos",
+            value: "R$ 50,00",
+            method: "Pix",
+            date: "Hoje, 14h32",
 
-    {
-      id: 5,
-      icon: <Check className="w-[30px] h-[30px] text-[#6B39A7] stroke-[3]" />,
-      confirmDonation: "Doação Confirmada!",
-      confirmOrganization:
-        "para SOS Gatinhos",
+            confirmDescription: "Recibo enviado para o seu e-mail. Obrigado por fazer a diferença!",
 
-      to: "SOS Gatinhos",
-      value: "R$ 50,00",
-      method: "Pix",
-      date: "Hoje, 14h32",
+            label: "TUDO CERTO!",
 
-      confirmDescription: "Recibo enviado para o seu e-mail. Obrigado por fazer a diferença!",
+            title: "Sua doação foi um confirmada!",
 
-      label: "TUDO CERTO!",
+            description:
+                "Recibo e comprovante chegam na hora no seu e-mail",
+        },
+    ];
 
-      title: "Sua doação foi um confirmada!",
+    const [currentStep, setCurrentStep] = useState(0);
 
-      description:
-        "Recibo e comprovante chegam na hora no seu e-mail",
-    },
-  ];
+    const step = steps[currentStep];
 
-  const [currentStep, setCurrentStep] = useState(0);
+    /* =========================
+       MAPEAMENTO DOS CARDS
+    ========================= */
 
-  const step = steps[currentStep];
+    const cardComponents: Record<number, any> = {
+        1: DefaultCard,
+        2: DonationTypeCard,
+        3: ReviewCard,
+        4: SuccessCard,
+        5: FinishCard,
+    };
 
-  /* =========================
-     MAPEAMENTO DOS CARDS
-  ========================= */
+    const CurrentCard = cardComponents[step.id] || DefaultCard;
 
-  const cardComponents: Record<number, any> = {
-    1: DefaultCard,
-    2: DonationTypeCard,
-    3: ReviewCard,
-    4: SuccessCard,
-    5: FinishCard,
-  };
-
-  const CurrentCard = cardComponents[step.id] || DefaultCard;
-
-  function handleNext() {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      router.push("/help-center");
+    function handleNext() {
+        if (currentStep < steps.length - 1) {
+            setCurrentStep(currentStep + 1);
+        } else {
+            router.push("/help-center");
+        }
     }
-  }
 
-  function handleBack() {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+    function handleBack() {
+        if (currentStep > 0) {
+            setCurrentStep(currentStep - 1);
+        }
     }
-  }
 
-  return (
-    <div className="min-h-dvh px-[25px] py-[10px] flex flex-col items-center">
-      <StepHeader
-        currentStep={step.id}
-        totalSteps={steps.length}
-        onSkip={() => router.push("/help-center")}
-      />
-
-
-      <main className="max-w-[430px] flex flex-col flex-1">
-
-        {/* CARD DINÂMICO */}
-        <CurrentCard step={step} />
-
-        {/* Intro */}
-        <StepIntro
-          label={step.label ?? ""}
-          title={typeof step.title === "string" ? step.title : ""}
-          description={step.description ?? ""}
-        />
-
-        {/* Indicators */}
-        <div className="mt-auto mb-6 flex justify-center gap-[5px]">
-          {steps.map((_, index) => (
-            <div
-              key={index}
-              className={`h-[10px] rounded-full transition-all duration-300 ${currentStep === index
-                ? "w-[24px] bg-[#6B39A7]"
-                : "w-[10px] bg-[#D9B8F5]"
-                }`}
-            />
-          ))}
-        </div>
-
-        {/* Buttons */}
-        <div className="flex justify-center gap-[15px] pb-2">
-          {currentStep > 0 && (
-            <BackButton onClick={handleBack} />
-          )}
-
-          <NextButton
-            onClick={handleNext}
-            text={currentStep === steps.length - 1 ? "Concluir" : "Próximo"}
-            isFinish={currentStep === steps.length - 1}
+    return (
+        <div className="min-h-dvh px-[25px] py-[10px] flex flex-col items-center">
+          <StepHeader
+            currentStep={step.id}
+            totalSteps={steps.length}
+            onSkip={() => router.push("/help-center")}
           />
+    
+    
+          <main className="max-w-[430px] flex flex-col flex-1">
+    
+            {/* CARD DINÂMICO */}
+            <CurrentCard step={step} />
+    
+            {/* Intro */}
+            <StepIntro
+              label={step.label ?? ""}
+              title={typeof step.title === "string" ? step.title : ""}
+              description={step.description ?? ""}
+            />
+    
+            {/* Indicators */}
+            <div className="mt-auto mb-6 flex justify-center gap-[5px]">
+              {steps.map((_, index) => (
+                <div
+                  key={index}
+                  className={`h-[10px] rounded-full transition-all duration-300 ${currentStep === index
+                    ? "w-[24px] bg-[#6B39A7]"
+                    : "w-[10px] bg-[#D9B8F5]"
+                    }`}
+                />
+              ))}
+            </div>
+    
+            {/* Buttons */}
+            <div className="flex justify-center gap-[15px] pb-2">
+              {currentStep > 0 && (
+                <BackButton onClick={handleBack} />
+              )}
+    
+              <NextButton
+                onClick={handleNext}
+                text={currentStep === steps.length - 1 ? "Concluir" : "Próximo"}
+                isFinish={currentStep === steps.length - 1}
+              />
+            </div>
+    
+          </main>
         </div>
-
-      </main>
-    </div>
-  );
-}
+      );
+    }
