@@ -15,9 +15,9 @@ import BackButton from "@/components/ui/BackButton";
 ========================= */
 
 function DefaultCard({ step }: any) {
-    return (
-        <div
-            className="
+  return (
+    <div
+      className="
         w-full
         bg-white
         border
@@ -29,24 +29,24 @@ function DefaultCard({ step }: any) {
         flex-col
         items-center
       "
-        >
-            <div className="w-full flex flex-row justify-between items-center">
-                <div>
-                    <Image src="/logo_roxa.svg" alt="DoeCerto" width={125} height={125} priority />
-                </div>
-
-                <div className="flex flex-row items-center">
-                    <ArrowRight className="w-[35px] h-[20px]" />
-
-                    <div className="bottom-0 border border-[#6B39A7] rounded-full w-[35px] h-[35px] flex justify-center items-center">
-
-                        <User className="w-[30px] h-[25px] text-[#6B39A7]" />
-                    </div>
-                </div>
-
-            </div>
+    >
+      <div className="w-full flex flex-row justify-between items-center">
+        <div>
+          <Image src="/logo_roxa.svg" alt="DoeCerto" width={125} height={125} priority />
         </div>
-    );
+
+        <div className="flex flex-row items-center">
+          <ArrowRight className="w-[35px] h-[20px]" />
+
+          <div className="bottom-0 border border-[#6B39A7] rounded-full w-[35px] h-[35px] flex justify-center items-center">
+
+            <User className="w-[30px] h-[25px] text-[#6B39A7]" />
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
 }
 
 /* =========================
@@ -186,15 +186,10 @@ function ReviewCard({ step }: any) {
         border
         border-[#6B39A7]
         rounded-[20px]
-        mt-[30px]
         pt-[40px]
         px-[25px]
         pb-[28px]
-        mb-[25px]
         shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
-        flex
-        flex-col
-        items-center
       "
     >
       <div className="flex flex-col items-center">
@@ -222,7 +217,7 @@ function ReviewCard({ step }: any) {
         </p>
       </div>
 
-      <div className="w-full flex flex-row gap-4 justify-center">
+      <div className="w-full flex flex-row gap-2 justify-center">
         <div
           className="
                 w-full 
@@ -304,11 +299,9 @@ function SuccessCard({ step }: any) {
         border
         border-[#6B39A7]
         rounded-[20px]
-        mt-[30px]
         pt-[40px]
         px-[25px]
         pb-[28px]
-        mb-[25px]
         shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
       "
     >
@@ -336,7 +329,6 @@ function SuccessCard({ step }: any) {
         </p>
 
         <div className="gap-2 w-full flex flex-col">
-
           <div className="rounded-[10px] py-[10px] px-[20px] border border-[#6B39A7] text-[16px] font-extrabold bg-[#EBD2FF]">
             {step.labelCard1}
             <div className="flex flex-row justify-between items-center">
@@ -476,170 +468,173 @@ function FinishCard({ step }: any) {
 }
 
 export default function DonationGuide() {
-    const router = useRouter();
+  const router = useRouter();
 
-    const steps = [
-        {
-            id: 1,
+  const steps = [
+    {
+      id: 1,
 
-            label: "Passo 1",
+      label: "Passo 1",
 
-            title: "Acesse seu Perfil",
+      title: "Acesse seu Perfil",
 
-            description:
-                "Toque no seu avatar no canto superior direito da home",
-        },
+      description:
+        "Toque no seu avatar no canto superior direito da home",
+    },
 
-        {
-            id: 2,
-            icon: <span className="text-[28px]">🐱</span>,
-            organization: "SOS Gatinhos",
-            organizationDescription:
-                "Como você quer ajudar?",
+    {
+      id: 2,
+      icon: <span className="text-[28px]">🐱</span>,
+      organization: "SOS Gatinhos",
+      organizationDescription:
+        "Como você quer ajudar?",
 
-            money: "Dinheiro",
-            DescribeMoney: "Pix ou boleto - rápido e seguro",
+      money: "Dinheiro",
+      DescribeMoney: "Pix ou boleto - rápido e seguro",
 
-            items: "Itens",
-            DescribeItems: "Ração, roupas e mais",
+      items: "Itens",
+      DescribeItems: "Ração, roupas e mais",
 
-            label: "VOCÊ DECIDE COMO AJUDAR",
+      label: "VOCÊ DECIDE COMO AJUDAR",
 
-            title: (
-                <>
-                    Escolha o tipo de <br />
-                    doação
-                </>
-            ),
+      title: (
+        <>
+          Escolha o tipo de <br />
+          doação
+        </>
+      ),
 
-            description:
-                "Doe dinheiro ou itens físicos - do jeito que for melhor pra você",
-        },
+      description:
+        "Doe dinheiro ou itens físicos - do jeito que for melhor pra você",
+    },
 
-        {
-            id: 3,
-            icon: <Heart className="w-[28px] h-[28px] fill-[#6B39A7] text-[#6B39A7]" />,
-            money: "R$ 50,00",
-            organizationDescription:
-                "para SOS Gatinhos",
+    {
+      id: 3,
+      icon: <Heart className="w-[28px] h-[28px] fill-[#6B39A7] text-[#6B39A7]" />,
+      money: "R$ 50,00",
+      organizationDescription:
+        "para SOS Gatinhos",
 
-            titleCard1: "Pix",
-            descriptionCard1:
-                "Instantâneo",
+      titleCard1: "Pix",
+      descriptionCard1:
+        "Instantâneo",
 
-            titleCard2: "Boleto",
+      titleCard2: "Boleto",
 
-            buttonText: "Confirmar Doação",
+      buttonText: "Confirmar Doação",
 
-            label: "RÁPIDO E SEGURO",
+      label: "RÁPIDO E SEGURO",
 
-            title: "Doe em segundos com Segurança",
+      title: "Doe em segundos com Segurança",
 
-            description:
-                "Pix ou boleto. Recibo e confirmação chega na hora.",
-        },
+      description:
+        "Pix ou boleto. Recibo e confirmação chega na hora.",
+    },
 
-        {
-            id: 4,
-            icon: <span className="text-[28px]">📦</span>,
-            titleCard: "O que você vai doar?",
-            titleDescription:
-                "Adicione os itens que deseja enviar para SOS Gatinhos",
+    {
+      id: 4,
+      icon: <span className="text-[28px]">📦</span>,
+      titleCard: "O que você vai doar?",
+      titleDescription:
+        "Adicione os itens que deseja enviar para SOS Gatinhos",
 
-            labelCard1: "Item 1",
-            itensCard1: "Ração e shampoo",
+      labelCard1: "Item 1",
+      itensCard1: "Ração e shampoo",
 
-            labelCard2: "Item 2",
-            itensCard2: "Ex: remédios, coberto...",
+      labelCard2: "Item 2",
+      itensCard2: "Ex: remédios, coberto...",
 
-            label: "ITENS QUE FAZEM DIFERENÇA",
+      label: "ITENS QUE FAZEM DIFERENÇA",
 
-            title: "Doe itens para quem mais precisa",
+      title: "Doe itens para quem mais precisa",
 
-            description:
-                "Adicione ração, remédios ou qualquer item da lista da ONG",
+      description:
+        "Adicione ração, remédios ou qualquer item da lista da ONG",
 
-            buttonAdd: "Adicionar Item",
-        },
+      buttonAdd: "Adicionar Item",
+    },
 
-        {
-            id: 5,
-            icon: <Check className="w-[30px] h-[30px] text-[#6B39A7] stroke-[3]" />,
-            confirmDonation: "Doação Confirmada!",
-            confirmOrganization:
-                "para SOS Gatinhos",
+    {
+      id: 5,
+      icon: <Check className="w-[30px] h-[30px] text-[#6B39A7] stroke-[3]" />,
+      confirmDonation: "Doação Confirmada!",
+      confirmOrganization:
+        "para SOS Gatinhos",
 
-            to: "SOS Gatinhos",
-            value: "R$ 50,00",
-            method: "Pix",
-            date: "Hoje, 14h32",
+      to: "SOS Gatinhos",
+      value: "R$ 50,00",
+      method: "Pix",
+      date: "Hoje, 14h32",
 
-            confirmDescription: "Recibo enviado para o seu e-mail. Obrigado por fazer a diferença!",
+      confirmDescription: "Recibo enviado para o seu e-mail. Obrigado por fazer a diferença!",
 
-            label: "TUDO CERTO!",
+      label: "TUDO CERTO!",
 
-            title: "Sua doação foi um confirmada!",
+      title: "Sua doação foi um confirmada!",
 
-            description:
-                "Recibo e comprovante chegam na hora no seu e-mail",
-        },
-    ];
+      description:
+        "Recibo e comprovante chegam na hora no seu e-mail",
+    },
+  ];
 
-    const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
 
-    const step = steps[currentStep];
+  const step = steps[currentStep];
 
-    /* =========================
-       MAPEAMENTO DOS CARDS
-    ========================= */
+  /* =========================
+     MAPEAMENTO DOS CARDS
+  ========================= */
 
-    const cardComponents: Record<number, any> = {
-        1: DefaultCard,
-        2: DonationTypeCard,
-        3: ReviewCard,
-        4: SuccessCard,
-        5: FinishCard,
-    };
+  const cardComponents: Record<number, any> = {
+    1: DefaultCard,
+    2: DonationTypeCard,
+    3: ReviewCard,
+    4: SuccessCard,
+    5: FinishCard,
+  };
 
-    const CurrentCard = cardComponents[step.id] || DefaultCard;
+  const CurrentCard = cardComponents[step.id] || DefaultCard;
 
-    function handleNext() {
-        if (currentStep < steps.length - 1) {
-            setCurrentStep(currentStep + 1);
-        } else {
-            router.push("/help-center");
-        }
+  function handleNext() {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    } else {
+      router.push("/help-center");
     }
+  }
 
-    function handleBack() {
-        if (currentStep > 0) {
-            setCurrentStep(currentStep - 1);
-        }
+  function handleBack() {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
     }
+  }
 
-    return (
-        <div className="min-h-dvh px-[25px] py-[10px] flex flex-col items-center">
-          <StepHeader
-            currentStep={step.id}
-            totalSteps={steps.length}
-            onSkip={() => router.push("/help-center")}
+  return (
+    <div className="px-[25px] py-[10px] flex flex-col items-center">
+      <StepHeader
+        currentStep={step.id}
+        totalSteps={steps.length}
+        onSkip={() => router.push("/help-center")}
+      />
+
+      <main className="mt-2 flex flex-col lg:flex-row gap-2 lg:gap-20 lg:items-start justify-center items-center">
+
+        {/* CARD DINÂMICO */}
+        <div className="w-full lg:flex-1">
+          <CurrentCard step={step} />
+        </div>
+
+        {/* Intro */}
+        <div className="w-full lg:flex-1 pt-6 lg:pt-10 h-auto lg:h-[530px] flex flex-col">
+          <StepIntro
+            label={step.label ?? ""}
+            title={typeof step.title === "string" ? step.title : ""}
+            description={step.description ?? ""}
           />
-    
-    
-          <main className="max-w-[430px] flex flex-col flex-1">
-    
-            {/* CARD DINÂMICO */}
-            <CurrentCard step={step} />
-    
-            {/* Intro */}
-            <StepIntro
-              label={step.label ?? ""}
-              title={typeof step.title === "string" ? step.title : ""}
-              description={step.description ?? ""}
-            />
-    
-            {/* Indicators */}
-            <div className="mt-auto mb-6 flex justify-center gap-[5px]">
+
+          {/* Indicators */}
+          <div className="flex justify-center flex-col lg:mt-auto mt-8">
+            <div className="mb-6 flex justify-center gap-[5px]">
               {steps.map((_, index) => (
                 <div
                   key={index}
@@ -650,21 +645,22 @@ export default function DonationGuide() {
                 />
               ))}
             </div>
-    
+
             {/* Buttons */}
             <div className="flex justify-center gap-[15px] pb-2">
               {currentStep > 0 && (
                 <BackButton onClick={handleBack} />
               )}
-    
+
               <NextButton
                 onClick={handleNext}
                 text={currentStep === steps.length - 1 ? "Concluir" : "Próximo"}
                 isFinish={currentStep === steps.length - 1}
               />
             </div>
-    
-          </main>
+          </div>
         </div>
-      );
-    }
+      </main>
+    </div>
+  );
+}
