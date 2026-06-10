@@ -402,6 +402,7 @@ function SuccessCard({ step }: any) {
         pt-[40px]
         px-[25px]
         pb-[28px]
+        mt-[30px]
         shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
       "
     >
@@ -727,7 +728,7 @@ export default function DonationGuide() {
         onSkip={() => router.push("/help-center")}
       />
 
-      <main className="mt-2flex flex-col lg:flex-row gap-2 lg:gap-20 lg:items-start justify-center items-center">
+      <main className="flex flex-col lg:flex-row gap-2 lg:gap-20 lg:items-start justify-center items-center">
 
         {/* CARD DINÂMICO */}
         <div className="w-full lg:flex-1">
