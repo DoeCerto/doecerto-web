@@ -1,19 +1,19 @@
-import { api } from './api';
+import { api } from "./api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const OngsProfileService = {
   _formatImageUrl(path: string | null) {
     if (!path) return "";
-    if (path.startsWith('http')) return path;
+    if (path.startsWith("http")) return path;
     const cleanPath = path.replace(/\\/g, "/");
-    return `${API_URL}${cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`}`;
+    return `${API_URL}${cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`}`;
   },
 
   _calculateYears(createdAt: string | Date) {
     const yearCreated = new Date(createdAt).getFullYear();
     const diff = new Date().getFullYear() - yearCreated;
-    return diff <= 0 ? "Novo" : `${diff} ${diff === 1 ? 'ano' : 'anos'}`;
+    return diff <= 0 ? "Novo" : `${diff} ${diff === 1 ? "ano" : "anos"}`;
   },
 
   async getPublicProfile(ongId: number) {
@@ -21,21 +21,25 @@ export const OngsProfileService = {
       const [resBase, resProfile, resReviews] = await Promise.all([
         api<any>(`/ongs/${ongId}`).catch(() => ({ data: {} })),
         api<any>(`/ongs/${ongId}/profile`).catch(() => ({ data: {} })),
-        api<any>(`/ongs/${ongId}/ratings`).catch(() => ({ data: [] }))
+        api<any>(`/ongs/${ongId}/ratings`).catch(() => ({ data: [] })),
       ]);
 
       const base = resBase.data;
       const profile = resProfile.data;
 
       // Normalização da descrição
-      const descriptionText = profile.description || profile.about || profile.bio || "ONG verificada.";
+      const descriptionText =
+        profile.description ||
+        profile.about ||
+        profile.bio ||
+        "ONG verificada.";
 
       // Normalização do Website
       let websiteLink = "Não informado";
       const urls = profile.websiteUrls || profile.website || [];
       if (Array.isArray(urls) && urls.length > 0) {
         websiteLink = urls[0];
-      } else if (typeof urls === 'string') {
+      } else if (typeof urls === "string") {
         websiteLink = urls;
       }
 
@@ -48,14 +52,16 @@ export const OngsProfileService = {
         description: descriptionText,
         phone: profile.contactNumber || base.contactNumber || "Não informado",
         instagram: websiteLink,
-        address: profile.address?.city ? `${profile.address.city}, ${profile.address.state}` : "Endereço não informado",
+        address: profile.address?.city
+          ? `${profile.address.city}, ${profile.address.state}`
+          : "Endereço não informado",
         yearsOfOperation: profile.yearsOfOperation,
         rating: Number(profile.rating?.average || 0),
         numberOfRatings: profile.rating?.count || 0,
         categories: profile.categories || [],
         reviews: Array.isArray(resReviews.data) ? resReviews.data : [],
         donations: profile.receivedDonations || 0,
-        distance: base.distance || "—"
+        distance: base.distance || "—",
       };
     } catch (error) {
       console.error("Erro no getPublicProfile:", error);
@@ -64,19 +70,24 @@ export const OngsProfileService = {
   },
 
   async getMyProfile() {
-    const { data } = await api<any>('/ongs/me/profile');
+    const { data } = await api<any>("/ongs/me/profile");
 
     let websiteValue = "";
-    if (data.websiteUrls && Array.isArray(data.websiteUrls) && data.websiteUrls.length > 0) {
+
+    if (
+      data.websiteUrls &&
+      Array.isArray(data.websiteUrls) &&
+      data.websiteUrls.length > 0
+    ) {
       websiteValue = data.websiteUrls[0];
     } else if (data.website && Array.isArray(data.website)) {
-       websiteValue = data.website[0] || "";
+      websiteValue = data.website[0] || "";
     }
 
     return {
       ...data,
       name: data.name || "Minha ONG",
-     
+
       description: data.description || data.about || data.bio || "",
       website: websiteValue,
       avatarUrl: this._formatImageUrl(data.avatarUrl),
@@ -85,15 +96,15 @@ export const OngsProfileService = {
       stats: {
         donations: data.receivedDonations || 0,
         ratingAverage: Number(data.rating?.average) || 0,
-      }
+      },
     };
   },
 
   async postReview(ongId: number, score: number, comment: string) {
     return api(`/ongs/${ongId}/ratings`, {
       method: "POST",
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ score, comment }),
     });
-  }
+  },
 };
