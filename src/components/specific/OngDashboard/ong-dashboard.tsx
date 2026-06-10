@@ -183,7 +183,6 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
 
       const profileIncomplete =
         !profileData.description ||
-        !profileData.contactNumber ||
         !profileData.address?.city;
 
       if (profileIncomplete && !dismissed) {

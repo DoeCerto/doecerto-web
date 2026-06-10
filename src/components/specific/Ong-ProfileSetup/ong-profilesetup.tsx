@@ -20,7 +20,7 @@ import {
   Info,
   Navigation,
   Flag,
-  ExternalLink
+  ExternalLink,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
@@ -61,7 +61,10 @@ export default function OngSetupProfile() {
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState("");
   const [bannerPreview, setBannerPreview] = useState("");
-  const [bannerCrop, setBannerCrop] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
+  const [bannerCrop, setBannerCrop] = useState<{ x: number; y: number }>({
+    x: 50,
+    y: 50,
+  });
 
   // Lista de Desejos
   const [newItem, setNewItem] = useState("");
@@ -77,6 +80,7 @@ export default function OngSetupProfile() {
   const [pixKeyType, setPixKeyType] = useState("CPF");
 
   const accountTypeOptions = ["Corrente", "Poupança", "Aplicação"];
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   useEffect(() => {
     async function loadInitialData() {
@@ -101,7 +105,7 @@ export default function OngSetupProfile() {
             console.error("Erro ao carregar wishlist");
           }
 
-          if (profile.address && typeof profile.address === 'object') {
+          if (profile.address && typeof profile.address === "object") {
             setStreet(profile.address.street || "");
             setNumber(profile.address.number || "");
             setComplement(profile.address.complement || "");
@@ -112,10 +116,12 @@ export default function OngSetupProfile() {
             setCountry(profile.address.country || "Brasil");
           }
 
-          if (profile.yearsOfOperation) setYears(profile.yearsOfOperation.toString());
+          if (profile.yearsOfOperation)
+            setYears(profile.yearsOfOperation.toString());
           if (profile.avatarUrl) setLogoPreview(profile.avatarUrl);
           if (profile.bannerUrl) setBannerPreview(profile.bannerUrl);
-          if (profile.categories) setSelectedCategoryIds(profile.categories.map((c: any) => c.id));
+          if (profile.categories)
+            setSelectedCategoryIds(profile.categories.map((c: any) => c.id));
         }
 
         const bankData = await BankAccountService.getMyAccount();
@@ -142,7 +148,6 @@ export default function OngSetupProfile() {
             setPixKeyType("CPF");
           }
         }
-
       } catch (error) {
         toast.error("Erro ao sincronizar dados com o servidor.");
       } finally {
@@ -163,8 +168,8 @@ export default function OngSetupProfile() {
   };
 
   const toggleCategory = (id: number) => {
-    setSelectedCategoryIds(prev =>
-      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+    setSelectedCategoryIds((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id],
     );
   };
 
@@ -177,7 +182,7 @@ export default function OngSetupProfile() {
 
     try {
       const addedItem = await WishlistService.addItem(ongId, newItem.trim(), 1);
-      setItems(prev => [...prev, addedItem]);
+      setItems((prev) => [...prev, addedItem]);
       setNewItem("");
       toast.success("Item adicionado à lista!");
     } catch (error) {
@@ -189,7 +194,7 @@ export default function OngSetupProfile() {
     if (!ongId) return;
     try {
       await WishlistService.deleteItem(ongId, itemId);
-      setItems(prev => prev.filter(item => item.id !== itemId));
+      setItems((prev) => prev.filter((item) => item.id !== itemId));
       toast.success("Item removido.");
     } catch (error) {
       toast.error("Erro ao excluir item.");
@@ -218,36 +223,95 @@ export default function OngSetupProfile() {
   };
 
   const validateForm = () => {
-    if (!description.trim()) { toast.error("A descrição da ONG é obrigatória."); return false; }
-    if (!years) { toast.error("Informe os anos de atuação."); return false; }
-
-    // TRAVA DE VALIDAÇÃO DO WHATSAPP (Impede apenas o "55" ou campo incompleto)
-    const rawPhone = phone.replace(/\D/g, "");
-    if (!rawPhone || rawPhone === "55" || rawPhone.length < 12) {
-      toast.error("O número de contato válido com o DDD é obrigatório.");
+    if (!description.trim()) {
+      toast.error("A descrição da ONG é obrigatória.");
       return false;
     }
 
-    if (!zipCode.trim()) { toast.error("O CEP é obrigatório."); return false; }
-    if (!street.trim()) { toast.error("O nome da rua é obrigatório."); return false; }
-    if (!number.trim()) { toast.error("O número do endereço é obrigatório."); return false; }
-    if (!neighborhood.trim()) { toast.error("O bairro é obrigatório."); return false; }
-    if (!city.trim()) { toast.error("A cidade é obrigatória."); return false; }
-    if (!state.trim()) { toast.error("O estado (UF) é obrigatório."); return false; }
-    if (selectedCategoryIds.length === 0) { toast.error("Selecione pelo menos uma categoria."); return false; }
+    if (!years) {
+      toast.error("Informe os anos de atuação.");
+      return false;
+    }
 
-    if (!bankName.trim() || !pixKey.trim()) {
-      toast.error("Complete os dados bancários para receber doações.");
+    // Telefone opcional
+    if (phone.trim()) {
+      const rawPhone = phone.replace(/\D/g, "");
+
+      if (rawPhone === "55" || rawPhone.length < 12) {
+        toast.error("Número de contato inválido.");
+        return false;
+      }
+    }
+
+    // Endereço obrigatório
+    if (!zipCode.trim()) {
+      toast.error("O CEP é obrigatório.");
+      return false;
+    }
+
+    if (!street.trim()) {
+      toast.error("O nome da rua é obrigatório.");
+      return false;
+    }
+
+    if (!number.trim()) {
+      toast.error("O número do endereço é obrigatório.");
+      return false;
+    }
+
+    if (!neighborhood.trim()) {
+      toast.error("O bairro é obrigatório.");
+      return false;
+    }
+
+    if (!city.trim()) {
+      toast.error("A cidade é obrigatória.");
+      return false;
+    }
+
+    if (!state.trim()) {
+      toast.error("O estado (UF) é obrigatório.");
+      return false;
+    }
+
+    if (selectedCategoryIds.length === 0) {
+      toast.error("Selecione pelo menos uma categoria.");
+      return false;
+    }
+
+    // Dados bancários obrigatórios
+    if (!bankName.trim()) {
+      toast.error("Informe a instituição bancária.");
+      return false;
+    }
+
+    if (!agencyNumber.trim() || agencyNumber.trim().length < 3) {
+      toast.error("Informe uma agência válida.");
+      return false;
+    }
+
+    if (!accountNumber.trim() || accountNumber.trim().length < 3) {
+      toast.error("Informe uma conta válida.");
+      return false;
+    }
+
+    if (!pixKey.trim()) {
+      toast.error("Informe uma chave PIX.");
       return false;
     }
 
     return true;
   };
 
-  const handleFinalize = async () => {
+  const handleFinalize = () => {
     if (!validateForm()) return;
 
+    setShowConfirmModal(true);
+  };
+
+  const saveProfile = async () => {
     setLoading(true);
+
     try {
       const cleanPhone = phone.replace(/\D/g, "");
 
@@ -257,7 +321,16 @@ export default function OngSetupProfile() {
         websiteUrls: website?.trim() ? [website.trim()] : undefined,
         categoryIds: selectedCategoryIds,
         yearsOfOperation: years ? Number(years) : undefined,
-        address: { street, number, complement, neighborhood, city, state, zipCode, country },
+        address: {
+          street,
+          number,
+          complement,
+          neighborhood,
+          city,
+          state,
+          zipCode,
+          country,
+        },
       };
 
       await OngSetupService.updateProfileData(payload);
@@ -266,7 +339,7 @@ export default function OngSetupProfile() {
         await OngSetupService.updateProfileImages(
           logoFile,
           bannerFile,
-          bannerFile ? bannerCrop : undefined
+          bannerFile ? bannerCrop : undefined,
         );
       }
 
@@ -279,19 +352,20 @@ export default function OngSetupProfile() {
       });
 
       toast.success("Perfil atualizado com sucesso!");
+
       setTimeout(() => {
         router.push("/ong-dashboard");
       }, 1500);
     } catch (error: any) {
       const msg = error.message?.includes("avatar")
         ? "A imagem da logo é muito grande ou inválida."
-        : "Ocorreu um erro ao salvar os dados. Verifique sua conexão.";
+        : "Ocorreu um erro ao salvar os dados.";
+
       toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
-
   // Helper para exibir no campo apenas os dígitos que vêm depois do 55
   const getDisplayPhone = (fullPhone: string) => {
     const clean = fullPhone.replace(/\D/g, "");
@@ -360,12 +434,13 @@ export default function OngSetupProfile() {
                   </span>
 
                   <span
-                    className={`text-xs font-bold transition-colors ${description.length >= 500
-                      ? "text-red-500"
-                      : description.length >= 450
-                        ? "text-orange-500"
-                        : "text-purple-500"
-                      }`}
+                    className={`text-xs font-bold transition-colors ${
+                      description.length >= 500
+                        ? "text-red-500"
+                        : description.length >= 450
+                          ? "text-orange-500"
+                          : "text-purple-500"
+                    }`}
                   >
                     {description.length}/500
                   </span>
@@ -373,7 +448,11 @@ export default function OngSetupProfile() {
               </div>
             </FormSection>
 
-            <FormSection title="Atuação (Anos) *" icon={Award} className="flex flex-col justify-center">
+            <FormSection
+              title="Atuação (Anos) *"
+              icon={Award}
+              className="flex flex-col justify-center"
+            >
               <input
                 type="number"
                 value={years}
@@ -383,11 +462,9 @@ export default function OngSetupProfile() {
               />
             </FormSection>
           </div>
-          
 
-          <FormSection title="Canais de Contato *" italicTitle>
+          <FormSection title="Canais de Contato" italicTitle>
             <div className="space-y-3 sm:space-y-4">
-
               {/* CONTAINER COM O PREFIXO +55 FIXO VISUALMENTE */}
               <div className="flex rounded-xl bg-gray-50 overflow-hidden border border-transparent focus-within:border-purple-200 focus-within:ring-2 focus-within:ring-purple-100 transition-all">
                 <div className="flex items-center justify-center bg-gray-100 text-gray-500 px-4 text-sm font-bold select-none border-r border-gray-200/60 gap-2">
@@ -444,18 +521,38 @@ export default function OngSetupProfile() {
 
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <div className="w-full sm:w-1/3">
-                  <InputGroup icon={Milestone} placeholder="Nº" value={number} onChange={(e) => setNumber(e.target.value)} />
+                  <InputGroup
+                    icon={Milestone}
+                    placeholder="Nº"
+                    value={number}
+                    onChange={(e) => setNumber(e.target.value)}
+                  />
                 </div>
                 <div className="w-full sm:w-2/3">
-                  <InputGroup icon={Info} placeholder="Complemento" value={complement} onChange={(e) => setComplement(e.target.value)} />
+                  <InputGroup
+                    icon={Info}
+                    placeholder="Complemento"
+                    value={complement}
+                    onChange={(e) => setComplement(e.target.value)}
+                  />
                 </div>
               </div>
 
-              <InputGroup icon={Navigation} placeholder="Bairro" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} />
+              <InputGroup
+                icon={Navigation}
+                placeholder="Bairro"
+                value={neighborhood}
+                onChange={(e) => setNeighborhood(e.target.value)}
+              />
 
               <div className="grid grid-cols-3 gap-3 sm:gap-4">
                 <div className="col-span-2">
-                  <InputGroup icon={Building2} placeholder="Cidade" value={city} onChange={(e) => setCity(e.target.value)} />
+                  <InputGroup
+                    icon={Building2}
+                    placeholder="Cidade"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                  />
                 </div>
                 <div className="col-span-1">
                   <InputGroup
@@ -463,24 +560,32 @@ export default function OngSetupProfile() {
                     placeholder="UF"
                     value={state}
                     maxLength={2}
-                    onChange={(e) => setState(e.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase())}
+                    onChange={(e) =>
+                      setState(
+                        e.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase(),
+                      )
+                    }
                   />
                 </div>
               </div>
             </div>
           </FormSection>
 
-          <FormSection title="Categorias de Causa * (Selecione pelo menos uma)" icon={Tag}>
+          <FormSection
+            title="Categorias de Causa * (Selecione pelo menos uma)"
+            icon={Tag}
+          >
             <div className="flex flex-wrap gap-2">
               {availableCategories.map((cat) => (
                 <button
                   key={cat.id}
                   type="button"
                   onClick={() => toggleCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-xl text-[11px] sm:text-sm font-bold transition-all border ${selectedCategoryIds.includes(cat.id)
-                    ? "bg-[#6B39A7] text-white border-[#6B39A7] shadow-md"
-                    : "bg-gray-50 text-gray-500 border-gray-100 hover:bg-purple-50"
-                    }`}
+                  className={`px-3 py-1.5 rounded-xl text-[11px] sm:text-sm font-bold transition-all border ${
+                    selectedCategoryIds.includes(cat.id)
+                      ? "bg-[#6B39A7] text-white border-[#6B39A7] shadow-md"
+                      : "bg-gray-50 text-gray-500 border-gray-100 hover:bg-purple-50"
+                  }`}
                 >
                   {cat.name}
                 </button>
@@ -494,7 +599,6 @@ export default function OngSetupProfile() {
             className="bg-gradient-to-br from-white to-purple-50"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-
               {/* BANCO */}
               <div className="md:col-span-2">
                 <label className="text-[10px] font-black uppercase text-purple-400 mb-1 block ml-1">
@@ -548,7 +652,6 @@ export default function OngSetupProfile() {
                   {/* TELEFONE */}
                   {pixKeyType === "Telefone" ? (
                     <div className="flex items-center bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden focus-within:border-purple-300 transition-colors">
-
                       {/* PREFIXO FIXO */}
                       <div className="px-4 py-4 bg-purple-50 text-purple-600 font-black text-sm border-r border-gray-100">
                         +55
@@ -635,7 +738,6 @@ export default function OngSetupProfile() {
                   className="w-full bg-white p-4 rounded-xl border border-gray-100 outline-none text-sm focus:border-purple-300 transition-colors shadow-sm"
                 />
               </div>
-
             </div>
           </FormSection>
 
@@ -658,9 +760,16 @@ export default function OngSetupProfile() {
 
             <div className="flex flex-wrap gap-2">
               {items.map((item) => (
-                <span key={item.id} className="flex items-center gap-2 bg-purple-50 text-[#6B39A7] px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold border border-purple-100 shadow-sm">
+                <span
+                  key={item.id}
+                  className="flex items-center gap-2 bg-purple-50 text-[#6B39A7] px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold border border-purple-100 shadow-sm"
+                >
                   {item.description}
-                  <Trash2 size={14} className="cursor-pointer text-red-400 hover:text-red-600 transition-colors" onClick={() => handleDeleteItem(item.id)} />
+                  <Trash2
+                    size={14}
+                    className="cursor-pointer text-red-400 hover:text-red-600 transition-colors"
+                    onClick={() => handleDeleteItem(item.id)}
+                  />
                 </span>
               ))}
             </div>
@@ -668,7 +777,11 @@ export default function OngSetupProfile() {
         </div>
       </div>
 
-      <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="fixed bottom-4 left-0 right-0 px-4 z-[100]">
+      <motion.div
+        initial={{ y: 40, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="fixed bottom-4 left-0 right-0 px-4 z-[100]"
+      >
         <div className="max-w-4xl mx-auto">
           <button
             type="button"
@@ -676,10 +789,54 @@ export default function OngSetupProfile() {
             disabled={loading}
             className="w-full py-4 rounded-2xl text-lg font-black text-white bg-gradient-to-r from-pink-500 to-purple-600 shadow-xl flex items-center justify-center gap-3 active:scale-[0.98] transition-all disabled:opacity-70"
           >
-            {loading ? <Loader2 className="animate-spin" /> : "Salvar Perfil e Continuar"}
+            {loading ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              "Salvar Perfil e Continuar"
+            )}
           </button>
         </div>
       </motion.div>
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 px-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl"
+          >
+            <h2 className="text-xl font-black text-gray-900 mb-3">
+              Confirmar alterações
+            </h2>
+
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Você está prestes a atualizar as informações públicas da sua ONG.
+              Verifique os dados antes de continuar.
+            </p>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowConfirmModal(false)}
+                className="flex-1 py-3 rounded-xl border border-gray-200 font-bold text-gray-600 hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowConfirmModal(false);
+                  saveProfile();
+                }}
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold"
+              >
+                Confirmar
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
