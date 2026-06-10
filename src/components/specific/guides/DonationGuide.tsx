@@ -289,9 +289,6 @@ function ReviewCard({ step }: any) {
         pb-[28px]
         mb-[25px]
         shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
-        flex
-        flex-col
-        items-center
       "
     >
       <div className="flex flex-col items-center">
@@ -330,7 +327,8 @@ function ReviewCard({ step }: any) {
                 flex-col 
                 items-center 
                 justify-center 
-                p-[15px] 
+                py-[15px] 
+                px-[20px]
                 rounded-[14px]
               "
         >
@@ -348,7 +346,7 @@ function ReviewCard({ step }: any) {
               items-center
               justify-center
               py-[5px]
-              px-[15px]
+              px-[20px]
               rounded-[14px]
             "
         >
@@ -401,11 +399,9 @@ function SuccessCard({ step }: any) {
         border
         border-[#6B39A7]
         rounded-[20px]
-        mt-[30px]
         pt-[40px]
         px-[25px]
         pb-[28px]
-        mb-[25px]
         shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
       "
     >
@@ -433,7 +429,6 @@ function SuccessCard({ step }: any) {
         </p>
 
         <div className="gap-2 w-full flex flex-col">
-
           <div className="rounded-[10px] py-[10px] px-[20px] border border-[#6B39A7] text-[16px] font-extrabold bg-[#EBD2FF]">
             {step.labelCard1}
             <div className="flex flex-row justify-between items-center">
@@ -600,7 +595,7 @@ export default function DonationGuide() {
     {
       id: 2,
       icon: <span className="text-[28px]">🐱</span>,
-      organization: "Sos Gatinhos",
+      organization: "SOS Gatinhos",
       organizationDescription:
         "Como você quer ajudar?",
 
@@ -725,52 +720,56 @@ export default function DonationGuide() {
   }
 
   return (
-    <div className="min-h-dvh px-[25px] py-[10px] flex flex-col items-center">
+    <div className="px-[25px] py-[10px] flex flex-col items-center">
       <StepHeader
         currentStep={step.id}
         totalSteps={steps.length}
         onSkip={() => router.push("/help-center")}
       />
 
-
-      <main className="max-w-[430px] flex flex-col flex-1">
+      <main className="mt-2flex flex-col lg:flex-row gap-2 lg:gap-20 lg:items-start justify-center items-center">
 
         {/* CARD DINÂMICO */}
-        <CurrentCard step={step} />
+        <div className="w-full lg:flex-1">
+          <CurrentCard step={step} />
+        </div>
 
         {/* Intro */}
-        <StepIntro
-          label={step.label ?? ""}
-          title={typeof step.title === "string" ? step.title : ""}
-          description={step.description ?? ""}
-        />
-
-        {/* Indicators */}
-        <div className="mt-auto mb-6 flex justify-center gap-[5px]">
-          {steps.map((_, index) => (
-            <div
-              key={index}
-              className={`h-[10px] rounded-full transition-all duration-300 ${currentStep === index
-                ? "w-[24px] bg-[#6B39A7]"
-                : "w-[10px] bg-[#D9B8F5]"
-                }`}
-            />
-          ))}
-        </div>
-
-        {/* Buttons */}
-        <div className="flex justify-center gap-[15px] pb-2">
-          {currentStep > 0 && (
-            <BackButton onClick={handleBack} />
-          )}
-
-          <NextButton
-            onClick={handleNext}
-            text={currentStep === steps.length - 1 ? "Concluir" : "Próximo"}
-            isFinish={currentStep === steps.length - 1}
+        <div className="w-full lg:flex-1 pt-6 lg:pt-10 h-auto lg:h-[530px] flex flex-col">
+          <StepIntro
+            label={step.label ?? ""}
+            title={typeof step.title === "string" ? step.title : ""}
+            description={step.description ?? ""}
           />
-        </div>
 
+          {/* Indicators */}
+          <div className="flex justify-center flex-col lg:mt-auto mt-8">
+          <div className="mb-6 flex justify-center gap-[5px]">
+            {steps.map((_, index) => (
+              <div
+                key={index}
+                className={`h-[10px] rounded-full transition-all duration-300 ${currentStep === index
+                  ? "w-[24px] bg-[#6B39A7]"
+                  : "w-[10px] bg-[#D9B8F5]"
+                  }`}
+              />
+            ))}
+          </div>
+
+          {/* Buttons */}
+          <div className="flex justify-center gap-[15px] pb-2">
+            {currentStep > 0 && (
+              <BackButton onClick={handleBack} />
+            )}
+
+            <NextButton
+              onClick={handleNext}
+              text={currentStep === steps.length - 1 ? "Concluir" : "Próximo"}
+              isFinish={currentStep === steps.length - 1}
+            />
+          </div>
+          </div>
+        </div>
       </main>
     </div>
   );
