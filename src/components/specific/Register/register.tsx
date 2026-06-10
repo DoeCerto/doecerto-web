@@ -140,7 +140,6 @@ export default function Register() {
             <input
               id="nome"
               type="text"
-              required
               placeholder="Digite seu nome completo"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
@@ -155,7 +154,6 @@ export default function Register() {
               <input
                 id="cpf"
                 type="text"
-                required
                 placeholder="000.000.000-00"
                 value={cpf}
                 onChange={(e) => handleCPFChange(e.target.value)}
@@ -187,7 +185,6 @@ export default function Register() {
             <input
               id="email"
               type="email"
-              required
               placeholder="seu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -202,7 +199,6 @@ export default function Register() {
               <input
                 id="senha"
                 type={showSenha ? "text" : "password"}
-                required
                 minLength={6}
                 placeholder="Mínimo de 8 caracteres"
                 value={senha}
@@ -228,7 +224,6 @@ export default function Register() {
               <input
                 id="confirmarSenha"
                 type={showConfirmar ? "text" : "password"}
-                required
                 placeholder="Repita sua senha"
                 value={confirmarSenha}
                 onChange={(e) => setConfirmarSenha(e.target.value)}

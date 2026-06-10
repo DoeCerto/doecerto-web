@@ -7,7 +7,11 @@ import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import { Eye, EyeOff, AlertCircle, ArrowLeft } from "lucide-react";
 import { registerOng } from "@/services/register-ong.service";
-import { formatCNPJ, removeFormatting, validateCNPJ } from "@/utils/documentValidation";
+import {
+  formatCNPJ,
+  removeFormatting,
+  validateCNPJ,
+} from "@/utils/documentValidation";
 import TermosModal from "@/components/shared/TermosModal"; // ← NOVO
 
 export default function OngRegisterPage() {
@@ -126,7 +130,13 @@ export default function OngRegisterPage() {
 
       <div className="w-full max-w-xs flex flex-col items-center">
         <div className="mb-4">
-          <Image src="/logo.svg" alt="DoeCerto" width={120} height={120} priority />
+          <Image
+            src="/logo.svg"
+            alt="DoeCerto"
+            width={120}
+            height={120}
+            priority
+          />
         </div>
 
         <h1 className="text-4xl -mt-2 font-bold mb-8 text-center">
@@ -136,11 +146,12 @@ export default function OngRegisterPage() {
         <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
           {/* Nome */}
           <div className="flex flex-col">
-            <label htmlFor="nome" className="text-base font-bold mb-1">Nome</label>
+            <label htmlFor="nome" className="text-base font-bold mb-1">
+              Nome
+            </label>
             <input
               id="nome"
               type="text"
-              required
               placeholder="Digite o nome da ONG"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
@@ -150,11 +161,12 @@ export default function OngRegisterPage() {
 
           {/* Email */}
           <div className="flex flex-col">
-            <label htmlFor="email" className="text-base font-bold mb-1">Email</label>
+            <label htmlFor="email" className="text-base font-bold mb-1">
+              Email
+            </label>
             <input
               id="email"
               type="email"
-              required
               placeholder="exemplo@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -164,18 +176,21 @@ export default function OngRegisterPage() {
 
           {/* CNPJ */}
           <div className="flex flex-col relative">
-            <label htmlFor="cnpj" className="text-base font-bold mb-1">CNPJ</label>
+            <label htmlFor="cnpj" className="text-base font-bold mb-1">
+              CNPJ
+            </label>
             <div className="relative">
               <input
                 id="cnpj"
                 type="text"
-                required
                 placeholder="00.000.000/0000-00"
                 value={cnpj}
                 onChange={(e) => handleCNPJChange(e.target.value)}
                 maxLength={18}
                 className={`w-full bg-white p-2 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
-                  cnpjError ? "ring-2 ring-red-400 shake" : "focus:ring-purple-300"
+                  cnpjError
+                    ? "ring-2 ring-red-400 shake"
+                    : "focus:ring-purple-300"
                 } ${cnpjShake ? "shake" : ""}`}
               />
               {cnpjError && (
@@ -197,18 +212,21 @@ export default function OngRegisterPage() {
 
           {/* Senha */}
           <div className="flex flex-col relative">
-            <label htmlFor="senha" className="text-base font-bold mb-1">Senha</label>
+            <label htmlFor="senha" className="text-base font-bold mb-1">
+              Senha
+            </label>
             <div className="relative">
               <input
                 id="senha"
                 type={showSenha ? "text" : "password"}
-                required
                 minLength={6}
                 placeholder="Mínimo de 8 caracteres"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 className={`w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
-                  senhasCoincidem ? "ring-2 ring-green-400" : "focus:ring-purple-300"
+                  senhasCoincidem
+                    ? "ring-2 ring-green-400"
+                    : "focus:ring-purple-300"
                 }`}
               />
               <button
@@ -223,18 +241,25 @@ export default function OngRegisterPage() {
 
           {/* Confirmar Senha */}
           <div className="flex flex-col">
-            <label htmlFor="confirmarSenha" className="text-base font-bold mb-1">Confirmar Senha</label>
+            <label
+              htmlFor="confirmarSenha"
+              className="text-base font-bold mb-1"
+            >
+              Confirmar Senha
+            </label>
             <div className="relative">
               <input
                 id="confirmarSenha"
                 type={showConfirmar ? "text" : "password"}
-                required
                 placeholder="Repita sua senha"
                 value={confirmarSenha}
                 onChange={(e) => setConfirmarSenha(e.target.value)}
                 className={`w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
-                  senhasCoincidem ? "ring-2 ring-green-400" :
-                  senhasDiferentes ? "ring-2 ring-red-400" : "focus:ring-purple-300"
+                  senhasCoincidem
+                    ? "ring-2 ring-green-400"
+                    : senhasDiferentes
+                      ? "ring-2 ring-red-400"
+                      : "focus:ring-purple-300"
                 }`}
               />
               <button
@@ -254,7 +279,10 @@ export default function OngRegisterPage() {
 
           <p className="text-base text-right font-bold -mt-2 mb-4">
             Já possui conta?{" "}
-            <Link href="/login" className="font-bold text-[#E0C4FF] hover:underline transition-all">
+            <Link
+              href="/login"
+              className="font-bold text-[#E0C4FF] hover:underline transition-all"
+            >
               Fazer Login
             </Link>
           </p>
