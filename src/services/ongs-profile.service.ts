@@ -51,7 +51,7 @@ export const OngsProfileService = {
         logo: this._formatImageUrl(profile.avatarUrl || base.avatarUrl),
         description: descriptionText,
         phone: profile.contactNumber || base.contactNumber || "Não informado",
-        instagram: websiteLink,
+        website: websiteLink !== "Não informado" ? [websiteLink] : [],
         address: profile.address?.city
           ? `${profile.address.city}, ${profile.address.state}`
           : "Endereço não informado",
@@ -71,6 +71,10 @@ export const OngsProfileService = {
 
   async getMyProfile() {
     const { data } = await api<any>("/ongs/me/profile");
+
+    console.log("API PROFILE:", data);
+    console.log("website", data.website);
+    console.log("websiteUrls", data.websiteUrls);
 
     let websiteValue = "";
 
