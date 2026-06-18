@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { ArrowRight, User, Star, Heart, Check } from "lucide-react";
+import { MoveRight, User, Star, Heart, Check } from "lucide-react";
 
 import StepHeader from "@/components/ui/StepHeader";
 import StepIntro from "@/components/ui/StepIntro";
 import NextButton from "@/components/ui/NextButton";
 import BackButton from "@/components/ui/BackButton";
+import { FiSearch } from "react-icons/fi";
 
 /* =========================
    CARD PADRÃO
@@ -36,15 +37,48 @@ function DefaultCard({ step }: any) {
         </div>
 
         <div className="flex flex-row items-center">
-          <ArrowRight className="w-[35px] h-[20px]" />
+          <MoveRight className="w-[35px] h-[30px] text-[#6B39A7]" />
 
           <div className="bottom-0 border border-[#6B39A7] rounded-full w-[35px] h-[35px] flex justify-center items-center">
 
             <User className="w-[30px] h-[25px] text-[#6B39A7]" />
           </div>
         </div>
-
       </div>
+
+      <div className="mt-[15px] mb-[10px] w-full flex items-center gap-3 bg-white shadow-sm rounded-xl px-3 py-2">
+        <FiSearch className="text-gray-400" />
+        <input
+          placeholder="Pesquise uma ONG, cidade ou causa"
+          className="w-full outline-none text-sm"
+        />
+      </div>
+
+      <div className="w-full flex flex-row gap-3">
+        <div className="justify-start rounded-[20px] shadow-sm py-[2px] px-[10px] flex justify-center items-center">
+          <p>Proteção Animal</p>
+        </div>
+
+        <div className="justify-start rounded-[20px] shadow-sm py-[2px] px-[10px] flex justify-center items-center">
+          <p>Saúde</p>
+        </div>
+
+        <div className="justify-start rounded-[20px] shadow-sm py-[2px] px-[10px] flex justify-center items-center">
+          <p>Moradia</p>
+        </div>
+      </div>
+
+      <div className="w-full flex flex-col mt-[20px]">
+        <div>
+          <h1 className="font-semibold font-[16px]">Melhores Avaliadas</h1>
+        </div>
+
+      <div className="flex flex-row gap-3">
+        <div className="shadow-sm">adkjsdjilwd</div>
+        <div className="shadow-sm">adkjsdjilwd</div>
+      </div>
+      </div>
+
     </div>
   );
 }
@@ -302,6 +336,7 @@ function SuccessCard({ step }: any) {
         pt-[40px]
         px-[25px]
         pb-[28px]
+        mt-[30px]
         shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
       "
     >
@@ -617,7 +652,7 @@ export default function DonationGuide() {
         onSkip={() => router.push("/help-center")}
       />
 
-      <main className="mt-2 flex flex-col lg:flex-row gap-2 lg:gap-20 lg:items-start justify-center items-center">
+      <main className="flex flex-col lg:flex-row gap-2 lg:gap-20 lg:items-start justify-center items-center">
 
         {/* CARD DINÂMICO */}
         <div className="w-full lg:flex-1">
