@@ -277,7 +277,7 @@ export default function OngRegisterPage() {
             )}
           </div>
 
-          <p className="text-base text-right font-bold -mt-2 mb-4">
+          <p className="text-base text-right font-light -mt-2 mb-4">
             Já possui conta?{" "}
             <Link
               href="/login"
@@ -290,7 +290,7 @@ export default function OngRegisterPage() {
           <button
             type="submit"
             disabled={isPending}
-            className="w-full flex justify-center items-center bg-white text-purple-700 font-bold py-3 rounded-md active:scale-95 transition-all disabled:opacity-70 shadow-md text-xl"
+            className="w-60 mx-auto flex justify-center items-center text-2xl bg-white text-[#6B39A7] font-bold py-2 rounded-md border-2 border-white transition-all duration-300 hover:shadow-xl hover:shadow-[#6B39A7]/40 hover:-translate-y-1 active:scale-95 mb-8 cursor-pointer"
           >
             {isPending ? (
               <div className="w-7 h-7 border-4 border-purple-700/30 border-t-purple-700 rounded-full animate-spin" />

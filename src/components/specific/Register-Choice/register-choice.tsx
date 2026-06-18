@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FaUser, FaBuilding } from "react-icons/fa";
 import Link from "next/link";
-import { ArrowLeft} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 export default function RegisterChoicePage() {
   const [selected, setSelected] = useState<"doa" | "ong">("doa");
@@ -40,9 +40,10 @@ export default function RegisterChoicePage() {
           <button
             onClick={() => setSelected("doa")}
             className={`flex-1 flex items-center justify-center gap-2 py-2 text-lg font-bold rounded-md transition-all duration-200
-              ${selected === "doa"
-                ? "bg-[#6B39A7] text-white scale-[0.97] shadow-[inset_0_2px_6px_rgba(0,0,0,0.25)]"
-                : "text-[#6B39A7] bg-transparent hover:bg-purple-50"
+              ${
+                selected === "doa"
+                  ? "bg-[#6B39A7] text-white scale-[0.97] shadow-[inset_0_2px_6px_rgba(0,0,0,0.25)]"
+                  : "text-[#6B39A7] bg-transparent hover:bg-purple-50"
               }`}
           >
             <FaUser size={18} />
@@ -52,9 +53,10 @@ export default function RegisterChoicePage() {
           <button
             onClick={() => setSelected("ong")}
             className={`flex-1 flex items-center justify-center gap-2 py-2 text-lg font-bold rounded-md transition-all duration-200
-              ${selected === "ong"
-                ? "bg-[#6B39A7] text-white scale-[0.97] shadow-[inset_0_2px_6px_rgba(0,0,0,0.25)]"
-                : "text-[#6B39A7] bg-transparent hover:bg-purple-50"
+              ${
+                selected === "ong"
+                  ? "bg-[#6B39A7] text-white scale-[0.97] shadow-[inset_0_2px_6px_rgba(0,0,0,0.25)]"
+                  : "text-[#6B39A7] bg-transparent hover:bg-purple-50"
               }`}
           >
             <FaBuilding size={18} />
@@ -74,7 +76,7 @@ export default function RegisterChoicePage() {
         {/* Botão principal */}
         <button
           onClick={handleNavigate}
-          className="w-full bg-white text-[#6B39A7] font-bold text-xl py-3 rounded-md active:scale-95 transition-transform shadow-md"
+          className="w-60 mx-auto flex justify-center items-center text-2xl bg-white text-[#6B39A7] font-bold py-2 rounded-md border-2 border-white transition-all duration-300 hover:shadow-xl hover:shadow-[#6B39A7]/40 hover:-translate-y-1 active:scale-95 mb-8 cursor-pointer"
         >
           Continuar como {selected === "doa" ? "Doador" : "ONG"}
         </button>

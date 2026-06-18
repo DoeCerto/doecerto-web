@@ -30,21 +30,22 @@ export default function LoginPage() {
       const response = await login({ email, password });
       const data = response.data as any;
       const token = data?.accessToken || data?.access_token || data?.token;
-      
+
       // 1. Captura o cargo e avatar vindos da API
-      const apiUserRole = data?.user?.role || data?.role; 
+      const apiUserRole = data?.user?.role || data?.role;
       const userAvatar = data?.user?.avatarUrl || data?.avatarUrl;
 
       if (token) {
         // Persistência Nativa para APK (Capacitor)
         await Preferences.set({ key: "access_token", value: token });
-        if (apiUserRole) await Preferences.set({ key: "userRole", value: apiUserRole });
+        if (apiUserRole)
+          await Preferences.set({ key: "userRole", value: apiUserRole });
 
         // Persistência para Navegador
         localStorage.setItem("access_token", token);
         if (apiUserRole) localStorage.setItem("userRole", apiUserRole);
         if (userAvatar) localStorage.setItem("userAvatar", userAvatar);
-        
+
         toast.success("Login realizado com sucesso!");
 
         // 2. Lógica de Redirecionamento Atualizada
@@ -52,7 +53,7 @@ export default function LoginPage() {
 
         if (!finalRole) {
           try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
+            const payload = JSON.parse(atob(token.split(".")[1]));
             finalRole = payload.role;
           } catch (e) {
             console.error("Erro ao decodificar token:", e);
@@ -62,10 +63,10 @@ export default function LoginPage() {
         let redirectPath = "/home";
         const roleLower = finalRole?.toLowerCase();
 
-        if (roleLower === 'admin') {
-          redirectPath = '/adm-dashboard';
-        } else if (roleLower === 'ong') {
-          redirectPath = '/ong-dashboard';
+        if (roleLower === "admin") {
+          redirectPath = "/adm-dashboard";
+        } else if (roleLower === "ong") {
+          redirectPath = "/ong-dashboard";
         }
 
         setTimeout(() => {
@@ -88,7 +89,13 @@ export default function LoginPage() {
 
       <div className="w-full max-w-xs flex flex-col items-center">
         <div className="mb-4">
-          <Image src="/logo.svg" alt="DoeCerto" width={120} height={120} priority />
+          <Image
+            src="/logo.svg"
+            alt="DoeCerto"
+            width={120}
+            height={120}
+            priority
+          />
         </div>
 
         <h1 className="text-4xl -mt-2 font-bold mb-10 text-center">
@@ -97,7 +104,9 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="w-full flex flex-col">
           <div className="flex flex-col mb-4">
-            <label htmlFor="email" className="text-lg font-bold">Email</label>
+            <label htmlFor="email" className="text-lg font-bold">
+              Email
+            </label>
             <input
               id="email"
               type="email"
@@ -109,7 +118,9 @@ export default function LoginPage() {
           </div>
 
           <div className="flex flex-col mb-6">
-            <label htmlFor="password" className="text-lg font-bold">Senha</label>
+            <label htmlFor="password" className="text-lg font-bold">
+              Senha
+            </label>
             <div className="relative">
               <input
                 id="password"
@@ -130,7 +141,7 @@ export default function LoginPage() {
             <div className="flex justify-end mt-1">
               <Link
                 href="/forgot-password"
-                className="text-base font-bold text-white hover:underline"
+                className="text-base font-bold text-[#E0C4FF] hover:underline"
               >
                 Esqueceu a senha?
               </Link>
@@ -140,7 +151,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isPending}
-            className="w-full flex justify-center items-center text-2xl bg-white text-[#6B39A7] font-bold py-2 rounded-md active:scale-95 transition-transform mb-8 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-60 mx-auto flex justify-center items-center text-2xl bg-white text-[#6B39A7] font-bold py-2 rounded-md border-2 border-white transition-all duration-300 hover:shadow-xl hover:shadow-[#6B39A7]/40 hover:-translate-y-1 active:scale-95 mb-8 cursor-pointer"
           >
             {isPending ? (
               <div className="w-7 h-7 border-4 border-[#6B39A7]/30 border-t-[#6B39A7] rounded-full animate-spin"></div>
@@ -150,8 +161,13 @@ export default function LoginPage() {
           </button>
 
           <div className="flex flex-wrap justify-center gap-x-1 text-center text-lg font-bold text-purple-100">
-            <span>Ainda não possui conta?</span>
-            <Link href="/register-choice" className="text-white font-black hover:underline">
+            <span className="text-white font-light">
+              Ainda não possui conta?
+            </span>
+            <Link
+              href="/register-choice"
+              className="text-[#E0C4FF] font-black hover:underline"
+            >
               Cadastre-se agora
             </Link>
           </div>

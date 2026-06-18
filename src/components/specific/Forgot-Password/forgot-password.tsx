@@ -10,7 +10,7 @@ import { ArrowLeft } from "lucide-react";
 export default function ForgotPasswordComponent() {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isPending, setIsPending] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -20,7 +20,7 @@ export default function ForgotPasswordComponent() {
       return;
     }
 
-    setLoading(true);
+    setIsPending(true);
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/forgot-password`, {
         method: 'POST',
@@ -45,7 +45,7 @@ export default function ForgotPasswordComponent() {
     } catch (err: any) {
       toast.error(err.message || "Erro ao conectar com o servidor");
     } finally {
-      setLoading(false);
+      setIsPending(false);
     }
   }
 
@@ -87,18 +87,19 @@ export default function ForgotPasswordComponent() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="bg-white p-2 rounded-md text-black text-xl placeholder:text-lg placeholder-gray-500 focus:outline-none shadow-sm"
-              required
             />
           </div>
 
           <button
             type="submit"
-            disabled={loading}
-            className={`w-full text-center text-2xl bg-white text-[#6B39A7] font-bold py-2 rounded-md active:scale-95 transition-transform shadow-lg ${
-              loading ? "opacity-70 cursor-not-allowed" : ""
-            }`}
+            disabled={isPending}
+            className="w-60 mx-auto flex justify-center items-center text-2xl bg-white text-[#6B39A7] font-bold py-2 rounded-md border-2 border-white transition-all duration-300 hover:shadow-xl hover:shadow-[#6B39A7]/40 hover:-translate-y-1 active:scale-95 mb-8 cursor-pointer"
           >
-            {loading ? "Enviando..." : "Redefinir"}
+            {isPending ? (
+              <div className="w-7 h-7 border-4 border-[#6B39A7]/30 border-t-[#6B39A7] rounded-full animate-spin"></div>
+            ) : (
+              "Recuperar Senha"
+            )}
           </button>
         </form>
       </div>
