@@ -99,25 +99,26 @@ export default function DonationTutorialModal() {
 
   return (
     <div 
-      className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center px-4"
+      className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={handleClose}
     >
       <div 
-        className="bg-white w-full max-w-md rounded-[2rem] overflow-hidden shadow-[0_25px_80px_rgba(0,0,0,0.25)] relative"
+        className="bg-white w-full max-w-md rounded-[2rem] overflow-hidden shadow-[0_25px_80px_rgba(0,0,0,0.25)] relative flex flex-col max-h-[calc(100vh-2rem)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6 border-b border-gray-100">
+        {/* HEADER */}
+        <div className="p-5 sm:p-6 border-b border-gray-100 flex-shrink-0">
           <div className="flex items-start justify-between">
             <div>
               <span className="inline-flex items-center gap-2 bg-purple-100 text-purple-700 text-[11px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full">
                 Guia rápido
               </span>
 
-              <h2 className="mt-4 text-2xl font-black text-[#3b1a66] leading-tight">
+              <h2 className="mt-3 text-xl sm:text-2xl font-black text-[#3b1a66] leading-tight">
                 Como funciona a doação?
               </h2>
 
-              <p className="text-sm text-gray-700 mt-2 font-medium">
+              <p className="text-xs sm:text-sm text-gray-700 mt-1 font-medium">
                 Leva menos de 1 minuto para concluir.
               </p>
             </div>
@@ -132,49 +133,52 @@ export default function DonationTutorialModal() {
           </div>
         </div>
 
-        <div 
-          className={`px-8 py-10 flex flex-col items-center text-center min-h-[360px] justify-center transition-opacity duration-300 ${
-            isTransitioning ? "opacity-0" : "opacity-100"
-          }`}
-        >
-          <div
-            className={`w-28 h-28 rounded-[2rem] ${step.bg} flex items-center justify-center mb-8 shadow-sm`}
+        <div className="overflow-y-auto flex-1 min-h-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div 
+            className={`px-6 sm:px-8 py-6 sm:py-8 flex flex-col items-center text-center min-h-[280px] sm:min-h-[340px] justify-center transition-opacity duration-300 ${
+              isTransitioning ? "opacity-0" : "opacity-100"
+            }`}
           >
-            <Icon size={50} className={step.color} />
-          </div>
+            <div
+              className={`w-20 h-20 sm:w-28 sm:h-28 rounded-[1.5rem] sm:rounded-[2rem] ${step.bg} flex items-center justify-center mb-5 sm:mb-6 shadow-sm flex-shrink-0`}
+            >
+              <Icon className={`${step.color} w-10 h-10 sm:w-[50px] sm:h-[50px]`} />
+            </div>
 
-          <span className="bg-purple-100 text-purple-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider">
-            Passo {stepIndex + 1} de {STEPS.length}
-          </span>
+            <span className="bg-purple-100 text-purple-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider">
+              Passo {stepIndex + 1} de {STEPS.length}
+            </span>
 
-          <h3 className="text-[28px] font-black text-[#3b1a66] mt-5 leading-tight">
-            {step.title}
-          </h3>
+            <h3 className="text-xl sm:text-[28px] font-black text-[#3b1a66] mt-4 leading-tight">
+              {step.title}
+            </h3>
 
-          <p className="text-gray-700 text-[15px] leading-relaxed mt-4 max-w-xs font-medium">
-            {step.description}
-          </p>
+            <p className="text-gray-700 text-sm sm:text-[15px] leading-relaxed mt-3 max-w-xs font-medium">
+              {step.description}
+            </p>
 
-          <div className="flex items-center gap-2 mt-8">
-            {STEPS.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => handleStepChange(index)}
-                className={`transition-all duration-300 rounded-full h-2 ${
-                  index === stepIndex ? "w-10 bg-purple-600" : "w-2 bg-purple-200 hover:bg-purple-300"
-                }`}
-                aria-label={`Ir para o passo ${index + 1}`}
-              />
-            ))}
+            <div className="flex items-center gap-2 mt-6 sm:mt-8">
+              {STEPS.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleStepChange(index)}
+                  className={`transition-all duration-300 rounded-full h-2 ${
+                    index === stepIndex ? "w-10 bg-purple-600" : "w-2 bg-purple-200 hover:bg-purple-300"
+                  }`}
+                  aria-label={`Ir para o passo ${index + 1}`}
+                />
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="border-t border-gray-100 p-6 bg-gray-50/50 flex flex-col gap-4">
+        {/* FOOTER */}
+        <div className="border-t border-gray-100 p-5 sm:p-6 bg-gray-50/50 flex flex-col gap-4 flex-shrink-0">
           <div className="flex items-center justify-between">
             <button
               onClick={() => handleStepChange(stepIndex - 1)}
               disabled={stepIndex === 0}
-              className={`flex items-center gap-2 font-bold transition-colors ${
+              className={`flex items-center gap-2 font-bold text-sm sm:text-base transition-colors ${
                 stepIndex === 0
                   ? "text-gray-300 cursor-not-allowed"
                   : "text-purple-600 hover:text-purple-700"
@@ -187,7 +191,7 @@ export default function DonationTutorialModal() {
             {stepIndex < STEPS.length - 1 ? (
               <button
                 onClick={() => handleStepChange(stepIndex + 1)}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-2xl font-black flex items-center gap-2 transition-all shadow-lg shadow-purple-200 hover:scale-[1.02] active:scale-[0.98]"
+                className="bg-purple-600 hover:bg-purple-700 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-2xl font-black text-sm sm:text-base flex items-center gap-2 transition-all shadow-lg shadow-purple-200 hover:scale-[1.02] active:scale-[0.98]"
               >
                 Próximo
                 <ChevronRight size={18} />
@@ -195,7 +199,7 @@ export default function DonationTutorialModal() {
             ) : (
               <button
                 onClick={handleClose}
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-2xl font-black flex items-center gap-2 transition-all shadow-lg shadow-green-200 hover:scale-[1.02] active:scale-[0.98]"
+                className="bg-green-600 hover:bg-green-700 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-2xl font-black text-sm sm:text-base flex items-center gap-2 transition-all shadow-lg shadow-green-200 hover:scale-[1.02] active:scale-[0.98]"
               >
                 <CheckCircle2 size={18} />
                 Começar a doar
@@ -203,7 +207,7 @@ export default function DonationTutorialModal() {
             )}
           </div>
 
-          <label className="flex items-center justify-center gap-2.5 py-1 text-gray-500 hover:text-gray-700 cursor-pointer select-none transition-colors group">
+          <label className="flex items-center justify-center gap-2.5 py-0.5 text-gray-500 hover:text-gray-700 cursor-pointer select-none transition-colors group">
             <input
               type="checkbox"
               checked={dontShowAgain}
