@@ -27,15 +27,15 @@ function DefaultCard({ step }: any) {
         border
         border-[#6B39A7]
         rounded-[20px]
-        mt-[30px]
         pt-[40px]
         px-[25px]
         pb-[28px]
-        mb-[25px]
+        mb-[30px]
         shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
         flex
         flex-col
         items-center
+        lg:flex-1
       "
     >
       <div
@@ -159,11 +159,11 @@ function DonationTypeCard({ step }: any) {
         border
         border-[#6B39A7]
         rounded-[20px]
-        mt-[30px]
+        mt-[20px]
         pt-[40px]
         px-[25px]
         pb-[28px]
-        mb-[25px]
+        mb-[30px]
         shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
         flex
         flex-col
@@ -283,11 +283,11 @@ function ReviewCard({ step }: any) {
         border
         border-[#6B39A7]
         rounded-[20px]
-        mt-[30px]
+        mt-[20px]
         pt-[40px]
         px-[25px]
         pb-[28px]
-        mb-[25px]
+        mb-[30px]
         shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
       "
     >
@@ -399,10 +399,11 @@ function SuccessCard({ step }: any) {
         border
         border-[#6B39A7]
         rounded-[20px]
+        mt-[20px]
         pt-[40px]
         px-[25px]
         pb-[28px]
-        mt-[30px]
+        mb-[30px]
         shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
       "
     >
@@ -454,29 +455,6 @@ function SuccessCard({ step }: any) {
 
           </div>
 
-          <div className="rounded-[10px] py-[10px] px-[20px] border border-[#6B39A7] text-[16px] font-extrabold bg-[#EBD2FF]">
-            {step.labelCard2}
-            <div className="flex flex-row justify-between items-center">
-              <div className="bg-white py-[5px] px-[10px] w-[35%] rounded-[10px] flex justify-center items-center border border-[#6B39A7]">
-                <p className="font-semibold text-[16px] text-[#838383]">{step.itensCard2}</p>
-              </div>
-
-              <div className="gap-2 flex flex-row justify-center items-center">
-                <div className="bg-white rounded-[10px] max-h-[20px] px-[7px] py-[10px] border border-[#6B39A7] flex items-center justify-center">
-                  <div className="w-[12px] h-[3px] bg-[#6B39A7] rounded-full"></div>
-                </div>
-                <p className="text-[16px] font-extrabold">0</p>
-                <div className="bg-white rounded-[10px] max-h-[20px] px-[7px] py-[10px] border border-[#6B39A7] flex items-center justify-center">
-                  <div className="relative w-[10px] h-[10px]">
-                    <div className="absolute top-1/2 left-0.10 -translate-y-1/2 w-[10px] h-[2px] bg-[#6B39A7] rounded-full"></div>
-
-                    <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[2px] h-[10px] bg-[#6B39A7] rounded-full"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
 
           <div className="mt-[10px] rounded-[10px] w-full border border-[#6B39A7] py-[10px] flex justify-center items-center">
             <div className="flex flex-row justify-center items-center gap-4">
@@ -509,11 +487,11 @@ function FinishCard({ step }: any) {
         border
         border-[#6B39A7]
         rounded-[20px]
-        mt-[30px]
+        mt-[20px]
         pt-[40px]
         px-[25px]
         pb-[28px]
-        mb-[25px]
+        mb-[30px]
         shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
       "
     >
@@ -608,13 +586,8 @@ export default function DonationGuide() {
 
       label: "VOCÊ DECIDE COMO AJUDAR",
 
-      title: (
-        <>
-          Escolha o tipo de <br />
-          doação
-        </>
-      ),
-
+      title: "Escolha o tipo de doação",
+        
       description:
         "Doe dinheiro ou itens físicos - do jeito que for melhor pra você",
     },
@@ -721,14 +694,14 @@ export default function DonationGuide() {
   }
 
   return (
-    <div className="px-[25px] py-[10px] flex flex-col items-center">
+    <div className="w-full min-h-screen px-[25px] py-[10px] flex flex-col items-center">
       <StepHeader
         currentStep={step.id}
         totalSteps={steps.length}
         onSkip={() => router.push("/help-center")}
       />
 
-      <main className="flex flex-col lg:flex-row gap-2 lg:gap-20 lg:items-start justify-center items-center">
+      <main className="grid grid-cols-1 lg:grid-cols-2 lg:gap-20 lg:flex-1 lg:items-center">
 
         {/* CARD DINÂMICO */}
         <div className="w-full lg:flex-1">
@@ -736,7 +709,7 @@ export default function DonationGuide() {
         </div>
 
         {/* Intro */}
-        <div className="w-full lg:flex-1 pt-6 lg:pt-10 h-auto lg:h-[530px] flex flex-col">
+        <div className="lg:max-w-none lg:h-[400px] flex flex-col lg:justify-center items-center">
           <StepIntro
             label={step.label ?? ""}
             title={typeof step.title === "string" ? step.title : ""}

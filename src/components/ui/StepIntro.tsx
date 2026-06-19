@@ -19,7 +19,7 @@ export default function StepIntro({
         {title}
       </h1>
 
-      <p className="text-[20px] font-normal">
+      <p className="text-[18px] font-normal">
         {description}
       </p>
     </div>
