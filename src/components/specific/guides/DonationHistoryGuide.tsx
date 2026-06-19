@@ -17,21 +17,21 @@ import { FiSearch } from "react-icons/fi";
 
 function DefaultCard({ step }: any) {
   return (
-    <div
-      className="
-        w-full
-        bg-white
-        border
-        border-[#6B39A7]
-        rounded-[20px]
-        p-[15px]
-        shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
-        flex
-        flex-col
-        items-center
-      "
-    >
+    <div className=" 
+    w-full 
+    bg-white 
+    border 
+    border-[#6B39A7] 
+    rounded-[20px] 
+    p-[15px] 
+    shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
+    flex
+    flex-col
+    items-center
+      ">
+
       <div className="w-full flex flex-row justify-between items-center">
+
         <div>
           <Image src="/logo_roxa.svg" alt="DoeCerto" width={125} height={125} priority />
         </div>
@@ -40,9 +40,9 @@ function DefaultCard({ step }: any) {
           <MoveRight className="w-[35px] h-[30px] text-[#6B39A7]" />
 
           <div className="bottom-0 border border-[#6B39A7] rounded-full w-[35px] h-[35px] flex justify-center items-center">
-
             <User className="w-[30px] h-[25px] text-[#6B39A7]" />
           </div>
+
         </div>
       </div>
 
@@ -55,6 +55,7 @@ function DefaultCard({ step }: any) {
       </div>
 
       <div className="w-full flex flex-row gap-3">
+
         <div className="justify-start rounded-[20px] shadow-sm py-[2px] px-[10px] flex justify-center items-center">
           <p>Proteção Animal</p>
         </div>
@@ -66,6 +67,7 @@ function DefaultCard({ step }: any) {
         <div className="justify-start rounded-[20px] shadow-sm py-[2px] px-[10px] flex justify-center items-center">
           <p>Moradia</p>
         </div>
+
       </div>
 
       <div className="w-full flex flex-col mt-[20px]">
@@ -73,12 +75,67 @@ function DefaultCard({ step }: any) {
           <h1 className="font-semibold font-[16px]">Melhores Avaliadas</h1>
         </div>
 
-      <div className="flex flex-row gap-3">
-        <div className="shadow-sm">adkjsdjilwd</div>
-        <div className="shadow-sm">adkjsdjilwd</div>
-      </div>
-      </div>
+        <div className="flex flex-row gap-4">
 
+          <div className="shadow-sm flex flex-col items-center rounded-[10px]">
+            <div>
+              <Image src="/frame_22.svg" alt="ONG" width={127} height={72} priority />
+            </div>
+            <div className="flex flex-col w-full p-[10px]">
+              <div className="flex flex-row gap-[10px]">
+                <p className="text-[16px] font-semibold">SOS Gatinhos</p>
+                <div className="flex flex-row justify-center items-center gap-1">
+                  <Star className="w-3 h-3 text-[#FFC600] fill-[#FFC600] border-none" />
+                  <p className="font-[8px] text-[14px] text-[#FF7B00]">5.0</p>
+                </div>
+              </div>
+
+                <div className="flex flex-row gap-1 mt-[5px]">
+                <div className="w-fit rounded-[20px] bg-[#EBD2FF] shadow-sm px-[10px]">
+                  <p className="text-[14px] text-[#6B39A7] font-semibold">
+                    Animal
+                  </p>
+                </div>
+                <p className="text-[14px] text-[#666666]">+1</p>
+                </div>
+
+                <div>
+                  <p className="text-[14px] text-[#666666]">1.4 km</p>
+                </div>
+                <div className="w-full mt-[8px] rounded-[8px] font-semibold bg-[#6B39A7] flex justify-center items-center text-white">Doar</div>
+            </div>
+          </div>
+
+          <div className="shadow-sm flex flex-col items-center rounded-[10px]">
+            <div>
+              <Image src="/frame_22.svg" alt="ONG" width={127} height={72} priority />
+            </div>
+            <div className="flex flex-col w-full p-[10px]">
+              <div className="flex flex-row gap-[10px]">
+                <p className="text-[16px] font-semibold">SOS Gatinhos</p>
+                <div className="flex flex-row justify-center items-center gap-1">
+                  <Star className="w-3 h-3 text-[#FFC600] fill-[#FFC600] border-none" />
+                  <p className="font-[8px] text-[14px] text-[#FF7B00]">5.0</p>
+                </div>
+              </div>
+
+                <div className="flex flex-row gap-1 mt-[5px]">
+                <div className="w-fit rounded-[20px] bg-[#EBD2FF] shadow-sm px-[10px]">
+                  <p className="text-[14px] text-[#6B39A7] font-semibold">
+                    Meio Ambiente</p>
+                </div>
+                <p className="text-[14px] text-[#666666]">+2</p>
+                </div>
+
+                <div>
+                  <p className="text-[14px] text-[#666666]">1.4 km</p>
+                </div>
+                <div className="w-full mt-[8px] rounded-[8px] font-semibold bg-[#6B39A7] flex justify-center items-center text-white">Doar</div>
+            </div>
+          </div>
+          </div>
+
+      </div>
     </div>
   );
 }
@@ -96,11 +153,11 @@ function DonationTypeCard({ step }: any) {
         border
         border-[#6B39A7]
         rounded-[20px]
-        mt-[30px]
+        mt-[20px]
         pt-[40px]
         px-[25px]
         pb-[28px]
-        mb-[25px]
+        mb-[30px]
         shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
         flex
         flex-col
@@ -220,9 +277,11 @@ function ReviewCard({ step }: any) {
         border
         border-[#6B39A7]
         rounded-[20px]
+        mt-[20px]
         pt-[40px]
         px-[25px]
         pb-[28px]
+        mb-[30px]
         shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
       "
     >
@@ -251,7 +310,7 @@ function ReviewCard({ step }: any) {
         </p>
       </div>
 
-      <div className="w-full flex flex-row gap-2 justify-center">
+      <div className="w-full flex flex-row gap-4 justify-center">
         <div
           className="
                 w-full 
@@ -262,7 +321,8 @@ function ReviewCard({ step }: any) {
                 flex-col 
                 items-center 
                 justify-center 
-                p-[15px] 
+                py-[15px] 
+                px-[20px]
                 rounded-[14px]
               "
         >
@@ -280,7 +340,7 @@ function ReviewCard({ step }: any) {
               items-center
               justify-center
               py-[5px]
-              px-[15px]
+              px-[20px]
               rounded-[14px]
             "
         >
@@ -333,10 +393,11 @@ function SuccessCard({ step }: any) {
         border
         border-[#6B39A7]
         rounded-[20px]
+        mt-[20px]
         pt-[40px]
         px-[25px]
         pb-[28px]
-        mt-[30px]
+        mb-[30px]
         shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
       "
     >
@@ -388,29 +449,6 @@ function SuccessCard({ step }: any) {
 
           </div>
 
-          <div className="rounded-[10px] py-[10px] px-[20px] border border-[#6B39A7] text-[16px] font-extrabold bg-[#EBD2FF]">
-            {step.labelCard2}
-            <div className="flex flex-row justify-between items-center">
-              <div className="bg-white py-[5px] px-[10px] w-[35%] rounded-[10px] flex justify-center items-center border border-[#6B39A7]">
-                <p className="font-semibold text-[16px] text-[#838383]">{step.itensCard2}</p>
-              </div>
-
-              <div className="gap-2 flex flex-row justify-center items-center">
-                <div className="bg-white rounded-[10px] max-h-[20px] px-[7px] py-[10px] border border-[#6B39A7] flex items-center justify-center">
-                  <div className="w-[12px] h-[3px] bg-[#6B39A7] rounded-full"></div>
-                </div>
-                <p className="text-[16px] font-extrabold">0</p>
-                <div className="bg-white rounded-[10px] max-h-[20px] px-[7px] py-[10px] border border-[#6B39A7] flex items-center justify-center">
-                  <div className="relative w-[10px] h-[10px]">
-                    <div className="absolute top-1/2 left-0.10 -translate-y-1/2 w-[10px] h-[2px] bg-[#6B39A7] rounded-full"></div>
-
-                    <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[2px] h-[10px] bg-[#6B39A7] rounded-full"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
 
           <div className="mt-[10px] rounded-[10px] w-full border border-[#6B39A7] py-[10px] flex justify-center items-center">
             <div className="flex flex-row justify-center items-center gap-4">
@@ -443,11 +481,11 @@ function FinishCard({ step }: any) {
         border
         border-[#6B39A7]
         rounded-[20px]
-        mt-[30px]
+        mt-[20px]
         pt-[40px]
         px-[25px]
         pb-[28px]
-        mb-[25px]
+        mb-[30px]
         shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
       "
     >
@@ -502,17 +540,14 @@ function FinishCard({ step }: any) {
   );
 }
 
-export default function DonationGuide() {
+export default function DonationHistoryGuide() {
   const router = useRouter();
 
   const steps = [
     {
       id: 1,
-
       label: "Passo 1",
-
       title: "Acesse seu Perfil",
-
       description:
         "Toque no seu avatar no canto superior direito da home",
     },
@@ -532,12 +567,7 @@ export default function DonationGuide() {
 
       label: "VOCÊ DECIDE COMO AJUDAR",
 
-      title: (
-        <>
-          Escolha o tipo de <br />
-          doação
-        </>
-      ),
+      title: "Escolha o tipo de doação",
 
       description:
         "Doe dinheiro ou itens físicos - do jeito que for melhor pra você",
@@ -645,14 +675,14 @@ export default function DonationGuide() {
   }
 
   return (
-    <div className="px-[25px] py-[10px] flex flex-col items-center">
+    <div className="w-full min-h-screen px-[25px] py-[10px] flex flex-col items-center">
       <StepHeader
         currentStep={step.id}
         totalSteps={steps.length}
         onSkip={() => router.push("/help-center")}
       />
 
-      <main className="flex flex-col lg:flex-row gap-2 lg:gap-20 lg:items-start justify-center items-center">
+      <main className="grid grid-cols-1 lg:grid-cols-2 lg:gap-20 lg:flex-1 lg:items-center">
 
         {/* CARD DINÂMICO */}
         <div className="w-full lg:flex-1">
@@ -660,7 +690,7 @@ export default function DonationGuide() {
         </div>
 
         {/* Intro */}
-        <div className="w-full lg:flex-1 pt-6 lg:pt-10 h-auto lg:h-[530px] flex flex-col">
+        <div className="lg:max-w-none lg:h-[400px] flex flex-col lg:justify-center items-center">
           <StepIntro
             label={step.label ?? ""}
             title={typeof step.title === "string" ? step.title : ""}

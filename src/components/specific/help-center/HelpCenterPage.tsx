@@ -48,7 +48,7 @@ export default function HelpCenterPage() {
             />
           </Link>
 
-          <Link href="/donation-guide" className="flex-1">
+          <Link href="/donation-history-guide" className="flex-1">
             <ActionCard
               icon={<Package className="w-5 h-5 text-[#6B39A7]" />}
               title="Como doar itens"
