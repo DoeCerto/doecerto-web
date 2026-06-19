@@ -67,7 +67,9 @@ export default function Donation({
   }, [ongId]);
 
   const handleAddItem = () => {
-    if (!selectedItemId || !quantidade || !descricaoAdicional.trim()) return;
+    const qty = Number(quantidade);
+    if (!selectedItemId || qty <= 0 || !descricaoAdicional.trim()) return;
+
     const itemDaLista = itemsCadastrados.find(
       (i) => i.id.toString() === selectedItemId,
     );
@@ -176,11 +178,10 @@ export default function Donation({
               type="number"
               min={1}
               value={quantidade}
-              onChange={(e) =>
-                setQuantidade(
-                  e.target.value === "" ? "" : Number(e.target.value),
-                )
-              }
+              onChange={(e) => {
+                const val = e.target.value;
+                setQuantidade(val === "" ? "" : Math.max(1, Number(val)));
+              }}
               disabled={fetchingData || !hasPhone}
               placeholder="Ex: 5"
               className="w-full p-3.5 md:p-4 rounded-2xl border-2 border-gray-100 bg-gray-50/70 text-gray-700 font-bold text-sm md:text-base focus:border-[#6B39A7] focus:bg-white outline-none transition-all"
@@ -205,7 +206,10 @@ export default function Donation({
             type="button"
             onClick={handleAddItem}
             disabled={
-              !selectedItemId || !quantidade || !descricaoAdicional.trim()
+              !selectedItemId ||
+              quantidade === "" ||
+              quantidade <= 0 ||
+              !descricaoAdicional.trim()
             }
             className="mt-1 w-full bg-gradient-to-r from-purple-50 to-indigo-50 text-[#6B39A7] font-black py-3.5 md:py-4 rounded-2xl border border-purple-100/80 flex items-center justify-center gap-2 disabled:opacity-40 text-sm md:text-base"
           >
@@ -213,7 +217,7 @@ export default function Donation({
               size={16}
               strokeWidth={3}
               className="md:w-[18px] md:h-[18px]"
-            />{" "}
+            />
             Incluir na Lista
           </button>
         </div>
