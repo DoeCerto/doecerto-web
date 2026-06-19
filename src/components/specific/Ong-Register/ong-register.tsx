@@ -12,7 +12,8 @@ import {
   removeFormatting,
   validateCNPJ,
 } from "@/utils/documentValidation";
-import TermosModal from "@/components/shared/TermosModal"; // ← NOVO
+import TermosModal from "@/components/shared/TermosModal";
+import { PendingAnalysisModal } from "@/components/ui/PendingAnalysisModal";
 
 export default function OngRegisterPage() {
   const router = useRouter();
@@ -32,6 +33,7 @@ export default function OngRegisterPage() {
 
   // ← NOVO — controle do modal
   const [modalAberto, setModalAberto] = useState(false);
+  const [modalAnaliseAberto, setModalAnaliseAberto] = useState(false);
 
   const senhasPreenchidas = senha.length > 0 && confirmarSenha.length > 0;
   const senhasCoincidem = senhasPreenchidas && senha === confirmarSenha;
@@ -94,12 +96,10 @@ export default function OngRegisterPage() {
         cnpj: cnpjNumbers,
       });
 
-      setModalAberto(false);
+      setModalAberto(false); 
+      setModalAnaliseAberto(true); 
       toast.success("ONG cadastrada com sucesso!");
 
-      setTimeout(() => {
-        router.push("/login");
-      }, 1200);
     } catch (err) {
       toast.error("Erro ao cadastrar ONG. Verifique os dados.");
       setIsPending(false);
@@ -116,6 +116,14 @@ export default function OngRegisterPage() {
         onConfirm={handleConfirmarCadastro}
         onCancel={() => setModalAberto(false)}
         isLoading={isPending}
+      />
+
+      {/* NOVO: Modal de feedback de análise */}
+      <PendingAnalysisModal
+        isOpen={modalAnaliseAberto}
+        title="Cadastro em análise"
+        description="Seu cadastro foi enviado com sucesso! Nosso time administrativo irá validar os dados da sua ONG e entraremos em contato por e-mail em breve."
+        onClose={() => router.push("/login")}
       />
 
       <div className="absolute top-6 left-6 z-10">
