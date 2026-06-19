@@ -19,6 +19,7 @@ import { api } from "@/services/api";
 import { QRCodeSVG } from "qrcode.react";
 import toast, { Toaster } from "react-hot-toast";
 import DonationTutorialModal from "@/components/ui/DonationTutorial";
+import { ConfirmationCard } from "@/components/ui/ConfirmationCard";
 
 function calculateCRC16(str: string): string {
   let crc = 0xffff;
@@ -92,6 +93,7 @@ function PixPageContent() {
   const [showPopup, setShowPopup] = useState(false);
   const [valor, setValor] = useState("20");
   const valoresRapidos = ["5", "10", "20", "50", "100"];
+  const [showReview, setShowReview] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -247,15 +249,13 @@ function PixPageContent() {
     }
   };
 
-  const handleConfirmarDoacao = async () => {
+  const handleConfirmarDoacao = () => {
     if (!file || !ongId) {
       toast.error("Por favor, anexe o comprovante.");
       return;
     }
 
-    const selectedFile = file;
-
-    if (selectedFile.size > 5 * 1024 * 1024) {
+    if (file.size > 5 * 1024 * 1024) {
       toast.error("O arquivo deve ter no máximo 5MB.");
       return;
     }
@@ -268,43 +268,45 @@ function PixPageContent() {
       "image/webp",
     ];
 
-    if (!allowedTypes.includes(selectedFile.type)) {
+    if (!allowedTypes.includes(file.type)) {
       toast.error("Envie apenas PDF, PNG, JPG ou WEBP.");
       return;
     }
 
     const donationValue = Number(valor);
-
     if (isNaN(donationValue) || donationValue <= 0) {
       toast.error("Informe um valor válido para a doação.");
       return;
     }
 
+    setShowReview(true);
+  };
+
+  const handleExecuteSubmit = async () => {
+    if (!file || !ongId) return;
     setLoading(true);
 
     try {
       const formData = new FormData();
-
       formData.append("ongId", ongId);
       formData.append("donationType", "monetary");
       formData.append("monetaryCurrency", "BRL");
-      formData.append("proofFile", selectedFile);
-      formData.append("monetaryAmount", donationValue.toString());
+      formData.append("proofFile", file);
+      formData.append("monetaryAmount", Number(valor).toString());
 
       await api("/donations", {
         method: "POST",
         body: formData,
       });
 
+      setShowReview(false);
       setShowPopup(true);
     } catch (error: any) {
       console.error("Erro ao doar:", error);
-
       const msg =
         error.response?.data?.message ||
         error.message ||
         "Erro ao processar doação.";
-
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -329,8 +331,8 @@ function PixPageContent() {
           zIndex: 999999,
         }}
       />
-       
-      <DonationTutorialModal/>
+
+      <DonationTutorialModal />
 
       <div className="pt-6 px-4 lg:absolute lg:top-8 lg:left-12 z-10">
         <button
@@ -533,28 +535,41 @@ function PixPageContent() {
         </div>
       </main>
 
+      {showReview && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="w-full max-w-md md:max-w-lg">
+            <ConfirmationCard
+              type="money"
+              title="Revisar dados da doação"
+              amountOrQuantity={`R$ ${Number(valor).toFixed(2)}`}
+              detailsLabel={`Confirma o envio do comprovante para ${ongData?.name || "a ONG"}?`}
+              detailsText={`Arquivo anexado: ${file?.name}`}
+              primaryButtonText={loading ? "Enviando..." : "Confirmar e Enviar"}
+              onPrimaryAction={handleExecuteSubmit}
+              secondaryButtonText="Voltar e Alterar"
+              onSecondaryAction={() => setShowReview(false)}
+            />
+          </div>
+        </div>
+      )}
+
       {showPopup && (
-        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-[#3b1a66]/40 backdrop-blur-md px-4">
-          <div className="bg-white rounded-[2rem] lg:rounded-[3rem] p-8 lg:p-10 w-full max-w-[380px] text-center shadow-2xl">
-            <div className="inline-flex items-center justify-center bg-green-500 rounded-full p-4 lg:p-5 mb-6 shadow-xl shadow-green-200">
-              <FaCheckCircle className="text-white text-3xl lg:text-4xl" />
-            </div>
-            <h2 className="text-xl lg:text-2xl font-black text-[#3b1a66] mb-3">
-              Tudo certo!
-            </h2>
-            <p className="text-gray-500 text-xs lg:text-sm mb-8 leading-relaxed">
-              Sua doação para{" "}
-              <span className="font-bold text-purple-600">
-                {ongData?.name || "a ONG"}
-              </span>{" "}
-              foi informada com sucesso. 💜
-            </p>
-            <button
-              onClick={() => router.push("/home")}
-              className="w-full bg-purple-600 text-white py-4 rounded-xl lg:rounded-2xl font-black uppercase tracking-widest hover:bg-purple-700 transition-all text-xs lg:text-sm"
-            >
-              Concluir
-            </button>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="w-full max-w-md md:max-w-lg">
+            <ConfirmationCard
+              type="money"
+              title="Doação Confirmada!"
+              amountOrQuantity={`R$ ${Number(valor).toFixed(2)}`}
+              detailsLabel="Obrigado por apoiar!"
+              detailsText={`Sua doação para ${ongData?.name || "a ONG"} foi registrada com sucesso.`}
+              primaryButtonText="Ir para o Início"
+              onPrimaryAction={() => router.push("/home")}
+              secondaryButtonText="Fazer outra Doação"
+              onSecondaryAction={() => {
+                setFile(null);
+                setShowPopup(false);
+              }}
+            />
           </div>
         </div>
       )}
