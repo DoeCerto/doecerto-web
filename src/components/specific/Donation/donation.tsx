@@ -8,7 +8,8 @@ import { DonorService, DonorProfileData } from "@/services/donor.service";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { MissingPhoneAlert } from "@/components/ui/MissingPhoneAlert";
 import { DonationItemsList } from "@/components/ui/DonationItemsList";
-import { ConfirmationCard } from "@/components/ui/ConfirmationCard"; 
+import { ConfirmationCard } from "@/components/ui/ConfirmationCard";
+import { SuccessModal } from "@/components/ui/SuccessModal";
 
 export interface DonationData {
   tipoItem: string;
@@ -42,8 +43,8 @@ export default function Donation({
   const [listaEnvio, setListaEnvio] = useState<ListaItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchingData, setFetchingData] = useState(true);
-  const [showReview, setShowReview] = useState(false); 
-  const [isSuccess, setIsSuccess] = useState(false);   
+  const [showReview, setShowReview] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -70,7 +71,9 @@ export default function Donation({
     const itemDaLista = itemsCadastrados.find(
       (i) => i.id.toString() === selectedItemId,
     );
-    const itemName = itemDaLista ? itemDaLista.description : "Outros (Item não listado)";
+    const itemName = itemDaLista
+      ? itemDaLista.description
+      : "Outros (Item não listado)";
 
     setListaEnvio([
       ...listaEnvio,
@@ -89,7 +92,7 @@ export default function Donation({
   const handleOpenReview = (ev: React.FormEvent) => {
     ev.preventDefault();
     if (!listaEnvio.length) return;
-    setShowReview(true); 
+    setShowReview(true);
   };
 
   const handleExecuteSubmit = async () => {
@@ -104,8 +107,8 @@ export default function Donation({
     try {
       setLoading(true);
       if (onSubmit) await onSubmit(payload);
-      setIsSuccess(true); 
-      setShowReview(false); 
+      setIsSuccess(true);
+      setShowReview(false);
     } catch (err) {
       console.error(err);
     } finally {
@@ -115,7 +118,9 @@ export default function Donation({
 
   const hasPhone = !!userProfile?.phone;
   const totalItens = listaEnvio.reduce((acc, item) => acc + item.quantidade, 0);
-  const resumoItens = listaEnvio.map((i) => `${i.quantidade}x ${i.itemName}`).join(", ");
+  const resumoItens = listaEnvio
+    .map((i) => `${i.quantidade}x ${i.itemName}`)
+    .join(", ");
 
   return (
     <div className="w-full max-w-md md:max-w-4xl mx-auto p-4 min-h-screen pb-24 bg-gray-50/30 relative">
@@ -129,9 +134,15 @@ export default function Donation({
 
       <div className="mb-8 mt-12 px-1">
         <span className="inline-flex items-center gap-1.5 bg-purple-50 border border-purple-100 text-purple-700 text-[11px] font-black uppercase px-3 py-1.5 rounded-full mb-3 md:text-xs">
-          <HeartHandshake size={12} className="animate-pulse md:w-3.5 md:h-3.5" /> Doação Material
+          <HeartHandshake
+            size={12}
+            className="animate-pulse md:w-3.5 md:h-3.5"
+          />{" "}
+          Doação Material
         </span>
-        <h1 className="text-2xl md:text-3xl font-black text-[#2e134d]">{ongName}</h1>
+        <h1 className="text-2xl md:text-3xl font-black text-[#2e134d]">
+          {ongName}
+        </h1>
         <p className="text-sm md:text-base text-gray-500 mt-1">
           Selecione os itens abaixo para compor a sua doação.
         </p>
@@ -198,7 +209,12 @@ export default function Donation({
             }
             className="mt-1 w-full bg-gradient-to-r from-purple-50 to-indigo-50 text-[#6B39A7] font-black py-3.5 md:py-4 rounded-2xl border border-purple-100/80 flex items-center justify-center gap-2 disabled:opacity-40 text-sm md:text-base"
           >
-            <Plus size={16} strokeWidth={3} className="md:w-[18px] md:h-[18px]" /> Incluir na Lista
+            <Plus
+              size={16}
+              strokeWidth={3}
+              className="md:w-[18px] md:h-[18px]"
+            />{" "}
+            Incluir na Lista
           </button>
         </div>
 
@@ -207,7 +223,7 @@ export default function Donation({
           onRemove={(index) =>
             setListaEnvio(listaEnvio.filter((_, i) => i !== index))
           }
-          onSubmit={handleOpenReview} 
+          onSubmit={handleOpenReview}
           loading={loading}
           disabled={fetchingData || !hasPhone}
           onCancel={onCancel}
@@ -224,7 +240,7 @@ export default function Donation({
               detailsLabel={`Confirma o envio para a ${ongName}?`}
               detailsText={resumoItens}
               primaryButtonText={loading ? "Enviando..." : "Confirmar e Enviar"}
-              onPrimaryAction={handleExecuteSubmit} 
+              onPrimaryAction={handleExecuteSubmit}
               secondaryButtonText="Voltar e Alterar"
               onSecondaryAction={() => setShowReview(false)}
             />
@@ -232,26 +248,16 @@ export default function Donation({
         </div>
       )}
 
-      {isSuccess && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-          <div className="w-full max-w-md md:max-w-lg">
-            <ConfirmationCard
-              type="material"
-              title="Doação Confirmada!"
-              amountOrQuantity={`${totalItens} ${totalItens === 1 ? "Item Enviado" : "Itens Enviados"}`}
-              detailsLabel="Obrigado por apoiar!"
-              detailsText={`Sua doação para ${ongName} foi registrada com sucesso.`}
-              primaryButtonText="Ir para o Início"
-              onPrimaryAction={() => router.push("/")} 
-              secondaryButtonText="Fazer outra Doação"
-              onSecondaryAction={() => {
-                setListaEnvio([]);
-                setIsSuccess(false);
-              }}
-            />
-          </div>
-        </div>
-      )}
+      <SuccessModal
+        isOpen={isSuccess}
+        title="Doação enviada!"
+        description={`A ONG ${ongName} recebeu sua intenção de doação de materiais e entrará em contato.`}
+        homePath="/"
+        onResetFlow={() => {
+          setListaEnvio([]);
+          setIsSuccess(false);
+        }}
+      />
     </div>
   );
 }

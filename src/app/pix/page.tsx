@@ -20,6 +20,7 @@ import { QRCodeSVG } from "qrcode.react";
 import toast, { Toaster } from "react-hot-toast";
 import DonationTutorialModal from "@/components/ui/DonationTutorial";
 import { ConfirmationCard } from "@/components/ui/ConfirmationCard";
+import { SuccessModal } from "@/components/ui/SuccessModal";
 
 function calculateCRC16(str: string): string {
   let crc = 0xffff;
@@ -553,26 +554,17 @@ function PixPageContent() {
         </div>
       )}
 
-      {showPopup && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-          <div className="w-full max-w-md md:max-w-lg">
-            <ConfirmationCard
-              type="money"
-              title="Doação Confirmada!"
-              amountOrQuantity={`R$ ${Number(valor).toFixed(2)}`}
-              detailsLabel="Obrigado por apoiar!"
-              detailsText={`Sua doação para ${ongData?.name || "a ONG"} foi registrada com sucesso.`}
-              primaryButtonText="Ir para o Início"
-              onPrimaryAction={() => router.push("/home")}
-              secondaryButtonText="Fazer outra Doação"
-              onSecondaryAction={() => {
-                setFile(null);
-                setShowPopup(false);
-              }}
-            />
-          </div>
-        </div>
-      )}
+      <SuccessModal
+        isOpen={showPopup}
+        title="Doação Confirmada!"
+        description={`Sua doação de R$ ${Number(valor).toFixed(2)} para ${ongData?.name || "a ONG"} foi registrada com sucesso.`}
+        homePath="/home"
+        onResetFlow={() => {
+          setFile(null);
+          setValor("");
+          setShowPopup(false);
+        }}
+      />
     </div>
   );
 }
