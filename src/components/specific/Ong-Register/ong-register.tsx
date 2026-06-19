@@ -133,13 +133,14 @@ export default function OngRegisterPage() {
           <Image
             src="/logo.svg"
             alt="DoeCerto"
-            width={120}
-            height={120}
+            width={220}
+            height={80}
             priority
+            className="w-full h-auto"
           />
         </div>
 
-        <h1 className="text-4xl -mt-2 font-bold mb-8 text-center">
+        <h1 className="text-xl -mt-2 font-bold mb-8 text-center">
           Cadastre sua ONG!
         </h1>
 

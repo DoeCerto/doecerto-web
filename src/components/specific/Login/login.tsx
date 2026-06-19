@@ -92,13 +92,14 @@ export default function LoginPage() {
           <Image
             src="/logo.svg"
             alt="DoeCerto"
-            width={120}
-            height={120}
+            width={220}
+            height={80}
             priority
+            className="w-full h-auto"
           />
         </div>
 
-        <h1 className="text-4xl -mt-2 font-bold mb-10 text-center">
+        <h1 className="text-2xl -mt-2 font-bold mb-10 text-center">
           Faça seu login!
         </h1>
 

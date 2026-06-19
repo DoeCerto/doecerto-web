@@ -66,10 +66,10 @@ export default function ForgotPasswordComponent() {
 
       <div className="w-full max-w-xs flex flex-col items-center">
         <div className="mb-4">
-          <Image src="/logo.svg" alt="DoeCerto" width={120} height={120} priority />
+          <Image src="/logo.svg" alt="DoeCerto" width={220} height={80} priority  className="w-full h-auto"/>
         </div>
 
-        <h1 className="text-4xl -mt-2 font-bold mb-6 text-center leading-tight">
+        <h1 className="text-2xl -mt-2 font-bold mb-6 text-center leading-tight">
           Recuperar Senha
         </h1>
 

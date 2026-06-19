@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FaUser, FaBuilding } from "react-icons/fa";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import Image from "next/image";
 
 export default function RegisterChoicePage() {
   const [selected, setSelected] = useState<"doa" | "ong">("doa");
@@ -29,8 +30,20 @@ export default function RegisterChoicePage() {
           <span className="hidden xs:inline">Voltar</span>
         </Link>
       </div>
+      <div className="w-full max-w-xs flex flex-col items-center">
+        <div className="mb-2">
+          <Image
+            src="/logo.svg"
+            alt="DoeCerto"
+            width={220}
+            height={80}
+            priority
+            className="w-full h-auto"
+          />
+        </div>
+      </div>
       <div className="w-full max-w-xs flex flex-col items-center text-center">
-        <h1 className="text-4xl font-bold mb-3">Novo por aqui?</h1>
+        <h1 className="text-2xl font-bold mb-3">Novo por aqui?</h1>
         <p className="text-base mb-8 text-purple-100">
           Cadastre-se agora mesmo como ONG ou Doador.
         </p>
