@@ -25,6 +25,9 @@ export default function Register() {
 
   const [cpfError, setCpfError] = useState("");
   const [cpfShake, setCpfShake] = useState(false);
+  const [nomeError, setNomeError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [senhaError, setSenhaError] = useState("");
 
   // ← NOVO — controle do modal
   const [modalAberto, setModalAberto] = useState(false);
@@ -51,32 +54,54 @@ export default function Register() {
     setTimeout(() => setCpfShake(false), 500);
   }
 
-  // ← MODIFICADO — agora só valida e abre o modal, não envia ainda
   function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!nome || !cpf || !email || !senha || !confirmarSenha) {
-      toast.error("Preencha todos os campos");
-      return;
-    }
+  // Reseta erros anteriores
+  setNomeError("");
+  setEmailError("");
+  setSenhaError("");
+  setCpfError("");
 
-    if (!validateCPF(cpf)) {
-      setCpfError("CPF inválido");
-      triggerShake();
-      toast.error("CPF inválido");
-      return;
-    }
+  let hasError = false;
 
-    if (senha !== confirmarSenha) {
-      toast.error("As senhas não coincidem");
-      return;
-    }
-
-    // Abre o modal de termos
-    setModalAberto(true);
+    if (!nome || nome.trim().length < 3) {
+    setNomeError("O nome deve conter pelo menos 3 caracteres");
+    hasError = true;
+  } else if (/\d/.test(nome)) {
+    setNomeError("O nome não pode conter números");
+    hasError = true;
   }
 
-  // ← NOVO — chamado após confirmar no modal
+  if (!validateCPF(cpf)) {
+    setCpfError("CPF inválido");
+    triggerShake();
+    hasError = true;
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email)) {
+    setEmailError("Email inválido");
+    hasError = true;
+  }
+
+  if (!senha || senha.length < 6) {
+    setSenhaError("A senha deve ter pelo menos 6 caracteres");
+    hasError = true;
+  }
+
+  if (senha !== confirmarSenha) {
+    setSenhaError("As senhas não coincidem");
+    hasError = true;
+  }
+
+  if (hasError) return;
+
+
+  setModalAberto(true);
+}
+
+ 
   async function handleConfirmarCadastro() {
     setIsPending(true);
 
@@ -106,7 +131,7 @@ export default function Register() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#6B39A7] text-white font-sans px-6 py-12">
       <Toaster position="top-center" />
 
-      {/* ← NOVO — Modal de termos */}
+      {/* Modal de termos */}
       <TermosModal
         isOpen={modalAberto}
         onConfirm={handleConfirmarCadastro}
@@ -147,6 +172,9 @@ export default function Register() {
               className="bg-white p-2 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all"
             />
           </div>
+          {nomeError && (
+            <span className="text-red-300 text-sm font-bold mt-1">{nomeError}</span>
+          )}
 
           {/* CPF */}
           <div className="flex flex-col relative">
@@ -194,6 +222,9 @@ export default function Register() {
               className="bg-white p-2 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all"
             />
           </div>
+          {emailError && (
+            <span className="text-red-300 text-sm font-bold mt-1">{emailError}</span>
+          )}
 
           {/* Senha */}
           <div className="flex flex-col relative">
@@ -220,7 +251,9 @@ export default function Register() {
               </button>
             </div>
           </div>
-
+           {senhaError && (
+            <span className="text-red-300 text-sm font-bold mt-1">{senhaError}</span>
+          )}
           {/* Confirmar Senha */}
           <div className="flex flex-col">
             <label htmlFor="confirmarSenha" className="text-base font-bold mb-1">Confirmar Senha</label>

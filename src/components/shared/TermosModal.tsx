@@ -44,7 +44,7 @@ export default function TermosModal({
             exit={{ y: 80, opacity: 0 }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
           >
-            {/* Cabeçalho roxo */}
+            
             <div className="bg-[#6B39A7] px-6 pt-6 pb-5 relative">
               <button
                 onClick={handleCancel}
@@ -67,10 +67,10 @@ export default function TermosModal({
               </div>
             </div>
 
-            {/* Corpo */}
+           
             <div className="px-6 py-5 flex flex-col gap-5">
 
-              {/* Checkbox 1 — Termos e Privacidade */}
+              
               <label className="flex items-start gap-4 cursor-pointer group">
                 <div className="mt-0.5 flex-shrink-0">
                   <input
@@ -79,7 +79,7 @@ export default function TermosModal({
                     onChange={(e) => setAceitouTermos(e.target.checked)}
                     className="sr-only"
                   />
-                  {/* Checkbox customizado — só ✓ branco no roxo, sem bolinha */}
+                  
                   <div
                     className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
                       aceitouTermos
@@ -129,7 +129,7 @@ export default function TermosModal({
                 </span>
               </label>
 
-              {/* Divider */}
+              
               <div className="border-t border-gray-100" />
 
               {/* Checkbox 2 — Idade */}
