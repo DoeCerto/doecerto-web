@@ -8,7 +8,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { Eye, EyeOff, AlertCircle, ArrowLeft } from "lucide-react";
 import { registerDonor } from "@/services/register.service";
 import { formatCPF, removeFormatting, validateCPF } from "@/utils/documentValidation";
-import TermosModal from "@/components/shared/TermosModal"; // ← NOVO
+import TermosModal from "@/components/shared/TermosModal";
 
 export default function Register() {
   const router = useRouter();
@@ -23,85 +23,137 @@ export default function Register() {
   const [showSenha, setShowSenha] = useState(false);
   const [showConfirmar, setShowConfirmar] = useState(false);
 
-  const [cpfError, setCpfError] = useState("");
-  const [cpfShake, setCpfShake] = useState(false);
+  // Estados de Erro
   const [nomeError, setNomeError] = useState("");
+  const [cpfError, setCpfError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [senhaError, setSenhaError] = useState("");
 
-  // ← NOVO — controle do modal
+  // Estados do Efeito Shake (Independentes para cada campo)
+  const [nomeShake, setNomeShake] = useState(false);
+  const [cpfShake, setCpfShake] = useState(false);
+  const [emailShake, setEmailShake] = useState(false);
+  const [senhaShake, setSenhaShake] = useState(false);
+
+  // Controle do modal
   const [modalAberto, setModalAberto] = useState(false);
 
   const senhasPreenchidas = senha.length > 0 && confirmarSenha.length > 0;
   const senhasCoincidem = senhasPreenchidas && senha === confirmarSenha;
   const senhasDiferentes = senhasPreenchidas && senha !== confirmarSenha;
 
-  function handleCPFChange(value: string) {
-    const formatted = formatCPF(value);
-    setCpf(formatted);
-    if (cpfError) setCpfError("");
-    const numbers = removeFormatting(formatted);
-    if (numbers.length === 11) {
-      if (!validateCPF(formatted)) {
-        setCpfError("CPF inválido");
-        triggerShake();
-      }
-    }
+  
+  function triggerNomeShake() {
+    setNomeShake(true);
+    setTimeout(() => setNomeShake(false), 500);
   }
 
-  function triggerShake() {
+  function triggerCpfShake() {
     setCpfShake(true);
     setTimeout(() => setCpfShake(false), 500);
   }
 
+  function triggerEmailShake() {
+    setEmailShake(true);
+    setTimeout(() => setEmailShake(false), 500);
+  }
+
+  function triggerSenhaShake() {
+    setSenhaShake(true);
+    setTimeout(() => setSenhaShake(false), 500);
+  }
+
+  
+  function handleNomeChange(value: string) {
+    setNome(value);
+    if (nomeError) setNomeError("");
+
+    
+    if (/\d/.test(value)) {
+      setNomeError("O nome não pode conter números");
+      triggerNomeShake();
+    }
+  }
+
+  function handleCPFChange(value: string) {
+    const formatted = formatCPF(value);
+    setCpf(formatted);
+    if (cpfError) setCpfError("");
+    
+    const numbers = removeFormatting(formatted);
+    if (numbers.length === 11) {
+      if (!validateCPF(formatted)) {
+        setCpfError("CPF inválido");
+        triggerCpfShake();
+      }
+    }
+  }
+
+  function handleEmailChange(value: string) {
+    setEmail(value);
+    if (emailError) setEmailError("");
+  }
+
+  function handleSenhaChange(value: string) {
+    setSenha(value);
+    if (senhaError) setSenhaError("");
+  }
+
   function handleSubmit(e: React.FormEvent) {
-  e.preventDefault();
+    e.preventDefault();
 
-  // Reseta erros anteriores
-  setNomeError("");
-  setEmailError("");
-  setSenhaError("");
-  setCpfError("");
+    // Reseta erros anteriores
+    setNomeError("");
+    setCpfError("");
+    setEmailError("");
+    setSenhaError("");
 
-  let hasError = false;
+    let hasError = false;
 
+    
     if (!nome || nome.trim().length < 3) {
-    setNomeError("O nome deve conter pelo menos 3 caracteres");
-    hasError = true;
-  } else if (/\d/.test(nome)) {
-    setNomeError("O nome não pode conter números");
-    hasError = true;
+      setNomeError("O nome deve conter pelo menos 3 caracteres");
+      triggerNomeShake();
+      hasError = true;
+    } else if (/\d/.test(nome)) {
+      setNomeError("O nome não pode conter números");
+      triggerNomeShake();
+      hasError = true;
+    }
+
+   
+    if (!validateCPF(cpf)) {
+      setCpfError("CPF inválido");
+      triggerCpfShake();
+      hasError = true;
+    }
+
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      setEmailError("Email inválido");
+      triggerEmailShake();
+      hasError = true;
+    }
+
+    
+    if (!senha || senha.length < 6) {
+      setSenhaError("A senha deve ter pelo menos 6 caracteres");
+      triggerSenhaShake();
+      hasError = true;
+    }
+
+    if (senha !== confirmarSenha) {
+      setSenhaError("As senhas não coincidem");
+      triggerSenhaShake();
+      hasError = true;
+    }
+
+    if (hasError) return;
+
+    setModalAberto(true);
   }
 
-  if (!validateCPF(cpf)) {
-    setCpfError("CPF inválido");
-    triggerShake();
-    hasError = true;
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!email || !emailRegex.test(email)) {
-    setEmailError("Email inválido");
-    hasError = true;
-  }
-
-  if (!senha || senha.length < 6) {
-    setSenhaError("A senha deve ter pelo menos 6 caracteres");
-    hasError = true;
-  }
-
-  if (senha !== confirmarSenha) {
-    setSenhaError("As senhas não coincidem");
-    hasError = true;
-  }
-
-  if (hasError) return;
-
-
-  setModalAberto(true);
-}
-
- 
   async function handleConfirmarCadastro() {
     setIsPending(true);
 
@@ -162,22 +214,34 @@ export default function Register() {
           {/* Nome */}
           <div className="flex flex-col">
             <label htmlFor="nome" className="text-base font-bold mb-1">Nome</label>
-            <input
-              id="nome"
-              type="text"
-              required
-              placeholder="Digite seu nome completo"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              className="bg-white p-2 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all"
-            />
+            <div className="relative">
+              <input
+                id="nome"
+                type="text"
+                required
+                placeholder="Digite seu nome completo"
+                value={nome}
+                onChange={(e) => handleNomeChange(e.target.value)}
+                className={`w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
+                  nomeError ? "ring-2 ring-red-400" : "focus:ring-purple-300"
+                } ${nomeShake ? "shake" : ""}`}
+              />
+              {nomeError && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <AlertCircle size={20} className="text-red-500" />
+                </div>
+              )}
+            </div>
+            {nomeError && (
+              <div className="mt-1 flex items-center gap-1 text-red-300 text-sm font-bold animate-fadeIn">
+                <AlertCircle size={14} />
+                <span>{nomeError}</span>
+              </div>
+            )}
           </div>
-          {nomeError && (
-            <span className="text-red-300 text-sm font-bold mt-1">{nomeError}</span>
-          )}
 
           {/* CPF */}
-          <div className="flex flex-col relative">
+          <div className="flex flex-col">
             <label htmlFor="cpf" className="text-base font-bold mb-1">CPF</label>
             <div className="relative">
               <input
@@ -188,12 +252,12 @@ export default function Register() {
                 value={cpf}
                 onChange={(e) => handleCPFChange(e.target.value)}
                 maxLength={14}
-                className={`w-full bg-white p-2 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
-                  cpfError ? "ring-2 ring-red-400 shake" : "focus:ring-purple-300"
+                className={`w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
+                  cpfError ? "ring-2 ring-red-400" : "focus:ring-purple-300"
                 } ${cpfShake ? "shake" : ""}`}
               />
               {cpfError && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                   <AlertCircle size={20} className="text-red-500" />
                 </div>
               )}
@@ -204,30 +268,39 @@ export default function Register() {
                 <span>{cpfError}</span>
               </div>
             )}
-            <span className="text-xs text-purple-200 mt-1">
-              O CPF deve conter exatamente 11 dígitos
-            </span>
           </div>
 
           {/* Email */}
           <div className="flex flex-col">
             <label htmlFor="email" className="text-base font-bold mb-1">Email</label>
-            <input
-              id="email"
-              type="email"
-              required
-              placeholder="seu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-white p-2 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all"
-            />
+            <div className="relative">
+              <input
+                id="email"
+                type="email"
+                required
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => handleEmailChange(e.target.value)}
+                className={`w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
+                  emailError ? "ring-2 ring-red-400" : "focus:ring-purple-300"
+                } ${emailShake ? "shake" : ""}`}
+              />
+              {emailError && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <AlertCircle size={20} className="text-red-500" />
+                </div>
+              )}
+            </div>
+            {emailError && (
+              <div className="mt-1 flex items-center gap-1 text-red-300 text-sm font-bold animate-fadeIn">
+                <AlertCircle size={14} />
+                <span>{emailError}</span>
+              </div>
+            )}
           </div>
-          {emailError && (
-            <span className="text-red-300 text-sm font-bold mt-1">{emailError}</span>
-          )}
 
           {/* Senha */}
-          <div className="flex flex-col relative">
+          <div className="flex flex-col">
             <label htmlFor="senha" className="text-base font-bold mb-1">Senha</label>
             <div className="relative">
               <input
@@ -235,12 +308,13 @@ export default function Register() {
                 type={showSenha ? "text" : "password"}
                 required
                 minLength={6}
-                placeholder="Mínimo de 8 caracteres"
+                placeholder="Mínimo de 6 caracteres"
                 value={senha}
-                onChange={(e) => setSenha(e.target.value)}
+                onChange={(e) => handleSenhaChange(e.target.value)}
                 className={`w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
-                  senhasCoincidem ? "ring-2 ring-green-400" : "focus:ring-purple-300"
-                }`}
+                  senhasCoincidem ? "ring-2 ring-green-400" : 
+                  senhaError ? "ring-2 ring-red-400" : "focus:ring-purple-300"
+                } ${senhaShake ? "shake" : ""}`}
               />
               <button
                 type="button"
@@ -250,10 +324,14 @@ export default function Register() {
                 {showSenha ? <Eye size={20} /> : <EyeOff size={20} />}
               </button>
             </div>
+            {senhaError && (
+              <div className="mt-1 flex items-center gap-1 text-red-300 text-sm font-bold animate-fadeIn">
+                <AlertCircle size={14} />
+                <span>{senhaError}</span>
+              </div>
+            )}
           </div>
-           {senhaError && (
-            <span className="text-red-300 text-sm font-bold mt-1">{senhaError}</span>
-          )}
+
           {/* Confirmar Senha */}
           <div className="flex flex-col">
             <label htmlFor="confirmarSenha" className="text-base font-bold mb-1">Confirmar Senha</label>
@@ -268,7 +346,7 @@ export default function Register() {
                 className={`w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
                   senhasCoincidem ? "ring-2 ring-green-400" :
                   senhasDiferentes ? "ring-2 ring-red-400" : "focus:ring-purple-300"
-                }`}
+                } ${senhaShake ? "shake" : ""}`}
               />
               <button
                 type="button"
