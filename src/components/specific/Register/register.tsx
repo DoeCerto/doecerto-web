@@ -65,15 +65,9 @@ export default function Register() {
 
   
   function handleNomeChange(value: string) {
-    setNome(value);
-    if (nomeError) setNomeError("");
-
-    
-    if (/\d/.test(value)) {
-      setNomeError("O nome não pode conter números");
-      triggerNomeShake();
-    }
-  }
+  setNome(value);
+  if (nomeError) setNomeError("");
+}
 
   function handleCPFChange(value: string) {
     const formatted = formatCPF(value);
@@ -89,10 +83,32 @@ export default function Register() {
     }
   }
 
-  function handleEmailChange(value: string) {
-    setEmail(value);
-    if (emailError) setEmailError("");
+  function handleNomeBlur() {
+  if (!nome.trim()) return;
+
+  if (nome.trim().length < 3) {
+    setNomeError("O nome deve conter pelo menos 3 caracteres");
+    triggerNomeShake();
+  } else if (/\d/.test(nome)) {
+    setNomeError("O nome não pode conter números");
+    triggerNomeShake();
   }
+}
+
+function handleEmailBlur() {
+  if (!email.trim()) return;
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    setEmailError("Email inválido");
+    triggerEmailShake(); // Ativa o tremor do email
+  }
+}
+
+  function handleEmailChange(value: string) {
+  setEmail(value);
+  if (emailError) setEmailError(""); 
+}
 
   function handleSenhaChange(value: string) {
     setSenha(value);
@@ -222,6 +238,7 @@ export default function Register() {
                 placeholder="Digite seu nome completo"
                 value={nome}
                 onChange={(e) => handleNomeChange(e.target.value)}
+                onBlur={handleNomeBlur}
                 className={`w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
                   nomeError ? "ring-2 ring-red-400" : "focus:ring-purple-300"
                 } ${nomeShake ? "shake" : ""}`}
@@ -281,6 +298,7 @@ export default function Register() {
                 placeholder="seu@email.com"
                 value={email}
                 onChange={(e) => handleEmailChange(e.target.value)}
+                onBlur={handleEmailBlur}
                 className={`w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
                   emailError ? "ring-2 ring-red-400" : "focus:ring-purple-300"
                 } ${emailShake ? "shake" : ""}`}
