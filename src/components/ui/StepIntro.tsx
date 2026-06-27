@@ -2,16 +2,18 @@ type StepIntroProps = {
   label: string;
   title: string;
   description: string;
+  labelClassName?: string;
 };
 
 export default function StepIntro({
   label,
   title,
   description,
+  labelClassName = "",
 }: StepIntroProps) {
   return (
     <div className="flex flex-col">
-      <span className="text-[#6B39A7] font-extrabold text-[24px]">
+      <span className={`inline-block w-fit text-[#6B39A7] font-extrabold text-[24px] ${labelClassName}`}>
         {label}
       </span>
 

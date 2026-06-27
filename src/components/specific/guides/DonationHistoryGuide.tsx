@@ -23,6 +23,8 @@ function DefaultCard({ step }: any) {
     border 
     border-[#6B39A7] 
     rounded-[20px] 
+    mt-[20px]
+    mb-[30px]
     p-[15px] 
     shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
     flex
@@ -90,19 +92,19 @@ function DefaultCard({ step }: any) {
                 </div>
               </div>
 
-                <div className="flex flex-row gap-1 mt-[5px]">
+              <div className="flex flex-row gap-1 mt-[5px]">
                 <div className="w-fit rounded-[20px] bg-[#EBD2FF] shadow-sm px-[10px]">
                   <p className="text-[14px] text-[#6B39A7] font-semibold">
                     Animal
                   </p>
                 </div>
                 <p className="text-[14px] text-[#666666]">+1</p>
-                </div>
+              </div>
 
-                <div>
-                  <p className="text-[14px] text-[#666666]">1.4 km</p>
-                </div>
-                <div className="w-full mt-[8px] rounded-[8px] font-semibold bg-[#6B39A7] flex justify-center items-center text-white">Doar</div>
+              <div>
+                <p className="text-[14px] text-[#666666]">1.4 km</p>
+              </div>
+              <div className="w-full mt-[8px] rounded-[8px] font-semibold bg-[#6B39A7] flex justify-center items-center text-white">Doar</div>
             </div>
           </div>
 
@@ -119,21 +121,21 @@ function DefaultCard({ step }: any) {
                 </div>
               </div>
 
-                <div className="flex flex-row gap-1 mt-[5px]">
+              <div className="flex flex-row gap-1 mt-[5px]">
                 <div className="w-fit rounded-[20px] bg-[#EBD2FF] shadow-sm px-[10px]">
                   <p className="text-[14px] text-[#6B39A7] font-semibold">
                     Meio Ambiente</p>
                 </div>
                 <p className="text-[14px] text-[#666666]">+2</p>
-                </div>
+              </div>
 
-                <div>
-                  <p className="text-[14px] text-[#666666]">1.4 km</p>
-                </div>
-                <div className="w-full mt-[8px] rounded-[8px] font-semibold bg-[#6B39A7] flex justify-center items-center text-white">Doar</div>
+              <div>
+                <p className="text-[14px] text-[#666666]">1.4 km</p>
+              </div>
+              <div className="w-full mt-[8px] rounded-[8px] font-semibold bg-[#6B39A7] flex justify-center items-center text-white">Doar</div>
             </div>
           </div>
-          </div>
+        </div>
 
       </div>
     </div>
@@ -154,110 +156,70 @@ function DonationTypeCard({ step }: any) {
         border-[#6B39A7]
         rounded-[20px]
         mt-[20px]
-        pt-[40px]
-        px-[25px]
-        pb-[28px]
         mb-[30px]
         shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
         flex
         flex-col
-        items-center
+        overflow-hidden
       "
     >
-      <div
-        className="
-          w-[60px]
-          h-[60px]
-          bg-[#EBD2FF]
-          rounded-full
-          flex
-          items-center
-          justify-center
-        "
-      >
-        {step.icon}
+      <div className="flex flex-row gap-[16px] w-full bg-[#6B39A7] border border-[#6B39A7] p-[15px]">
+
+        <div className="w-[45px] h-[45px] rounded-full bg-white flex justify-center items-center">
+          <User className="w-[35px] h-[30px] text-[#6B39A7]" />
+        </div>
+
+        <div>
+          <div className="text-[20px] font-semibold text-white">
+            <h2>Felipe Romero</h2>
+          </div>
+          <div className="text-[14px] font-semibold text-white -mt-2">
+            <p>felipe@gmail.com</p>
+          </div>
+        </div>
       </div>
 
-      <h1 className="font-semibold text-[24px] mt-[3px] text-center">
-        {step.organization}
-      </h1>
+      <div className="px-[15px] py-[20px] gap-[8px] flex flex-col">
+        <div className="rounded-[10px] border-5 border-[#6B39A7] p-[15px] flex flex-row gap-[10px] items-center">
 
-      <p
-        className="
-          text-[16px]
-          font-normal
-          -translate-y-[8px]
-          mb-[20px]
-          text-center
-        "
-      >
-        {step.organizationDescription}
-      </p>
+          <div className="w-[40px] h-[40px] bg-[#EBD2FF] rounded-[10px] flex items-center justify-center">1</div>
 
-      <div className="w-full flex flex-col gap-3">
-        <div
-          className="
-            border
-            border-[#6B39A7]
-            bg-[#EBD2FF]
-            rounded-[14px]
-            p-[18px]
-            flex
-            flex-row
-            justify-between
-            items-center
-          "
-        >
-          <div className="flex flex-row gap-2 items-center">
-            <div className="p-[5px] flex items-center justify-center rounded-[5px] bg-[#FFFFFF]">
-              💰
+          <div>
+            <div className="text-[20px] font-semibold ">
+              <h2>Ver histórico de doações</h2>
             </div>
-
-            <div>
-              <h2 className="text-[20px] font-bold text-[#6B39A7]">
-                {step.money}
-              </h2>
-
-              <p className="text-[14px] text-[#5F5F5F]">
-                {step.DescribeMoney}
-              </p>
+            <div className="text-[14px] font-regular -mt-2">
+              <p>Tudo que você já doou</p>
             </div>
-          </div>
-
-          <div className="rounded-full p-[5px] w-[15px] h-[15px] flex justify-center items-center bg-[#6B39A7]">
-            <div className="rounded-full w-[6px] h-[6px] bg-white"></div>
           </div>
         </div>
 
-        <div
-          className="
-            border
-            border-[#EBD2FF]
-            rounded-[14px]
-            p-[18px]
-            flex
-            flex-row
-            justify-between
-            items-center
-          "
-        >
-          <div className="flex flex-row gap-2 items-center">
-            <div className="p-[5px] flex items-center justify-center rounded-[5px] bg-[#EBD2FF] text-white">
-              📦
+        <div className="rounded-[10px] shadow-sm p-[15px] flex flex-row gap-[10px] items-center">
+
+          <div className="w-[40px] h-[40px] bg-[#EBD2FF] rounded-[10px] flex items-center justify-center">1</div>
+
+          <div>
+            <div className="text-[20px] font-semibold ">
+              <h2>Avaliar uma ONG</h2>
             </div>
-
-            <div>
-              <h2 className="text-[20px] font-bold text-[#6B39A7]">
-                {step.items}
-              </h2>
-
-              <p className="text-[14px] text-[#5F5F5F]">
-                {step.DescribeItems}
-              </p>
+            <div className="text-[14px] font-regular -mt-2">
+              <p>Comentários e estrelas</p>
             </div>
           </div>
+        </div>
 
-          <div className="border border-[#6B39A7] rounded-full p-[5px] w-[15px] h-[15px] flex justify-center items-center"></div>
+        <div className="rounded-[10px] shadow-sm p-[15px] flex flex-row gap-[10px] items-center">
+
+          <div className="w-[40px] h-[40px] bg-[#EBD2FF] rounded-[10px] flex items-center justify-center">1</div>
+
+          <div>
+            <div className="text-[20px] font-semibold ">
+              <h2>Minha Conta</h2>
+            </div>
+            <div className="text-[14px] font-regular -mt-2">
+              <p>Dados e preferênciais</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -547,6 +509,7 @@ export default function DonationHistoryGuide() {
     {
       id: 1,
       label: "Passo 1",
+      labelClassName: "bg-[#EBD2FF] px-[10px] rounded-[20px]",
       title: "Acesse seu Perfil",
       description:
         "Toque no seu avatar no canto superior direito da home",
@@ -554,23 +517,11 @@ export default function DonationHistoryGuide() {
 
     {
       id: 2,
-      icon: <span className="text-[28px]">🐱</span>,
-      organization: "SOS Gatinhos",
-      organizationDescription:
-        "Como você quer ajudar?",
-
-      money: "Dinheiro",
-      DescribeMoney: "Pix ou boleto - rápido e seguro",
-
-      items: "Itens",
-      DescribeItems: "Ração, roupas e mais",
-
-      label: "VOCÊ DECIDE COMO AJUDAR",
-
-      title: "Escolha o tipo de doação",
-
+      label: "Passo 2",
+      labelClassName: "bg-[#EBD2FF] px-[10px] rounded-[20px]",
+      title: "Toque em ver Histórico",
       description:
-        "Doe dinheiro ou itens físicos - do jeito que for melhor pra você",
+        "No seu perfil, toque em \"Ver histórico de doações\" ",
     },
 
     {
@@ -693,6 +644,7 @@ export default function DonationHistoryGuide() {
         <div className="lg:max-w-none lg:h-[400px] flex flex-col lg:justify-center items-center">
           <StepIntro
             label={step.label ?? ""}
+            labelClassName={step.labelClassName}
             title={typeof step.title === "string" ? step.title : ""}
             description={step.description ?? ""}
           />
