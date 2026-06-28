@@ -9,7 +9,7 @@ import StepHeader from "@/components/ui/StepHeader";
 import StepIntro from "@/components/ui/StepIntro";
 import NextButton from "@/components/ui/NextButton";
 import BackButton from "@/components/ui/BackButton";
-import { FiSearch } from "react-icons/fi";
+import { FiSearch, FiChevronLeft } from "react-icons/fi";
 
 /* =========================
    CARD PADRÃO
@@ -240,103 +240,124 @@ function ReviewCard({ step }: any) {
         border-[#6B39A7]
         rounded-[20px]
         mt-[20px]
-        pt-[40px]
-        px-[25px]
-        pb-[28px]
         mb-[30px]
         shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
       "
     >
-      <div className="flex flex-col items-center">
-        <div
-          className="
-            w-[60px]
-            h-[60px]
-            bg-[#EBD2FF]
-            rounded-full
-            flex
-            items-center
-            justify-center
-          "
-        >
-          {step.icon}
-        </div>
+      <div className="p-[15px] flex flex-col gap-[25px]">
 
-        <h1 className="font-semibold text-[24px] mt-[3px] text-center">
-          {step.money}
-        </h1>
-
-        <p className="text-[16px] text-center mb-[20px] font-normal
-          -translate-y-[8px]">
-          {step.organizationDescription}
-        </p>
-      </div>
-
-      <div className="w-full flex flex-row gap-4 justify-center">
-        <div
-          className="
-                w-full 
-                border 
-                border-[#6B39A7] 
-                bg-[#EBD2FF] 
-                flex 
-                flex-col 
-                items-center 
-                justify-center 
-                py-[15px] 
-                px-[20px]
-                rounded-[14px]
-              "
-        >
-          <h1 className="font-semibold text-[24px] text-[#6B39A7]">{step.titleCard1}</h1>
-          <p className="text-[#6B39A7] -translate-y-[8px]">{step.descriptionCard1}</p>
-        </div>
-
-        <div
-          className="
-              w-full
-              border
-              border-[#6B39A7]
-              flex
-              flex-col
-              items-center
-              justify-center
-              py-[5px]
-              px-[20px]
-              rounded-[14px]
-            "
-        >
-          <h1 className="font-semibold text-[24px] text-[#6B39A7]">
-            {step.titleCard2}
-          </h1>
-
-          <div className="text-[#6B39A7] mt-[5px] -translate-y-[15px]">
-            <svg
-              width="55"
-              height="32"
-              viewBox="0 0 55 32"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <rect x="2" y="4" width="2" height="24" fill="currentColor" />
-              <rect x="6" y="4" width="1" height="24" fill="currentColor" />
-              <rect x="9" y="4" width="3" height="24" fill="currentColor" />
-              <rect x="14" y="4" width="2" height="24" fill="currentColor" />
-              <rect x="18" y="4" width="4" height="24" fill="currentColor" />
-              <rect x="24" y="4" width="1" height="24" fill="currentColor" />
-              <rect x="27" y="4" width="3" height="24" fill="currentColor" />
-              <rect x="32" y="4" width="2" height="24" fill="currentColor" />
-              <rect x="36" y="4" width="5" height="24" fill="currentColor" />
-              <rect x="43" y="4" width="1" height="24" fill="currentColor" />
-              <rect x="46" y="4" width="3" height="24" fill="currentColor" />
-              <rect x="51" y="4" width="2" height="24" fill="currentColor" />
-            </svg>
+        <div className="flex flex-row gap-[10px] items-center">
+          <div className="w-[35px] h-[35px] bg-[#EBD2FF] rounded-full flex justify-center items-center">
+            <FiChevronLeft className="w-[35px] h-[25px] text-[#6B39A7]"/>
+          </div>
+          <div className="font-extrabold text-[20px]">
+            <p>Histórico de doações</p>
           </div>
         </div>
-      </div>
 
-      <div className="mt-4 py-[18px] text-white rounded-[10px] w-full bg-[#6B39A7] flex justify-center items-center">
-        <p className="font-bold font-[16px]">{step.buttonText}</p>
+
+        <div className="flex flex-col gap-[5px]">
+          <div className="flex flex-row rounded-[10px] shadow-sm p-[12px] items-center justify-between">
+
+            <div className="flex flex-row">
+              <div className="w-[42px] h-[42px] bg-[#EBD2FF] rounded-full mr-[13px]"></div>
+
+              <div>
+                <div className="text-[20px] font-semibold ">
+                  <h2>SOS Gatinhos</h2>
+                </div>
+                <div className="text-[14px] font-regular -mt-2">
+                  <p>13 abr - Pix</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="w-fit">
+              <div className="text-[20px] text-[#6B39A7] font-bold ">
+                <h2>R$50,00</h2>
+              </div>
+              <div className="-mt-1 bg-[#08A60C] rounded-[10px] px-[7px] flex justify-center items-center">
+                <p className="text-[14px] font-semibold">Concluído</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-row rounded-[10px] shadow-sm p-[12px] items-center justify-between">
+
+            <div className="flex flex-row">
+              <div className="w-[42px] h-[42px] bg-[#EBD2FF] rounded-full mr-[13px]"></div>
+
+              <div>
+                <div className="text-[20px] font-semibold ">
+                  <h2>SOS Gatinhos</h2>
+                </div>
+                <div className="text-[14px] font-regular -mt-2">
+                  <p>13 abr - Pix</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="w-fit">
+              <div className="text-[20px] text-[#6B39A7] font-bold ">
+                <h2>R$50,00</h2>
+              </div>
+              <div className="-mt-1 bg-[#08A60C] rounded-[10px] px-[7px] flex justify-center items-center">
+                <p className="text-[14px] font-semibold">Concluído</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-row rounded-[10px] shadow-sm p-[12px] items-center justify-between">
+
+            <div className="flex flex-row">
+              <div className="w-[42px] h-[42px] bg-[#EBD2FF] rounded-full mr-[13px]"></div>
+
+              <div>
+                <div className="text-[20px] font-semibold ">
+                  <h2>SOS Gatinhos</h2>
+                </div>
+                <div className="text-[14px] font-regular -mt-2">
+                  <p>13 abr - Pix</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="w-fit">
+              <div className="text-[20px] text-[#6B39A7] font-bold ">
+                <h2>R$50,00</h2>
+              </div>
+              <div className="-mt-1 bg-[#08A60C] rounded-[10px] px-[7px] flex justify-center items-center">
+                <p className="text-[14px] font-semibold">Concluído</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-row rounded-[10px] shadow-sm p-[12px] items-center justify-between">
+
+            <div className="flex flex-row">
+              <div className="w-[42px] h-[42px] bg-[#EBD2FF] rounded-full mr-[13px]"></div>
+
+              <div>
+                <div className="text-[20px] font-semibold ">
+                  <h2>SOS Gatinhos</h2>
+                </div>
+                <div className="text-[14px] font-regular -mt-2">
+                  <p>13 abr - Pix</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="w-fit">
+              <div className="text-[20px] text-[#6B39A7] font-bold ">
+                <h2>R$50,00</h2>
+              </div>
+              <div className="-mt-1 bg-[#08A60C] rounded-[10px] px-[7px] flex justify-center items-center">
+                <p className="text-[14px] font-semibold">Concluído</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
@@ -526,71 +547,13 @@ export default function DonationHistoryGuide() {
 
     {
       id: 3,
-      icon: <Heart className="w-[28px] h-[28px] fill-[#6B39A7] text-[#6B39A7]" />,
-      money: "R$ 50,00",
-      organizationDescription:
-        "para SOS Gatinhos",
-
-      titleCard1: "Pix",
-      descriptionCard1:
-        "Instantâneo",
-
-      titleCard2: "Boleto",
-
-      buttonText: "Confirmar Doação",
-
-      label: "RÁPIDO E SEGURO",
-
-      title: "Doe em segundos com Segurança",
-
+      label: "Passo 3",
+      labelClassName: "bg-[#EBD2FF] px-[10px] rounded-[20px]",
+      title: "Seu Histórico completo",
       description:
-        "Pix ou boleto. Recibo e confirmação chega na hora.",
+        "Veja todas as doações, datas e valores em um só lugar",
     },
 
-    {
-      id: 4,
-      icon: <span className="text-[28px]">📦</span>,
-      titleCard: "O que você vai doar?",
-      titleDescription:
-        "Adicione os itens que deseja enviar para SOS Gatinhos",
-
-      labelCard1: "Item 1",
-      itensCard1: "Ração e shampoo",
-
-      labelCard2: "Item 2",
-      itensCard2: "Ex: remédios, coberto...",
-
-      label: "ITENS QUE FAZEM DIFERENÇA",
-
-      title: "Doe itens para quem mais precisa",
-
-      description:
-        "Adicione ração, remédios ou qualquer item da lista da ONG",
-
-      buttonAdd: "Adicionar Item",
-    },
-
-    {
-      id: 5,
-      icon: <Check className="w-[30px] h-[30px] text-[#6B39A7] stroke-[3]" />,
-      confirmDonation: "Doação Confirmada!",
-      confirmOrganization:
-        "para SOS Gatinhos",
-
-      to: "SOS Gatinhos",
-      value: "R$ 50,00",
-      method: "Pix",
-      date: "Hoje, 14h32",
-
-      confirmDescription: "Recibo enviado para o seu e-mail. Obrigado por fazer a diferença!",
-
-      label: "TUDO CERTO!",
-
-      title: "Sua doação foi um confirmada!",
-
-      description:
-        "Recibo e comprovante chegam na hora no seu e-mail",
-    },
   ];
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -605,8 +568,6 @@ export default function DonationHistoryGuide() {
     1: DefaultCard,
     2: DonationTypeCard,
     3: ReviewCard,
-    4: SuccessCard,
-    5: FinishCard,
   };
 
   const CurrentCard = cardComponents[step.id] || DefaultCard;
