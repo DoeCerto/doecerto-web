@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { MoveRight, User, Star, Heart, Check } from "lucide-react";
+import { MoveRight, User, Star, ListChecks } from "lucide-react";
 
 import StepHeader from "@/components/ui/StepHeader";
 import StepIntro from "@/components/ui/StepIntro";
@@ -182,7 +182,9 @@ function DonationTypeCard({ step }: any) {
       <div className="px-[15px] py-[20px] gap-[8px] flex flex-col">
         <div className="rounded-[10px] border-5 border-[#6B39A7] p-[15px] flex flex-row gap-[10px] items-center">
 
-          <div className="w-[40px] h-[40px] bg-[#EBD2FF] rounded-[10px] flex items-center justify-center">1</div>
+          <div className="w-[40px] h-[40px] bg-[#EBD2FF] rounded-[10px] flex items-center justify-center">
+            <ListChecks className="w-5 h-5 text-[#6B39A7]" />
+          </div>
 
           <div>
             <div className="text-[20px] font-semibold ">
@@ -196,7 +198,9 @@ function DonationTypeCard({ step }: any) {
 
         <div className="rounded-[10px] shadow-sm p-[15px] flex flex-row gap-[10px] items-center">
 
-          <div className="w-[40px] h-[40px] bg-[#EBD2FF] rounded-[10px] flex items-center justify-center">1</div>
+          <div className="w-[40px] h-[40px] bg-[#EBD2FF] rounded-[10px] flex items-center justify-center">
+            <Star className="w-5 h-5 text-[#6B39A7]" />
+          </div>
 
           <div>
             <div className="text-[20px] font-semibold ">
@@ -210,7 +214,9 @@ function DonationTypeCard({ step }: any) {
 
         <div className="rounded-[10px] shadow-sm p-[15px] flex flex-row gap-[10px] items-center">
 
-          <div className="w-[40px] h-[40px] bg-[#EBD2FF] rounded-[10px] flex items-center justify-center">1</div>
+          <div className="w-[40px] h-[40px] bg-[#EBD2FF] rounded-[10px] flex items-center justify-center">
+            <User className="w-5 h-5 text-[#6B39A7]" />
+          </div>
 
           <div>
             <div className="text-[20px] font-semibold ">
@@ -260,7 +266,9 @@ function ReviewCard({ step }: any) {
           <div className="flex flex-row rounded-[10px] shadow-sm p-[12px] items-center justify-between">
 
             <div className="flex flex-row">
-              <div className="w-[42px] h-[42px] bg-[#EBD2FF] rounded-full mr-[13px]"></div>
+              <div className="w-[42px] h-[42px] bg-[#EBD2FF] rounded-full mr-[13px] flex justify-center items-center">
+                <span className="text-[25px]">🐱</span>
+              </div>
 
               <div>
                 <div className="text-[20px] font-semibold ">
@@ -276,8 +284,8 @@ function ReviewCard({ step }: any) {
               <div className="text-[20px] text-[#6B39A7] font-bold ">
                 <h2>R$50,00</h2>
               </div>
-              <div className="-mt-1 bg-[#08A60C] rounded-[10px] px-[7px] flex justify-center items-center">
-                <p className="text-[14px] font-semibold">Concluído</p>
+              <div className="-mt-1 bg-[#6BF66F] rounded-[10px] px-[7px] flex justify-center items-center">
+                <p className="text-[14px] text-[#08A60C] font-semibold">Concluído</p>
               </div>
             </div>
           </div>
@@ -285,7 +293,9 @@ function ReviewCard({ step }: any) {
           <div className="flex flex-row rounded-[10px] shadow-sm p-[12px] items-center justify-between">
 
             <div className="flex flex-row">
-              <div className="w-[42px] h-[42px] bg-[#EBD2FF] rounded-full mr-[13px]"></div>
+              <div className="w-[42px] h-[42px] bg-[#EBD2FF] rounded-full mr-[13px] flex justify-center items-center">
+                <span className="text-[25px]">🐱</span>
+              </div>
 
               <div>
                 <div className="text-[20px] font-semibold ">
@@ -301,8 +311,8 @@ function ReviewCard({ step }: any) {
               <div className="text-[20px] text-[#6B39A7] font-bold ">
                 <h2>R$50,00</h2>
               </div>
-              <div className="-mt-1 bg-[#08A60C] rounded-[10px] px-[7px] flex justify-center items-center">
-                <p className="text-[14px] font-semibold">Concluído</p>
+              <div className="-mt-1 bg-[#6BF66F] rounded-[10px] px-[7px] flex justify-center items-center">
+                <p className="text-[14px] text-[#08A60C] font-semibold">Concluído</p>
               </div>
             </div>
           </div>
@@ -310,7 +320,9 @@ function ReviewCard({ step }: any) {
           <div className="flex flex-row rounded-[10px] shadow-sm p-[12px] items-center justify-between">
 
             <div className="flex flex-row">
-              <div className="w-[42px] h-[42px] bg-[#EBD2FF] rounded-full mr-[13px]"></div>
+              <div className="w-[42px] h-[42px] bg-[#EBD2FF] rounded-full mr-[13px] flex justify-center items-center">
+                <span className="text-[25px]">🐱</span>
+              </div>
 
               <div>
                 <div className="text-[20px] font-semibold ">
@@ -326,8 +338,8 @@ function ReviewCard({ step }: any) {
               <div className="text-[20px] text-[#6B39A7] font-bold ">
                 <h2>R$50,00</h2>
               </div>
-              <div className="-mt-1 bg-[#08A60C] rounded-[10px] px-[7px] flex justify-center items-center">
-                <p className="text-[14px] font-semibold">Concluído</p>
+              <div className="-mt-1 bg-[#6BF66F] rounded-[10px] px-[7px] flex justify-center items-center">
+                <p className="text-[14px] text-[#08A60C] font-semibold">Concluído</p>
               </div>
             </div>
           </div>
@@ -335,7 +347,9 @@ function ReviewCard({ step }: any) {
           <div className="flex flex-row rounded-[10px] shadow-sm p-[12px] items-center justify-between">
 
             <div className="flex flex-row">
-              <div className="w-[42px] h-[42px] bg-[#EBD2FF] rounded-full mr-[13px]"></div>
+              <div className="w-[42px] h-[42px] bg-[#EBD2FF] rounded-full mr-[13px] flex justify-center items-center">
+                <span className="text-[25px]">🐱</span>
+              </div>
 
               <div>
                 <div className="text-[20px] font-semibold ">
@@ -351,174 +365,14 @@ function ReviewCard({ step }: any) {
               <div className="text-[20px] text-[#6B39A7] font-bold ">
                 <h2>R$50,00</h2>
               </div>
-              <div className="-mt-1 bg-[#08A60C] rounded-[10px] px-[7px] flex justify-center items-center">
-                <p className="text-[14px] font-semibold">Concluído</p>
+              <div className="-mt-1 bg-[#6BF66F] rounded-[10px] px-[7px] flex justify-center items-center">
+                <p className="text-[14px] text-[#08A60C] font-semibold">Concluído</p>
               </div>
             </div>
           </div>
         </div>
 
       </div>
-    </div>
-  );
-}
-
-/* =========================
-   CARD STEP 4
-========================= */
-
-function SuccessCard({ step }: any) {
-  return (
-    <div
-      className="
-        w-full
-        bg-white
-        border
-        border-[#6B39A7]
-        rounded-[20px]
-        mt-[20px]
-        pt-[40px]
-        px-[25px]
-        pb-[28px]
-        mb-[30px]
-        shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
-      "
-    >
-      <div className="flex flex-col items-center">
-        <div
-          className="
-            w-[60px]
-            h-[60px]
-            bg-[#EBD2FF]
-            rounded-full
-            flex
-            items-center
-            justify-center
-          "
-        >
-          {step.icon}
-        </div>
-
-        <h1 className="font-semibold text-[24px] mt-[3px] text-center">
-          {step.titleCard}
-        </h1>
-
-        <p className="text-[16px] text-center text-[#6B39A7] mb-[25px]">
-          {step.titleDescription}
-        </p>
-
-        <div className="gap-2 w-full flex flex-col">
-          <div className="rounded-[10px] py-[10px] px-[20px] border border-[#6B39A7] text-[16px] font-extrabold bg-[#EBD2FF]">
-            {step.labelCard1}
-            <div className="flex flex-row justify-between items-center">
-              <div className="bg-white py-[5px] px-[10px] w-[35%] rounded-[10px] flex justify-center items-center border border-[#6B39A7]">
-                <p className="font-semibold text-[16px]">{step.itensCard1}</p>
-              </div>
-
-              <div className="gap-2 flex flex-row justify-center items-center">
-                <div className="bg-white rounded-[10px] max-h-[20px] px-[7px] py-[10px] border border-[#6B39A7] flex items-center justify-center">
-                  <div className="w-[12px] h-[3px] bg-[#6B39A7] rounded-full"></div>
-                </div>
-                <p className="text-[16px] font-extrabold">2</p>
-                <div className="bg-white rounded-[10px] max-h-[20px] px-[7px] py-[10px] border border-[#6B39A7] flex items-center justify-center">
-                  <div className="relative w-[10px] h-[10px]">
-                    <div className="absolute top-1/2 left-0.10 -translate-y-1/2 w-[10px] h-[2px] bg-[#6B39A7] rounded-full"></div>
-
-                    <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[2px] h-[10px] bg-[#6B39A7] rounded-full"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-
-          <div className="mt-[10px] rounded-[10px] w-full border border-[#6B39A7] py-[10px] flex justify-center items-center">
-            <div className="flex flex-row justify-center items-center gap-4">
-              <div className="relative w-[20px] h-[20px] flex justify-center items-center">
-                <div className="absolute top-1/2 left-0 -translate-y-1/2 w-full h-[3px] bg-[#6B39A7] rounded-full"></div>
-
-                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[3px] h-full bg-[#6B39A7] rounded-full"></div>
-              </div>
-              <p className="font-semibold text-[20px] text-[#6B39A7]">{step.buttonAdd}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-
-    </div>
-  );
-}
-
-/* =========================
-   CARD STEP 5
-========================= */
-
-function FinishCard({ step }: any) {
-  return (
-    <div
-      className="
-        w-full
-        bg-white
-        border
-        border-[#6B39A7]
-        rounded-[20px]
-        mt-[20px]
-        pt-[40px]
-        px-[25px]
-        pb-[28px]
-        mb-[30px]
-        shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
-      "
-    >
-      <div className="flex flex-col items-center">
-        <div
-          className="
-            w-[60px]
-            h-[60px]
-            bg-[#EBD2FF]
-            rounded-full
-            flex
-            items-center
-            justify-center
-          "
-        >
-          {step.icon}
-        </div>
-
-        <h1 className="font-semibold text-[24px] text-[#6B39A7] mt-[3px] text-center">
-          {step.confirmDonation}
-        </h1>
-
-        <p className="text-[16px] text-center mb-[25px]">
-          {step.confirmOrganization}
-        </p>
-
-        <div className="flex flex-col border border-[#6B39A7] bg-[#EBD2FF] rounded-[14px] w-full py-[15px] px-[30px]">
-          <div className="flex flex-row justify-between">
-            <p className="text-[16px]">Para</p>
-            <p className="font-semibold text-[#6B39A7] text-[16px]">{step.to}</p>
-          </div>
-          <div className="flex flex-row justify-between">
-            <p className="text-[16px]">Valor</p>
-            <p className="font-semibold text-[#6B39A7] text-[16px]">{step.value}</p>
-          </div>
-          <div className="flex flex-row justify-between">
-            <p className="text-[16px]">Método</p>
-            <p className="font-semibold text-[#6B39A7] text-[16px]">{step.method}</p>
-          </div>
-          <div className="flex flex-row justify-between">
-            <p className="text-[16px]">Data</p>
-            <p className="font-semibold text-[#6B39A7] text-[16px]">{step.date}</p>
-          </div>
-        </div>
-        <div className="mt-[20px]">
-          <p className="text-[16px] text-center text-[#6B39A7]">{step.confirmDescription}</p>
-        </div>
-      </div>
-
-
     </div>
   );
 }
