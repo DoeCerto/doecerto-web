@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Darker_Grotesque } from "next/font/google"
 import "./globals.css"
 
+
 const darker = Darker_Grotesque({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
