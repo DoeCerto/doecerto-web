@@ -182,8 +182,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
       const dismissed = localStorage.getItem("ong-profile-reminder-dismissed");
 
       const profileIncomplete =
-        !profileData.description ||
-        !profileData.address?.city;
+        !profileData.description || !profileData.address?.city;
 
       if (profileIncomplete && !dismissed) {
         setShowProfileModal(true);
@@ -245,58 +244,70 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
 
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-32">
-      {/* Header / Banner */}
-      <div className="relative w-full h-[220px] sm:h-[360px] bg-gray-100 border-b border-purple-100 flex items-center justify-center">
-        {ong.bannerUrl ? (
-          <motion.img
-            src={ong.bannerUrl}
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ objectPosition: ong.bannerPosition || "50% 50%" }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            alt="Banner da ONG"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-tr from-purple-100 via-violet-50 to-pink-100" />
-        )}
-
-        <div className="absolute top-4 right-4 z-50 flex gap-2">
-          <motion.button
-            onClick={() => router.push(`/ong-profilesetup`)}
-            className="flex items-center gap-2 bg-white border-2 border-[#6B39A7] px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold text-[#6B39A7] shadow-sm hover:bg-purple-50 transition-colors text-xs sm:text-base"
-          >
-            <Pencil size={16} /> <span>Editar Perfil</span>
-          </motion.button>
-
-          <motion.button
-            onClick={handleLogout}
-            className="flex items-center gap-2 bg-red-50 border-2 border-red-200 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold text-red-600 shadow-sm hover:bg-red-100 transition-colors text-xs sm:text-base"
-          >
-            <LogOut size={16} /> <span>Sair</span>
-          </motion.button>
-        </div>
-
-        <motion.div className="absolute -bottom-14 left-6 sm:left-10 z-50 w-28 h-28 sm:w-40 sm:h-40 rounded-2xl sm:rounded-3xl overflow-hidden border-4 border-white shadow-xl bg-white flex items-center justify-center">
-          {ong.avatarUrl ? (
-            <img
-              src={ong.avatarUrl}
-              className="w-full h-full object-cover"
-              alt={ong.name}
+      {/* Header */}
+      <div className="relative mb-16 sm:mb-20 lg:mb-24">
+        {/* Banner */}
+        <div className="relative w-full aspect-[1.8/1] sm:aspect-[2.5/1] lg:aspect-[3.5/1] xl:aspect-[4/1] overflow-hidden bg-gray-100 border-b border-purple-100">
+          {ong.bannerUrl ? (
+            <motion.img
+              src={ong.bannerUrl}
+              alt="Banner da ONG"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              // Ajuste o object-center para object-[50%_25%] se quiser focar mais no topo da foto
+              className="absolute inset-0 w-full h-full object-cover object-[50%_35%]"
             />
           ) : (
-            <div className="w-full h-full bg-[#6B39A7] flex items-center justify-center">
-              <span className="text-white text-4xl sm:text-5xl font-black">
-                {ong.name?.charAt(0) || "O"}
-              </span>
-            </div>
+            <div className="absolute inset-0 bg-gradient-to-tr from-purple-100 via-violet-50 to-pink-100" />
           )}
+
+          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-30 flex gap-2">
+            <motion.button
+              onClick={() => router.push("/ong-profilesetup")}
+              className="flex items-center gap-2 bg-white border-2 border-[#6B39A7] px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold text-[#6B39A7] shadow-sm hover:bg-purple-50 transition-colors text-xs sm:text-base"
+            >
+              <Pencil size={16} />
+              <span>Editar Perfil</span>
+            </motion.button>
+
+            <motion.button
+              onClick={handleLogout}
+              className="flex items-center gap-2 bg-red-50 border-2 border-red-200 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold text-red-600 shadow-sm hover:bg-red-100 transition-colors text-xs sm:text-base"
+            >
+              <LogOut size={16} />
+              <span>Sair</span>
+            </motion.button>
+          </div>
+        </div>
+
+        {/* Logo */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="absolute left-4 sm:left-6 md:left-8 bottom-0 translate-y-1/2 z-50"
+        >
+          <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-36 md:h-36 lg:w-40 lg:h-40 rounded-2xl sm:rounded-3xl overflow-hidden border-[3px] sm:border-4 border-white shadow-xl bg-white flex items-center justify-center">
+            {ong.avatarUrl ? (
+              <img
+                src={ong.avatarUrl}
+                alt={ong.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-[#6B39A7] flex items-center justify-center">
+                <span className="text-white text-3xl sm:text-4xl md:text-5xl font-black">
+                  {ong.name?.charAt(0) || "O"}
+                </span>
+              </div>
+            )}
+          </div>
         </motion.div>
       </div>
 
-      {/* Conteúdo Abaixo do Header */}
-      <div className="px-4 sm:px-10 mt-16 sm:mt-20">
-        <h1 className="text-2xl sm:text-4xl font-black text-gray-900">
-          {ong.name || "Minha ONG"}
+      {/* Conteúdo */}
+      <div className="px-4 sm:px-10">
+        <h1 className="text-2xl sm:text-3xl font-black text-gray-900">
+          {ong.name}
         </h1>
 
         <div className="text-gray-500 mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm sm:text-lg font-medium">
@@ -901,7 +912,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
           </div>
         )}
       </AnimatePresence>
-      
+
       {/* --- MODAL PERFIL INCOMPLETO --- */}
       <AnimatePresence>
         {showProfileModal && (

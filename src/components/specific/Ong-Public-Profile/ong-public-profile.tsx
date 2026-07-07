@@ -6,7 +6,6 @@ import {
   MapPin,
   Heart,
   Award,
-  Instagram,
   Phone,
   Home,
   Star,
@@ -15,7 +14,6 @@ import {
   MessageSquare,
   X,
   Tag,
-  Globe,
   ExternalLink,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -62,7 +60,6 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
     if (!ongId) return;
     try {
       const result = await OngsProfileService.getPublicProfile(ongId);
-
       setData({
         ong: {
           ...result,
@@ -86,9 +83,7 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="flex flex-col items-center gap-2">
           <div className="w-8 h-8 border-4 border-[#6B39A7] border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-gray-500 font-medium">
-            Carregando perfil...
-          </span>
+          <span className="text-gray-500 font-medium">Carregando perfil...</span>
         </div>
       </div>
     );
@@ -97,71 +92,87 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
 
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-36 font-sans">
-      {/* Banner Section */}
-      <div className="relative w-full h-[220px] xs:h-[260px] sm:h-[340px] bg-gray-200">
-        {ong.banner && !errors.banner ? (
-          <motion.img
-            src={ong.banner}
-            className="absolute inset-0 w-full h-full object-cover object-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            onError={() => setErrors((prev) => ({ ...prev, banner: true }))}
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-300">
-            <ImageIcon size={40} className="text-gray-400" />
-          </div>
-        )}
-
-        <button
-          onClick={() => router.back()}
-          className="absolute top-4 left-4 bg-white/90 p-2 rounded-full z-30 shadow-md hover:bg-white transition-colors"
-        >
-          <ArrowLeft size={20} />
-        </button>
-
-        <motion.div className="absolute -bottom-8 left-6 z-50 w-28 h-28 sm:w-36 sm:h-36 rounded-2xl overflow-hidden border-4 border-white shadow-xl bg-white flex items-center justify-center">
-          {ong.logo && !errors.logo ? (
-            <img
-              src={ong.logo}
-              className="w-full h-full object-cover"
-              alt="Logo"
-              onError={() => setErrors((prev) => ({ ...prev, logo: true }))}
+      {/* Banner Section — mesma proporção do dashboard */}
+      <div className="relative mb-16 sm:mb-20 lg:mb-24">
+        <div className="relative w-full aspect-[1.8/1] sm:aspect-[2.5/1] lg:aspect-[3.5/1] xl:aspect-[4/1] overflow-hidden bg-gray-100 border-b border-purple-100">
+          {ong.banner && !errors.banner ? (
+            <motion.img
+              src={ong.banner}
+              className="absolute inset-0 w-full h-full object-cover object-[50%_35%]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              onError={() => setErrors((prev) => ({ ...prev, banner: true }))}
             />
           ) : (
-            <span className="text-3xl font-black text-[#6B39A7]">
-              {ong.name?.charAt(0).toUpperCase() || "O"}
-            </span>
+            <div className="absolute inset-0 bg-gradient-to-tr from-purple-100 via-violet-50 to-pink-100 flex items-center justify-center">
+              <ImageIcon size={40} className="text-gray-400" />
+            </div>
           )}
+
+          <button
+            onClick={() => router.back()}
+            className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-white/90 p-2 rounded-full z-30 shadow-md hover:bg-white transition-colors"
+          >
+            <ArrowLeft size={20} />
+          </button>
+        </div>
+
+        {/* Logo — mesmo tamanho e posição do dashboard */}
+        <motion.div className="absolute left-4 sm:left-6 md:left-8 bottom-0 translate-y-1/2 z-50">
+          <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-36 md:h-36 lg:w-40 lg:h-40 rounded-2xl sm:rounded-3xl overflow-hidden border-[3px] sm:border-4 border-white shadow-xl bg-white flex items-center justify-center">
+            {ong.logo && !errors.logo ? (
+              <img
+                src={ong.logo}
+                className="w-full h-full object-cover"
+                alt="Logo"
+                onError={() => setErrors((prev) => ({ ...prev, logo: true }))}
+              />
+            ) : (
+              <div className="w-full h-full bg-[#6B39A7] flex items-center justify-center">
+                <span className="text-white text-3xl sm:text-4xl md:text-5xl font-black">
+                  {ong.name?.charAt(0).toUpperCase() || "O"}
+                </span>
+              </div>
+            )}
+          </div>
         </motion.div>
       </div>
 
-      <div className="px-6 mt-14 sm:mt-20">
-        <h1 className="text-3xl sm:text-4xl font-bold text-[#002B49] leading-tight">
-          {ong.name}
-        </h1>
+      <div className="px-4 sm:px-10">
+        {/* Nome + estrela na mesma linha — igual ao dashboard com nome + localização */}
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">
+            {ong.name}
+          </h1>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-yellow-50 border border-yellow-100 rounded-xl shrink-0">
+            <Star size={16} fill="#facc15" className="text-yellow-400" />
+            <span className="text-yellow-700 font-bold text-sm">
+              {ong.rating?.toFixed(1) || "0.0"}
+            </span>
+          </div>
+        </div>
 
-        {/* --- LOCALIZAÇÃO E ANOS --- */}
-        <div className="text-gray-400 mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-medium items-center">
+        {/* Localização e anos — mesmo estilo do dashboard */}
+        <div className="text-gray-500 mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm sm:text-lg font-medium">
           <span className="flex items-center gap-1.5">
-            <MapPin size={18} className="text-red-400" />{" "}
+            <MapPin size={18} className="text-red-400" />
             {ong.address || "Endereço não informado"}
           </span>
           <span className="flex items-center gap-1.5">
-            <Award size={18} className="text-blue-400" />{" "}
+            <Award size={18} className="text-blue-400" />
             {ong.yearsOfOperation
               ? `${ong.yearsOfOperation} ${ong.yearsOfOperation === 1 ? "ano" : "anos"} de atuação`
               : "Ano de atuação não informado"}
           </span>
         </div>
 
-        {/* --- CATEGORIAS --- */}
+        {/* Categorias — mesmo estilo do dashboard */}
         {ong.categories && ong.categories.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-4">
+          <div className="flex flex-wrap gap-2 mt-3">
             {ong.categories.map((cat, idx) => (
               <span
                 key={idx}
-                className="px-3 py-1.5 bg-purple-50 text-[#6B39A7] border border-purple-100 text-[11px] sm:text-xs font-bold rounded-full flex items-center gap-1.5 shadow-sm"
+                className="px-3 py-1 bg-purple-50 text-[#6B39A7] border border-purple-100 text-[11px] sm:text-xs font-bold rounded-full flex items-center gap-1.5 shadow-sm"
               >
                 <Tag size={12} className="text-purple-400" />
                 {cat}
@@ -170,30 +181,19 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
           </div>
         )}
 
-        {/* --- RATING (ESTRELA) LOGO ABAIXO DAS CATEGORIAS --- */}
-        <div className="mt-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-yellow-50 border border-yellow-100 rounded-xl">
-            <Star size={18} fill="#facc15" className="text-yellow-400" />
-            <span className="text-yellow-700 font-bold text-sm">
-              {ong.rating?.toFixed(1) || "0.0"}
-            </span>
-          </div>
-        </div>
-
-        <div className="mt-10 grid grid-cols-1 gap-4">
-          <div className="p-6 rounded-2xl bg-white shadow-md border border-gray-100">
-            <h2 className="text-xl font-bold text-[#6B39A7]">Sobre</h2>
-            <p className="mt-2 text-gray-700 leading-relaxed">
+        <div className="mt-8 grid grid-cols-1 gap-4">
+          {/* Card Sobre */}
+          <div className="p-4 sm:p-6 rounded-2xl bg-white shadow-md border border-gray-100">
+            <h2 className="text-lg sm:text-xl font-bold text-[#6B39A7]">Sobre</h2>
+            <p className="mt-3 text-gray-700 text-sm sm:text-lg leading-relaxed">
               {ong.description}
             </p>
-            <div className="mt-4 pt-4 border-t border-gray-50 space-y-3">
+            <div className="mt-5 pt-5 border-t border-gray-50 space-y-4">
               <ContactInfo
-                icon={<Phone size={16} className="text-[#6B39A7]" />}
+                icon={<Phone size={18} className="text-[#6B39A7]" />}
                 text={ong.phone}
               />
-              {ong.website &&
-              Array.isArray(ong.website) &&
-              ong.website.length > 0 ? (
+              {ong.website && Array.isArray(ong.website) && ong.website.length > 0 ? (
                 <a
                   href={
                     ong.website[0].startsWith("http")
@@ -204,100 +204,129 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 text-sm sm:text-base font-bold text-[#6B39A7] underline break-all"
                 >
-                  <ExternalLink size={16} className="text-pink-600" />
+                  <ExternalLink size={16} className="text-pink-600 shrink-0" />
                   Visitar página oficial
                 </a>
               ) : (
                 <div className="flex items-center gap-3 text-gray-600 text-sm font-bold">
-                  <ExternalLink size={16} className="text-gray-400" />
+                  <ExternalLink size={16} className="text-gray-400 shrink-0" />
                   <span>Site não informado</span>
                 </div>
               )}
               <ContactInfo
-                icon={<Home size={16} className="text-blue-600" />}
+                icon={<Home size={18} className="text-blue-600" />}
                 text={ong.address}
               />
             </div>
           </div>
 
-          <div className="p-6 rounded-2xl bg-white shadow-md border border-gray-100">
-            <h3 className="text-lg font-bold text-[#6B39A7] mb-3">
+          {/* Card Estatísticas */}
+          <div className="p-4 sm:p-6 rounded-2xl bg-white shadow-md border border-gray-100">
+            <h3 className="text-lg sm:text-xl font-bold text-[#6B39A7] mb-4">
               Estatísticas
             </h3>
-            <div className="grid grid-cols-3 gap-3">
-              <StatItem
-                icon={<MessageSquare size={18} className="text-blue-500" />}
-                value={ong.numberOfRatings}
-                label="Feedbacks"
-              />
-              <StatItem
-                icon={
-                  <Heart
-                    size={18}
-                    className="text-pink-500"
-                    fill="currentColor"
-                  />
-                }
-                value={ong.donations}
-                label="Doações"
-              />
+            <div className="flex flex-wrap gap-3 sm:gap-4">
+              <div className="flex-1 min-w-[100px] p-3 sm:p-4 rounded-lg bg-gray-50 text-center border border-gray-200">
+                <MessageSquare size={20} className="mx-auto text-blue-500" />
+                <p className="mt-1 text-xl sm:text-2xl font-black text-gray-900">
+                  {ong.numberOfRatings || 0}
+                </p>
+                <p className="text-[10px] sm:text-sm text-gray-500 font-bold uppercase tracking-tight">
+                  Feedbacks
+                </p>
+              </div>
+
+              <div className="flex-1 min-w-[100px] p-3 sm:p-4 rounded-lg bg-gray-50 text-center border border-gray-200">
+                <Heart
+                  size={20}
+                  className="mx-auto text-pink-500"
+                  fill="currentColor"
+                />
+                <p className="mt-1 text-xl sm:text-2xl font-black text-gray-900">
+                  {ong.donations || 0}
+                </p>
+                <p className="text-[10px] sm:text-sm text-gray-500 font-bold uppercase tracking-tight">
+                  Doações
+                </p>
+              </div>
+
               <button
                 onClick={() => setIsReviewModalOpen(true)}
-                className="p-3 rounded-xl bg-yellow-50 border border-yellow-200 active:scale-95 transition-all hover:bg-yellow-100 shadow-sm"
+                className="flex-1 min-w-[100px] p-3 sm:p-4 rounded-lg bg-yellow-50 text-center border border-yellow-100 hover:bg-yellow-100 transition-all cursor-pointer"
               >
-                <Star
-                  size={18}
-                  fill="#facc15"
-                  className="mx-auto text-yellow-400 mb-1"
-                />
-                <p className="text-xs font-black text-yellow-700 uppercase">
+                <div className="flex justify-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Star
+                      key={s}
+                      size={12}
+                      fill={s <= Math.floor(ong.rating || 0) ? "#facc15" : "transparent"}
+                      className={
+                        s <= Math.floor(ong.rating || 0)
+                          ? "text-yellow-400"
+                          : "text-gray-300"
+                      }
+                    />
+                  ))}
+                </div>
+                <p className="mt-1 text-xl sm:text-2xl font-black text-gray-900">
+                  {(ong.rating || 0).toFixed(1)}
+                </p>
+                <p className="text-[10px] sm:text-sm text-yellow-700 font-bold uppercase tracking-tight underline">
                   Avaliar
                 </p>
               </button>
             </div>
           </div>
 
-          <div className="p-6 rounded-2xl bg-white shadow-md border border-gray-100">
-            <h3 className="text-lg font-bold text-[#6B39A7] mb-4">
-              Comentários de Doadores
-            </h3>
-            <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+          {/* Card Comentários — muito mais visível */}
+          <div className="p-4 sm:p-6 rounded-2xl bg-white shadow-md border border-gray-100">
+            <div className="flex items-center gap-2 mb-5">
+              <Star size={20} fill="#facc15" className="text-yellow-400 shrink-0" />
+              <h3 className="text-lg sm:text-xl font-bold text-[#6B39A7]">
+                O que dizem sobre nós
+              </h3>
+            </div>
+
+            <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1 custom-scrollbar">
               {reviews.length > 0 ? (
                 reviews.map((rev, i) => (
                   <div
                     key={i}
-                    className="border-b border-gray-50 pb-3 last:border-0"
+                    className="p-4 rounded-2xl border border-gray-100 bg-gray-50/50"
                   >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-bold text-gray-800">
-                        {rev.donor?.user?.name || "Doador"}
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-bold text-gray-900">
+                        {rev.donor?.user?.name || "Doador Anônimo"}
                       </span>
-                      <div className="flex text-yellow-400">
+                      <div className="flex gap-0.5">
                         {Array.from({ length: 5 }).map((_, idx) => (
                           <Star
                             key={idx}
-                            size={10}
-                            fill={idx < rev.score ? "currentColor" : "none"}
-                            className={idx < rev.score ? "" : "text-gray-200"}
+                            size={13}
+                            fill={idx < rev.score ? "#facc15" : "transparent"}
+                            className={idx < rev.score ? "text-yellow-400" : "text-gray-200"}
                           />
                         ))}
                       </div>
                     </div>
-                    <p className="text-xs text-gray-600 italic">
-                      "{rev.comment || "Sem comentário."}"
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      {rev.comment || "Sem comentário enviado."}
                     </p>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-gray-400 text-center py-4">
-                  Ninguém avaliou ainda. Seja o primeiro!
-                </p>
+                <div className="text-center py-10 text-gray-400">
+                  <Star size={36} className="mx-auto mb-3 opacity-20" />
+                  <p className="font-medium">Ninguém avaliou ainda.</p>
+                  <p className="text-sm mt-1">Seja o primeiro a deixar um comentário!</p>
+                </div>
               )}
             </div>
           </div>
         </div>
       </div>
 
+      {/* Botão fixo de doação */}
       <div className="fixed bottom-6 left-6 right-6 z-[999]">
         <button
           onClick={() => setIsModalOpen(true)}
@@ -336,29 +365,11 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
 
 function ContactInfo({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
-    <div className="flex items-center gap-3 text-gray-600 text-sm font-bold">
+    <div className="flex items-center gap-3 text-gray-600">
       <div className="shrink-0">{icon}</div>
-      <span className="truncate">{text || "Não informado"}</span>
-    </div>
-  );
-}
-
-function StatItem({
-  icon,
-  value,
-  label,
-}: {
-  icon: React.ReactNode;
-  value: number;
-  label: string;
-}) {
-  return (
-    <div className="p-3 rounded-xl bg-gray-50 text-center border border-gray-100">
-      <div className="mx-auto mb-1 flex justify-center">{icon}</div>
-      <p className="text-xl font-black text-gray-900">{value || 0}</p>
-      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-tight">
-        {label}
-      </p>
+      <span className="text-sm sm:text-base font-bold truncate">
+        {text || "Não informado"}
+      </span>
     </div>
   );
 }

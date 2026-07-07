@@ -339,7 +339,6 @@ export default function OngSetupProfile() {
         await OngSetupService.updateProfileImages(
           logoFile,
           bannerFile,
-          bannerFile ? bannerCrop : undefined,
         );
       }
 
@@ -384,7 +383,6 @@ export default function OngSetupProfile() {
           variant="banner"
           image={bannerPreview}
           onImageChange={handleBannerChange}
-          onCropChange={setBannerCrop}
           label="Capa do Perfil"
         />
 
