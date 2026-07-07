@@ -12,7 +12,14 @@ import {
   FaFilePdf,
   FaFileImage,
 } from "react-icons/fa";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  CircleHelp,
+  Eye,
+  Loader2,
+  Paperclip,
+  X,
+} from "lucide-react";
 import { useState, Suspense, useEffect, useMemo } from "react";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { api } from "@/services/api";
@@ -95,6 +102,18 @@ function PixPageContent() {
   const [valor, setValor] = useState("20");
   const valoresRapidos = ["5", "10", "20", "50", "100"];
   const [showReview, setShowReview] = useState(false);
+  const previewUrl = useMemo(() => {
+    return file ? URL.createObjectURL(file) : "";
+  }, [file]);
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  useEffect(() => {
+    const hidden = localStorage.getItem("hideDonationTutorial");
+
+    if (hidden !== "true") {
+      setShowTutorial(true);
+    }
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -333,7 +352,10 @@ function PixPageContent() {
         }}
       />
 
-      <DonationTutorialModal />
+      <DonationTutorialModal
+        open={showTutorial}
+        onClose={() => setShowTutorial(false)}
+      />
 
       <div className="pt-6 px-4 lg:absolute lg:top-8 lg:left-12 z-10">
         <button
@@ -350,6 +372,13 @@ function PixPageContent() {
         </h1>
         <div className="h-1 w-8 bg-purple-600 rounded-full mt-2"></div>
       </div>
+
+      <button
+        onClick={() => setShowTutorial(true)}
+        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-purple-600 text-white shadow-xl hover:scale-105 transition"
+      >
+        <CircleHelp size={24} className="mx-auto" />
+      </button>
 
       <main className="max-w-6xl mx-auto px-4 lg:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
@@ -535,16 +564,60 @@ function PixPageContent() {
           </div>
         </div>
       </main>
-
+      
       {showReview && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
           <div className="w-full max-w-md md:max-w-lg">
             <ConfirmationCard
               type="money"
-              title="Revisar dados da doação"
+              title="Confirme os dados da doação"
+              description="Confira as informações abaixo antes de confirmar sua doação. Após a confirmação, o comprovante será enviado para análise da ONG."
               amountOrQuantity={`R$ ${Number(valor).toFixed(2)}`}
-              detailsLabel={`Confirma o envio do comprovante para ${ongData?.name || "a ONG"}?`}
-              detailsText={`Arquivo anexado: ${file?.name}`}
+              detailsLabel="Comprovante da doação"
+              detailsContent={
+                <button
+                  type="button"
+                  onClick={() =>
+                    window.open(previewUrl, "_blank", "noopener,noreferrer")
+                  }
+                  className="w-full group rounded-2xl border border-purple-200 bg-white hover:bg-purple-50 hover:border-purple-300 transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.99]"
+                >
+                  <div className="flex items-center justify-between gap-3 p-4">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-11 h-11 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600 flex-shrink-0 group-hover:bg-purple-200 transition-colors">
+                        <Paperclip size={18} />
+                      </div>
+
+                      <div className="flex-1 min-w-0 text-left">
+                        <p className="text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-gray-400">
+                          Comprovante anexado
+                        </p>
+
+                        <p className="text-sm font-semibold text-gray-800 truncate">
+                          {file?.name || "comprovante.png"}
+                        </p>
+
+                        <p className="text-xs text-purple-600 font-medium mt-1">
+                          Clique para visualizar
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex-shrink-0">
+                      <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl bg-purple-50 text-purple-600 group-hover:bg-purple-100 transition-colors">
+                        <Eye size={16} />
+                        <span className="text-sm font-semibold">
+                          Visualizar
+                        </span>
+                      </div>
+
+                      <div className="sm:hidden w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 group-hover:bg-purple-100 transition-colors">
+                        <Eye size={18} />
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              }
               primaryButtonText={loading ? "Enviando..." : "Confirmar e Enviar"}
               onPrimaryAction={handleExecuteSubmit}
               secondaryButtonText="Voltar e Alterar"

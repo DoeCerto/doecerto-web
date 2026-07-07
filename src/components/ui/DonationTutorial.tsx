@@ -47,8 +47,15 @@ const STEPS = [
   },
 ];
 
-export default function DonationTutorialModal() {
-  const [open, setOpen] = useState(false);
+interface DonationTutorialModalProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export default function DonationTutorialModal({
+  open,
+  onClose,
+}: DonationTutorialModalProps) {
   const [stepIndex, setStepIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
@@ -56,16 +63,12 @@ export default function DonationTutorialModal() {
   const handleClose = useCallback(() => {
     if (dontShowAgain) {
       localStorage.setItem("hideDonationTutorial", "true");
+    } else {
+      localStorage.removeItem("hideDonationTutorial");
     }
-    setOpen(false);
-  }, [dontShowAgain]);
 
-  useEffect(() => {
-    const hidden = localStorage.getItem("hideDonationTutorial");
-    if (hidden !== "true") {
-      setOpen(true);
-    }
-  }, []);
+    onClose();
+  }, [dontShowAgain, onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -77,12 +80,19 @@ export default function DonationTutorialModal() {
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    
+
     return () => {
       document.body.style.overflow = "unset";
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [open, handleClose]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const hidden = localStorage.getItem("hideDonationTutorial");
+    setDontShowAgain(hidden === "true");
+  }, [open]);
 
   const handleStepChange = (newIndex: number) => {
     setIsTransitioning(true);
@@ -98,11 +108,11 @@ export default function DonationTutorialModal() {
   const Icon = step.icon;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={handleClose}
     >
-      <div 
+      <div
         className="bg-white w-full max-w-md rounded-[2rem] overflow-hidden shadow-[0_25px_80px_rgba(0,0,0,0.25)] relative flex flex-col max-h-[calc(100vh-2rem)]"
         onClick={(e) => e.stopPropagation()}
       >
@@ -134,7 +144,7 @@ export default function DonationTutorialModal() {
         </div>
 
         <div className="overflow-y-auto flex-1 min-h-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div 
+          <div
             className={`px-6 sm:px-8 py-6 sm:py-8 flex flex-col items-center text-center min-h-[280px] sm:min-h-[340px] justify-center transition-opacity duration-300 ${
               isTransitioning ? "opacity-0" : "opacity-100"
             }`}
@@ -142,7 +152,9 @@ export default function DonationTutorialModal() {
             <div
               className={`w-20 h-20 sm:w-28 sm:h-28 rounded-[1.5rem] sm:rounded-[2rem] ${step.bg} flex items-center justify-center mb-5 sm:mb-6 shadow-sm flex-shrink-0`}
             >
-              <Icon className={`${step.color} w-10 h-10 sm:w-[50px] sm:h-[50px]`} />
+              <Icon
+                className={`${step.color} w-10 h-10 sm:w-[50px] sm:h-[50px]`}
+              />
             </div>
 
             <span className="bg-purple-100 text-purple-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider">
@@ -163,7 +175,9 @@ export default function DonationTutorialModal() {
                   key={index}
                   onClick={() => handleStepChange(index)}
                   className={`transition-all duration-300 rounded-full h-2 ${
-                    index === stepIndex ? "w-10 bg-purple-600" : "w-2 bg-purple-200 hover:bg-purple-300"
+                    index === stepIndex
+                      ? "w-10 bg-purple-600"
+                      : "w-2 bg-purple-200 hover:bg-purple-300"
                   }`}
                   aria-label={`Ir para o passo ${index + 1}`}
                 />
