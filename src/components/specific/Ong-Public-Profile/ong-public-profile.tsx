@@ -17,11 +17,13 @@ import {
   ExternalLink,
   CheckCircle2,
   Clock,
+  User, 
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import DonateModal from "@/components/specific/DonateModal";
 import { OngsProfileService } from "@/services/ongs-profile.service";
-import toast from "react-hot-toast";
+import { DonorService } from "@/services/donor.service"; 
+import toast, { Toaster } from "react-hot-toast"; 
 
 // --- INTERFACES PARA TYPESCRIPT ---
 export interface Review {
@@ -61,6 +63,13 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
   } | null>(null);
   const [errors, setErrors] = useState({ banner: false, logo: false });
 
+  // Estados para verificação de perfil incompleto
+  const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Carrega os dados da ONG e reviews
   const loadData = async () => {
     if (!ongId) return;
     try {
@@ -79,13 +88,10 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
     }
   };
 
+  // Verifica se o usuário logado pode avaliar
   const checkDonationStatus = async () => {
     try {
       const hasDonated = await OngsProfileService.hasDonatedToOng(ongId);
-
-      console.log("ONG:", ongId);
-      console.log("Resposta:", hasDonated);
-
       setCanReview(hasDonated);
     } catch (err) {
       console.error(err);
@@ -93,10 +99,64 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
     }
   };
 
+  // 1. Verifica se o perfil do doador está incompleto ao montar a tela
+  useEffect(() => {
+    async function checkUserProfile() {
+      try {
+        const userRole = localStorage.getItem("userRole")?.toUpperCase();
+        // Apenas doadores precisam fornecer telefone
+        if (userRole !== "ONG") {
+          const profile = await DonorService.getMyProfile();
+          const isIncomplete = profile.isNewProfile || !profile.phone;
+          setIsProfileIncomplete(isIncomplete);
+        }
+      } catch (err) {
+        console.error("Erro ao verificar perfil do usuário:", err);
+      }
+    }
+    checkUserProfile();
+  }, []);
+
   useEffect(() => {
     loadData();
     checkDonationStatus();
   }, [ongId]);
+
+  // Intercepta a abertura do modal de doação se o perfil estiver incompleto
+  function openDonateModal() {
+    if (isProfileIncomplete) {
+      setShowProfileModal(true);
+    } else {
+      setIsModalOpen(true);
+    }
+  }
+
+  // Envia a atualização do telefone do doador
+  const handleCompleteRegistration = async () => {
+    const rawPhone = phone.replace(/\D/g, "");
+
+    if (rawPhone.length < 10) {
+      toast.error("Por favor, informe um número válido.");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+
+      await DonorService.updateProfile({ contactNumber: `55${rawPhone}` });
+
+      toast.success("Telefone cadastrado com sucesso!");
+      setIsProfileIncomplete(false);
+      setShowProfileModal(false);
+      
+      // Prossiga com a abertura do modal de doação após salvar
+      setIsModalOpen(true);
+    } catch (error) {
+      toast.error("Erro ao salvar telefone. Tente novamente.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleReviewButtonClick = () => {
     if (canReview) {
@@ -122,6 +182,8 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
 
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-36 font-sans">
+      <Toaster position="top-center" reverseOrder={false} />
+
       {/* Banner Section — mesma proporção do dashboard */}
       <div className="relative mb-16 sm:mb-20 lg:mb-24">
         <div className="relative w-full aspect-[1.8/1] sm:aspect-[2.5/1] lg:aspect-[3.5/1] xl:aspect-[4/1] overflow-hidden bg-gray-100 border-b border-purple-100">
@@ -322,7 +384,7 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
             </div>
           </div>
 
-          {/* Card Comentários — muito mais visível */}
+          {/* Card Comentários */}
           <div className="p-4 sm:p-6 rounded-2xl bg-white shadow-md border border-gray-100">
             <div className="flex items-center gap-2 mb-5">
               <Star
@@ -380,11 +442,11 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
         </div>
       </div>
 
-      {/* Botão fixo de doação */}
+      {/* Botão fixo de doação — Aciona a checagem de cadastro primeiro */}
       <div className="fixed bottom-6 left-6 right-6 z-[999]">
         <button
-          onClick={() => setIsModalOpen(true)}
-          className="w-full py-4 rounded-2xl text-lg font-black text-white bg-gradient-to-r from-pink-500 to-purple-600 shadow-2xl active:scale-95 transition-transform"
+          onClick={openDonateModal}
+          className="w-full py-4 rounded-2xl text-lg font-black text-white bg-gradient-to-r from-pink-500 to-purple-600 shadow-2xl active:scale-95 transition-transform cursor-pointer"
         >
           Doar para esta ONG
         </button>
@@ -402,6 +464,84 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
         />
       )}
 
+      {/* Modal de completar cadastro integrado */}
+      <AnimatePresence>
+        {showProfileModal && (
+          <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+              onClick={() => setShowProfileModal(false)}
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: "spring", duration: 0.4 }}
+              className="relative bg-white w-full max-w-md rounded-[40px] shadow-2xl p-10 flex flex-col items-center text-center border border-gray-100"
+            >
+              {/* Botão de Fechar */}
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="absolute top-6 right-6 p-2 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 active:scale-95 transition-all cursor-pointer"
+              >
+                <X size={24} />
+              </button>
+
+              <div className="w-24 h-24 bg-purple-50 rounded-full flex items-center justify-center mb-8 border border-purple-100/50">
+                <User size={44} className="text-[#6B39A7]" />
+              </div>
+
+              <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">
+                Só mais um detalhe!
+              </h2>
+
+              <p className="text-gray-600 text-sm min-[380px]:text-base mb-10 leading-relaxed font-medium">
+                Para prosseguir com sua doação, precisamos de um telefone de contato.
+                <span className="block mt-2 text-[#6B39A7] font-semibold">
+                  É através dele que a ONG poderá alinhar a entrega das doações, enviar atualizações e prestar contas sobre o impacto do seu apoio.
+                </span>
+              </p>
+
+              <div className="w-full space-y-6">
+                <div className="relative flex items-center w-full">
+                  <div className="absolute left-4 text-[#6B39A7] font-bold text-lg bg-purple-50 px-2 py-1 rounded-lg">
+                    +55
+                  </div>
+
+                  <input
+                    type="tel"
+                    placeholder="(00) 00000-0000"
+                    className="w-full pl-20 pr-4 py-5 text-lg bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#6B39A7] transition-all"
+                    value={phone}
+                    onChange={(e) => {
+                      const numericValue = e.target.value.replace(/\D/g, "");
+                      setPhone(numericValue);
+                    }}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-3 w-full">
+                  <button
+                    onClick={handleCompleteRegistration}
+                    disabled={isSaving}
+                    className="w-full bg-[#6B39A7] hover:bg-[#55278d] text-white font-bold py-5 rounded-2xl shadow-lg shadow-purple-100 active:scale-[0.98] transition-all text-lg disabled:opacity-70 cursor-pointer"
+                  >
+                    {isSaving ? "Salvando..." : "Salvar e Continuar"}
+                  </button>
+
+                  <button
+                    onClick={() => setShowProfileModal(false)}
+                    className="w-full bg-transparent hover:bg-gray-50 text-gray-500 font-semibold py-3 rounded-2xl transition-all text-sm cursor-pointer"
+                  >
+                    Talvez mais tarde
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {isReviewModalOpen && (
           <ReviewPostModal
@@ -418,7 +558,7 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
             onClose={() => setShowDonateFirstModal(false)}
             onDonate={() => {
               setShowDonateFirstModal(false);
-              setIsModalOpen(true);
+              openDonateModal(); 
             }}
           />
         )}
@@ -480,7 +620,7 @@ function DonateFirstModal({
           Para garantir a autenticidade das avaliações, você precisa ter:
         </p>
 
-        {/* Caixa de Requisitos (Paddings internos responsivos) */}
+        {/* Caixa de Requisitos */}
         <div className="bg-gray-50 rounded-2xl p-3.5 sm:p-5 text-left space-y-3 sm:space-y-4 mb-5 border border-gray-100">
           <div className="flex items-start gap-3 text-sm sm:text-base text-gray-700">
             <CheckCircle2
@@ -599,7 +739,7 @@ function ReviewPostModal({
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="w-full py-4 bg-[#6B39A7] text-white font-bold rounded-2xl shadow-lg flex items-center justify-center"
+          className="w-full py-4 bg-[#6B39A7] text-white font-bold rounded-2xl shadow-lg flex items-center justify-center cursor-pointer"
         >
           {loading ? (
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
