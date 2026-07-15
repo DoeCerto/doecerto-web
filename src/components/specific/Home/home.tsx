@@ -90,6 +90,7 @@ export default function HomePage() {
   const [page, setPage] = useState(0);
 
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
   const [phone, setPhone] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -107,7 +108,12 @@ export default function HomePage() {
       await DonorService.updateProfile({ contactNumber: `55${rawPhone}` });
 
       toast.success("Telefone cadastrado com sucesso!");
+      setIsProfileIncomplete(false);
       setShowProfileModal(false);
+      
+      if (selectedOng) {
+        setIsModalOpen(true);
+      }
     } catch (error) {
       toast.error("Erro ao salvar telefone. Tente novamente.");
     } finally {
@@ -124,12 +130,8 @@ export default function HomePage() {
 
           setUser(profile);
 
-          // Verifica se faltam dados básicos
           const isIncomplete = profile.isNewProfile || !profile.phone;
-
-          if (isIncomplete) {
-            setShowProfileModal(true);
-          }
+          setIsProfileIncomplete(isIncomplete);
 
           if (profile?.avatarUrl) {
             setUserAvatar(
@@ -213,7 +215,12 @@ export default function HomePage() {
 
   function openDonateModal(ongId: number) {
     setSelectedOng(ongId);
-    setIsModalOpen(true);
+
+    if (isProfileIncomplete) {
+      setShowProfileModal(true);
+    } else {
+      setIsModalOpen(true);
+    }
   }
 
   function goToDonateItems() {
@@ -274,7 +281,6 @@ export default function HomePage() {
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="flex items-center gap-1.5 min-[340px]:gap-2 bg-white px-2 py-1.5 min-[340px]:px-3 min-[340px]:py-2 rounded-full shadow-md border border-gray-100 hover:shadow-lg transition-all active:scale-95 max-w-[130px] min-[340px]:max-w-[190px]"
           >
-            {/* seta */}
             <motion.div
               className="shrink-0"
               animate={{ rotate: isMenuOpen ? 180 : 0 }}
@@ -296,12 +302,10 @@ export default function HomePage() {
               </svg>
             </motion.div>
 
-            {/* nome do usuário */}
             <span className="hidden min-[370px]:block flex-1 min-w-0 truncate text-[#6B21A8] font-semibold text-sm">
               {user?.name || "Usuário"}
             </span>
 
-            {/* avatar */}
             <div className="w-8 h-8 min-[340px]:w-10 min-[340px]:h-10 shrink-0 rounded-full overflow-hidden ring-2 ring-purple-100">
               {userAvatar && userAvatar !== "/default-avatar.png" ? (
                 <img
@@ -320,7 +324,6 @@ export default function HomePage() {
             </div>
           </button>
 
-          {/* O menu dropdown */}
           {isMenuOpen && (
             <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 animate-fadeIn">
               <button
@@ -460,7 +463,7 @@ export default function HomePage() {
                       e.stopPropagation();
                       openDonateModal(ong.id);
                     }}
-                    className="mt-3 w-full bg-[#6B21A8] text-white py-1.5 rounded-lg text-sm font-semibold hover:bg-purple-800 transition"
+                    className="mt-3 w-full bg-[#6B21A8] text-white py-1.5 rounded-lg text-sm font-semibold hover:scale-95 cursor-pointer transition"
                   >
                     Doar
                   </button>
@@ -543,21 +546,37 @@ export default function HomePage() {
         />
       )}
 
+      {/* Modal de completar cadastro (ajustado com botão de fechar e textos mais claros) */}
       {showProfileModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fadeIn">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          {/* Clicar no backdrop agora também fecha o modal */}
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer" 
+            onClick={() => setShowProfileModal(false)}
+          />
           <div className="relative bg-white w-full max-w-md rounded-[40px] shadow-2xl p-10 flex flex-col items-center text-center animate-scaleIn">
+            
+            {/* Botão de Fechar no canto superior direito */}
+            <button 
+              onClick={() => setShowProfileModal(false)}
+              className="absolute top-6 right-6 p-2 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 active:scale-95 transition-all cursor-pointer"
+            >
+              <FiX size={24} />
+            </button>
+
             <div className="w-24 h-24 bg-purple-50 rounded-full flex items-center justify-center mb-8 border border-purple-100/50">
               <FiUser size={44} className="text-[#6B39A7]" />
             </div>
 
             <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">
-              Complete seu cadastro
+              Só mais um detalhe!
             </h2>
 
-            <p className="text-gray-600 text-base mb-10 leading-relaxed font-medium">
-              Para garantirmos a segurança da doação e o contato da ONG, insira
-              seu número de telefone abaixo.
+            <p className="text-gray-600 text-sm min-[380px]:text-base mb-10 leading-relaxed font-medium">
+              Para prosseguir com sua doação, precisamos de um telefone de contato. 
+              <span className="block mt-2 text-[#6B39A7] font-semibold">
+                É através dele que a ONG poderá alinhar a entrega das doações, enviar atualizações e prestar contas sobre o impacto do seu apoio.
+              </span>
             </p>
 
             <div className="w-full space-y-6">
@@ -572,20 +591,28 @@ export default function HomePage() {
                   className="w-full pl-20 pr-4 py-5 text-lg bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#6B39A7] transition-all"
                   value={phone} 
                   onChange={(e) => {
-                  
                     const numericValue = e.target.value.replace(/\D/g, "");
                     setPhone(numericValue);
                   }}
                 />
               </div>
 
-              <button
-                onClick={handleCompleteRegistration} 
-                disabled={isSaving} 
-                className="w-full bg-[#6B39A7] hover:bg-[#55278d] text-white font-bold py-5 rounded-2xl shadow-lg shadow-purple-100 active:scale-[0.98] transition-all text-lg disabled:opacity-70"
-              >
-                {isSaving ? "Salvando..." : "Confirmar Telefone"}
-              </button>
+              <div className="flex flex-col gap-3 w-full">
+                <button
+                  onClick={handleCompleteRegistration} 
+                  disabled={isSaving} 
+                  className="w-full bg-[#6B39A7] hover:bg-[#55278d] text-white font-bold py-5 rounded-2xl shadow-lg shadow-purple-100 active:scale-[0.98] transition-all text-lg disabled:opacity-70 cursor-pointer"
+                >
+                  {isSaving ? "Salvando..." : "Salvar e Continuar"}
+                </button>
+                
+                <button
+                  onClick={() => setShowProfileModal(false)}
+                  className="w-full bg-transparent hover:bg-gray-50 text-gray-500 font-semibold py-3 rounded-2xl transition-all text-sm cursor-pointer"
+                >
+                  Talvez mais tarde
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -256,7 +256,7 @@ export default function Donation({
         isOpen={isSuccess}
         title="Doação enviada!"
         description={`A ONG ${ongName} recebeu sua intenção de doação de materiais e entrará em contato.`}
-        homePath="/"
+        homePath="/home"
         onResetFlow={() => {
           setListaEnvio([]);
           setIsSuccess(false);

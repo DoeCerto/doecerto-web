@@ -15,10 +15,13 @@ import {
   X,
   Tag,
   ExternalLink,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import DonateModal from "@/components/specific/DonateModal";
 import { OngsProfileService } from "@/services/ongs-profile.service";
+import toast from "react-hot-toast";
 
 // --- INTERFACES PARA TYPESCRIPT ---
 export interface Review {
@@ -50,6 +53,8 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [showDonateFirstModal, setShowDonateFirstModal] = useState(false);
+  const [canReview, setCanReview] = useState<boolean | null>(null); // null = verificando
   const [data, setData] = useState<{
     ong: OngProfileData;
     reviews: Review[];
@@ -74,16 +79,41 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
     }
   };
 
+  const checkDonationStatus = async () => {
+    try {
+      const hasDonated = await OngsProfileService.hasDonatedToOng(ongId);
+
+      console.log("ONG:", ongId);
+      console.log("Resposta:", hasDonated);
+
+      setCanReview(hasDonated);
+    } catch (err) {
+      console.error(err);
+      setCanReview(false);
+    }
+  };
+
   useEffect(() => {
     loadData();
+    checkDonationStatus();
   }, [ongId]);
+
+  const handleReviewButtonClick = () => {
+    if (canReview) {
+      setIsReviewModalOpen(true);
+    } else {
+      setShowDonateFirstModal(true);
+    }
+  };
 
   if (!data)
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="flex flex-col items-center gap-2">
           <div className="w-8 h-8 border-4 border-[#6B39A7] border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-gray-500 font-medium">Carregando perfil...</span>
+          <span className="text-gray-500 font-medium">
+            Carregando perfil...
+          </span>
         </div>
       </div>
     );
@@ -184,7 +214,9 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
         <div className="mt-8 grid grid-cols-1 gap-4">
           {/* Card Sobre */}
           <div className="p-4 sm:p-6 rounded-2xl bg-white shadow-md border border-gray-100">
-            <h2 className="text-lg sm:text-xl font-bold text-[#6B39A7]">Sobre</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-[#6B39A7]">
+              Sobre
+            </h2>
             <p className="mt-3 text-gray-700 text-sm sm:text-lg leading-relaxed">
               {ong.description}
             </p>
@@ -193,7 +225,9 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
                 icon={<Phone size={18} className="text-[#6B39A7]" />}
                 text={ong.phone}
               />
-              {ong.website && Array.isArray(ong.website) && ong.website.length > 0 ? (
+              {ong.website &&
+              Array.isArray(ong.website) &&
+              ong.website.length > 0 ? (
                 <a
                   href={
                     ong.website[0].startsWith("http")
@@ -251,15 +285,25 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
               </div>
 
               <button
-                onClick={() => setIsReviewModalOpen(true)}
-                className="flex-1 min-w-[100px] p-3 sm:p-4 rounded-lg bg-yellow-50 text-center border border-yellow-100 hover:bg-yellow-100 transition-all cursor-pointer"
+                onClick={handleReviewButtonClick}
+                disabled={canReview === null}
+                title={
+                  canReview === false
+                    ? "Você precisa doar para esta ONG antes de avaliar"
+                    : undefined
+                }
+                className="flex-1 min-w-[100px] p-3 sm:p-4 rounded-lg bg-yellow-50 text-center border border-yellow-100 hover:bg-yellow-100 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="flex justify-center gap-0.5">
                   {[1, 2, 3, 4, 5].map((s) => (
                     <Star
                       key={s}
                       size={12}
-                      fill={s <= Math.floor(ong.rating || 0) ? "#facc15" : "transparent"}
+                      fill={
+                        s <= Math.floor(ong.rating || 0)
+                          ? "#facc15"
+                          : "transparent"
+                      }
                       className={
                         s <= Math.floor(ong.rating || 0)
                           ? "text-yellow-400"
@@ -281,7 +325,11 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
           {/* Card Comentários — muito mais visível */}
           <div className="p-4 sm:p-6 rounded-2xl bg-white shadow-md border border-gray-100">
             <div className="flex items-center gap-2 mb-5">
-              <Star size={20} fill="#facc15" className="text-yellow-400 shrink-0" />
+              <Star
+                size={20}
+                fill="#facc15"
+                className="text-yellow-400 shrink-0"
+              />
               <h3 className="text-lg sm:text-xl font-bold text-[#6B39A7]">
                 O que dizem sobre nós
               </h3>
@@ -304,7 +352,11 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
                             key={idx}
                             size={13}
                             fill={idx < rev.score ? "#facc15" : "transparent"}
-                            className={idx < rev.score ? "text-yellow-400" : "text-gray-200"}
+                            className={
+                              idx < rev.score
+                                ? "text-yellow-400"
+                                : "text-gray-200"
+                            }
                           />
                         ))}
                       </div>
@@ -318,7 +370,9 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
                 <div className="text-center py-10 text-gray-400">
                   <Star size={36} className="mx-auto mb-3 opacity-20" />
                   <p className="font-medium">Ninguém avaliou ainda.</p>
-                  <p className="text-sm mt-1">Seja o primeiro a deixar um comentário!</p>
+                  <p className="text-sm mt-1">
+                    Seja o primeiro a deixar um comentário!
+                  </p>
                 </div>
               )}
             </div>
@@ -357,6 +411,18 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
           />
         )}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {showDonateFirstModal && (
+          <DonateFirstModal
+            onClose={() => setShowDonateFirstModal(false)}
+            onDonate={() => {
+              setShowDonateFirstModal(false);
+              setIsModalOpen(true);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -370,6 +436,95 @@ function ContactInfo({ icon, text }: { icon: React.ReactNode; text: string }) {
       <span className="text-sm sm:text-base font-bold truncate">
         {text || "Não informado"}
       </span>
+    </div>
+  );
+}
+
+function DonateFirstModal({
+  onClose,
+  onDonate,
+}: {
+  onClose: () => void;
+  onDonate: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm transition-opacity">
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        transition={{ type: "spring", duration: 0.4 }}
+        className="bg-white w-full max-w-md rounded-3xl p-5 sm:p-8 shadow-2xl relative text-center overflow-hidden border border-gray-100"
+      >
+        {/* Botão Fechar */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+          aria-label="Fechar"
+        >
+          <X size={20} />
+        </button>
+
+        {/* Ícone Principal */}
+        <div className="mx-auto w-16 h-16 bg-pink-50 rounded-2xl flex items-center justify-center mb-4 text-pink-500 shadow-sm">
+          <Heart size={32} fill="currentColor" />
+        </div>
+
+        {/* Título */}
+        <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-3 tracking-tight px-2 leading-snug">
+          Falta bem pouquinho para poder avaliar!
+        </h3>
+
+        {/* Contexto & Regras */}
+        <p className="text-sm sm:text-base text-gray-600 mb-4 leading-relaxed">
+          Para garantir a autenticidade das avaliações, você precisa ter:
+        </p>
+
+        {/* Caixa de Requisitos (Paddings internos responsivos) */}
+        <div className="bg-gray-50 rounded-2xl p-3.5 sm:p-5 text-left space-y-3 sm:space-y-4 mb-5 border border-gray-100">
+          <div className="flex items-start gap-3 text-sm sm:text-base text-gray-700">
+            <CheckCircle2
+              size={20}
+              className="text-green-500 mt-0.5 flex-shrink-0"
+            />
+            <span className="leading-normal">
+              Feito pelo menos uma doação para esta ONG.
+            </span>
+          </div>
+          <div className="flex items-start gap-3 text-sm sm:text-base text-gray-700">
+            <CheckCircle2
+              size={20}
+              className="text-green-500 mt-0.5 flex-shrink-0"
+            />
+            <span className="leading-normal">
+              Ter a doação aprovada e aceita por eles.
+            </span>
+          </div>
+        </div>
+
+        {/* Caixa de Tranquilização */}
+        <div className="bg-amber-50 rounded-2xl p-3.5 sm:p-5 flex items-start gap-3 text-left mb-6 border border-amber-100">
+          <Clock size={20} className="text-amber-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="text-xs sm:text-sm font-black text-amber-900 uppercase tracking-wide">
+              Já fez sua doação?
+            </h4>
+            <p className="text-xs sm:text-sm text-amber-800 mt-1 leading-relaxed">
+              Fique tranquilo! Se você já doou, a ONG está apenas processando o
+              recebimento. Assim que eles aprovarem, você poderá deixar sua
+              avaliação aqui.
+            </p>
+          </div>
+        </div>
+
+        {/* Ação Principal */}
+        <button
+          onClick={onDonate}
+          className="w-full py-3.5 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold rounded-2xl shadow-lg shadow-pink-500/20 active:scale-[0.98] transition-all duration-200"
+        >
+          Fazer uma doação agora
+        </button>
+      </motion.div>
     </div>
   );
 }
@@ -394,7 +549,13 @@ function ReviewPostModal({
       onSuccess();
       onClose();
     } catch (err: any) {
-      alert("Erro ao enviar avaliação.");
+      if (err?.response?.status === 403 || err?.status === 403) {
+        toast.error(
+          "Você precisa ter feito uma doação para esta ONG para poder avaliá-la.",
+        );
+      } else {
+        toast.error("Erro ao enviar avaliação.");
+      }
       console.error(err);
     } finally {
       setLoading(false);

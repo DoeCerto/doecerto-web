@@ -104,6 +104,21 @@ export const OngsProfileService = {
     };
   },
 
+  async hasDonatedToOng(ongId: number): Promise<boolean> {
+    try {
+      const { data } = await api<any>(`/donations/me/sent?take=100`);
+      const donations = Array.isArray(data?.data) ? data.data : [];
+
+      return donations.some(
+        (d: any) =>
+          d.ong?.userId === ongId && d.donationStatus === "completed"
+      );
+    } catch (error) {
+      console.error("Erro ao verificar doações:", error);
+      return false;
+    }
+  },
+
   async postReview(ongId: number, score: number, comment: string) {
     return api(`/ongs/${ongId}/ratings`, {
       method: "POST",
