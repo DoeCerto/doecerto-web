@@ -7,7 +7,11 @@ import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import { Eye, EyeOff, AlertCircle, ArrowLeft } from "lucide-react";
 import { registerDonor } from "@/services/register.service";
-import { formatCPF, removeFormatting, validateCPF } from "@/utils/documentValidation";
+import {
+  formatCPF,
+  removeFormatting,
+  validateCPF,
+} from "@/utils/documentValidation";
 import TermosModal from "@/components/shared/TermosModal"; // ← NOVO
 
 export default function Register() {
@@ -126,21 +130,29 @@ export default function Register() {
 
       <div className="w-full max-w-xs flex flex-col items-center">
         <div className="mb-4">
-          <Image src="/logo.svg" alt="DoeCerto" width={120} height={120} priority />
+          <Image
+            src="/logo.svg"
+            alt="DoeCerto"
+            width={220}
+            height={80}
+            priority
+            className="w-full h-auto"
+          />
         </div>
 
-        <h1 className="text-4xl -mt-2 font-bold mb-8 text-center">
+        <h1 className="text-2xl -mt-2 font-bold mb-8 text-center">
           Cadastre-se
         </h1>
 
         <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
           {/* Nome */}
           <div className="flex flex-col">
-            <label htmlFor="nome" className="text-base font-bold mb-1">Nome</label>
+            <label htmlFor="nome" className="text-base font-bold mb-1">
+              Nome
+            </label>
             <input
               id="nome"
               type="text"
-              required
               placeholder="Digite seu nome completo"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
@@ -150,18 +162,21 @@ export default function Register() {
 
           {/* CPF */}
           <div className="flex flex-col relative">
-            <label htmlFor="cpf" className="text-base font-bold mb-1">CPF</label>
+            <label htmlFor="cpf" className="text-base font-bold mb-1">
+              CPF
+            </label>
             <div className="relative">
               <input
                 id="cpf"
                 type="text"
-                required
                 placeholder="000.000.000-00"
                 value={cpf}
                 onChange={(e) => handleCPFChange(e.target.value)}
                 maxLength={14}
                 className={`w-full bg-white p-2 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
-                  cpfError ? "ring-2 ring-red-400 shake" : "focus:ring-purple-300"
+                  cpfError
+                    ? "ring-2 ring-red-400 shake"
+                    : "focus:ring-purple-300"
                 } ${cpfShake ? "shake" : ""}`}
               />
               {cpfError && (
@@ -183,11 +198,12 @@ export default function Register() {
 
           {/* Email */}
           <div className="flex flex-col">
-            <label htmlFor="email" className="text-base font-bold mb-1">Email</label>
+            <label htmlFor="email" className="text-base font-bold mb-1">
+              Email
+            </label>
             <input
               id="email"
               type="email"
-              required
               placeholder="seu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -197,18 +213,21 @@ export default function Register() {
 
           {/* Senha */}
           <div className="flex flex-col relative">
-            <label htmlFor="senha" className="text-base font-bold mb-1">Senha</label>
+            <label htmlFor="senha" className="text-base font-bold mb-1">
+              Senha
+            </label>
             <div className="relative">
               <input
                 id="senha"
                 type={showSenha ? "text" : "password"}
-                required
                 minLength={6}
                 placeholder="Mínimo de 8 caracteres"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 className={`w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
-                  senhasCoincidem ? "ring-2 ring-green-400" : "focus:ring-purple-300"
+                  senhasCoincidem
+                    ? "ring-2 ring-green-400"
+                    : "focus:ring-purple-300"
                 }`}
               />
               <button
@@ -223,18 +242,25 @@ export default function Register() {
 
           {/* Confirmar Senha */}
           <div className="flex flex-col">
-            <label htmlFor="confirmarSenha" className="text-base font-bold mb-1">Confirmar Senha</label>
+            <label
+              htmlFor="confirmarSenha"
+              className="text-base font-bold mb-1"
+            >
+              Confirmar Senha
+            </label>
             <div className="relative">
               <input
                 id="confirmarSenha"
                 type={showConfirmar ? "text" : "password"}
-                required
                 placeholder="Repita sua senha"
                 value={confirmarSenha}
                 onChange={(e) => setConfirmarSenha(e.target.value)}
                 className={`w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none focus:ring-2 transition-all ${
-                  senhasCoincidem ? "ring-2 ring-green-400" :
-                  senhasDiferentes ? "ring-2 ring-red-400" : "focus:ring-purple-300"
+                  senhasCoincidem
+                    ? "ring-2 ring-green-400"
+                    : senhasDiferentes
+                      ? "ring-2 ring-red-400"
+                      : "focus:ring-purple-300"
                 }`}
               />
               <button
@@ -252,9 +278,12 @@ export default function Register() {
             )}
           </div>
 
-          <p className="text-base text-right font-bold -mt-2 mb-4">
+          <p className="text-base text-right font-light -mt-2 mb-4">
             Já possui conta?{" "}
-            <Link href="/login" className="font-bold text-[#E0C4FF] hover:underline transition-all">
+            <Link
+              href="/login"
+              className="font-bold text-[#E0C4FF] hover:underline transition-all"
+            >
               Fazer Login
             </Link>
           </p>
@@ -262,7 +291,7 @@ export default function Register() {
           <button
             type="submit"
             disabled={isPending}
-            className="w-full flex justify-center items-center bg-white text-purple-700 font-bold py-3 rounded-md active:scale-95 transition-all disabled:opacity-70 shadow-md text-xl"
+            className="w-60 mx-auto flex justify-center items-center text-2xl bg-white text-[#6B39A7] font-bold py-2 rounded-md border-2 border-white transition-all duration-300 hover:shadow-xl hover:shadow-[#6B39A7]/40 hover:-translate-y-1 active:scale-95 mb-8 cursor-pointer"
           >
             {isPending ? (
               <div className="w-7 h-7 border-4 border-purple-700/30 border-t-purple-700 rounded-full animate-spin" />
