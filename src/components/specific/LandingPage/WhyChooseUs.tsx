@@ -60,7 +60,6 @@ export function WhyChooseUs() {
   ];
 
   return (
-    // Adicionei font-poppins aqui por garantia para manter a tipografia impecável
     <section ref={sectionRef} className="py-32 bg-[#F8FAFC] relative z-10 font-poppins">
       <div className="container mx-auto px-8 md:px-32">
         

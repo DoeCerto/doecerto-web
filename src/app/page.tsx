@@ -11,10 +11,8 @@ import "@/components/specific/LandingPage/landing.css";
 
 export default function Home() {
   return (
-    // Colocamos o "landing-scope" para ativar nosso CSS isolado e deixamos o fundo branco
     <main className="landing-scope flex flex-col min-h-screen bg-white">
       
-      {/* O SmoothScroller agora abraça TODA a sua Landing Page */}
       <SmoothScroller>
         <HeroSection />
         <WhatIsDoeCerto />

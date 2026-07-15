@@ -35,6 +35,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    sessionStorage.clear();
     localStorage.removeItem("user");
     router.push("/login");
   };

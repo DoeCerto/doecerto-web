@@ -19,11 +19,9 @@ export default function SmoothScroller({
   const rafRef = useRef<((time: number) => void) | null>(null);
 
   useEffect(() => {
-    // Destrava qualquer CSS residual de imediato
     document.documentElement.style.removeProperty("overflow");
     document.body.style.removeProperty("overflow");
 
-    // Dá 100ms de fôlego para o Next.js inicializar o Router sem dar o erro de "dispatched before initialization"
     const initTimer = setTimeout(() => {
       const lenis = new Lenis({
         duration: 1.8,
@@ -34,10 +32,12 @@ export default function SmoothScroller({
         infinite: false,
       });
       lenisRef.current = lenis;
+      
+      // A MÁGICA: Expõe o Lenis para o site inteiro usar!
+      (window as any).lenis = lenis;
 
       lenis.on("scroll", ScrollTrigger.update);
 
-      // Guardamos a função na Ref para termos certeza de remover a certa
       rafRef.current = (time: number) => {
         lenis.raf(time * 1000);
       };
@@ -46,23 +46,21 @@ export default function SmoothScroller({
       gsap.ticker.lagSmoothing(0);
     }, 100);
 
-    // Limpeza Termonuclear Segura
     return () => {
-      clearTimeout(initTimer); // Cancela se o usuário sair rápido demais
+      clearTimeout(initTimer); 
       
-      if (rafRef.current) {
-        gsap.ticker.remove(rafRef.current);
-      }
+      // Limpa a variável global quando o componente morrer
+      delete (window as any).lenis;
       
+      if (rafRef.current) gsap.ticker.remove(rafRef.current);
       if (lenisRef.current) {
         lenisRef.current.destroy();
         lenisRef.current = null;
       }
-      
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
       ScrollTrigger.clearScrollMemory();
     };
   }, [pathname]);
-
+  
   return <>{children}</>;
 }

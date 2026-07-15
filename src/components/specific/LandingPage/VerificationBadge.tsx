@@ -39,41 +39,44 @@ export function VerificationBadge() {
   }, { scope: sectionRef });
 
   return (
-    <section ref={sectionRef} className="bg-white py-32 relative z-20">
-      <div className="container mx-auto px-32">
-        <div className="flex flex-col lg:flex-row gap-24 items-center">
+    <section ref={sectionRef} id="verificationbadge" className="bg-white py-16 md:py-24 lg:py-32 relative z-20">
+      
+      {/* Ajuste de padding lateral responsivo para evitar quebra no mobile */}
+      <div className="container mx-auto px-6 md:px-16 lg:px-32">
+        
+        {/* Ajuste de gap responsivo */}
+        <div className="flex flex-col lg:flex-row gap-12 lg:gap-24 items-center">
 
           {/* Coluna da Esquerda: Textos */}
           <div ref={textRef} className="w-full lg:w-1/2 flex flex-col justify-center">
             
-            {/* Ajuste 1: Tag <p> com text-[14px] para ficar sutil e perfeitamente alinhado à esquerda */}
-            <p className="block font-['Quicksand'] font-semi-bold text-[#434343] text-[14px] uppercase tracking-[0.28em] mb-5">
+            {/* Tag responsiva (fonte menor no mobile) */}
+            <p className="block font-['Quicksand'] font-semibold text-[#434343] text-xs md:text-[14px] uppercase tracking-[0.2em] md:tracking-[0.28em] mb-4 md:mb-5">
               Fique tranquilo
             </p>
 
-            {/* Título com Gradiente */}
-            <h2 className="font-['Poppins'] font-bold text-[56px] leading-[1.25] mb-8">
-              {/* Parte superior do título isolada */}
+            {/* Título responsivo: text-4xl mobile, text-5xl tablet, text-[56px] desktop */}
+            <h2 className="font-['Poppins'] font-bold text-4xl sm:text-5xl lg:text-[56px] leading-[1.1] lg:leading-[1.25] mb-6 md:mb-8">
               <span className="block bg-gradient-to-r from-[#6B39A7] to-[#623FFE] bg-clip-text text-transparent w-fit">
                 Selo de <br />
                 Verificação
               </span>
               
-              {/* Ajuste 2: Linha flex para travar o alinhamento vertical do ícone com o texto */}
-              <span className="flex items-center gap-0">
+              <span className="flex items-center gap-2 lg:gap-0 mt-2 lg:mt-0">
                 <span className="bg-gradient-to-r from-[#6B39A7] to-[#623FFE] bg-clip-text text-transparent">
                   DoeCerto
                 </span>
+                {/* Ícone responsivo: menor no mobile para não quebrar a linha */}
                 <img 
                   src="/iconeselo.svg" 
                   alt="Selo" 
-                  className="h-[95px] w-[95px] object-contain shrink-0" 
+                  className="h-[48px] w-[48px] sm:h-[64px] sm:w-[64px] lg:h-[95px] lg:w-[95px] object-contain shrink-0" 
                 />
               </span>
             </h2>
 
-            {/* Parágrafos */}
-            <div className="text-xl text-[#1E1E1E] space-y-6 font-['Poppins']">
+            {/* Parágrafos responsivos: text-base no mobile para melhor leitura */}
+            <div className="text-base sm:text-lg lg:text-xl text-[#1E1E1E] space-y-4 md:space-y-6 font-['Poppins']">
               <p className="leading-relaxed font-light">
                 Nossa equipe realiza uma curadoria rigorosa de todas as instituições cadastradas. Analisamos a documentação, o histórico de atuação e garantimos que <span className="font-medium text-black">sua ajuda chegue exatamente onde deve chegar</span>. Transparência e segurança são os pilares do nosso ecossistema.
               </p>
@@ -85,12 +88,13 @@ export function VerificationBadge() {
           </div>
 
           {/* Coluna da Direita: Ilustração 3D */}
-          <div ref={imageRef} className="w-full lg:w-1/2 flex justify-center">
-             <div className="relative w-full max-w-lg transition-transform duration-700 hover:scale-105">
+          {/* Margem superior adicionada no mobile para afastar do texto */}
+          <div ref={imageRef} className="w-full lg:w-1/2 flex justify-center mt-6 lg:mt-0">
+             <div className="relative w-full max-w-[280px] sm:max-w-sm md:max-w-md lg:max-w-lg transition-transform duration-700 hover:scale-105">
                 <img 
                   src="/selo-verificacao-ilustracao.svg" 
                   alt="Ilustração de Verificação" 
-                  className="w-full h-auto object-contain"
+                  className="w-full h-auto object-contain drop-shadow-xl"
                 />
              </div>
           </div>

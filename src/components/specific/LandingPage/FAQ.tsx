@@ -38,60 +38,41 @@ export function FAQ() {
   const sectionRef = useRef<HTMLElement>(null);
 
   useGSAP(() => {
-    // A mágica acontece aqui!
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: sectionRef.current,
-        start: "top 80%", // Dispara quando o topo do FAQ atinge 80% da tela (entrando)
-        // play = rolar para baixo (aparece) | reverse = rolar de volta para cima (some)
+        start: "top 80%", 
         toggleActions: "play none none reverse", 
       }
     });
 
-    // 1. Título desce suavemente e aparece
-    tl.fromTo(".faq-title",
-      { y: -30, opacity: 0 }, // Começa um pouco mais alto ("de cima para baixo")
-      { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" }
-    )
-    // 2. Os cards sobem em cascata logo em seguida
-    .fromTo(".faq-item",
-      { y: 30, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.2, stagger: 0.1, ease: "power2.out" },
-      "-=0.4" // Sobrepõe a animação para ficar mais fluido
-    );
+    tl.fromTo(".faq-title", { y: -30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" })
+      .fromTo(".faq-item", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.2, stagger: 0.1, ease: "power2.out" }, "-=0.4");
   }, { scope: sectionRef });
 
   return (
-    <section ref={sectionRef} className="py-24 bg-white">
+    <section ref={sectionRef} className="py-16 md:py-24 bg-white">
       <div className="container mx-auto px-6 max-w-3xl">
-        {/* Adicionada a classe faq-title */}
-        <h2 className="faq-title text-4xl font-bold text-center text-gray-900 mb-12">
+        <h2 className="faq-title text-3xl md:text-4xl font-bold text-center text-gray-900 mb-8 md:mb-12">
           Perguntas Frequentes
         </h2>
 
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
           {faqs.map((faq, index) => (
-            <div
-              key={index}
-              // Adicionada a classe faq-item para a cascata
-              className="faq-item border border-gray-200 rounded-2xl overflow-hidden transition-all duration-300"
-            >
+            <div key={index} className="faq-item border border-gray-200 rounded-2xl overflow-hidden transition-all duration-300">
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full text-left px-6 py-5 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors"
+                className="w-full text-left px-5 md:px-6 py-4 md:py-5 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors"
               >
-                <span className="font-semibold text-gray-900 text-lg">{faq.question}</span>
-                <span className="text-[#6B21A8] text-2xl font-light">
+                {/* Fonte levemente menor no mobile para não quebrar tantas linhas */}
+                <span className="font-semibold text-gray-900 text-base md:text-lg pr-4">{faq.question}</span>
+                <span className="text-[#6B21A8] text-2xl font-light shrink-0">
                   {openIndex === index ? '−' : '+'}
                 </span>
               </button>
 
-              <div
-                className={`transition-all duration-300 ease-in-out ${
-                  openIndex === index ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
-                }`}
-              >
-                <p className="px-6 py-5 text-gray-600">
+              <div className={`transition-all duration-300 ease-in-out ${openIndex === index ? 'max-h-96 md:max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
+                <p className="px-5 md:px-6 py-4 md:py-5 text-gray-600 text-sm md:text-base">
                   {faq.answer}
                 </p>
               </div>

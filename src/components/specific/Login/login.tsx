@@ -1,13 +1,13 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import { login } from "@/services/login.service";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { Preferences } from "@capacitor/preferences";
+import gsap from "gsap";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,6 +15,41 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isPending, setIsPending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Refs para o GSAP
+  const mainWrapperRef = useRef(null);
+  const leftContentRef = useRef(null);
+  const imageRef = useRef(null);
+
+useEffect(() => {
+  const token = localStorage.getItem("access_token");
+  if (token) {
+    // Se ele já tem token, manda para o dashboard
+    router.replace("/home");
+  }
+}, [router]);
+
+  useEffect(() => {
+    let ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+      tl.from((leftContentRef.current as any)?.children, {
+        y: 30,
+        opacity: 0,
+        duration: 0.8,
+        stagger: 0.1,
+      })
+        .from(imageRef.current, {
+          x: 50,
+          opacity: 0,
+          duration: 1.2,
+          ease: "power2.out"
+        }, "-=0.6");
+
+    }, mainWrapperRef);
+
+    return () => ctx.revert();
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -28,137 +63,189 @@ export default function LoginPage() {
 
     try {
       const response = await login({ email, password });
-      const data = response.data as any;
+
+      if (!response) throw new Error("Sem resposta do servidor");
+
+      // Correção do TypeScript (as any) aplicada aqui!
+      const data = (response?.data || response) as any;
       const token = data?.accessToken || data?.access_token || data?.token;
-      
-      // 1. Captura o cargo e avatar vindos da API
-      const apiUserRole = data?.user?.role || data?.role; 
+
+      const apiUserRole = data?.user?.role || data?.role;
       const userAvatar = data?.user?.avatarUrl || data?.avatarUrl;
 
       if (token) {
-        // Persistência Nativa para APK (Capacitor)
-        await Preferences.set({ key: "access_token", value: token });
-        if (apiUserRole) await Preferences.set({ key: "userRole", value: apiUserRole });
+        try {
+          await Preferences.set({ key: "access_token", value: token });
+          if (apiUserRole) await Preferences.set({ key: "userRole", value: apiUserRole });
+        } catch (capacitorError) { }
 
-        // Persistência para Navegador
         localStorage.setItem("access_token", token);
+        localStorage.setItem("registration_completed", "true");
         if (apiUserRole) localStorage.setItem("userRole", apiUserRole);
         if (userAvatar) localStorage.setItem("userAvatar", userAvatar);
-        
+
         toast.success("Login realizado com sucesso!");
 
-        // 2. Lógica de Redirecionamento Atualizada
         let finalRole = apiUserRole;
 
-        if (!finalRole) {
+        if (!finalRole && token.includes('.')) {
           try {
             const payload = JSON.parse(atob(token.split('.')[1]));
-            finalRole = payload.role;
-          } catch (e) {
-            console.error("Erro ao decodificar token:", e);
-          }
+            finalRole = payload?.role;
+          } catch (e) { }
         }
 
         let redirectPath = "/home";
-        const roleLower = finalRole?.toLowerCase();
+        const roleLower = finalRole?.toLowerCase() || "";
 
-        if (roleLower === 'admin') {
-          redirectPath = '/adm-dashboard';
-        } else if (roleLower === 'ong') {
-          redirectPath = '/ong-dashboard';
-        }
+        if (roleLower === 'admin') redirectPath = '/adm-dashboard';
+        else if (roleLower === 'ong') redirectPath = '/ong-dashboard';
 
         setTimeout(() => {
           router.push(redirectPath);
         }, 1500);
+
       } else {
-        toast.error("Erro ao processar autenticação.");
+        toast.error("Credenciais incorretas.");
         setIsPending(false);
       }
     } catch (err: any) {
-      console.error("Erro no login:", err);
-      toast.error("Email ou senha inválidos");
+      const errorMessage = err?.response?.data?.message || err?.message || "Email ou senha inválidos";
+      toast.error(errorMessage);
       setIsPending(false);
     }
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#6B39A7] text-white px-6">
+    <div ref={mainWrapperRef} className="flex min-h-[100dvh] w-full font-sans selection:bg-[#6B39A7] selection:text-white bg-[#F9FAFB] lg:bg-white overflow-hidden">
       <Toaster position="top-center" />
 
-      <div className="w-full max-w-xs flex flex-col items-center">
-        <div className="mb-4">
-          <Image src="/logo.svg" alt="DoeCerto" width={120} height={120} priority />
-        </div>
+      {/* ================================================== */}
+      {/* LADO ESQUERDO (Formulário Centralizado - 50%) */}
+      {/* ================================================== */}
+      <div className="w-full lg:w-1/2 flex flex-col relative items-center justify-center px-6 sm:px-12 py-10 overflow-y-auto">
 
-        <h1 className="text-4xl -mt-2 font-bold mb-10 text-center">
-          Faça seu login!
-        </h1>
+        {/* CONTAINER DO FORMULÁRIO */}
+        <div ref={leftContentRef} className="w-full max-w-[460px] shrink-0">
 
-        <form onSubmit={handleSubmit} className="w-full flex flex-col">
-          <div className="flex flex-col mb-4">
-            <label htmlFor="email" className="text-lg font-bold">Email</label>
-            <input
-              id="email"
-              type="email"
-              required
-              placeholder="Digite seu email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-white p-2 rounded-md text-black text-xl placeholder:text-lg focus:outline-none"
-            />
+          {/* TÍTULOS ALINHADOS À ESQUERDA (Sem Logo) */}
+          <div className="mb-10 text-left">
+            <h1 className="text-4xl sm:text-[3rem] font-bold text-gray-900 mb-2 tracking-tight leading-tight">
+              Bem-vindo de volta!
+            </h1>
+            <p className="text-gray-500 text-lg font-medium">
+              Insira suas credenciais para acessar a conta.
+            </p>
           </div>
 
-          <div className="flex flex-col mb-6">
-            <label htmlFor="password" className="text-lg font-bold">Senha</label>
-            <div className="relative">
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                required
-                placeholder="Digite sua senha"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-white p-2 pr-10 rounded-md text-black text-xl placeholder:text-lg focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#6B39A7] transition-colors"
-              >
-                {showPassword ? <Eye size={24} /> : <EyeOff size={24} />}
-              </button>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="email" className="text-gray-800 text-base font-bold tracking-wide">
+                Endereço de Email
+              </label>
+              <div className="relative group">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#6B39A7] transition-colors" size={22} />
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  placeholder="Digite seu email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-white border border-gray-200 text-gray-900 rounded-xl pl-12 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-[#6B39A7]/20 focus:border-[#6B39A7] transition-all placeholder:text-gray-400 text-lg font-medium shadow-sm"
+                />
+              </div>
             </div>
-            <div className="flex justify-end mt-1">
-              <Link
-                href="/forgot-password"
-                className="text-base font-bold text-white hover:underline"
-              >
-                Esqueceu a senha?
+
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between items-center">
+                <label htmlFor="password" className="text-gray-800 text-base font-bold tracking-wide">
+                  Senha
+                </label>
+                <Link href="/forgot-password" className="text-sm font-semibold text-[#6B39A7] hover:text-purple-800 transition-colors">
+                  Esqueceu a senha?
+                </Link>
+              </div>
+              <div className="relative group">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#6B39A7] transition-colors" size={22} />
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  placeholder="Digite sua senha"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-white border border-gray-200 text-gray-900 rounded-xl pl-12 pr-12 py-4 focus:outline-none focus:ring-2 focus:ring-[#6B39A7]/20 focus:border-[#6B39A7] transition-all placeholder:text-gray-400 text-lg font-medium shadow-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer active:scale-95"
+                >
+                  {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 mt-2">
+              <input
+                type="checkbox"
+                id="remember"
+                className="w-5 h-5 rounded border-gray-300 text-[#4A2675] focus:ring-[#6B39A7]/50 cursor-pointer accent-[#4A2675]"
+              />
+              <label htmlFor="remember" className="text-base text-gray-500 font-medium cursor-pointer select-none">
+                Lembrar de mim por 30 dias
+              </label>
+            </div>
+
+{/* BOTÃO DE ENTRAR */}
+            <button
+              type="submit"
+              disabled={isPending}
+              className="w-full flex justify-center items-center h-[60px] mt-2 bg-[#4A2675] hover:bg-[#3b1a66] text-white font-bold text-lg rounded-xl transition-all duration-300 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed shadow-[0_8px_20px_-6px_rgba(74,38,117,0.5)]"
+            >
+              {isPending ? (
+                <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : (
+                "Entrar"
+              )}
+            </button>
+
+            {/* NOTA DE PRIVACIDADE E SEGURANÇA */}
+            <div className="text-center mt-6 text-sm text-gray-500 px-4">
+              Ao continuar, você concorda com nossos{" "}
+              <Link href="/privacy" className="font-bold text-[#6B39A7] hover:underline transition-all">
+                Termos e Política de Privacidade
+              </Link>.
+            </div>
+
+            {/* LINK PARA CRIAR CONTA */}
+            <div className="text-center mt-6">
+              <span className="text-lg text-gray-500 font-medium">Não tem uma conta? </span>
+              <Link href="/register" className="text-lg font-bold text-[#6B39A7] hover:text-purple-800 transition-colors">
+                Criar conta
               </Link>
             </div>
-          </div>
 
-          <button
-            type="submit"
-            disabled={isPending}
-            className="w-full flex justify-center items-center text-2xl bg-white text-[#6B39A7] font-bold py-2 rounded-md active:scale-95 transition-transform mb-8 disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            {isPending ? (
-              <div className="w-7 h-7 border-4 border-[#6B39A7]/30 border-t-[#6B39A7] rounded-full animate-spin"></div>
-            ) : (
-              "Entrar"
-            )}
-          </button>
-
-          <div className="flex flex-wrap justify-center gap-x-1 text-center text-lg font-bold text-purple-100">
-            <span>Ainda não possui conta?</span>
-            <Link href="/register-choice" className="text-white font-black hover:underline">
-              Cadastre-se agora
-            </Link>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
+
+      {/* ================================================== */}
+      {/* LADO DIREITO */}
+      {/* ================================================== */}
+      <div className="hidden lg:block w-1/2 relative h-screen bg-transparent">
+        <div ref={imageRef} className="absolute inset-y-0 right-0 left-0 rounded-l-[3.5rem] overflow-hidden shadow-[-20px_0_40px_rgba(0,0,0,0.05)]">
+          <img
+            src="/fotocrianca.jpg"
+            alt="Fundo Login"
+            className="w-full h-full object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#4A2675]/30 via-transparent to-transparent mix-blend-multiply"></div>
+        </div>
+      </div>
+
     </div>
   );
 }

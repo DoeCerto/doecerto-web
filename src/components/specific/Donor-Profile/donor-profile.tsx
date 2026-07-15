@@ -53,7 +53,7 @@ export default function DonorProfile() {
     name: "Carregando...",
     email: "",
     cpf: "",
-    phone: "", 
+    phone: "",
     description: "",
   });
 
@@ -116,7 +116,7 @@ export default function DonorProfile() {
         // PROFILE
         if (profileData) {
           setDonorData({
-            name: profileData.name || "",
+           name: (profileData.name || "").replace("undefined", "").trim(),
             email: profileData.email || "",
             cpf: profileData.cpf || "",
             phone: profileData.phone || "",
@@ -410,7 +410,9 @@ export default function DonorProfile() {
                     {isEditingProfile ? (
                       <input className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100" value={donorData.name} onChange={(e) => setDonorData({ ...donorData, name: e.target.value })} />
                     ) : (
-                      <p className="font-medium text-gray-900">{donorData.name}</p>
+                      <p className="font-medium text-gray-900">
+                        {(donorData.name || "").replace("undefined", "").trim()}
+                      </p>
                     )}
                   </div>
                 </div>

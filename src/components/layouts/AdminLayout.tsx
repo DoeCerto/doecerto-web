@@ -40,6 +40,7 @@ export default function AdminLayout({ children, activeMenu: initialActiveMenu = 
       await Preferences.remove({ key: 'access_token' });
       // Clear browser storage
       localStorage.removeItem('access_token');
+      sessionStorage.clear();
       toast.success('Logout realizado com sucesso!');
       router.push('/login');
     } catch (error) {
