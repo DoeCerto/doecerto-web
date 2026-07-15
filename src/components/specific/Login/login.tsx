@@ -5,8 +5,10 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import { login } from "@/services/login.service";
+import { api } from "@/services/api";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { Preferences } from "@capacitor/preferences";
+import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
 import gsap from "gsap";
 
 export default function LoginPage() {
@@ -18,118 +20,157 @@ export default function LoginPage() {
 
   // Refs para o GSAP
   const mainWrapperRef = useRef(null);
-  const leftContentRef = useRef(null);
   const imageRef = useRef(null);
 
-useEffect(() => {
-  const token = localStorage.getItem("access_token");
-  if (token) {
-    // Se ele já tem token, manda para o dashboard
-    router.replace("/home");
-  }
-}, [router]);
-
+  // 1. Verifica se já está logado
   useEffect(() => {
+    const checkAuth = async () => {
+      const { value: token } = await Preferences.get({ key: "access_token" });
+      const localToken = localStorage.getItem("access_token");
+      if (token || localToken) {
+        router.replace("/home");
+      }
+    };
+    checkAuth();
+  }, [router]);
+
+// 2. Inicializa o Plugin do Google e GSAP
+  useEffect(() => {
+const initGoogle = async () => {
+      try {
+        await GoogleSignIn.initialize({
+          clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
+          redirectUrl: "http://localhost:3000", // A URL fica aqui!
+        });
+      } catch (error) {
+        console.error("Erro ao inicializar Google Sign-In", error);
+      }
+    };
+    initGoogle();
+
     let ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
-      tl.from((leftContentRef.current as any)?.children, {
-        y: 30,
-        opacity: 0,
-        duration: 0.8,
-        stagger: 0.1,
-      })
-        .from(imageRef.current, {
-          x: 50,
-          opacity: 0,
-          duration: 1.2,
-          ease: "power2.out"
-        }, "-=0.6");
-
+      // Substituímos o .from pelo .fromTo para forçar o início (0) e o fim (1)
+      tl.fromTo(".animate-item", 
+        { y: 30, opacity: 0 }, // Estado Inicial
+        { y: 0, opacity: 1, duration: 0.8, stagger: 0.1 } // Estado Final
+      ).fromTo(imageRef.current,
+        { x: 50, opacity: 0 }, // Estado Inicial da Imagem
+        { x: 0, opacity: 1, duration: 1.2, ease: "power2.out" }, // Estado Final
+        "-=0.6"
+      );
     }, mainWrapperRef);
 
     return () => ctx.revert();
   }, []);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  // 3. Função auxiliar para salvar a sessão
+  const saveSessionAndRedirect = async (data: any) => {
+    const token = data?.accessToken || data?.access_token || data?.token;
+    const apiUserRole = data?.user?.role || data?.role;
+    const userAvatar = data?.user?.avatarUrl || data?.avatarUrl;
 
-    if (!email || !password) {
-      toast.error("Preencha todos os campos");
-      return;
-    }
-
-    setIsPending(true);
+    if (!token) throw new Error("Token não recebido");
 
     try {
-      const response = await login({ email, password });
+      await Preferences.set({ key: "access_token", value: token });
+      if (apiUserRole) await Preferences.set({ key: "userRole", value: apiUserRole });
+    } catch (capacitorError) {}
 
+    localStorage.setItem("access_token", token);
+    localStorage.setItem("registration_completed", "true");
+    if (apiUserRole) localStorage.setItem("userRole", apiUserRole);
+    if (userAvatar) localStorage.setItem("userAvatar", userAvatar);
+
+    toast.success("Login realizado com sucesso!");
+
+    let finalRole = apiUserRole;
+    if (!finalRole && token.includes(".")) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        finalRole = payload?.role;
+      } catch (e) {}
+    }
+
+    let redirectPath = "/home";
+    const roleLower = finalRole?.toLowerCase() || "";
+
+    if (roleLower === "admin") redirectPath = "/adm-dashboard";
+    else if (roleLower === "ong") redirectPath = "/ong-dashboard";
+
+setTimeout(() => {
+      // Em vez de router.push, vamos usar o window.location para forçar a navegação
+      window.location.href = redirectPath; 
+    }, 1500);
+  };
+
+  // 4. Fluxo de Login Normal
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email || !password) return toast.error("Preencha todos os campos");
+
+    setIsPending(true);
+    try {
+      const response = await login({ email, password });
       if (!response) throw new Error("Sem resposta do servidor");
 
-      // Correção do TypeScript (as any) aplicada aqui!
       const data = (response?.data || response) as any;
-      const token = data?.accessToken || data?.access_token || data?.token;
-
-      const apiUserRole = data?.user?.role || data?.role;
-      const userAvatar = data?.user?.avatarUrl || data?.avatarUrl;
-
-      if (token) {
-        try {
-          await Preferences.set({ key: "access_token", value: token });
-          if (apiUserRole) await Preferences.set({ key: "userRole", value: apiUserRole });
-        } catch (capacitorError) { }
-
-        localStorage.setItem("access_token", token);
-        localStorage.setItem("registration_completed", "true");
-        if (apiUserRole) localStorage.setItem("userRole", apiUserRole);
-        if (userAvatar) localStorage.setItem("userAvatar", userAvatar);
-
-        toast.success("Login realizado com sucesso!");
-
-        let finalRole = apiUserRole;
-
-        if (!finalRole && token.includes('.')) {
-          try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            finalRole = payload?.role;
-          } catch (e) { }
-        }
-
-        let redirectPath = "/home";
-        const roleLower = finalRole?.toLowerCase() || "";
-
-        if (roleLower === 'admin') redirectPath = '/adm-dashboard';
-        else if (roleLower === 'ong') redirectPath = '/ong-dashboard';
-
-        setTimeout(() => {
-          router.push(redirectPath);
-        }, 1500);
-
-      } else {
-        toast.error("Credenciais incorretas.");
-        setIsPending(false);
-      }
+      await saveSessionAndRedirect(data);
     } catch (err: any) {
-      const errorMessage = err?.response?.data?.message || err?.message || "Email ou senha inválidos";
+      const errorMessage =
+        err?.response?.data?.message || err?.message || "Email ou senha inválidos";
       toast.error(errorMessage);
       setIsPending(false);
     }
   }
 
+  // 5. Fluxo do Google
+  const handleGoogleLogin = async () => {
+    setIsPending(true);
+    try {
+      const result = await GoogleSignIn.signIn();
+
+      if (!result.idToken) {
+        throw new Error("Falha ao obter token do Google");
+      }
+
+      const response = await api<any>("/auth/google", {
+        method: "POST",
+        body: JSON.stringify({ token: result.idToken }),
+      });
+
+      const data = response.data;
+      console.log(data)
+
+      if (data.requireProfileCompletion) {
+        localStorage.setItem("@DoeCerto:tempEmail", data.email);
+        if (data.tempToken) localStorage.setItem("@DoeCerto:tempToken", data.tempToken);
+        toast.success("Quase lá! Precisamos de mais alguns dados.");
+        router.push("/completar-cadastro");
+      } else {
+        await saveSessionAndRedirect(data);
+      }
+    } catch (error: any) {
+      console.error(error);
+      toast.error("O login com Google foi cancelado ou falhou.");
+      setIsPending(false);
+    }
+  };
+
   return (
-    <div ref={mainWrapperRef} className="flex min-h-[100dvh] w-full font-sans selection:bg-[#6B39A7] selection:text-white bg-[#F9FAFB] lg:bg-white overflow-hidden">
+    <div
+      ref={mainWrapperRef}
+      className="flex min-h-[100dvh] w-full font-sans selection:bg-[#6B39A7] selection:text-white bg-[#F9FAFB] lg:bg-white overflow-hidden"
+    >
       <Toaster position="top-center" />
 
-      {/* ================================================== */}
-      {/* LADO ESQUERDO (Formulário Centralizado - 50%) */}
-      {/* ================================================== */}
+      {/* LADO ESQUERDO */}
       <div className="w-full lg:w-1/2 flex flex-col relative items-center justify-center px-6 sm:px-12 py-10 overflow-y-auto">
-
-        {/* CONTAINER DO FORMULÁRIO */}
-        <div ref={leftContentRef} className="w-full max-w-[460px] shrink-0">
-
-          {/* TÍTULOS ALINHADOS À ESQUERDA (Sem Logo) */}
-          <div className="mb-10 text-left">
+        <div className="w-full max-w-[460px] shrink-0">
+          
+          {/* Item Animado 1 */}
+          <div className="animate-item mb-10 text-left">
             <h1 className="text-4xl sm:text-[3rem] font-bold text-gray-900 mb-2 tracking-tight leading-tight">
               Bem-vindo de volta!
             </h1>
@@ -138,14 +179,17 @@ useEffect(() => {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-
+          {/* Item Animado 2 */}
+          <form onSubmit={handleSubmit} className="animate-item flex flex-col gap-6">
             <div className="flex flex-col gap-2">
               <label htmlFor="email" className="text-gray-800 text-base font-bold tracking-wide">
                 Endereço de Email
               </label>
               <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#6B39A7] transition-colors" size={22} />
+                <Mail
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#6B39A7] transition-colors"
+                  size={22}
+                />
                 <input
                   id="email"
                   type="email"
@@ -163,12 +207,18 @@ useEffect(() => {
                 <label htmlFor="password" className="text-gray-800 text-base font-bold tracking-wide">
                   Senha
                 </label>
-                <Link href="/forgot-password" className="text-sm font-semibold text-[#6B39A7] hover:text-purple-800 transition-colors">
+                <Link
+                  href="/forgot-password"
+                  className="text-sm font-semibold text-[#6B39A7] hover:text-purple-800 transition-colors"
+                >
                   Esqueceu a senha?
                 </Link>
               </div>
               <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#6B39A7] transition-colors" size={22} />
+                <Lock
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#6B39A7] transition-colors"
+                  size={22}
+                />
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
@@ -194,12 +244,14 @@ useEffect(() => {
                 id="remember"
                 className="w-5 h-5 rounded border-gray-300 text-[#4A2675] focus:ring-[#6B39A7]/50 cursor-pointer accent-[#4A2675]"
               />
-              <label htmlFor="remember" className="text-base text-gray-500 font-medium cursor-pointer select-none">
+              <label
+                htmlFor="remember"
+                className="text-base text-gray-500 font-medium cursor-pointer select-none"
+              >
                 Lembrar de mim por 30 dias
               </label>
             </div>
 
-{/* BOTÃO DE ENTRAR */}
             <button
               type="submit"
               disabled={isPending}
@@ -211,32 +263,62 @@ useEffect(() => {
                 "Entrar"
               )}
             </button>
-
-            {/* NOTA DE PRIVACIDADE E SEGURANÇA */}
-            <div className="text-center mt-6 text-sm text-gray-500 px-4">
-              Ao continuar, você concorda com nossos{" "}
-              <Link href="/privacy" className="font-bold text-[#6B39A7] hover:underline transition-all">
-                Termos e Política de Privacidade
-              </Link>.
-            </div>
-
-            {/* LINK PARA CRIAR CONTA */}
-            <div className="text-center mt-6">
-              <span className="text-lg text-gray-500 font-medium">Não tem uma conta? </span>
-              <Link href="/register" className="text-lg font-bold text-[#6B39A7] hover:text-purple-800 transition-colors">
-                Criar conta
-              </Link>
-            </div>
-
           </form>
+
+          {/* Item Animado 3 */}
+          <div className="animate-item relative flex items-center justify-center mt-8 mb-6">
+            <div className="absolute border-t border-gray-200 w-full"></div>
+            <span className="bg-[#F9FAFB] lg:bg-white px-4 text-sm text-gray-500 font-medium relative">
+              Ou continue com
+            </span>
+          </div>
+
+          {/* Item Animado 4 */}
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={isPending}
+            className="animate-item w-full flex justify-center items-center gap-3 h-[60px] bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-lg rounded-xl transition-all shadow-sm active:scale-[0.98] disabled:opacity-70"
+          >
+            <img
+              src="https://www.svgrepo.com/show/475656/google-color.svg"
+              alt="Google"
+              className="w-6 h-6"
+            />
+            Google
+          </button>
+
+          {/* Item Animado 5 */}
+          <div className="animate-item text-center mt-6 text-sm text-gray-500 px-4">
+            Ao continuar, você concorda com nossos{" "}
+            <Link
+              href="/privacy"
+              className="font-bold text-[#6B39A7] hover:underline transition-all"
+            >
+              Termos e Política de Privacidade
+            </Link>
+            .
+          </div>
+
+          {/* Item Animado 6 */}
+          <div className="animate-item text-center mt-6">
+            <span className="text-lg text-gray-500 font-medium">Não tem uma conta? </span>
+            <Link
+              href="/register"
+              className="text-lg font-bold text-[#6B39A7] hover:text-purple-800 transition-colors"
+            >
+              Criar conta
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* ================================================== */}
       {/* LADO DIREITO */}
-      {/* ================================================== */}
       <div className="hidden lg:block w-1/2 relative h-screen bg-transparent">
-        <div ref={imageRef} className="absolute inset-y-0 right-0 left-0 rounded-l-[3.5rem] overflow-hidden shadow-[-20px_0_40px_rgba(0,0,0,0.05)]">
+        <div
+          ref={imageRef}
+          className="absolute inset-y-0 right-0 left-0 rounded-l-[3.5rem] overflow-hidden shadow-[-20px_0_40px_rgba(0,0,0,0.05)]"
+        >
           <img
             src="/fotocrianca.jpg"
             alt="Fundo Login"
@@ -245,7 +327,6 @@ useEffect(() => {
           <div className="absolute inset-0 bg-gradient-to-t from-[#4A2675]/30 via-transparent to-transparent mix-blend-multiply"></div>
         </div>
       </div>
-
     </div>
   );
 }

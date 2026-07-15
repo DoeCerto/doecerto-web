@@ -12,6 +12,7 @@
     "@capacitor/android": "^7.4.4",
     "@capacitor/core": "^7.4.4",
     "@capacitor/preferences": "^7.0.0",
+    "@capawesome/capacitor-google-sign-in": "^0.1.2",
     "@gsap/react": "^2.1.2",
     "@studio-freight/lenis": "^1.0.42",
     "framer-motion": "^12.23.24",

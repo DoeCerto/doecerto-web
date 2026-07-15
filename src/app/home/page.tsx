@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Home from "@/components/specific/Home/home";
 
-export default function HomePage() {
+
+function TokenProcessor({ onReady }: { onReady: () => void }) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [tokenReady, setTokenReady] = useState(false); // Estado para controlar a renderização
 
   useEffect(() => {
     const token = searchParams.get("token");
@@ -15,20 +15,33 @@ export default function HomePage() {
     if (token) {
       localStorage.setItem("access_token", token);
       router.replace("/home");
-      setTokenReady(true); // Token salvo, pode renderizar
+      onReady(); 
     } else if (localStorage.getItem("access_token")) {
-      setTokenReady(true); // Token já existe no storage, pode renderizar
+      onReady(); 
+    } else {
+      onReady(); 
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, onReady]);
 
-  // Enquanto o token não for processado, não renderizamos o componente que busca dados
-  if (!tokenReady) {
-    return <div>Carregando...</div>; 
-  }
+  return null; 
+}
+
+
+export default function HomePage() {
+  const [tokenReady, setTokenReady] = useState(false);
 
   return (
-    <div>
-      <Home />
-    </div>
+    <>
+      <Suspense fallback={null}>
+        <TokenProcessor onReady={() => setTokenReady(true)} />
+      </Suspense>
+      {!tokenReady ? (
+        <div>Carregando...</div>
+      ) : (
+        <div>
+          <Home />
+        </div>
+      )}
+    </>
   );
 }
