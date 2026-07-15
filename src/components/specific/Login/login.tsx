@@ -8,7 +8,6 @@ import { login } from "@/services/login.service";
 import { api } from "@/services/api";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { Preferences } from "@capacitor/preferences";
-import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
 import gsap from "gsap";
 
 export default function LoginPage() {
@@ -34,30 +33,17 @@ export default function LoginPage() {
     checkAuth();
   }, [router]);
 
-// 2. Inicializa o Plugin do Google e GSAP
+  // 2. Inicializa o GSAP (Google Sign-In removido temporariamente)
   useEffect(() => {
-const initGoogle = async () => {
-      try {
-        await GoogleSignIn.initialize({
-          clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
-          redirectUrl: "http://localhost:3000", // A URL fica aqui!
-        });
-      } catch (error) {
-        console.error("Erro ao inicializar Google Sign-In", error);
-      }
-    };
-    initGoogle();
-
     let ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
-      // Substituímos o .from pelo .fromTo para forçar o início (0) e o fim (1)
       tl.fromTo(".animate-item", 
-        { y: 30, opacity: 0 }, // Estado Inicial
-        { y: 0, opacity: 1, duration: 0.8, stagger: 0.1 } // Estado Final
+        { y: 30, opacity: 0 }, 
+        { y: 0, opacity: 1, duration: 0.8, stagger: 0.1 } 
       ).fromTo(imageRef.current,
-        { x: 50, opacity: 0 }, // Estado Inicial da Imagem
-        { x: 0, opacity: 1, duration: 1.2, ease: "power2.out" }, // Estado Final
+        { x: 50, opacity: 0 }, 
+        { x: 0, opacity: 1, duration: 1.2, ease: "power2.out" }, 
         "-=0.6"
       );
     }, mainWrapperRef);
@@ -99,8 +85,7 @@ const initGoogle = async () => {
     if (roleLower === "admin") redirectPath = "/adm-dashboard";
     else if (roleLower === "ong") redirectPath = "/ong-dashboard";
 
-setTimeout(() => {
-      // Em vez de router.push, vamos usar o window.location para forçar a navegação
+    setTimeout(() => {
       window.location.href = redirectPath; 
     }, 1500);
   };
@@ -125,37 +110,12 @@ setTimeout(() => {
     }
   }
 
-  // 5. Fluxo do Google
+  // 5. Fluxo do Google (Desabilitado Temporariamente)
   const handleGoogleLogin = async () => {
-    setIsPending(true);
-    try {
-      const result = await GoogleSignIn.signIn();
-
-      if (!result.idToken) {
-        throw new Error("Falha ao obter token do Google");
-      }
-
-      const response = await api<any>("/auth/google", {
-        method: "POST",
-        body: JSON.stringify({ token: result.idToken }),
-      });
-
-      const data = response.data;
-      console.log(data)
-
-      if (data.requireProfileCompletion) {
-        localStorage.setItem("@DoeCerto:tempEmail", data.email);
-        if (data.tempToken) localStorage.setItem("@DoeCerto:tempToken", data.tempToken);
-        toast.success("Quase lá! Precisamos de mais alguns dados.");
-        router.push("/completar-cadastro");
-      } else {
-        await saveSessionAndRedirect(data);
-      }
-    } catch (error: any) {
-      console.error(error);
-      toast.error("O login com Google foi cancelado ou falhou.");
-      setIsPending(false);
-    }
+    // Apenas exibe um aviso em vez de tentar chamar o plugin nativo
+    toast("Login com Google temporariamente desabilitado para manutenção.", {
+      icon: '🛠️',
+    });
   };
 
   return (
@@ -169,7 +129,6 @@ setTimeout(() => {
       <div className="w-full lg:w-1/2 flex flex-col relative items-center justify-center px-6 sm:px-12 py-10 overflow-y-auto">
         <div className="w-full max-w-[460px] shrink-0">
           
-          {/* Item Animado 1 */}
           <div className="animate-item mb-10 text-left">
             <h1 className="text-4xl sm:text-[3rem] font-bold text-gray-900 mb-2 tracking-tight leading-tight">
               Bem-vindo de volta!
@@ -179,7 +138,6 @@ setTimeout(() => {
             </p>
           </div>
 
-          {/* Item Animado 2 */}
           <form onSubmit={handleSubmit} className="animate-item flex flex-col gap-6">
             <div className="flex flex-col gap-2">
               <label htmlFor="email" className="text-gray-800 text-base font-bold tracking-wide">
@@ -265,7 +223,6 @@ setTimeout(() => {
             </button>
           </form>
 
-          {/* Item Animado 3 */}
           <div className="animate-item relative flex items-center justify-center mt-8 mb-6">
             <div className="absolute border-t border-gray-200 w-full"></div>
             <span className="bg-[#F9FAFB] lg:bg-white px-4 text-sm text-gray-500 font-medium relative">
@@ -273,7 +230,6 @@ setTimeout(() => {
             </span>
           </div>
 
-          {/* Item Animado 4 */}
           <button
             type="button"
             onClick={handleGoogleLogin}
@@ -288,7 +244,6 @@ setTimeout(() => {
             Google
           </button>
 
-          {/* Item Animado 5 */}
           <div className="animate-item text-center mt-6 text-sm text-gray-500 px-4">
             Ao continuar, você concorda com nossos{" "}
             <Link
@@ -300,7 +255,6 @@ setTimeout(() => {
             .
           </div>
 
-          {/* Item Animado 6 */}
           <div className="animate-item text-center mt-6">
             <span className="text-lg text-gray-500 font-medium">Não tem uma conta? </span>
             <Link

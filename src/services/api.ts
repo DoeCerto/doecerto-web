@@ -14,10 +14,6 @@ export async function api<T>(
     const { value } = await Preferences.get({ key: "access_token" });
     token = value;
 
-if (!token && typeof window !== "undefined") {
-    token = localStorage.getItem("access_token");
-}
-
     // Fallback para cookies (Web)
     if (!token) {
       token = document.cookie
