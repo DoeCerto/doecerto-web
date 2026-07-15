@@ -80,6 +80,16 @@ async getMyProfile(): Promise<DonorProfileData> {
   }
 },
 
+// Adicione isso à classe DonorService no Frontend
+async completeRegistration(data: { name: string; cpf: string; phone: string }) {
+  // Chamada para a rota que criamos no backend
+  const response = await api('/donors/profile/complete-register', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+  return response;
+},
+
   async updateProfile(payload: FormData | UpdateProfileDTO): Promise<DonorProfileData> {
     const isFormData = payload instanceof FormData;
 
@@ -175,7 +185,7 @@ _mapProfileData(data: any): DonorProfileData {
   const user = donor.user || data.user || {};
 
   return {
-    name: user.name || donor.name || "",
+    name: (user.name || donor.name || "").replace("undefined", "").trim(),
     email: user.email || donor.email || "",
     cpf: donor.cpf || "",
     phone: data.contactNumber || donor.contactNumber || "",
@@ -185,4 +195,7 @@ _mapProfileData(data: any): DonorProfileData {
     description: data.description || "",
   };
 }
+
+
+
 };

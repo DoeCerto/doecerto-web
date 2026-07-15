@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+
+  allowedDevOrigins: ["192.168.1.18", "localhost"],
   reactCompiler: true,
 
   // 1. ATIVE ISSO (É obrigatório para o Capacitor ver o index.html)

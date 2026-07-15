@@ -1,0 +1,52 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Quicksand:wght@500&display=swap');
+
+/* Apenas aplicamos a fonte no escopo que usar esta classe */
+.landing-scope {
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Efeito Glass */
+.landing-scope .glass-effect {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Seleções customizadas */
+.landing-scope ::selection {
+  background-color: #d8b4fe; 
+  color: #1e1b4b;
+}
+
+.landing-scope .text-\[\#6B21A8\]::selection,
+.landing-scope h1 span::selection, 
+.landing-scope h2 span::selection {
+  background-color: #6B21A8 !important; 
+  color: #ffffff !important; 
+}
+
+.landing-scope .bg-\[\#6B21A8\] ::selection {
+  background-color: #F8FAFC; 
+  color: #6B21A8; 
+}
+
+.landing-scope .nav-link-premium {
+  position: relative;
+}
+.landing-scope .nav-link-premium::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 1.35px;
+  bottom: 0;
+  left: 0;
+  background-color: white;
+  transform: scaleX(0);
+  transform-origin: bottom right;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.landing-scope .nav-link-premium:hover::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}

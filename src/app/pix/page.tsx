@@ -3,16 +3,10 @@
 import Image from "next/image";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
-  FaCopy,
-  FaKey,
-  FaBuilding,
-  FaIdCard,
-  FaDollarSign,
-  FaCheckCircle,
-  FaFilePdf,
-  FaFileImage,
-} from "react-icons/fa";
-import { ArrowLeft, Loader2 } from "lucide-react";
+  ArrowLeft, Loader2, Building2, IdCard, DollarSign,
+  Key, Copy, CheckCircle2, FileText, Image as ImageIcon,
+  Paperclip, X
+} from "lucide-react";
 import { useState, Suspense, useEffect, useMemo } from "react";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { api } from "@/services/api";
@@ -34,43 +28,18 @@ function calculateCRC16(str: string): string {
   return (crc & 0xffff).toString(16).toUpperCase().padStart(4, "0");
 }
 
-function getPixKeyType(
-  key: string
-): "email" | "cpf" | "cnpj" | "phone" | "random" {
+function getPixKeyType(key: string): "email" | "cpf" | "cnpj" | "phone" | "random" {
   const cleanKey = key.trim();
 
-  // Email
-  if (cleanKey.includes("@")) {
-    return "email";
-  }
+  if (cleanKey.includes("@")) return "email";
 
-  // UUID aleatório
-  const isUuid =
-    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
-      cleanKey
-    );
-
-  if (isUuid) {
-    return "random";
-  }
+  const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanKey);
+  if (isUuid) return "random";
 
   const digits = cleanKey.replace(/\D/g, "");
-
-  if (digits.length === 14) {
-    return "cnpj";
-  }
-
-  if (
-    digits.startsWith("55") &&
-    (digits.length === 12 || digits.length === 13)
-  ) {
-    return "phone";
-  }
-
-  // CPF → exatamente 11 dígitos
-  if (digits.length === 11) {
-    return "cpf";
-  }
+  if (digits.length === 14) return "cnpj";
+  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) return "phone";
+  if (digits.length === 11) return "cpf";
 
   return "random";
 }
@@ -104,11 +73,9 @@ function PixPageContent() {
         try {
           const response = await api(`/ongs/bank-account/${idNum}`);
           const data = response.data;
-
           setBankData(Array.isArray(data) ? data[0] : data);
         } catch (e: any) {
           console.error("Erro ao buscar banco:", e);
-
           if (e.response?.status === 401) {
             alert("Sua sessão expirou. Por favor, faça login novamente.");
             router.push("/login");
@@ -134,17 +101,11 @@ function PixPageContent() {
       case "cnpj":
         treatedKey = digitsOnly;
         break;
-
       case "phone":
         let rawDigits = digitsOnly;
-
-        if (!rawDigits.startsWith("55")) {
-          rawDigits = `55${rawDigits}`;
-        }
-
+        if (!rawDigits.startsWith("55")) rawDigits = `55${rawDigits}`;
         treatedKey = `+${rawDigits}`;
         break;
-
       case "email":
       case "random":
       default:
@@ -152,73 +113,38 @@ function PixPageContent() {
         break;
     }
 
-    // Tratamento do Nome
     const nameRaw = ongData?.name || "ONG DOE CERTO";
-    const name = nameRaw
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-zA-Z0-9 ]/g, "")
-      .trim()
-      .substring(0, 25);
+    const name = nameRaw.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9 ]/g, "").trim().substring(0, 25);
 
-    // Tratamento da Cidade
     const rawCity = ongData?.address?.city || bankData?.city || "ITAPISSUMA";
-    const city = rawCity
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-zA-Z0-9 ]/g, "")
-      .trim()
-      .substring(0, 15)
-      .toUpperCase();
+    const city = rawCity.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9 ]/g, "").trim().substring(0, 15).toUpperCase();
 
     const parsedAmount = parseFloat(valor);
-    const amountStr = isNaN(parsedAmount) || parsedAmount <= 0
-      ? ""
-      : parsedAmount.toFixed(2);
+    const amountStr = isNaN(parsedAmount) || parsedAmount <= 0 ? "" : parsedAmount.toFixed(2);
 
     try {
       const pfi = "000201";
       const gui = "0014br.gov.bcb.pix";
-
       const keyTag = `01${treatedKey.length.toString().padStart(2, "0")}${treatedKey}`;
       const merchantAccountContent = gui + keyTag;
       const merchantAccountInfo = `26${merchantAccountContent.length.toString().padStart(2, "0")}${merchantAccountContent}`;
-
       const mcc = "52040000";
       const currency = "5303986";
-
-      const amountField = amountStr
-        ? `54${amountStr.length.toString().padStart(2, "0")}${amountStr}`
-        : "";
-
+      const amountField = amountStr ? `54${amountStr.length.toString().padStart(2, "0")}${amountStr}` : "";
       const country = "5802BR";
       const merchantNameField = `59${name.length.toString().padStart(2, "0")}${name}`;
       const merchantCityField = `60${city.length.toString().padStart(2, "0")}${city}`;
-
       const txIdContent = "0503***";
       const additionalDataField = `62${txIdContent.length.toString().padStart(2, "0")}${txIdContent}`;
-
       const crcIndicator = "6304";
 
-      const partialPayload =
-        pfi +
-        merchantAccountInfo +
-        mcc +
-        currency +
-        amountField +
-        country +
-        merchantNameField +
-        merchantCityField +
-        additionalDataField +
-        crcIndicator;
-
+      const partialPayload = pfi + merchantAccountInfo + mcc + currency + amountField + country + merchantNameField + merchantCityField + additionalDataField + crcIndicator;
       const crc16 = calculateCRC16(partialPayload);
       return partialPayload + crc16;
     } catch (error) {
       console.error("Erro ao gerar string do Pix:", error);
-      return `00020126${(22 + treatedKey.length).toString().padStart(2, "0")}0014br.gov.bcb.pix01${treatedKey.length.toString().padStart(2, "0")}${treatedKey}5204000053039865802BR5913ONG DOE CERTO6010ITAPISSUMA62070503***63040000`;
+      return "";
     }
-
   }, [bankData?.pixKey, ongData?.name, ongData?.address?.city, bankData?.city, valor]);
 
   const copyKey = () => {
@@ -244,11 +170,7 @@ function PixPageContent() {
       formData.append("monetaryCurrency", "BRL");
       formData.append("proofFile", file);
 
-      await api("/donations", {
-        method: "POST",
-        body: formData,
-      });
-
+      await api("/donations", { method: "POST", body: formData });
       setShowPopup(true);
     } catch (error: any) {
       console.error("Erro ao doar:", error);
@@ -270,32 +192,36 @@ function PixPageContent() {
   const pixKeyVisual = bankData?.pixKey || "Chave não configurada";
 
   return (
-    <div className="min-h-screen bg-[#F8F9FD] text-[#3b1a66] pb-12 font-sans relative">
-      <div className="pt-6 px-4 lg:absolute lg:top-8 lg:left-12 z-10">
-        <button onClick={() => router.back()} className="bg-white/90 p-2 rounded-full shadow-md text-gray-900 hover:bg-white transition-colors">
-          <ArrowLeft size={20} />
+    <div className="min-h-screen bg-[#F8F9FD] text-[#3b1a66] pb-16 font-sans relative">
+      
+      {/* Header & Botão Voltar */}
+      <div className="pt-6 px-6 lg:absolute lg:top-6 lg:left-8 z-10 flex items-center">
+        <button onClick={() => router.back()} className="bg-white p-3.5 rounded-full shadow-sm text-slate-700 hover:bg-purple-50 transition-all active:scale-95">
+          <ArrowLeft size={22} />
         </button>
       </div>
 
-      <div className="w-full flex flex-col items-center pt-4 mb-6 lg:mb-10 lg:pt-8">
-        <h1 className="text-lg lg:text-xl font-black text-[#4A1D96] uppercase tracking-widest">Doação em dinheiro</h1>
-        <div className="h-1 w-8 bg-purple-600 rounded-full mt-2"></div>
+      <div className="w-full flex flex-col items-center pt-8 mb-8">
+        <h1 className="text-xl font-black text-purple-600 uppercase tracking-widest">Doação em dinheiro</h1>
+        <div className="h-1.5 w-14 bg-purple-600 rounded-full mt-2"></div>
       </div>
 
-      <main className="max-w-6xl mx-auto px-4 lg:px-6">
+      <main className="max-w-5xl mx-auto px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
 
-          {/* COLUNA DA ESQUERDA */}
-          <div className="flex flex-col gap-6">
-            <div className="bg-white rounded-[1.5rem] lg:rounded-[2rem] p-5 lg:p-8 shadow-xl shadow-purple-100/50 border border-purple-50">
-              <div className="flex items-center gap-3 lg:gap-4 mb-6 lg:mb-8">
-                <div className="bg-purple-600 p-3 lg:p-4 rounded-xl lg:rounded-2xl shadow-lg shadow-purple-200">
-                  <FaBuilding className="text-white text-xl lg:text-2xl" />
+          {/* COLUNA DA ESQUERDA: Informações e Valor */}
+          <div className="flex flex-col gap-6 lg:gap-8">
+            
+            {/* Card da ONG */}
+            <div className="bg-white rounded-3xl p-8 shadow-md shadow-purple-100/40 border border-purple-50">
+              <div className="flex items-center gap-5 mb-6">
+                <div className="bg-purple-600 p-4 rounded-2xl shadow-sm">
+                  <Building2 className="text-white" size={26} />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-lg lg:text-2xl font-black text-[#3b1a66] leading-tight truncate">{ongData?.name || "Carregando..."}</h2>
-                  <div className="flex items-center gap-2 text-gray-400 text-[10px] lg:text-sm mt-1">
-                    <FaIdCard className="flex-shrink-0" />
+                  <h2 className="text-2xl font-black text-[#3b1a66] leading-tight truncate">{ongData?.name || "Carregando..."}</h2>
+                  <div className="flex items-center gap-2 text-slate-400 text-sm mt-1 font-bold">
+                    <IdCard size={16} className="flex-shrink-0" />
                     <span className="truncate">
                       {ongData?.cnpj || bankData?.cnpj || bankData?.ong?.cnpj || "CNPJ não informado"}
                     </span>
@@ -303,7 +229,7 @@ function PixPageContent() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-y-4 lg:gap-y-6 gap-x-4 border-t border-gray-100 pt-6 lg:pt-8">
+              <div className="grid grid-cols-2 gap-y-6 gap-x-6 border-t border-gray-100 pt-6">
                 {[
                   { label: "Instituição", value: bankData?.bankName },
                   { label: "Agência", value: bankData?.agencyNumber },
@@ -311,76 +237,87 @@ function PixPageContent() {
                   { label: "Tipo", value: bankData?.accountType }
                 ].map((item, idx) => (
                   <div key={idx} className="min-w-0">
-                    <p className="text-gray-400 uppercase text-[9px] lg:text-[10px] font-black tracking-widest mb-1 truncate">
+                    <p className="text-slate-400 uppercase text-xs font-black tracking-widest mb-1 truncate">
                       {item.label}
                     </p>
-                    <p className="font-bold text-xs lg:text-sm truncate text-[#3b1a66]">{item.value || "---"}</p>
+                    <p className="font-bold text-base truncate text-[#3b1a66]">{item.value || "---"}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* SEÇÃO DE VALOR */}
-            <div className="bg-white rounded-[1.5rem] lg:rounded-[2rem] p-6 lg:p-8 shadow-xl shadow-purple-100/50 border border-purple-50 flex flex-col">
-              <div className="flex items-center gap-3 mb-6 lg:mb-8">
-                <div className="bg-green-100 p-2 rounded-lg"><FaDollarSign className="text-green-600" /></div>
-                <h3 className="font-black text-base lg:text-lg text-[#3b1a66] uppercase tracking-tighter">Valor da Doação</h3>
+            {/* Card de Valor */}
+            <div className="bg-white rounded-3xl p-8 shadow-md shadow-purple-100/40 border border-purple-50 flex flex-col">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="bg-green-100 p-2.5 rounded-xl"><DollarSign className="text-green-600" size={22} /></div>
+                <h3 className="font-black text-xl text-[#3b1a66] uppercase tracking-tight">Valor da Doação</h3>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 lg:gap-4 mb-6 lg:mb-8">
+              <div className="grid grid-cols-3 gap-3 mb-2">
                 {valoresRapidos.map((v) => (
-                  <button key={v} onClick={() => setValor(v)} className={`py-3 lg:py-5 rounded-xl lg:rounded-2xl font-black text-xs lg:text-sm transition-all border-2 ${valor === v ? "bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-200" : "bg-gray-50 border-transparent text-gray-500 hover:bg-purple-50"}`}>R$ {v}</button>
+                  <button 
+                    key={v} 
+                    onClick={() => setValor(v)} 
+                    className={`py-4 rounded-2xl font-black text-base transition-all border-2 ${valor === v ? "bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-200" : "bg-gray-50 border-transparent text-gray-500 hover:bg-purple-50"}`}
+                  >
+                    R$ {v}
+                  </button>
                 ))}
-                <div className="col-span-full relative mt-2">
-                  <input type="number" placeholder="Outro" value={valor} onChange={(e) => setValor(e.target.value)} className="w-full bg-gray-50 border-2 border-transparent focus:border-purple-200 rounded-xl lg:rounded-2xl py-4 lg:py-6 px-10 lg:px-14 font-black text-lg lg:text-xl focus:bg-white transition-all outline-none" />
-                  <span className="absolute left-4 lg:left-6 top-1/2 -translate-y-1/2 font-black text-purple-300 text-base lg:text-lg">R$</span>
+                <div className="col-span-full relative mt-3">
+                  <input 
+                    type="number" 
+                    placeholder="Outro valor" 
+                    value={valor} 
+                    onChange={(e) => setValor(e.target.value)} 
+                    className="w-full bg-gray-50 border-2 border-transparent focus:border-purple-200 rounded-2xl py-4.5 px-14 font-black text-xl text-[#3b1a66] focus:bg-white transition-all outline-none" 
+                  />
+                  <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-purple-400 text-xl">R$</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* COLUNA DA DIREITA */}
-          <div className="flex flex-col gap-6">
-            <div className="bg-white rounded-[1.5rem] lg:rounded-[2rem] p-6 lg:p-8 shadow-xl shadow-purple-100/50 border border-purple-50 flex flex-col items-center justify-center">
-              <p className="font-black text-[#3b1a66] mb-4 uppercase text-[10px] lg:text-xs tracking-widest">Escaneie o QR Code</p>
+          {/* COLUNA DA DIREITA: QR Code e Comprovante */}
+          <div className="flex flex-col gap-6 lg:gap-8">
+            <div className="bg-white rounded-3xl p-8 shadow-md shadow-purple-100/40 border border-purple-50 flex flex-col items-center justify-center">
+              <p className="font-black text-slate-400 mb-5 uppercase text-xs tracking-widest">Escaneie o QR Code</p>
 
-              <div className="bg-white p-4 lg:p-6 rounded-2xl lg:rounded-3xl border-2 border-purple-100 mb-6">
+              <div className="bg-white p-5 rounded-2xl border-2 border-purple-100 shadow-sm mb-6">
                 {pixCopiaECola ? (
-                  <QRCodeSVG
-                    value={pixCopiaECola}
-                    size={180}
-                    level="M"
-                  />
+                  <QRCodeSVG value={pixCopiaECola} size={180} level="M" />
                 ) : (
-                  <div className="w-[180px] h-[180px] flex items-center justify-center text-xs text-red-400 font-bold">
+                  <div className="w-[180px] h-[180px] flex items-center justify-center text-base text-slate-400 font-bold text-center">
                     Aguardando chave Pix...
                   </div>
                 )}
               </div>
 
               <div className="w-full mb-6">
-                <div className={`flex items-center justify-between bg-gray-50 p-3 lg:p-4 rounded-xl lg:rounded-2xl border-2 transition-all duration-300 ${copied ? 'border-green-500 bg-green-50' : 'border-transparent'}`}>
-                  <div className="flex items-center gap-2 lg:gap-3 min-w-0">
-                    <FaKey className={`flex-shrink-0 ${copied ? "text-green-600" : "text-purple-600"}`} />
-                    <span className="text-[11px] lg:text-sm font-bold truncate tracking-tight">{pixKeyVisual}</span>
+                <div className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all duration-300 ${copied ? 'border-green-500 bg-green-50' : 'border-purple-100 bg-purple-50/20'}`}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Key className={`flex-shrink-0 ${copied ? "text-green-600" : "text-purple-600"}`} size={20} />
+                    <span className="text-base font-bold truncate text-[#3b1a66]">{pixKeyVisual}</span>
                   </div>
                   <button
                     onClick={copyKey}
                     title="Copiar Pix Copia e Cola"
-                    className="flex-shrink-0 ml-2 bg-white shadow-md p-2 lg:p-3 rounded-lg lg:rounded-xl hover:scale-110 active:scale-95 transition-all text-purple-600"
+                    className={`flex-shrink-0 ml-3 p-3 rounded-xl transition-all ${copied ? "bg-green-600 text-white shadow-sm" : "bg-white text-purple-600 shadow-sm hover:scale-105 active:scale-95"}`}
                   >
-                    {copied ? <FaCheckCircle className="text-green-600" /> : <FaCopy size={14} />}
+                    {copied ? <CheckCircle2 size={18} /> : <Copy size={18} />}
                   </button>
                 </div>
-                <p className="text-[10px] text-center text-gray-400 mt-2 font-medium">
-                  {copied ? "Código Copia e Cola copiado!" : "O botão copia o código Pix Copia e Cola completo"}
+                <p className="text-xs text-center text-slate-400 mt-2 font-semibold">
+                  {copied ? "Código Copia e Cola copiado com sucesso!" : "O botão copia o código Pix Copia e Cola completo"}
                 </p>
               </div>
 
               {/* BLOCO DE COMPROVANTE */}
-              <div className="w-full space-y-4 pt-6 border-t border-gray-100">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">📎 Comprovante do Pix</label>
-                <div className={`relative border-2 border-dashed rounded-xl lg:rounded-[1.5rem] p-6 lg:p-8 transition-all text-center ${file ? 'border-green-400 bg-green-50' : 'border-purple-100 bg-purple-50/30 hover:bg-purple-50'}`}>
+              <div className="w-full space-y-3 pt-6 border-t border-gray-100">
+                <label className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
+                  <Paperclip size={14} /> Comprovante do Pix
+                </label>
+                
+                <div className={`relative border-2 border-dashed rounded-2xl p-6 lg:p-8 transition-all text-center ${file ? 'border-green-400 bg-green-50' : 'border-purple-200 bg-purple-50/30 hover:bg-purple-50'}`}>
                   {!file ? (
                     <>
                       <input
@@ -389,19 +326,21 @@ function PixPageContent() {
                         onChange={(e) => setFile(e.target.files?.[0] || null)}
                         className="absolute inset-0 opacity-0 cursor-pointer"
                       />
-                      <p className="text-[11px] lg:text-sm font-bold text-purple-400">Clique para anexar imagem ou PDF</p>
+                      <p className="text-sm font-bold text-purple-500">Clique para anexar imagem ou PDF</p>
                     </>
                   ) : (
-                    <div className="flex items-center justify-between text-green-700 font-bold text-xs lg:text-sm">
+                    <div className="flex items-center justify-between text-green-700 font-bold text-sm lg:text-base">
                       <span className="truncate flex items-center gap-2 max-w-[85%]">
                         {file.type === "application/pdf" ? (
-                          <FaFilePdf className="flex-shrink-0 text-red-500 text-base" />
+                          <FileText className="flex-shrink-0 text-red-500" size={20} />
                         ) : (
-                          <FaFileImage className="flex-shrink-0 text-green-600 text-base" />
+                          <ImageIcon className="flex-shrink-0 text-green-600" size={20} />
                         )}
                         <span className="truncate" title={file.name}>{file.name}</span>
                       </span>
-                      <button onClick={() => setFile(null)} className="text-red-500 hover:text-red-700 p-1 ml-2 transition-colors">✕</button>
+                      <button onClick={() => setFile(null)} className="text-slate-400 hover:text-red-500 p-1 ml-2 transition-colors">
+                        <X size={18} />
+                      </button>
                     </div>
                   )}
                 </div>
@@ -409,9 +348,9 @@ function PixPageContent() {
                 <button
                   onClick={handleConfirmarDoacao}
                   disabled={!file || loading}
-                  className={`w-full py-4 lg:py-5 rounded-xl lg:rounded-2xl font-black text-xs lg:text-sm uppercase tracking-[0.2em] transition-all ${!file || loading ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-[#00C897] text-white hover:bg-[#00B085] shadow-lg shadow-green-100 active:scale-95"}`}
+                  className={`w-full py-4.5 rounded-2xl font-black text-base uppercase tracking-widest transition-all mt-4 ${!file || loading ? "bg-slate-200 text-slate-400 cursor-not-allowed" : "bg-purple-600 text-white hover:bg-purple-700 shadow-md shadow-purple-200 active:scale-95"}`}
                 >
-                  {loading ? "Enviando..." : "Confirmar Doação"}
+                  {loading ? "Processando..." : "Confirmar Doação"}
                 </button>
               </div>
 
@@ -421,17 +360,21 @@ function PixPageContent() {
         </div>
       </main>
 
+      {/* MODAL DE SUCESSO */}
       {showPopup && (
-        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-[#3b1a66]/40 backdrop-blur-md px-4">
-          <div className="bg-white rounded-[2rem] lg:rounded-[3rem] p-8 lg:p-10 w-full max-w-[380px] text-center shadow-2xl">
-            <div className="inline-flex items-center justify-center bg-green-500 rounded-full p-4 lg:p-5 mb-6 shadow-xl shadow-green-200">
-              <FaCheckCircle className="text-white text-3xl lg:text-4xl" />
+        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-[#3b1a66]/60 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-3xl p-8 lg:p-10 w-full max-w-[400px] text-center shadow-2xl">
+            <div className="inline-flex items-center justify-center bg-green-500 rounded-full p-5 lg:p-6 mb-6 shadow-xl shadow-green-200">
+              <CheckCircle2 className="text-white" size={36} />
             </div>
-            <h2 className="text-xl lg:text-2xl font-black text-[#3b1a66] mb-3">Tudo certo!</h2>
-            <p className="text-gray-500 text-xs lg:text-sm mb-8 leading-relaxed">
-              Sua doação para <span className="font-bold text-purple-600">{ongData?.name || "a ONG"}</span> foi informada com sucesso. 💜
+            <h2 className="text-2xl font-black text-[#3b1a66] mb-3">Tudo certo!</h2>
+            <p className="text-slate-500 text-sm mb-8 leading-relaxed font-medium">
+              Sua doação para <span className="font-black text-purple-600">{ongData?.name || "a ONG"}</span> foi informada com sucesso. Muito obrigado por ajudar! 💜
             </p>
-            <button onClick={() => router.push("/home")} className="w-full bg-purple-600 text-white py-4 rounded-xl lg:rounded-2xl font-black uppercase tracking-widest hover:bg-purple-700 transition-all text-xs lg:text-sm">
+            <button 
+              onClick={() => router.push("/home")} 
+              className="w-full bg-purple-600 text-white py-4 rounded-xl font-black uppercase tracking-widest hover:bg-purple-700 transition-all text-sm shadow-md active:scale-95"
+            >
               Concluir
             </button>
           </div>
@@ -443,7 +386,11 @@ function PixPageContent() {
 
 export default function PixPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#F8F9FD] flex items-center justify-center">
+        <Loader2 className="animate-spin text-purple-600" size={40} />
+      </div>
+    }>
       <PixPageContent />
     </Suspense>
   );
