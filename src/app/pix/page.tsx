@@ -28,6 +28,7 @@ import toast, { Toaster } from "react-hot-toast";
 import DonationTutorialModal from "@/components/ui/DonationTutorial";
 import { ConfirmationCard } from "@/components/ui/ConfirmationCard";
 import { SuccessModal } from "@/components/ui/SuccessModal";
+import { FiPaperclip } from "react-icons/fi";
 
 function calculateCRC16(str: string): string {
   let crc = 0xffff;
@@ -511,8 +512,9 @@ function PixPageContent() {
 
               {/* BLOCO DE COMPROVANTE */}
               <div className="w-full space-y-4 pt-6 border-t border-gray-100">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
-                  📎 Comprovante do Pix
+                <label className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                  <FiPaperclip className="text-purple-600 size-3.5" />
+                  Comprovante do Pix
                 </label>
                 <div
                   className={`relative border-2 border-dashed rounded-xl lg:rounded-[1.5rem] p-6 lg:p-8 transition-all text-center ${file ? "border-green-400 bg-green-50" : "border-purple-100 bg-purple-50/30 hover:bg-purple-50"}`}
@@ -564,7 +566,7 @@ function PixPageContent() {
           </div>
         </div>
       </main>
-      
+
       {showReview && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
           <div className="w-full max-w-md md:max-w-lg">
