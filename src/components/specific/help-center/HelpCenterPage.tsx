@@ -48,7 +48,7 @@ export default function HelpCenterPage() {
             />
           </Link>
 
-          <Link href="/donation-history-guide" className="flex-1">
+          <Link href="/donation-guide" className="flex-1">
             <ActionCard
               icon={<Package className="w-5 h-5 text-[#6B39A7]" />}
               title="Como doar itens"
@@ -62,11 +62,13 @@ export default function HelpCenterPage() {
             HISTÓRICO E AVALIAÇÕES
           </h1>
 
+          <Link href="/donation-history-guide">
           <InfoCard
             icon={<ListChecks className="w-5 h-5 text-[#6B39A7]" />}
             title="Ver histórico de doações"
             description="Tudo que você já doou"
           />
+          </Link>
           <InfoCard
             icon={<Star className="w-5 h-5 text-[#6B39A7]" />}
             title="Avaliar uma ONG"
