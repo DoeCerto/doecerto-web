@@ -80,8 +80,14 @@ function DefaultCard({ step }: any) {
         <div className="flex flex-row gap-4">
 
           <div className="shadow-sm flex flex-col items-center rounded-[10px]">
-            <div>
-              <Image src="/frame_22.svg" alt="ONG" width={127} height={72} priority />
+            <div className="">
+              <Image 
+              src="/Frame22.svg" 
+              alt="ONG" 
+              width={170} 
+              height={72} 
+              priority 
+              />
             </div>
             <div className="flex flex-col w-full p-[10px]">
               <div className="flex flex-row gap-[10px]">
@@ -109,8 +115,14 @@ function DefaultCard({ step }: any) {
           </div>
 
           <div className="shadow-sm flex flex-col items-center rounded-[10px]">
-            <div>
-              <Image src="/frame_22.svg" alt="ONG" width={127} height={72} priority />
+            <div className="">
+              <Image 
+              src="/Frame31.svg" 
+              alt="ONG" 
+              width={170} 
+              height={72} 
+              priority 
+              />
             </div>
             <div className="flex flex-col w-full p-[10px]">
               <div className="flex flex-row gap-[10px]">
