@@ -1,35 +1,27 @@
-"use client"
+"use client";
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import Image from "next/image"
+import { useRouter } from "next/navigation";
+import Lottie from "lottie-react";
+import animationData from "@/assets/animations/loading.json";
 
 export default function Splash() {
-  const router = useRouter()
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      router.push("/login")
-    }, 3000)
-    
-    return () => clearTimeout(timer) 
-  }, [router])
+  const router = useRouter();
 
   return (
-    <div className="flex flex-col justify-center items-center h-screen bg-[#6B39A7] gap-8">
-      
-      {/* Logo */}
-      <Image 
-        src="/logo.svg" 
-        alt="Logo" 
-        width={160} 
-        height={48} 
-        className="w-auto h-auto" 
-        priority 
-      />
-      
-      {/* Spinner de carregamento */}
-      <div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+    <div className="flex items-center justify-center min-h-screen bg-[#6B39A7]">
+
+
+      <div className="w-[550px] h-[550px] flex items-center justify-center will-change: transform; transform: translateZ(0); backface-visibility: hidden;">
+        <Lottie
+          animationData={animationData}
+          loop={0}
+          autoplay={true}
+          onComplete={() => {
+            router.push("/login");
+          }}
+        />
+      </div>
+
     </div>
-  )
+  );
 }

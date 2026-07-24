@@ -38,6 +38,7 @@ export default function DonorProfile() {
   const [isLoading, setIsLoading] = useState(false);
   const [donationHistory, setDonationHistory] = useState<DonationHistory[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  
   const [address, setAddress] = useState<Address>({
     zipCode: "",
     street: "",
@@ -57,13 +58,25 @@ export default function DonorProfile() {
     description: "",
   });
 
+  // Estados de Backup para restaurar ao clicar no botão de cancelar (X)
+  const [profileBackup, setProfileBackup] = useState<{ donor: typeof donorData; addr: Address } | null>(null);
+
+  // Estados locais para controle de erros visuais inline
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+  const [imageError, setImageError] = useState<string | null>(null);
+
   const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const cep = e.target.value.replace(/\D/g, "");
 
-    setAddress(prev => ({
-      ...prev,
-      zipCode: cep
-    }));
+    setAddress(prev => ({ ...prev, zipCode: cep }));
+
+    // Limpa o erro de CEP se o usuário voltou a digitar
+    if (formErrors.zipCode) {
+      setFormErrors(prev => {
+        const { zipCode, ...rest } = prev;
+        return rest;
+      });
+    }
 
     if (cep.length !== 8) return;
 
@@ -73,6 +86,7 @@ export default function DonorProfile() {
 
       if (data.erro) {
         toast.error("CEP não encontrado");
+        setFormErrors(prev => ({ ...prev, zipCode: "CEP inválido ou não encontrado." }));
         return;
       }
 
@@ -84,6 +98,12 @@ export default function DonorProfile() {
         state: data.uf || "",
         country: "Brasil"
       }));
+
+      // Limpa os erros de campos de endereço auto-preenchidos
+      setFormErrors(prev => {
+        const { street, neighborhood, city, state, ...rest } = prev;
+        return rest;
+      });
 
       toast.success("Endereço preenchido automaticamente!");
     } catch {
@@ -104,14 +124,9 @@ export default function DonorProfile() {
           DonorService.getMyAddress(),
         ]);
 
-        const profileData =
-          profile.status === "fulfilled" ? profile.value : null;
-
-        const historyData =
-          history.status === "fulfilled" ? history.value : [];
-
-        const addressData =
-          addressRes.status === "fulfilled" ? addressRes.value : null;
+        const profileData = profile.status === "fulfilled" ? profile.value : null;
+        const historyData = history.status === "fulfilled" ? history.value : [];
+        const addressData = addressRes.status === "fulfilled" ? addressRes.value : null;
 
         // PROFILE
         if (profileData) {
@@ -161,17 +176,64 @@ export default function DonorProfile() {
     loadAllData();
   }, []);
 
+  // Entra no modo de edição salvando uma cópia idêntica do estado atual
+  const handleStartEditing = () => {
+    setProfileBackup({
+      donor: { ...donorData },
+      addr: { ...address }
+    });
+    setFormErrors({});
+    setIsEditingProfile(true);
+  };
+
+  // Cancela e reverte todo o formulário para o backup original
+  const handleCancelEditing = () => {
+    if (profileBackup) {
+      setDonorData(profileBackup.donor);
+      setAddress(profileBackup.addr);
+    }
+    setFormErrors({});
+    setIsEditingProfile(false);
+  };
+
   // SALVAR ALTERAÇÕES
   const handleUpdateInfo = async () => {
+    const errors: { [key: string]: string } = {};
     const rawPhone = donorData.phone.replace(/\D/g, "");
 
+    // Validações de campos obrigatórios vazios ou inválidos
+    if (!donorData.name || donorData.name.trim().length < 2 || donorData.name === "Carregando...") {
+      errors.name = "O campo nome completo é obrigatório.";
+    }
     if (!rawPhone || rawPhone === "55" || rawPhone.length < 12) {
-      toast.error("Por favor, informe um número de telefone válido com o DDD.");
+      errors.phone = "Informe um número de telefone celular válido com DDD.";
+    }
+    if (!address.zipCode) {
+      errors.zipCode = "O CEP residencial é obrigatório.";
+    }
+    if (!address.street) {
+      errors.street = "A rua é obrigatória.";
+    }
+    if (!address.neighborhood) {
+      errors.neighborhood = "O bairro é obrigatório.";
+    }
+    if (!address.city) {
+      errors.city = "A cidade é obrigatória.";
+    }
+    if (!address.state) {
+      errors.state = "O estado (UF) é obrigatório.";
+    }
+
+    // Se houver algum erro, atualiza o estado visual e impede o fluxo de envio
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      toast.error("Por favor, preencha todos os campos obrigatórios corretamente.");
       return;
     }
 
     try {
       setIsLoading(true);
+      setFormErrors({}); // Limpa erros se passar da validação
 
       // 1. Atualizar Nome
       const isNameValid = donorData.name &&
@@ -222,13 +284,24 @@ export default function DonorProfile() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    setImageError(null);
+
+    // Validação estrita do tipo do arquivo de imagem
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+    if (!allowedTypes.includes(file.type)) {
+      setImageError("Tipo de arquivo inválido. Por favor, envie uma imagem nos formatos JPG, PNG ou WEBP.");
+      toast.error("Formato de imagem não permitido.");
+      return;
+    }
+
     try {
       setIsUploading(true);
       const formData = new FormData();
       formData.append("file", file);
       const updatedProfile = await DonorService.updateProfile(formData as any);
       setProfileImage(updatedProfile.avatarUrl ?? null);
-      toast.success("Foto de perfil atualizada!");
+      toast.success("Foto de perfil updated!");
     } catch (error) {
       toast.error("Erro ao salvar imagem.");
     } finally {
@@ -261,13 +334,21 @@ export default function DonorProfile() {
     .filter(d => d.donationType === "monetary" && d.donationStatus === "completed")
     .reduce((sum, d) => sum + (Number(d.monetaryAmount) || 0), 0);
 
-  // Helper para exibir no input apenas o número sem o prefixo 55
   const getDisplayPhone = (fullPhone: string) => {
     const clean = fullPhone.replace(/\D/g, "");
     if (clean.startsWith("55")) {
       return clean.substring(2);
     }
     return clean;
+  };
+
+  // Helper CSS para destacar inputs inválidos mantendo o padrão do seu layout
+  const getInputClass = (fieldName: string) => {
+    const baseClass = "w-full mt-1 px-3 py-2 border rounded-xl outline-none transition-all";
+    if (formErrors[fieldName]) {
+      return `${baseClass} border-red-400 focus:ring-2 focus:ring-red-400 focus:border-red-400 bg-red-50/20`;
+    }
+    return `${baseClass} focus:ring-2 focus:ring-purple-500 border-gray-100`;
   };
 
   return (
@@ -308,8 +389,18 @@ export default function DonorProfile() {
         </div>
       </div>
 
+      {/* BOX DE ERRO DE FORMATO DE IMAGEM */}
+      {imageError && (
+        <div className="max-w-md mx-auto mt-20 px-6">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2 text-red-700 text-xs font-semibold">
+            <AlertCircle size={16} className="shrink-0" />
+            <span>{imageError}</span>
+          </div>
+        </div>
+      )}
+
       {/* RESUMO */}
-      <div className="mt-20 px-6 text-center">
+      <div className={`${imageError ? "mt-4" : "mt-20"} px-6 text-center`}>
         <h1 className="text-3xl font-bold text-gray-900">{donorData.name || "Doador"}</h1>
         <p className="text-gray-500 font-medium">{donorData.email}</p>
 
@@ -367,13 +458,13 @@ export default function DonorProfile() {
 
                 {isEditingProfile ? (
                   <div className="flex gap-2">
-                    <button onClick={() => setIsEditingProfile(false)} className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"><X size={20} /></button>
-                    <button onClick={handleUpdateInfo} disabled={isLoading} className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors">
+                    <button onClick={handleCancelEditing} className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors" title="Cancelar alterações"><X size={20} /></button>
+                    <button onClick={handleUpdateInfo} disabled={isLoading} className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors" title="Salvar alterações">
                       {isLoading ? <Loader2 className="animate-spin" size={20} /> : <Check size={20} />}
                     </button>
                   </div>
                 ) : (
-                  <button onClick={() => setIsEditingProfile(true)} className="flex items-center gap-2 text-sm font-medium text-purple-600 hover:bg-purple-50 px-3 py-1.5 rounded-lg transition-colors">
+                  <button onClick={handleStartEditing} className="flex items-center gap-2 text-sm font-medium text-purple-600 hover:bg-purple-50 px-3 py-1.5 rounded-lg transition-colors">
                     <Edit2 size={16} /> Editar Perfil
                   </button>
                 )}
@@ -402,19 +493,32 @@ export default function DonorProfile() {
 
                 <hr className="border-gray-50" />
 
-                {/* Nome e Telefone */}
+                {/* Nome Completo */}
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-gray-50 rounded-lg"><User size={20} className="text-gray-400" /></div>
                   <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Nome Completo</p>
+                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">
+                      Nome Completo {isEditingProfile && <span className="text-red-500">*</span>}
+                    </p>
                     {isEditingProfile ? (
-                      <input className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100" value={donorData.name} onChange={(e) => setDonorData({ ...donorData, name: e.target.value })} />
+                      <div>
+                        <input 
+                          className={getInputClass("name")} 
+                          value={donorData.name} 
+                          onChange={(e) => {
+                            setDonorData({ ...donorData, name: e.target.value });
+                            if (formErrors.name) setFormErrors(prev => { const { name, ...r } = prev; return r; });
+                          }} 
+                        />
+                        {formErrors.name && <span className="text-xs text-red-500 mt-1 block font-medium">{formErrors.name}</span>}
+                      </div>
                     ) : (
                       <p className="font-medium text-gray-900">{donorData.name}</p>
                     )}
                   </div>
                 </div>
 
+                {/* Endereço */}
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-gray-50 rounded-lg">
                     <MapPin size={20} className="text-gray-400" />
@@ -422,71 +526,86 @@ export default function DonorProfile() {
 
                   <div className="flex-1">
                     <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2">
-                      Endereço
+                      Endereço {isEditingProfile && <span className="text-red-500">*</span>}
                     </p>
 
                     {isEditingProfile ? (
                       <div className="grid grid-cols-2 gap-3">
-                        <input
-                          placeholder="CEP"
-                          className="col-span-2 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
-                          value={address.zipCode}
-                          onChange={handleCepChange}
-                        />
+                        <div className="col-span-2">
+                          <input
+                            placeholder="CEP *"
+                            className={getInputClass("zipCode")}
+                            value={address.zipCode}
+                            onChange={handleCepChange}
+                          />
+                          {formErrors.zipCode && <span className="text-xs text-red-500 mt-1 block font-medium">{formErrors.zipCode}</span>}
+                        </div>
 
-                        <input
-                          placeholder="Rua"
-                          className="col-span-2 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
-                          value={address.street}
-                          onChange={(e) =>
-                            setAddress({ ...address, street: e.target.value })
-                          }
-                        />
+                        <div className="col-span-2">
+                          <input
+                            placeholder="Rua *"
+                            className={getInputClass("street")}
+                            value={address.street}
+                            onChange={(e) => {
+                              setAddress({ ...address, street: e.target.value });
+                              if (formErrors.street) setFormErrors(prev => { const { street, ...r } = prev; return r; });
+                            }}
+                          />
+                          {formErrors.street && <span className="text-xs text-red-500 mt-1 block font-medium">{formErrors.street}</span>}
+                        </div>
 
                         <input
                           placeholder="Número"
-                          className="px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
+                          className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
                           value={address.number}
-                          onChange={(e) =>
-                            setAddress({ ...address, number: e.target.value })
-                          }
+                          onChange={(e) => setAddress({ ...address, number: e.target.value })}
                         />
 
                         <input
                           placeholder="Complemento"
-                          className="px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
+                          className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
                           value={address.complement}
-                          onChange={(e) =>
-                            setAddress({ ...address, complement: e.target.value })
-                          }
+                          onChange={(e) => setAddress({ ...address, complement: e.target.value })}
                         />
 
-                        <input
-                          placeholder="Bairro"
-                          className="col-span-2 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
-                          value={address.neighborhood}
-                          onChange={(e) =>
-                            setAddress({ ...address, neighborhood: e.target.value })
-                          }
-                        />
+                        <div className="col-span-2">
+                          <input
+                            placeholder="Bairro *"
+                            className={getInputClass("neighborhood")}
+                            value={address.neighborhood}
+                            onChange={(e) => {
+                              setAddress({ ...address, neighborhood: e.target.value });
+                              if (formErrors.neighborhood) setFormErrors(prev => { const { neighborhood, ...r } = prev; return r; });
+                            }}
+                          />
+                          {formErrors.neighborhood && <span className="text-xs text-red-500 mt-1 block font-medium">{formErrors.neighborhood}</span>}
+                        </div>
 
-                        <input
-                          placeholder="Cidade"
-                          className="px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
-                          value={address.city}
-                          onChange={(e) =>
-                            setAddress({ ...address, city: e.target.value })
-                          }
-                        />
+                        <div>
+                          <input
+                            placeholder="Cidade *"
+                            className={getInputClass("city")}
+                            value={address.city}
+                            onChange={(e) => {
+                              setAddress({ ...address, city: e.target.value });
+                              if (formErrors.city) setFormErrors(prev => { const { city, ...r } = prev; return r; });
+                            }}
+                          />
+                          {formErrors.city && <span className="text-xs text-red-500 mt-1 block font-medium">{formErrors.city}</span>}
+                        </div>
 
-                        <input
-                          placeholder="Estado"
-                          className="px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
-                          value={address.state}
-                          onChange={(e) =>
-                            setAddress({ ...address, state: e.target.value })
-                          }
-                        />
+                        <div>
+                          <input
+                            placeholder="Estado *"
+                            className={getInputClass("state")}
+                            value={address.state}
+                            onChange={(e) => {
+                              setAddress({ ...address, state: e.target.value });
+                              if (formErrors.state) setFormErrors(prev => { const { state, ...r } = prev; return r; });
+                            }}
+                          />
+                          {formErrors.state && <span className="text-xs text-red-500 mt-1 block font-medium">{formErrors.state}</span>}
+                        </div>
                       </div>
                     ) : address.street ? (
                       <p className="text-gray-900 leading-relaxed">
@@ -499,31 +618,34 @@ export default function DonorProfile() {
                   </div>
                 </div>
 
+                {/* Telefone */}
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-gray-50 rounded-lg">
                     <Phone size={20} className="text-gray-400" />
                   </div>
                   <div className="flex-1">
                     <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">
-                      Telefone / WhatsApp
+                      Telefone / WhatsApp {isEditingProfile && <span className="text-red-500">*</span>}
                     </p>
                     {isEditingProfile ? (
-                      /* CONTAINER COM O +55 FIXADO DO LADO */
-                      <div className="flex mt-1 rounded-xl border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-purple-500 transition-all bg-white">
-                        <span className="flex items-center justify-center bg-gray-100 text-gray-500 px-3 border-r border-gray-200 text-sm font-semibold select-none">
-                          +55
-                        </span>
-                        <input
-                          type="text"
-                          className="w-full px-3 py-2 outline-none border-none text-sm bg-transparent"
-                          value={getDisplayPhone(donorData.phone)}
-                          placeholder="(DDD) 99999-9999"
-                          onChange={(e) => {
-                            const digits = e.target.value.replace(/\D/g, "");
-                            // Salva internamente concatenando o prefixo país '55'
-                            setDonorData({ ...donorData, phone: `55${digits}` });
-                          }}
-                        />
+                      <div>
+                        <div className={`flex mt-1 rounded-xl border overflow-hidden transition-all bg-white ${formErrors.phone ? "border-red-400 focus-within:ring-2 focus-within:ring-red-400" : "border-gray-200 focus-within:ring-2 focus-within:ring-purple-500"}`}>
+                          <span className="flex items-center justify-center bg-gray-100 text-gray-500 px-3 border-r border-gray-200 text-sm font-semibold select-none">
+                            +55
+                          </span>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 outline-none border-none text-sm bg-transparent"
+                            value={getDisplayPhone(donorData.phone)}
+                            placeholder="(DDD) 99999-9999"
+                            onChange={(e) => {
+                              const digits = e.target.value.replace(/\D/g, "");
+                              setDonorData({ ...donorData, phone: `55${digits}` });
+                              if (formErrors.phone) setFormErrors(prev => { const { phone, ...r } = prev; return r; });
+                            }}
+                          />
+                        </div>
+                        {formErrors.phone && <span className="text-xs text-red-500 mt-1 block font-medium">{formErrors.phone}</span>}
                       </div>
                     ) : (
                       <p className="font-medium text-gray-900">
@@ -533,6 +655,7 @@ export default function DonorProfile() {
                   </div>
                 </div>
 
+                {/* Email e CPF */}
                 <div className="flex items-start gap-3 opacity-60">
                   <div className="p-2 bg-gray-50 rounded-lg"><Mail size={20} className="text-gray-400" /></div>
                   <div>

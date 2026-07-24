@@ -70,10 +70,10 @@ function ResetPasswordForm() {
 
       <div className="w-full max-w-xs flex flex-col items-center">
         <div className="mb-2">
-          <Image src="/logo.svg" alt="DoeCerto" width={120} height={120} priority />
+          <Image src="/logo.svg" alt="DoeCerto" width={220} height={80} priority />
         </div>
 
-        <h1 className="text-4xl font-bold mb-6 text-center">Nova Senha</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">Nova Senha</h1>
         
         <p className="text-center text-lg font-bold text-purple-100 mb-8 leading-tight">
           Crie uma nova senha segura para acessar sua conta.

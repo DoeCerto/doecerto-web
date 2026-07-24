@@ -67,26 +67,19 @@ export const OngSetupService = {
     return profileResponse;
   },
 
-  async updateProfileImages(
-    avatar?: File | null, 
-    banner?: File | null, 
-    bannerCrop?: { x: number; y: number }
-  ) {
-    if (!avatar && !banner) return;
-    const formData = new FormData();
-    
-    if (avatar instanceof File) formData.append('avatar', avatar);
-    if (banner instanceof File) {
-      formData.append('banner', banner);
-      if (bannerCrop) {
-        formData.append('bannerCropX', String(Math.round(bannerCrop.x)));
-        formData.append('bannerCropY', String(Math.round(bannerCrop.y)));
-      }
-    }
-    
-    return api('/ongs/me/profile', { 
-      method: 'POST', 
-      body: formData 
-    });
-  },
+async updateProfileImages(
+  avatar?: File | null,
+  banner?: File | null,
+) {
+  if (!avatar && !banner) return;
+  const formData = new FormData();
+
+  if (avatar instanceof File) formData.append('avatar', avatar);
+  if (banner instanceof File) formData.append('banner', banner);
+
+  return api('/ongs/me/profile', {
+    method: 'POST',
+    body: formData,
+  });
+},
 };
