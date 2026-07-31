@@ -82,7 +82,7 @@ function DefaultCard({ step }: any) {
           <div className="shadow-sm flex flex-col items-center rounded-[10px]">
             <div className="">
               <Image 
-              src="/Frame22.svg" 
+              src="/Frame22.svg"
               alt="ONG" 
               width={170} 
               height={72} 

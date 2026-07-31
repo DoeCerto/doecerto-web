@@ -24,24 +24,24 @@ function DefaultCard({ step }: any) {
       className="
         w-full
         bg-white
-        border
-        border-[#6B39A7]
+        border-2
+        border-[#D7B8FF]
         rounded-[20px]
         pt-[40px]
-        px-[25px]
-        pb-[28px]
-        mb-[30px]
-        shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
+        px-[35px]
+        pb-[83px]
+        shadow-[0px_18px_60px_rgba(149,64,255,0.1)]
         flex
         flex-col
         items-center
         lg:flex-1
       "
     >
+      <div className="flex flex-col gap-[5px] mb-[25px] items-center">
       <div
         className="
-          w-[60px]
-          h-[60px]
+          w-[100px]
+          h-[100px]
           bg-[#EBD2FF]
           rounded-full
           flex
@@ -52,14 +52,25 @@ function DefaultCard({ step }: any) {
         {step.icon}
       </div>
 
-      <h1 className="font-semibold text-[24px] mt-[3px] text-center">
+      <h1 className="font-bold text-[50px] text-center">
         {step.organization}
       </h1>
 
+      <div className="bg-[#F3E8FF] py-[10px] px-[42px] gap-[10px] rounded-[999px] flex justify-center items-center">
+        <div className="w-[30px] h-[30px] bg-[#6B39A7] text-white">
+          1
+        </div>
+        <p className="text-[18px] font-semibold text-[#6B39A7]">
+          ONG verificada
+        </p>
+      </div>
+      </div>
+
       <p
         className="
-          text-[16px]
-          font-normal
+          text-[24px]
+          text-[#666666]
+          font-medium
           -translate-y-[8px]
           mb-[10px]
           text-center
@@ -76,63 +87,56 @@ function DefaultCard({ step }: any) {
           w-full
           flex
           flex-row
-          justify-between
-          mb-[15px]
-          mt-[10px]
-          px-[10px]
+          items-center
+          pt-[26px]
+          mb-[35px]
         "
       >
-        <div className="flex flex-col items-center">
-          <h1 className="text-[24px] font-bold">
-            {step.donors}
-          </h1>
+        <div className="w-[500px] flex items-center flex-col border-r-3 border-[#3D3D3D] pr-[30px]">
+          <div className="w-[30px] h-[30px] mb-[8px] bg-[#6B39A7]">
+            1
+          </div>
 
-          <p className="text-[16px] font-normal -translate-y-[8px]">
-            Doadores
-          </p>
+            <p className="text-[32px] font-bold">423</p>
+            <p className="text-[20px] font-medium text-[#777777] translate-y-[-8px]">Doações</p>
+            <p className="w-full text-[16px] font-medium text-[#777777] translate-y-[-15px]">fazem a diferença</p>
+
         </div>
 
-        <div className="flex flex-col items-center">
-          <h1 className="text-[24px] font-bold">
-            {step.rescues}
-          </h1>
+        <div className="w-full flex items-center flex-col border-r-3 border-[#3D3D3D] px-[30px]">
+          <div className="w-[30px] h-[30px] mb-[8px] bg-[#6B39A7] flex">
+            1
+          </div>
 
-          <p className="text-[16px] font-normal -translate-y-[8px]">
-            Resgates
-          </p>
+            <p className="text-[32px] font-bold">1.2k</p>
+            <p className="text-[20px] font-medium text-[#777777] translate-y-[-8px]">Resgates</p>
+            <p className="text-[16px] font-medium text-[#777777] translate-y-[-15px]">vidas salvas</p>
+
         </div>
 
-        <div className="flex flex-col items-center">
-          <h1
-            className="
-              flex
-              flex-row
-              items-center
-              gap-1
-              text-[24px]
-              font-bold
-            "
-          >
-            {step.rating}
+        <div className="w-full flex items-center flex-col pl-[30px]">
+          <div className="w-[30px] h-[30px] mb-[8px] bg-[#6B39A7]">
+            1
+          </div>
 
-            <Star className="w-[25px] h-[25px] fill-[#000000]" />
-          </h1>
+            <p className="text-[32px] font-bold">4.9</p>
+            <p className="text-[20px] font-medium text-[#777777] translate-y-[-8px]">Avaliação</p>
+            <p className="text-[16px] font-medium text-[#777777] translate-y-[-15px]">na plataforma</p>
+          
 
-          <p className="text-[16px] font-normal -translate-y-[8px]">
-            Avaliação
-          </p>
         </div>
+        
       </div>
 
       {/* Button */}
       <div
         className="
-          mx-[5px]
           py-[18px]
-          bg-[#6B39A7]
+          bg-[linear-gradient(to_bottom,#7A39D9_0%,#9540FF_100%)]
           text-white
-          text-[16px]
+          text-[24px]
           font-bold
+          gap-[10px]
           w-full
           rounded-[10px]
           flex
@@ -694,14 +698,16 @@ export default function DonationGuide() {
   }
 
   return (
-    <div className="w-full min-h-screen px-[25px] py-[10px] flex flex-col items-center">
+    <div className="border border-red-500 min-h-screen max-w-7xl mx-auto sm:px-6 lg:px-8 flex flex-col items-center">
       <StepHeader
         currentStep={step.id}
         totalSteps={steps.length}
         onSkip={() => router.push("/help-center")}
       />
 
-      <main className="grid grid-cols-1 lg:grid-cols-2 lg:gap-20 lg:flex-1 lg:items-center">
+      <main className="lg:flex-1 flex justify-center items-center w-full">
+
+      <div className="border border-red-500 grid grid-cols-1 lg:grid-cols-2 lg:gap-20 lg:items-center">
 
         {/* CARD DINÂMICO */}
         <div className="w-full lg:flex-1">
@@ -709,7 +715,7 @@ export default function DonationGuide() {
         </div>
 
         {/* Intro */}
-        <div className="lg:max-w-none lg:h-[400px] flex flex-col lg:justify-center items-center">
+        <div className="lg:max-w-none h-full flex flex-col lg:justify-center items-center">
           <StepIntro
             label={step.label ?? ""}
             title={typeof step.title === "string" ? step.title : ""}
@@ -731,7 +737,7 @@ export default function DonationGuide() {
           </div>
 
           {/* Buttons */}
-          <div className="flex justify-center gap-[15px] pb-2">
+          <div className="flex justify-center gap-[15px]">
             {currentStep > 0 && (
               <BackButton onClick={handleBack} />
             )}
@@ -744,6 +750,7 @@ export default function DonationGuide() {
           </div>
           </div>
         </div>
+      </div>
       </main>
     </div>
   );
