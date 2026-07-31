@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
 
   // 1. ATIVE ISSO (É obrigatório para o Capacitor ver o index.html)
-  output: "export",
+  //output: "export",
 
   // 2. REMOVA OU COMENTE O distDir
   // O Next já cria a pasta "out" por padrão quando o output é "export"
