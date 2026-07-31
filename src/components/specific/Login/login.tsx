@@ -36,18 +36,19 @@ export default function LoginPage() {
       const userAvatar = data?.user?.avatarUrl || data?.avatarUrl;
 
       if (token) {
-        // Persistência Nativa para APK (Capacitor)
+        // 1. Grava no Cookie para o Middleware do Next.js ler (OBRIGATÓRIO pro Middleware!)
+        document.cookie = `token=${token}; path=/; max-age=604800; SameSite=Lax`;
+
+        // 2. Mantém seus salvamentos atuais para o App (Capacitor e LocalStorage)
         await Preferences.set({ key: "access_token", value: token });
         if (apiUserRole)
           await Preferences.set({ key: "userRole", value: apiUserRole });
 
-        // Persistência para Navegador
         localStorage.setItem("access_token", token);
         if (apiUserRole) localStorage.setItem("userRole", apiUserRole);
         if (userAvatar) localStorage.setItem("userAvatar", userAvatar);
 
         toast.success("Login realizado com sucesso!");
-
         // 2. Lógica de Redirecionamento Atualizada
         let finalRole = apiUserRole;
 

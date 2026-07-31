@@ -247,19 +247,21 @@ export default function HomePage() {
     router.push(`/pix?id=${selectedOng}`);
   }
 
-  async function handleLogout() {
-    try {
-      await api("/auth/logout", { method: "POST" });
-    } catch (error) {
-      console.error("Erro ao deslogar no servidor:", error);
-    } finally {
-      document.cookie =
-        "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      localStorage.clear();
-      setUserAvatar("/default-avatar.png");
-      router.push("/login");
-    }
+async function handleLogout() {
+  try {
+    await api("/auth/logout", { method: "POST" });
+  } catch (error) {
+    console.error("Erro ao deslogar no servidor:", error);
+  } finally {
+    document.cookie =
+      "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie =
+      "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    localStorage.clear();
+    setUserAvatar("/default-avatar.png");
+    window.location.href = "/login";
   }
+}
 
   function goToProfile() {
     const userRole = localStorage.getItem("userRole") || "";
