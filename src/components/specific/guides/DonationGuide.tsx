@@ -27,9 +27,9 @@ function DefaultCard({ step }: any) {
         border-2
         border-[#D7B8FF]
         rounded-[20px]
-        pt-[40px]
+        pt-[30px]
         px-[35px]
-        pb-[83px]
+        pb-[40px]
         shadow-[0px_18px_60px_rgba(149,64,255,0.1)]
         flex
         flex-col
@@ -38,37 +38,37 @@ function DefaultCard({ step }: any) {
       "
     >
       <div className="flex flex-col gap-[5px] mb-[25px] items-center">
-      <div
-        className="
-          w-[100px]
-          h-[100px]
+        <div
+          className="
+          w-[80px]
+          h-[80px]
           bg-[#EBD2FF]
           rounded-full
           flex
           items-center
           justify-center
         "
-      >
-        {step.icon}
-      </div>
-
-      <h1 className="font-bold text-[50px] text-center">
-        {step.organization}
-      </h1>
-
-      <div className="bg-[#F3E8FF] py-[10px] px-[42px] gap-[10px] rounded-[999px] flex justify-center items-center">
-        <div className="w-[30px] h-[30px] bg-[#6B39A7] text-white">
-          1
+        >
+          {step.icon}
         </div>
-        <p className="text-[18px] font-semibold text-[#6B39A7]">
-          ONG verificada
-        </p>
-      </div>
+
+        <h1 className="font-bold text-[30px] text-center">
+          {step.organization}
+        </h1>
+
+        <div className="bg-[#F3E8FF] py-[5px] px-[42px] gap-[10px] rounded-[999px] flex justify-center items-center">
+          <div className="w-[30px] h-[30px] bg-[#6B39A7] text-white">
+            1
+          </div>
+          <p className="text-[18px] font-semibold text-[#6B39A7]">
+            ONG verificada
+          </p>
+        </div>
       </div>
 
       <p
         className="
-          text-[24px]
+          text-[20px]
           text-[#666666]
           font-medium
           -translate-y-[8px]
@@ -79,53 +79,109 @@ function DefaultCard({ step }: any) {
         {step.organizationDescription}
       </p>
 
-      <hr className="border border-[#3D3D3D] w-full h-[1px]" />
+      <hr className="border border-[#E6E6E6] w-full h-[1px]" />
 
       {/* Stats */}
       <div
         className="
-          w-full
-          flex
-          flex-row
-          items-center
-          pt-[26px]
-          mb-[35px]
-        "
+    w-full
+    flex
+    flex-row
+    items-stretch
+    pt-[20px]
+    mb-[35px]
+  "
       >
-        <div className="w-[500px] flex items-center flex-col border-r-3 border-[#3D3D3D] pr-[30px]">
-          <div className="w-[30px] h-[30px] mb-[8px] bg-[#6B39A7]">
+        {/* Doações */}
+        <div
+          className="
+      flex-1
+      min-w-0
+      flex
+      items-center
+      flex-col
+      border-r-3
+      border-[#E6E6E6]
+      px-4
+      sm:px-6
+    "
+        >
+          <div className="w-[30px] h-[30px] mb-[8px] bg-[#6B39A7] flex items-center justify-center shrink-0">
             1
           </div>
 
-            <p className="text-[32px] font-bold">423</p>
-            <p className="text-[20px] font-medium text-[#777777] translate-y-[-8px]">Doações</p>
-            <p className="w-full text-[16px] font-medium text-[#777777] translate-y-[-15px]">fazem a diferença</p>
+          <p className="text-[clamp(24px,2.2vw,30px)] font-bold">
+            423
+          </p>
 
+          <p className="text-[clamp(16px,1.5vw,20px)] font-medium text-[#777777] leading-tight text-center">
+            Doações
+          </p>
+
+          <p className="text-[clamp(13px,1.2vw,16px)] font-medium text-[#777777] leading-tight text-center whitespace-nowrap">
+            fazem a diferença
+          </p>
         </div>
 
-        <div className="w-full flex items-center flex-col border-r-3 border-[#3D3D3D] px-[30px]">
-          <div className="w-[30px] h-[30px] mb-[8px] bg-[#6B39A7] flex">
+        {/* Resgates */}
+        <div
+          className="
+      flex-1
+      min-w-0
+      flex
+      items-center
+      flex-col
+      border-r-3
+      border-[#E6E6E6]
+      px-4
+      sm:px-6
+    "
+        >
+          <div className="w-[30px] h-[30px] mb-[8px] bg-[#6B39A7] flex items-center justify-center shrink-0">
             1
           </div>
 
-            <p className="text-[32px] font-bold">1.2k</p>
-            <p className="text-[20px] font-medium text-[#777777] translate-y-[-8px]">Resgates</p>
-            <p className="text-[16px] font-medium text-[#777777] translate-y-[-15px]">vidas salvas</p>
+          <p className="text-[clamp(24px,2.2vw,30px)] font-bold">
+            1.2k
+          </p>
 
+          <p className="text-[clamp(16px,1.5vw,20px)] font-medium text-[#777777] leading-tight text-center">
+            Resgates
+          </p>
+
+          <p className="text-[clamp(13px,1.2vw,16px)] font-medium text-[#777777] leading-tight text-center whitespace-nowrap">
+            vidas salvas
+          </p>
         </div>
 
-        <div className="w-full flex items-center flex-col pl-[30px]">
-          <div className="w-[30px] h-[30px] mb-[8px] bg-[#6B39A7]">
+        {/* Avaliação */}
+        <div
+          className="
+      flex-1
+      min-w-0
+      flex
+      items-center
+      flex-col
+      px-4
+      sm:px-6
+    "
+        >
+          <div className="w-[30px] h-[30px] mb-[8px] bg-[#6B39A7] flex items-center justify-center shrink-0">
             1
           </div>
 
-            <p className="text-[32px] font-bold">4.9</p>
-            <p className="text-[20px] font-medium text-[#777777] translate-y-[-8px]">Avaliação</p>
-            <p className="text-[16px] font-medium text-[#777777] translate-y-[-15px]">na plataforma</p>
-          
+          <p className="text-[clamp(24px,2.2vw,30px)] font-bold">
+            4.9
+          </p>
 
+          <p className="text-[clamp(16px,1.5vw,20px)] font-medium text-[#777777] leading-tight text-center">
+            Avaliação
+          </p>
+
+          <p className="text-[clamp(13px,1.2vw,16px)] font-medium text-[#777777] leading-tight text-center whitespace-nowrap">
+            na plataforma
+          </p>
         </div>
-        
       </div>
 
       {/* Button */}
@@ -134,7 +190,7 @@ function DefaultCard({ step }: any) {
           py-[18px]
           bg-[linear-gradient(to_bottom,#7A39D9_0%,#9540FF_100%)]
           text-white
-          text-[24px]
+          text-[20px]
           font-bold
           gap-[10px]
           w-full
@@ -561,13 +617,14 @@ export default function DonationGuide() {
       organizationDescription:
         "Resgate e cuidados de gatos abandonados",
 
-      donors: "423",
-      rescues: "1.2K",
-      rating: "4.9",
-
       buttonText: "Doar para SOS Gatinhos",
 
-      label: "ENCONTRE E AJUDE",
+      label: (
+        <>
+          Encontre e ajude{" "}
+          <span className="text-[#6B39A7]">quem precisa</span>{" "}
+        </>
+      ),
 
       title: "Encontre uma ONG e toque em Doar",
 
@@ -591,7 +648,7 @@ export default function DonationGuide() {
       label: "VOCÊ DECIDE COMO AJUDAR",
 
       title: "Escolha o tipo de doação",
-        
+
       description:
         "Doe dinheiro ou itens físicos - do jeito que for melhor pra você",
     },
@@ -698,59 +755,59 @@ export default function DonationGuide() {
   }
 
   return (
-    <div className="border border-red-500 min-h-screen max-w-7xl mx-auto sm:px-6 lg:px-8 flex flex-col items-center">
+    <div className="min-h-screen max-w-7xl mx-auto sm:px-6 lg:px-8 flex flex-col items-center p-[10px]">
       <StepHeader
         currentStep={step.id}
         totalSteps={steps.length}
         onSkip={() => router.push("/help-center")}
       />
 
-      <main className="lg:flex-1 flex justify-center items-center w-full">
+      <main className="lg:flex-1 flex justify-center items-center w-full mt-[15px] px-[10px]">
 
-      <div className="border border-red-500 grid grid-cols-1 lg:grid-cols-2 lg:gap-20 lg:items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-40 lg:items-center">
 
-        {/* CARD DINÂMICO */}
-        <div className="w-full lg:flex-1">
-          <CurrentCard step={step} />
-        </div>
-
-        {/* Intro */}
-        <div className="lg:max-w-none h-full flex flex-col lg:justify-center items-center">
-          <StepIntro
-            label={step.label ?? ""}
-            title={typeof step.title === "string" ? step.title : ""}
-            description={step.description ?? ""}
-          />
-
-          {/* Indicators */}
-          <div className="flex justify-center flex-col lg:mt-auto mt-8">
-          <div className="mb-6 flex justify-center gap-[5px]">
-            {steps.map((_, index) => (
-              <div
-                key={index}
-                className={`h-[10px] rounded-full transition-all duration-300 ${currentStep === index
-                  ? "w-[24px] bg-[#6B39A7]"
-                  : "w-[10px] bg-[#D9B8F5]"
-                  }`}
-              />
-            ))}
+          {/* CARD DINÂMICO */}
+          <div className="w-full lg:flex-1">
+            <CurrentCard step={step} />
           </div>
 
-          {/* Buttons */}
-          <div className="flex justify-center gap-[15px]">
-            {currentStep > 0 && (
-              <BackButton onClick={handleBack} />
-            )}
-
-            <NextButton
-              onClick={handleNext}
-              text={currentStep === steps.length - 1 ? "Concluir" : "Próximo"}
-              isFinish={currentStep === steps.length - 1}
+          {/* Intro */}
+          <div className="lg:max-w-none h-full flex flex-col lg:justify-center items-center pt-[30px]">
+            <StepIntro
+              label={step.label}
+              title={typeof step.title === "string" ? step.title : ""}
+              description={step.description ?? ""}
             />
-          </div>
+
+            {/* Indicators */}
+            <div className="flex justify-center flex-col lg:mt-auto mt-8">
+              <div className="mb-6 flex justify-center gap-[5px]">
+                {steps.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`h-[10px] rounded-full transition-all duration-300 ${currentStep === index
+                      ? "w-[24px] bg-[#6B39A7]"
+                      : "w-[10px] bg-[#D9B8F5]"
+                      }`}
+                  />
+                ))}
+              </div>
+
+              {/* Buttons */}
+              <div className="flex justify-center gap-[15px]">
+                {currentStep > 0 && (
+                  <BackButton onClick={handleBack} />
+                )}
+
+                <NextButton
+                  onClick={handleNext}
+                  text={currentStep === steps.length - 1 ? "Concluir" : "Próximo"}
+                  isFinish={currentStep === steps.length - 1}
+                />
+              </div>
+            </div>
           </div>
         </div>
-      </div>
       </main>
     </div>
   );
