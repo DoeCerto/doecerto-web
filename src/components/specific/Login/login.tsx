@@ -66,10 +66,13 @@ useEffect(() => {
 
     try {
       await Preferences.set({ key: "access_token", value: token });
-      if (apiUserRole) await Preferences.set({ key: "userRole", value: apiUserRole });
     } catch (capacitorError) { }
+
     localStorage.setItem("registration_completed", "true");
-    if (apiUserRole) localStorage.setItem("userRole", apiUserRole);
+    
+    // 🛡️ userRole removido do cliente (localStorage / Preferences) com sucesso!
+    
+    // Mantemos apenas dados visuais/estéticos no navegador
     if (userAvatar) localStorage.setItem("userAvatar", userAvatar);
     if (userName) localStorage.setItem("userName", userName);
 
@@ -82,8 +85,11 @@ useEffect(() => {
         finalRole = payload?.role;
       } catch (e) { }
     }
-refreshSession();
-    // ✅ Lógica de redirecionamento atualizada
+
+    // Atualiza o estado global de contexto visual
+    refreshSession();
+
+    // 🚀 Lógica de redirecionamento inteligente
     const fromUrl = searchParams?.get("from");
     const roleLower = finalRole?.toLowerCase() || "";
     let redirectPath = "/home";
@@ -92,12 +98,12 @@ refreshSession();
       // Se veio de uma rota protegida (ex: /donation?ongId=...), volta pra ela
       redirectPath = fromUrl;
     } else {
-      // Se não, usa o fallback padrão de acordo com a role
+      // Se não, usa o fallback padrão de acordo com a role obtida do token em memória
       if (roleLower === "admin") redirectPath = "/adm-dashboard";
       else if (roleLower === "ong") redirectPath = "/ong-dashboard";
     }
 
-   setTimeout(() => {
+    setTimeout(() => {
       router.replace(redirectPath);
     }, 1500);
   };

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState, useRef, useEffect, forwardRef, InputHTMLAttributes } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
-import { Eye, EyeClosed, Lock, Mail, User, Building2, ArrowLeft, FileText, IdCard, UploadCloud, CheckCircle, X, LucideIcon, Phone } from "lucide-react";
+import { Eye, EyeClosed, Lock, Mail, User, Building2, ArrowLeft, FileText, IdCard, UploadCloud, CheckCircle, X, LucideIcon } from "lucide-react";
 import gsap from "gsap";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,25 +18,6 @@ import { formatCNPJ, removeFormatting, validateCNPJ, formatCPF, validateCPF } fr
 import TermosModal from "@/components/shared/TermosModal";
 
 // ==========================================
-// FUNÇÕES DE TELEFONE (Máscara e Validação)
-// ==========================================
-const formatPhone = (value: string) => {
-  if (!value) return "";
-  const p = value.replace(/\D/g, "");
-  if (p.length <= 2) return `(${p}`;
-  if (p.length <= 6) return `(${p.slice(0, 2)}) ${p.slice(2)}`;
-  if (p.length <= 10) return `(${p.slice(0, 2)}) ${p.slice(2, 6)}-${p.slice(6)}`;
-  return `(${p.slice(0, 2)}) ${p.slice(2, 7)}-${p.slice(7, 11)}`;
-};
-
-const validatePhone = (value: string) => {
-  const p = value.replace(/\D/g, "");
-  // Aceita fixo (10 dígitos) ou celular (11 dígitos)
-  return p.length === 10 || p.length === 11;
-};
-
-
-// ==========================================
 // 1. TIPAGENS E SCHEMAS
 // ==========================================
 type AccountType = "donor" | "ong" | null;
@@ -45,7 +26,6 @@ const registerSchema = z.object({
   accountType: z.enum(["donor", "ong"]).nullable(),
   nome: z.string().min(3, "Mínimo de 3 caracteres").regex(/^[^0-9]*$/, "Não pode conter números"),
   email: z.string().min(1, "O e-mail é obrigatório").email("E-mail inválido"),
-  contactNumber: z.string().min(1, "O telefone é obrigatório"), // <-- Novo campo adicionado aqui
   senha: z.string().min(8, "Mínimo de 8 caracteres"),
   confirmarSenha: z.string().min(1, "Confirme sua senha"),
   documento: z.string().min(1, "Documento é obrigatório"),
@@ -56,11 +36,6 @@ const registerSchema = z.object({
   // Validação de Senha
   if (data.senha !== data.confirmarSenha) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "As senhas não coincidem", path: ["confirmarSenha"] });
-  }
-  
-  // Validação de Telefone <-- Nova Validação
-  if (!validatePhone(data.contactNumber)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Telefone inválido", path: ["contactNumber"] });
   }
 
   // Validação de CNPJ/CPF
@@ -313,7 +288,6 @@ function useRegisterForm() {
       accountType: null, 
       nome: "", 
       email: "", 
-      contactNumber: "", // <-- Valor inicial para o telefone
       senha: "", 
       confirmarSenha: "", 
       documento: "", 
@@ -354,7 +328,7 @@ function useRegisterForm() {
     setStep(1);
     setAccountType(null);
     form.reset({
-      accountType: null, nome: "", email: "", contactNumber: "", senha: "", confirmarSenha: "", documento: "", nomePresidente: "", cpfPresidente: ""
+      accountType: null, nome: "", email: "", senha: "", confirmarSenha: "", documento: "", nomePresidente: "", cpfPresidente: ""
     });
     setFileEstatuto(null); setFileAta(null); setFileCartaoCnpj(null);
     setTimeout(() => { sessionStorage.removeItem("register_draft"); }, 50);
@@ -367,8 +341,7 @@ function useRegisterForm() {
   };
 
   const handleNextStep = async () => {
-    // Adicionamos contactNumber nos gatilhos de validação
-    const isValid = await form.trigger(["nome", "email", "contactNumber", "senha", "confirmarSenha", "documento"]);
+    const isValid = await form.trigger(["nome", "email", "senha", "confirmarSenha", "documento"]);
     if (isValid) {
       if (accountType === "ong") setStep(3);
       else setModalAberto(true);
@@ -388,7 +361,7 @@ function useRegisterForm() {
     setModalAberto(true);
   };
 
-const submitToApi = async () => {
+  const submitToApi = async () => {
     setIsPending(true);
     try {
       const data = form.getValues();
@@ -397,8 +370,7 @@ const submitToApi = async () => {
           name: data.nome, 
           email: data.email, 
           password: data.senha, 
-          cnpj: removeFormatting(data.documento),
-          contactNumber: removeFormatting(data.contactNumber)
+          cnpj: removeFormatting(data.documento)
         });
         toast.success("ONG cadastrada! Faça login para continuar.");
       } else {
@@ -406,21 +378,14 @@ const submitToApi = async () => {
           name: data.nome, 
           email: data.email, 
           password: data.senha, 
-          cpf: removeFormatting(data.documento),
-          contactNumber: removeFormatting(data.contactNumber)
+          cpf: removeFormatting(data.documento)
         });
         toast.success("Conta criada com sucesso! Faça login para continuar.");
       }
       
-      // 1. Fechamos o modal, mas removemos o `clearDraft()` daqui. 
-      // Isso impede que a tela de fundo volte para o Passo 1 e fique "piscando" enquanto espera os 1.5s
       setModalAberto(false);
-      
-      // 2. Limpamos o rascunho apenas da memória para a próxima vez que ele entrar no Register
       sessionStorage.removeItem("register_draft");
 
-      // 3. Substituímos a rota no histórico em vez de usar router.push
-      // Assim o usuário não consegue usar a seta de "voltar" para cair no formulário de novo
       setTimeout(() => {
         window.location.replace("/login");
       }, 1500);
@@ -519,20 +484,6 @@ export default function Register() {
                   onChange={(e: any) => { register("email").onChange(e); clearErrors("email"); }}
                   onBlur={(e: any) => { register("email").onBlur(e); if(e.target.value.trim() !== "") trigger("email"); }}
                   error={errors.email?.message} 
-                />
-
-                {/* NOVO CAMPO: TELEFONE */}
-                <InputField 
-                  label="Telefone" icon={Phone} placeholder="(00) 00000-0000" 
-                  maxLength={15}
-                  {...register("contactNumber")} 
-                  onChange={(e: any) => { 
-                    const val = formatPhone(e.target.value);
-                    setValue("contactNumber", val); 
-                    clearErrors("contactNumber"); 
-                  }}
-                  onBlur={(e: any) => { register("contactNumber").onBlur(e); if(e.target.value.trim() !== "") trigger("contactNumber"); }}
-                  error={errors.contactNumber?.message} 
                 />
                 
                 <InputField 

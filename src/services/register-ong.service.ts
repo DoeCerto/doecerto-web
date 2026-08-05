@@ -5,7 +5,7 @@ export interface RegisterOngDTO {
   email: string;
   password: string;
   cnpj: string;
-  contactNumber: string;
+  contactNumber?: string;
 }
 
 export function registerOng(data: RegisterOngDTO) {

@@ -50,23 +50,32 @@ export default function HomeClient({
   initialIsAuthenticated,
   initialUserName,
   initialUserAvatar,
+  initialUserRole,
 }: {
   initialCatalog: any[];
   initialIsAuthenticated: boolean;
   initialUserName?: string | null;
   initialUserAvatar?: string | null;
+  initialUserRole?: string | null;
 }) {
   const router = useRouter();
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  // ✅ 2. Consumindo o contexto global em vez do useState isolado
-  const { isAuthenticated, userName, userAvatar: contextAvatar, refreshSession } = useAuth();
+  // 1. Consome o contexto global (para o avatar e updates de sessão)
+  const { isAuthenticated: contextIsAuth, userName: contextName, userAvatar: contextAvatar, refreshSession } = useAuth();
 
-  // Tratamento da imagem e nome vindos do contexto
-  const displayAvatar = contextAvatar
-    ? OngsProfileService._formatImageUrl(contextAvatar)
+  // 2. PRIORIDADE DO CASO 2:
+  // - O status de autenticação vem preferencialmente do Cookie via SSR (servidor) ou do Contexto.
+  // - O nome vem direto do JWT decodificado no servidor (zero-flicker).
+  const isAuth = initialIsAuthenticated || contextIsAuth;
+  const displayName = initialUserName || contextName || "Usuário";
+
+  // - O avatar vem do localStorage através do Contexto Global (ou do avatar inicial se houver)
+  const rawAvatar = contextAvatar || initialUserAvatar;
+  const displayAvatar = rawAvatar
+    ? OngsProfileService._formatImageUrl(rawAvatar)
     : "/default-avatar.png";
-  const displayName = userName || "Usuário";
+
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -76,8 +85,8 @@ export default function HomeClient({
 
   useEffect(() => {
     async function loadUserAvatar() {
-      // Usamos o isAuthenticated do contexto agora
-      if (!isAuthenticated) return;
+      // Usa o isAuth (prioridade do servidor + contexto)
+      if (!isAuth) return;
 
       try {
         const userRole = localStorage.getItem("userRole")?.toUpperCase();
@@ -85,7 +94,7 @@ export default function HomeClient({
           const profile = await DonorService.getMyProfile();
           if (profile?.avatarUrl) {
             localStorage.setItem("userAvatar", profile.avatarUrl);
-            // ✅ 3. Atualiza o contexto global com a foto nova
+            // Atualiza o contexto global com a foto nova sem recarregar a página
             refreshSession();
           }
         }
@@ -95,7 +104,7 @@ export default function HomeClient({
     }
 
     loadUserAvatar();
-  }, [isAuthenticated, refreshSession]);
+  }, [isAuth, refreshSession]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -129,7 +138,7 @@ export default function HomeClient({
     localStorage.removeItem("userName");
     localStorage.removeItem("registration_completed");
 
-    // ✅ 4. Em vez de useState, dizemos ao Contexto Global que saímos
+    // Notifica o Contexto Global que a sessão encerrou
     refreshSession();
 
     router.refresh();
@@ -182,7 +191,7 @@ export default function HomeClient({
 
   function handleDonateClick(ongId: number) {
     setSelectedOng(ongId);
-    if (!isAuthenticated) {
+    if (!isAuth) {
       setShowGuestDonateModal(true);
     } else {
       setIsModalOpen(true);
@@ -227,7 +236,7 @@ export default function HomeClient({
           </button>
         </div>
 
-        {isAuthenticated ? (
+        {isAuth ? (
           <div className="flex items-center gap-3 relative" ref={menuRef}>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}

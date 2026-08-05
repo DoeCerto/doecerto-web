@@ -3,8 +3,8 @@ import HomeClient from "./HomeClient";
 
 export const dynamic = 'force-dynamic';
 
-// Função leve para extrair o nome de dentro do JWT no servidor
-function decodeJwtName(token: string) {
+// Função robusta para extrair nome e role de dentro do JWT no servidor
+function decodeJwtPayload(token: string) {
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -14,9 +14,13 @@ function decodeJwtName(token: string) {
         .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
         .join('')
     );
-    return JSON.parse(jsonPayload)?.name || null;
+    const payload = JSON.parse(jsonPayload);
+    return {
+      name: payload?.name || null,
+      role: payload?.role || null,
+    };
   } catch (e) {
-    return null;
+    return { name: null, role: null };
   }
 }
 
@@ -25,8 +29,10 @@ export default async function HomePageServer() {
   const token = cookieStore.get("access_token")?.value;
   const isAuthenticated = !!token;
 
-  // Pega o nome instantaneamente de dentro do JWT que o back-end já gera
-  const initialUserName = token ? decodeJwtName(token) : null;
+  // Pega o nome e o role instantaneamente de dentro do JWT do back-end
+  const { name: initialUserName, role: initialUserRole } = token 
+    ? decodeJwtPayload(token) 
+    : { name: null, role: null };
 
   let initialCatalog = [];
   try {
@@ -40,6 +46,7 @@ export default async function HomePageServer() {
       initialCatalog={initialCatalog} 
       initialIsAuthenticated={isAuthenticated}
       initialUserName={initialUserName}
+      initialUserRole={initialUserRole}
     />
   );
 }
