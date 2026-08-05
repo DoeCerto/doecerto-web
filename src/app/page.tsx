@@ -1,5 +1,6 @@
 import { HeroSection } from '@/components/specific/LandingPage/HeroSection';
 import { WhatIsDoeCerto } from '@/components/specific/LandingPage/WhatIsDoeCerto';
+import { PartnersSection } from '@/components/specific/LandingPage/PartnersSection';
 import { HowItWorks } from '@/components/specific/LandingPage/HowItWorks';
 import { VerificationBadge } from '@/components/specific/LandingPage/VerificationBadge';
 import { WhyChooseUs } from '@/components/specific/LandingPage/WhyChooseUs';
@@ -12,10 +13,11 @@ import "@/components/specific/LandingPage/landing.css";
 export default function Home() {
   return (
     <main className="landing-scope flex flex-col min-h-screen bg-white">
-      
+
       <SmoothScroller>
         <HeroSection />
         <WhatIsDoeCerto />
+        <PartnersSection />
         <HowItWorks />
         <VerificationBadge />
         <WhyChooseUs />
@@ -23,7 +25,7 @@ export default function Home() {
         <FAQ />
         <Footer />
       </SmoothScroller>
-      
+
     </main>
   );
 }

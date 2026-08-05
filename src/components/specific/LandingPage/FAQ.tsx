@@ -1,10 +1,14 @@
 "use client";
+
 import { useState, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 
-gsap.registerPlugin(ScrollTrigger);
+// TRAVA DE SEGURANÇA DO NEXT.JS
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 const faqs = [
   {
@@ -38,33 +42,45 @@ export function FAQ() {
   const sectionRef = useRef<HTMLElement>(null);
 
   useGSAP(() => {
+    if (!sectionRef.current) return;
+
+    // FORÇA O RECALCULO: Avisa ao GSAP que as seções acima mudaram de tamanho
+    ScrollTrigger.refresh();
+
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: sectionRef.current,
-        start: "top 80%", 
-        toggleActions: "play none none reverse", 
+        start: "top 90%", // Dispara a animação um pouco antes para garantir a leitura
+        toggleActions: "play none none none", // Toca uma vez e fixa. Não corre mais o risco de sumir!
       }
     });
 
-    tl.fromTo(".faq-title", { y: -30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" })
-      .fromTo(".faq-item", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.2, stagger: 0.1, ease: "power2.out" }, "-=0.4");
+    tl.fromTo(".faq-title", 
+      { y: -30, opacity: 0 }, 
+      { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" }
+    )
+    .fromTo(".faq-item", 
+      { y: 30, opacity: 0 }, 
+      { y: 0, opacity: 1, duration: 0.4, stagger: 0.1, ease: "power2.out" }, 
+      "-=0.3"
+    );
   }, { scope: sectionRef });
 
   return (
     <section ref={sectionRef} className="py-16 md:py-24 bg-white">
       <div className="container mx-auto px-6 max-w-3xl">
-        <h2 className="faq-title text-3xl md:text-4xl font-bold text-center text-gray-900 mb-8 md:mb-12">
+        {/* Adicionado opacity-0 no HTML para evitar "piscar" antes do GSAP agir */}
+        <h2 className="faq-title opacity-0 text-3xl md:text-4xl font-bold text-center text-gray-900 mb-8 md:mb-12">
           Perguntas Frequentes
         </h2>
 
         <div className="space-y-3 md:space-y-4">
           {faqs.map((faq, index) => (
-            <div key={index} className="faq-item border border-gray-200 rounded-2xl overflow-hidden transition-all duration-300">
+            <div key={index} className="faq-item opacity-0 border border-gray-200 rounded-2xl overflow-hidden transition-all duration-300">
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full text-left px-5 md:px-6 py-4 md:py-5 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors"
+                className="w-full text-left px-5 md:px-6 py-4 md:py-5 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
               >
-                {/* Fonte levemente menor no mobile para não quebrar tantas linhas */}
                 <span className="font-semibold text-gray-900 text-base md:text-lg pr-4">{faq.question}</span>
                 <span className="text-[#6B21A8] text-2xl font-light shrink-0">
                   {openIndex === index ? '−' : '+'}

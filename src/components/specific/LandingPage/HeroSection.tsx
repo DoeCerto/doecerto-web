@@ -2,16 +2,18 @@
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 import { Download, Globe, Menu, X } from 'lucide-react';
+
+gsap.registerPlugin(ScrollTrigger);
 
 export function HeroSection() {
   const [showNav, setShowNav] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const heroRef = useRef(null);
-
+  const heroRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if ('scrollRestoration' in window.history) {
@@ -69,17 +71,40 @@ export function HeroSection() {
     }
   };
 
-  // ANIMAÇÃO ORIGINAL DO GSAP
+  // ==========================================
+  // ANIMAÇÃO DE ENTRADA + PARALLAX GSAP
+  // ==========================================
   useGSAP(() => {
+    // 1. Animações de entrada (Fade in + Blur)
     gsap.from('.nav-anim', {
       y: -20, opacity: 0, filter: 'blur(8px)', duration: 1.8, stagger: 0.1, ease: 'power4.out',
     });
     gsap.from('.hero-anim', {
       y: 40, opacity: 0, filter: 'blur(12px)', duration: 2.2, stagger: 0.15, ease: 'power4.out', delay: 0.1
     });
+
+    // 2. Timeline do Parallax (Scrub)
+    if (!heroRef.current) return;
+    
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: heroRef.current,
+        start: "top top",
+        end: "bottom top", // Acaba quando a hero sair da tela
+        scrub: true, // Sincronizado perfeitamente com o scroll
+      }
+    });
+
+    // Camada 1: Imagem de fundo (Desce 20% criando o efeito de ficar para trás)
+    tl.to('.parallax-layer-bg', { yPercent: 20, ease: "none" }, 0);
+    
+    // Camada 2: Textos principais (Sobe 10% criando um efeito pop-out e deslocamento)
+    tl.to('.parallax-layer-content', { yPercent: -10, ease: "none" }, 0);
+
   }, { scope: heroRef });
 
   return (
+    // IMPORTANTE: overflow-hidden garante que a imagem de fundo não vaze ao fazer o parallax
     <section ref={heroRef} className="relative w-full min-h-screen flex flex-col justify-end pt-32 pb-24 sm:pb-32 md:pb-40 lg:pb-48 overflow-hidden bg-black">
 
       {/* ========================================= */}
@@ -102,7 +127,7 @@ export function HeroSection() {
       </nav>
 
       {/* ========================================= */}
-      {/* HEADER MOBILE (Apenas a Logo) */}
+      {/* HEADER MOBILE */}
       {/* ========================================= */}
       <header className={`md:hidden absolute top-0 left-0 w-full px-6 py-6 flex justify-between items-center z-[50] transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <div className="absolute inset-0 bg-gradient-to-b from-black/80 to-transparent pointer-events-none" />
@@ -112,7 +137,7 @@ export function HeroSection() {
       </header>
 
       {/* ========================================= */}
-      {/* BOTÃO PÍLULA FLUTUANTE (Com Morphing Animation) */}
+      {/* BOTÃO MOBILE FLUTUANTE */}
       {/* ========================================= */}
       <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[110] pointer-events-auto nav-anim">
         <button 
@@ -123,18 +148,11 @@ export function HeroSection() {
               : 'bg-[#2A2A2A]/90 backdrop-blur-md border border-white/10 text-white w-[120px] h-[48px] hover:scale-105'
           }`}
         >
-          {/* ESTADO: MENU (Hamburguer) */}
-          <div className={`absolute flex items-center gap-2 transition-all duration-500 ${
-            isMobileMenuOpen ? 'opacity-0 -translate-y-6 rotate-12 scale-50' : 'opacity-100 translate-y-0 rotate-0 scale-100'
-          }`}>
+          <div className={`absolute flex items-center gap-2 transition-all duration-500 ${isMobileMenuOpen ? 'opacity-0 -translate-y-6 rotate-12 scale-50' : 'opacity-100 translate-y-0 rotate-0 scale-100'}`}>
             <Menu size={20} className="text-white/80" />
             <span className="font-bold tracking-widest text-sm uppercase">Menu</span>
           </div>
-
-          {/* ESTADO: CLOSE (X) */}
-          <div className={`absolute flex items-center gap-2 transition-all duration-500 ${
-            isMobileMenuOpen ? 'opacity-100 translate-y-0 rotate-0 scale-100' : 'opacity-0 translate-y-6 -rotate-12 scale-50'
-          }`}>
+          <div className={`absolute flex items-center gap-2 transition-all duration-500 ${isMobileMenuOpen ? 'opacity-100 translate-y-0 rotate-0 scale-100' : 'opacity-0 translate-y-6 -rotate-12 scale-50'}`}>
             <X size={18} />
             <span className="font-bold tracking-widest text-sm uppercase">Close</span>
           </div>
@@ -142,13 +160,11 @@ export function HeroSection() {
       </div>
 
       {/* ========================================= */}
-      {/* MENU FULLSCREEN MOBILE (Fundo Translúcido e Animado) */}
+      {/* MENU FULLSCREEN MOBILE */}
       {/* ========================================= */}
       <div className={`fixed inset-0 z-[100] bg-[#050505]/85 backdrop-blur-2xl flex flex-col transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] md:hidden origin-bottom ${
         isMobileMenuOpen ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-8 pointer-events-none'
       }`}>
-        
-        {/* LOGO CENTRALIZADA NO TOPO DO MENU */}
         <div className="absolute top-8 left-1/2 -translate-x-1/2 w-full flex justify-center z-20">
           <button 
             onClick={() => { setIsMobileMenuOpen(false); window.location.href = '/'; }} 
@@ -157,14 +173,9 @@ export function HeroSection() {
             <img src="/logo.svg" alt="DoeCerto" className="h-7 sm:h-8 object-contain drop-shadow-2xl" />
           </button>
         </div>
-
-        {/* CONTEÚDO SCROLLÁVEL (Evita quebrar em telas pequenas) */}
         <div className="flex-1 flex flex-col justify-center items-center w-full h-full overflow-y-auto px-8 pt-24 pb-28 relative z-10">
-          
           <div className="flex flex-col items-center gap-6 sm:gap-8 w-full max-w-sm">
-            {/* Label "MENU" mais baixa e próxima dos links */}
             <span className="text-[#a855f7] font-bold tracking-[0.3em] text-xs sm:text-sm uppercase mb-2">Menu</span>
-
             {[
               { label: "Quero conhecer", action: () => scrollToSection("whatisdoecerto") },
               { label: "Saiba mais", action: () => scrollToSection("verificationbadge") },
@@ -174,14 +185,13 @@ export function HeroSection() {
                 key={i} 
                 onClick={() => {
                   setIsMobileMenuOpen(false);
-                  setTimeout(item.action, 300); // Delay sutil para a animação fechar primeiro
+                  setTimeout(item.action, 300);
                 }}
                 className="text-[#EBEBEB] text-3xl sm:text-4xl font-black tracking-tighter uppercase hover:text-white active:scale-95 transition-transform cursor-pointer w-full text-center"
               >
                 {item.label}
               </button>
             ))}
-            
             <Link 
               href="/splash"
               onClick={() => setIsMobileMenuOpen(false)}
@@ -194,15 +204,18 @@ export function HeroSection() {
       </div>
 
       {/* ========================================= */}
-      {/* IMAGENS E MÁSCARAS */}
+      {/* IMAGENS E MÁSCARAS (CAMADA PARALLAX BG) */}
+      {/* DICA: scale-110 evita que a imagem corte ao descer no parallax */}
       {/* ========================================= */}
-      <img src="/fotocrianca.jpg" alt="Fundo" className="absolute inset-0 w-full h-full object-cover object-center z-0" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10 md:bg-black/20 z-0" />
+      <div className="parallax-layer-bg absolute inset-0 w-full h-[120%] -top-[10%] scale-110 z-0 will-change-transform">
+        <img src="/fotocrianca.jpg" alt="Fundo" className="absolute inset-0 w-full h-full object-cover object-center" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10 md:bg-black/20" />
+      </div>
 
       {/* ========================================= */}
-      {/* CONTEÚDO PRINCIPAL (Títulos e Botões) */}
+      {/* CONTEÚDO PRINCIPAL (CAMADA PARALLAX CONTENT) */}
       {/* ========================================= */}
-      <div className="container mx-auto px-6 sm:px-8 md:px-16 lg:px-32 z-20 relative w-full flex-grow flex flex-col justify-end">
+      <div className="parallax-layer-content container mx-auto px-6 sm:px-8 md:px-16 lg:px-32 z-20 relative w-full flex-grow flex flex-col justify-end will-change-transform">
         <h1 className="hero-anim text-5xl sm:text-6xl md:text-[5rem] lg:text-7xl font-bold text-white leading-[1.1] md:leading-[0.95] tracking-tighter drop-shadow-md mb-8 md:mb-12">
           Sua doação <br />
           Ajuda <span className="relative inline-block px-2 md:px-4 mt-2 md:mt-0">
@@ -225,9 +238,9 @@ export function HeroSection() {
       </div>
 
       {/* ========================================= */}
-      {/* ONDA INFERIOR */}
+      {/* ONDA INFERIOR (Fica fixa na base, não sofre Parallax) */}
       {/* ========================================= */}
-      <div className="absolute bottom-0 left-0 w-full z-10 pointer-events-none translate-y-1">
+      <div className="absolute bottom-0 left-0 w-full z-30 pointer-events-none translate-y-1">
         <svg viewBox="0 0 1440 120" className="block w-full h-[60px] sm:h-[80px] md:h-[120px]" preserveAspectRatio="none">
           <path fill="#ffffff" d="M0,120 L0,70 C 280,0 750,140 1440,50 L1440,120 Z"></path>
         </svg>

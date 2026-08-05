@@ -5,6 +5,7 @@ export interface RegisterDonorDTO {
   email: string;
   password: string;
   cpf: string;
+  contactNumber: string;
 }
 
 export function registerDonor(data: RegisterDonorDTO) {

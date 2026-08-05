@@ -1,47 +1,45 @@
-"use client";
+import { cookies } from "next/headers";
+import HomeClient from "./HomeClient";
 
-import { useEffect, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import Home from "@/components/specific/Home/home";
+export const dynamic = 'force-dynamic';
 
-
-function TokenProcessor({ onReady }: { onReady: () => void }) {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-
-  useEffect(() => {
-    const token = searchParams.get("token");
-
-    if (token) {
-      localStorage.setItem("access_token", token);
-      router.replace("/home");
-      onReady(); 
-    } else if (localStorage.getItem("access_token")) {
-      onReady(); 
-    } else {
-      onReady(); 
-    }
-  }, [searchParams, router, onReady]);
-
-  return null; 
+// Função leve para extrair o nome de dentro do JWT no servidor
+function decodeJwtName(token: string) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload)?.name || null;
+  } catch (e) {
+    return null;
+  }
 }
 
+export default async function HomePageServer() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("access_token")?.value;
+  const isAuthenticated = !!token;
 
-export default function HomePage() {
-  const [tokenReady, setTokenReady] = useState(false);
+  // Pega o nome instantaneamente de dentro do JWT que o back-end já gera
+  const initialUserName = token ? decodeJwtName(token) : null;
+
+  let initialCatalog = [];
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    const res = await fetch(`${apiUrl}/catalog`, { cache: "no-store" });
+    if (res.ok) initialCatalog = await res.json();
+  } catch (error) {}
 
   return (
-    <>
-      <Suspense fallback={null}>
-        <TokenProcessor onReady={() => setTokenReady(true)} />
-      </Suspense>
-      {!tokenReady ? (
-        <div>Carregando...</div>
-      ) : (
-        <div>
-          <Home />
-        </div>
-      )}
-    </>
+    <HomeClient 
+      initialCatalog={initialCatalog} 
+      initialIsAuthenticated={isAuthenticated}
+      initialUserName={initialUserName}
+    />
   );
 }

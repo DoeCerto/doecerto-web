@@ -5,12 +5,16 @@ import { useSearchParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, Loader2, Building2, IdCard, DollarSign,
   Key, Copy, CheckCircle2, FileText, Image as ImageIcon,
-  Paperclip, X
+  Paperclip, X, UploadCloud
 } from "lucide-react";
 import { useState, Suspense, useEffect, useMemo } from "react";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { api } from "@/services/api";
 import { QRCodeSVG } from "qrcode.react";
+
+// ==========================================
+// LÓGICA (Mantida intacta para refatorar depois)
+// ==========================================
 
 function calculateCRC16(str: string): string {
   let crc = 0xffff;
@@ -43,6 +47,10 @@ function getPixKeyType(key: string): "email" | "cpf" | "cnpj" | "phone" | "rando
 
   return "random";
 }
+
+// ==========================================
+// COMPONENTE PRINCIPAL (UX/UI Refatorada)
+// ==========================================
 
 function PixPageContent() {
   const searchParams = useSearchParams();
@@ -191,37 +199,43 @@ function PixPageContent() {
 
   const pixKeyVisual = bankData?.pixKey || "Chave não configurada";
 
-  return (
-    <div className="min-h-screen bg-[#F8F9FD] text-[#3b1a66] pb-16 font-sans relative">
+ return (
+    <div className="min-h-screen bg-slate-50 text-slate-800 pb-16 font-sans">
       
-      {/* Header & Botão Voltar */}
-      <div className="pt-6 px-6 lg:absolute lg:top-6 lg:left-8 z-10 flex items-center">
-        <button onClick={() => router.back()} className="bg-white p-3.5 rounded-full shadow-sm text-slate-700 hover:bg-purple-50 transition-all active:scale-95">
-          <ArrowLeft size={22} />
-        </button>
-      </div>
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 lg:pt-10">
+        
+        {/* CABEÇALHO ALINHADO COM O CONTEÚDO */}
+        <div className="flex items-center gap-4 mb-8 lg:mb-10">
+          <button 
+            onClick={() => router.back()} 
+            className="flex-shrink-0 bg-white p-3 rounded-full shadow-sm text-slate-500 hover:text-purple-600 hover:bg-purple-50 transition-all active:scale-95 border border-slate-100"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">Doação via Pix</h1>
+            <p className="text-slate-500 text-sm mt-0.5">Contribua de forma rápida e segura para quem precisa.</p>
+          </div>
+        </div>
 
-      <div className="w-full flex flex-col items-center pt-8 mb-8">
-        <h1 className="text-xl font-black text-purple-600 uppercase tracking-widest">Doação em dinheiro</h1>
-        <div className="h-1.5 w-14 bg-purple-600 rounded-full mt-2"></div>
-      </div>
+        {/* GRADE DE LAYOUT: 7 colunas (Esquerda) / 5 colunas (Direita) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start">
 
-      <main className="max-w-5xl mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
-
-          {/* COLUNA DA ESQUERDA: Informações e Valor */}
-          <div className="flex flex-col gap-6 lg:gap-8">
+          {/* ==========================================
+              COLUNA DA ESQUERDA (Info & Valores) - Ocupa 7/12
+              ========================================== */}
+          <div className="lg:col-span-7 flex flex-col gap-6">
             
             {/* Card da ONG */}
-            <div className="bg-white rounded-3xl p-8 shadow-md shadow-purple-100/40 border border-purple-50">
-              <div className="flex items-center gap-5 mb-6">
-                <div className="bg-purple-600 p-4 rounded-2xl shadow-sm">
-                  <Building2 className="text-white" size={26} />
+            <div className="bg-white rounded-3xl p-6 lg:p-8 shadow-sm border border-slate-100">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="bg-purple-50 p-3.5 rounded-2xl border border-purple-100/50">
+                  <Building2 className="text-purple-600" size={24} />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-2xl font-black text-[#3b1a66] leading-tight truncate">{ongData?.name || "Carregando..."}</h2>
-                  <div className="flex items-center gap-2 text-slate-400 text-sm mt-1 font-bold">
-                    <IdCard size={16} className="flex-shrink-0" />
+                  <h2 className="text-xl font-bold text-slate-800 leading-tight truncate">{ongData?.name || "Carregando..."}</h2>
+                  <div className="flex items-center gap-1.5 text-slate-500 text-sm mt-1">
+                    <IdCard size={15} className="flex-shrink-0 text-slate-400" />
                     <span className="truncate">
                       {ongData?.cnpj || bankData?.cnpj || bankData?.ong?.cnpj || "CNPJ não informado"}
                     </span>
@@ -229,7 +243,7 @@ function PixPageContent() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-y-6 gap-x-6 border-t border-gray-100 pt-6">
+              <div className="grid grid-cols-2 gap-y-5 gap-x-6 border-t border-slate-100 pt-5 mt-2">
                 {[
                   { label: "Instituição", value: bankData?.bankName },
                   { label: "Agência", value: bankData?.agencyNumber },
@@ -237,109 +251,131 @@ function PixPageContent() {
                   { label: "Tipo", value: bankData?.accountType }
                 ].map((item, idx) => (
                   <div key={idx} className="min-w-0">
-                    <p className="text-slate-400 uppercase text-xs font-black tracking-widest mb-1 truncate">
+                    <p className="text-slate-400 uppercase text-[10px] font-semibold tracking-wider mb-1 truncate">
                       {item.label}
                     </p>
-                    <p className="font-bold text-base truncate text-[#3b1a66]">{item.value || "---"}</p>
+                    <p className="font-medium text-sm truncate text-slate-700">{item.value || "---"}</p>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Card de Valor */}
-            <div className="bg-white rounded-3xl p-8 shadow-md shadow-purple-100/40 border border-purple-50 flex flex-col">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="bg-green-100 p-2.5 rounded-xl"><DollarSign className="text-green-600" size={22} /></div>
-                <h3 className="font-black text-xl text-[#3b1a66] uppercase tracking-tight">Valor da Doação</h3>
+            <div className="bg-white rounded-3xl p-6 lg:p-8 shadow-sm border border-slate-100">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="bg-green-50 p-2.5 rounded-xl border border-green-100/50">
+                  <DollarSign className="text-green-600" size={22} />
+                </div>
+                <h3 className="font-bold text-lg text-slate-800">Qual valor deseja doar?</h3>
               </div>
 
-              <div className="grid grid-cols-3 gap-3 mb-2">
+              <div className="flex flex-wrap gap-3 mb-4">
                 {valoresRapidos.map((v) => (
                   <button 
                     key={v} 
                     onClick={() => setValor(v)} 
-                    className={`py-4 rounded-2xl font-black text-base transition-all border-2 ${valor === v ? "bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-200" : "bg-gray-50 border-transparent text-gray-500 hover:bg-purple-50"}`}
+                    className={`flex-1 min-w-[80px] py-3.5 rounded-2xl font-semibold text-base transition-all duration-200 border-2 ${
+                      valor === v 
+                        ? "bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-600/20 scale-[1.02]" 
+                        : "bg-slate-50 border-transparent text-slate-600 hover:bg-slate-100"
+                    }`}
                   >
                     R$ {v}
                   </button>
                 ))}
-                <div className="col-span-full relative mt-3">
-                  <input 
-                    type="number" 
-                    placeholder="Outro valor" 
-                    value={valor} 
-                    onChange={(e) => setValor(e.target.value)} 
-                    className="w-full bg-gray-50 border-2 border-transparent focus:border-purple-200 rounded-2xl py-4.5 px-14 font-black text-xl text-[#3b1a66] focus:bg-white transition-all outline-none" 
-                  />
-                  <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-purple-400 text-xl">R$</span>
+              </div>
+                
+              <div className="relative group w-full">
+                <div className="absolute left-5 top-1/2 -translate-y-1/2 font-semibold text-slate-400 group-focus-within:text-purple-600 transition-colors">
+                  R$
                 </div>
+                <input 
+                  type="number" 
+                  placeholder="Outro valor" 
+                  value={valor} 
+                  onChange={(e) => setValor(e.target.value)} 
+                  className="w-full bg-slate-50 border-2 border-transparent focus:bg-white focus:border-purple-200 rounded-2xl py-4.5 pl-14 pr-4 font-bold text-lg text-slate-800 transition-all outline-none placeholder:font-medium placeholder:text-slate-400" 
+                />
               </div>
             </div>
           </div>
 
-          {/* COLUNA DA DIREITA: QR Code e Comprovante */}
-          <div className="flex flex-col gap-6 lg:gap-8">
-            <div className="bg-white rounded-3xl p-8 shadow-md shadow-purple-100/40 border border-purple-50 flex flex-col items-center justify-center">
-              <p className="font-black text-slate-400 mb-5 uppercase text-xs tracking-widest">Escaneie o QR Code</p>
+          {/* ==========================================
+              COLUNA DA DIREITA (Pagamento) - Ocupa 5/12
+              ========================================== */}
+          <div className="lg:col-span-5 flex flex-col gap-6">
+            <div className="bg-white rounded-3xl p-6 lg:p-8 shadow-sm border border-slate-100 flex flex-col">
+              
+              <div className="w-full flex items-center justify-between mb-8">
+                <h3 className="font-bold text-lg text-slate-800">Pagamento</h3>
+                <span className="bg-purple-50 text-purple-600 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider border border-purple-100">
+                  Pix
+                </span>
+              </div>
 
-              <div className="bg-white p-5 rounded-2xl border-2 border-purple-100 shadow-sm mb-6">
+              {/* QR Code */}
+              <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 mb-6 flex justify-center items-center mx-auto w-full max-w-[260px] aspect-square">
                 {pixCopiaECola ? (
-                  <QRCodeSVG value={pixCopiaECola} size={180} level="M" />
+                  <QRCodeSVG value={pixCopiaECola} size={100} className="w-full h-full" level="M" />
                 ) : (
-                  <div className="w-[180px] h-[180px] flex items-center justify-center text-base text-slate-400 font-bold text-center">
-                    Aguardando chave Pix...
+                  <div className="w-full h-full flex flex-col items-center justify-center text-sm text-slate-400 font-medium text-center border-2 border-dashed border-slate-200 rounded-2xl bg-white/50">
+                    <Loader2 className="animate-spin text-slate-300 mb-2" size={24} />
+                    <span>Aguardando<br/>chave Pix...</span>
                   </div>
                 )}
               </div>
 
-              <div className="w-full mb-6">
-                <div className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all duration-300 ${copied ? 'border-green-500 bg-green-50' : 'border-purple-100 bg-purple-50/20'}`}>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Key className={`flex-shrink-0 ${copied ? "text-green-600" : "text-purple-600"}`} size={20} />
-                    <span className="text-base font-bold truncate text-[#3b1a66]">{pixKeyVisual}</span>
+              {/* Chave Copia e Cola */}
+              <div className="w-full mb-8">
+                <div className={`flex items-center justify-between p-3 rounded-2xl border transition-all duration-300 ${copied ? 'border-green-300 bg-green-50' : 'border-slate-200 bg-slate-50'}`}>
+                  <div className="flex items-center gap-3 min-w-0 pl-3">
+                    <Key className={`flex-shrink-0 ${copied ? "text-green-600" : "text-slate-400"}`} size={18} />
+                    <span className={`text-sm font-medium truncate ${copied ? "text-green-800" : "text-slate-600"}`}>{pixKeyVisual}</span>
                   </div>
                   <button
                     onClick={copyKey}
                     title="Copiar Pix Copia e Cola"
-                    className={`flex-shrink-0 ml-3 p-3 rounded-xl transition-all ${copied ? "bg-green-600 text-white shadow-sm" : "bg-white text-purple-600 shadow-sm hover:scale-105 active:scale-95"}`}
+                    className={`flex-shrink-0 ml-2 p-2.5 rounded-xl transition-all ${copied ? "bg-green-600 text-white shadow-sm" : "bg-white border border-slate-200 text-slate-600 hover:text-purple-600 hover:border-purple-200 active:scale-95"}`}
                   >
                     {copied ? <CheckCircle2 size={18} /> : <Copy size={18} />}
                   </button>
                 </div>
-                <p className="text-xs text-center text-slate-400 mt-2 font-semibold">
-                  {copied ? "Código Copia e Cola copiado com sucesso!" : "O botão copia o código Pix Copia e Cola completo"}
+                <p className="text-[11px] text-center text-slate-400 mt-2.5 font-medium">
+                  {copied ? "Código copiado com sucesso!" : "Copie o código para pagar no app do banco"}
                 </p>
               </div>
 
-              {/* BLOCO DE COMPROVANTE */}
-              <div className="w-full space-y-3 pt-6 border-t border-gray-100">
-                <label className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
-                  <Paperclip size={14} /> Comprovante do Pix
+              {/* Anexar Comprovante */}
+              <div className="w-full space-y-3 pt-6 border-t border-slate-100 mt-auto">
+                <label className="flex items-center gap-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  <Paperclip size={14} /> Comprovante
                 </label>
                 
-                <div className={`relative border-2 border-dashed rounded-2xl p-6 lg:p-8 transition-all text-center ${file ? 'border-green-400 bg-green-50' : 'border-purple-200 bg-purple-50/30 hover:bg-purple-50'}`}>
+                <div className={`relative border-2 border-dashed rounded-2xl p-5 transition-all text-center group cursor-pointer ${file ? 'border-green-400 bg-green-50' : 'border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-purple-300'}`}>
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={(e) => setFile(e.target.files?.[0] || null)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
                   {!file ? (
-                    <>
-                      <input
-                        type="file"
-                        accept="image/*,application/pdf"
-                        onChange={(e) => setFile(e.target.files?.[0] || null)}
-                        className="absolute inset-0 opacity-0 cursor-pointer"
-                      />
-                      <p className="text-sm font-bold text-purple-500">Clique para anexar imagem ou PDF</p>
-                    </>
+                    <div className="flex flex-col items-center gap-1.5 pointer-events-none">
+                      <UploadCloud size={22} className="text-slate-400 group-hover:text-purple-500 transition-colors mb-1" />
+                      <p className="text-xs font-medium text-slate-600">Buscar arquivos</p>
+                      <p className="text-[10px] text-slate-400">PDF, JPG ou PNG</p>
+                    </div>
                   ) : (
-                    <div className="flex items-center justify-between text-green-700 font-bold text-sm lg:text-base">
+                    <div className="flex items-center justify-between text-green-700 font-medium text-sm relative z-20">
                       <span className="truncate flex items-center gap-2 max-w-[85%]">
                         {file.type === "application/pdf" ? (
-                          <FileText className="flex-shrink-0 text-red-500" size={20} />
+                          <FileText className="flex-shrink-0 text-red-500" size={18} />
                         ) : (
-                          <ImageIcon className="flex-shrink-0 text-green-600" size={20} />
+                          <ImageIcon className="flex-shrink-0 text-green-600" size={18} />
                         )}
-                        <span className="truncate" title={file.name}>{file.name}</span>
+                        <span className="truncate font-semibold text-xs" title={file.name}>{file.name}</span>
                       </span>
-                      <button onClick={() => setFile(null)} className="text-slate-400 hover:text-red-500 p-1 ml-2 transition-colors">
-                        <X size={18} />
+                      <button onClick={(e) => { e.preventDefault(); setFile(null); }} className="text-slate-400 hover:text-red-500 p-1 ml-1 transition-colors bg-white rounded-md shadow-sm border border-slate-200">
+                        <X size={14} />
                       </button>
                     </div>
                   )}
@@ -348,9 +384,15 @@ function PixPageContent() {
                 <button
                   onClick={handleConfirmarDoacao}
                   disabled={!file || loading}
-                  className={`w-full py-4.5 rounded-2xl font-black text-base uppercase tracking-widest transition-all mt-4 ${!file || loading ? "bg-slate-200 text-slate-400 cursor-not-allowed" : "bg-purple-600 text-white hover:bg-purple-700 shadow-md shadow-purple-200 active:scale-95"}`}
+                  className={`w-full py-4 rounded-2xl font-bold text-sm tracking-wide transition-all mt-4 ${!file || loading ? "bg-slate-100 text-slate-400 cursor-not-allowed" : "bg-purple-600 text-white hover:bg-purple-700 shadow-md shadow-purple-500/20 active:scale-[0.98]"}`}
                 >
-                  {loading ? "Processando..." : "Confirmar Doação"}
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="animate-spin" size={18} /> Processando...
+                    </span>
+                  ) : (
+                    "CONFIRMAR DOAÇÃO"
+                  )}
                 </button>
               </div>
 
@@ -362,20 +404,20 @@ function PixPageContent() {
 
       {/* MODAL DE SUCESSO */}
       {showPopup && (
-        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-[#3b1a66]/60 backdrop-blur-sm px-4">
+        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-slate-900/40 backdrop-blur-sm px-4 transition-opacity">
           <div className="bg-white rounded-3xl p-8 lg:p-10 w-full max-w-[400px] text-center shadow-2xl">
-            <div className="inline-flex items-center justify-center bg-green-500 rounded-full p-5 lg:p-6 mb-6 shadow-xl shadow-green-200">
-              <CheckCircle2 className="text-white" size={36} />
+            <div className="inline-flex items-center justify-center bg-green-100 rounded-full p-5 mb-5">
+              <CheckCircle2 className="text-green-600" size={40} strokeWidth={2.5} />
             </div>
-            <h2 className="text-2xl font-black text-[#3b1a66] mb-3">Tudo certo!</h2>
-            <p className="text-slate-500 text-sm mb-8 leading-relaxed font-medium">
-              Sua doação para <span className="font-black text-purple-600">{ongData?.name || "a ONG"}</span> foi informada com sucesso. Muito obrigado por ajudar! 💜
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">Tudo certo!</h2>
+            <p className="text-slate-500 text-sm mb-8 leading-relaxed">
+              Sua doação para <span className="font-bold text-slate-700">{ongData?.name || "a ONG"}</span> foi informada com sucesso. Muito obrigado por ajudar!
             </p>
             <button 
               onClick={() => router.push("/home")} 
-              className="w-full bg-purple-600 text-white py-4 rounded-xl font-black uppercase tracking-widest hover:bg-purple-700 transition-all text-sm shadow-md active:scale-95"
+              className="w-full bg-slate-800 text-white py-3.5 rounded-xl font-bold text-sm hover:bg-slate-900 transition-all active:scale-[0.98]"
             >
-              Concluir
+              Voltar ao Início
             </button>
           </div>
         </div>
@@ -383,11 +425,10 @@ function PixPageContent() {
     </div>
   );
 }
-
 export default function PixPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#F8F9FD] flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <Loader2 className="animate-spin text-purple-600" size={40} />
       </div>
     }>

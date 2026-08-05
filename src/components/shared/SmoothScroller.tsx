@@ -14,26 +14,26 @@ export default function SmoothScroller({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  // Usamos um useRef para segurar a função exata de update do GSAP
   const lenisRef = useRef<Lenis | null>(null);
   const rafRef = useRef<((time: number) => void) | null>(null);
 
-  useEffect(() => {
+useEffect(() => {
     document.documentElement.style.removeProperty("overflow");
     document.body.style.removeProperty("overflow");
 
     const initTimer = setTimeout(() => {
+      if (typeof window !== "undefined" && window.innerWidth < 768) {
+        return; 
+      }
       const lenis = new Lenis({
         duration: 1.8,
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         smoothWheel: true,
         wheelMultiplier: 0.8,
-        touchMultiplier: 1.5,
         infinite: false,
       });
-      lenisRef.current = lenis;
       
-      // A MÁGICA: Expõe o Lenis para o site inteiro usar!
+      lenisRef.current = lenis;
       (window as any).lenis = lenis;
 
       lenis.on("scroll", ScrollTrigger.update);
@@ -48,8 +48,6 @@ export default function SmoothScroller({
 
     return () => {
       clearTimeout(initTimer); 
-      
-      // Limpa a variável global quando o componente morrer
       delete (window as any).lenis;
       
       if (rafRef.current) gsap.ticker.remove(rafRef.current);

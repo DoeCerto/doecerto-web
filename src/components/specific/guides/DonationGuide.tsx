@@ -1,777 +1,378 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-
-import StepHeader from "@/components/ui/StepHeader";
-import StepIntro from "@/components/ui/StepIntro";
-import NextButton from "@/components/ui/NextButton";
-import BackButton from "@/components/ui/BackButton";
-
-import {
+import React, { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { 
+  ArrowRight, 
+  ArrowLeft, 
   Star,
-  Heart,
-  Check
+  MapPin, 
+  DollarSign, 
+  Calendar, 
+  HeartHandshake, 
+  Banknote, 
+  Package,
+  Search
 } from "lucide-react";
 
-/* =========================
-   CARD PADRÃO
-========================= */
+// 1. Acha a ONG -> 2. Escolhe como doar -> 3. Vê no histórico
+const STEPS = [
+  {
+    id: 1,
+    title: "Encontre e ajude",
+    highlight: "quem precisa",
+    description: "Pesquise por causas que você ama na tela principal. Escolha a ONG ideal e abra o perfil para apoiar.",
+    mockup: <MockupCard1 />,
+  },
+  {
+    id: 2,
+    title: "Pronto para fazer a",
+    highlight: "diferença?",
+    description: "No perfil da ONG escolhida, defina se quer doar dinheiro via Pix ou agendar a entrega de materiais e alimentos.",
+    mockup: <MockupCard2 />,
+  },
+  {
+    id: 3,
+    title: "Transparência em",
+    highlight: "cada doação",
+    description: "Acompanhe tudo no seu perfil de doador. Suas doações financeiras e de materiais ficam registradas no seu histórico oficial.",
+    mockup: <MockupCard3 />,
+  },
+];
 
-function DefaultCard({ step }: any) {
-  return (
-    <div
-      className="
-        w-full
-        bg-white
-        border
-        border-[#6B39A7]
-        rounded-[20px]
-        mt-[30px]
-        pt-[40px]
-        px-[25px]
-        pb-[28px]
-        mb-[25px]
-        shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
-        flex
-        flex-col
-        items-center
-      "
-    >
-      <div
-        className="
-          w-[60px]
-          h-[60px]
-          bg-[#EBD2FF]
-          rounded-full
-          flex
-          items-center
-          justify-center
-        "
-      >
-        {step.icon}
-      </div>
-
-      <h1 className="font-semibold text-[24px] mt-[3px] text-center">
-        {step.organization}
-      </h1>
-
-      <p
-        className="
-          text-[16px]
-          font-normal
-          -translate-y-[8px]
-          mb-[10px]
-          text-center
-        "
-      >
-        {step.organizationDescription}
-      </p>
-
-      <hr className="border border-[#3D3D3D] w-full h-[1px]" />
-
-      {/* Stats */}
-      <div
-        className="
-          w-full
-          flex
-          flex-row
-          justify-between
-          mb-[15px]
-          mt-[10px]
-          px-[10px]
-        "
-      >
-        <div className="flex flex-col items-center">
-          <h1 className="text-[24px] font-bold">
-            {step.donors}
-          </h1>
-
-          <p className="text-[16px] font-normal -translate-y-[8px]">
-            Doadores
-          </p>
-        </div>
-
-        <div className="flex flex-col items-center">
-          <h1 className="text-[24px] font-bold">
-            {step.rescues}
-          </h1>
-
-          <p className="text-[16px] font-normal -translate-y-[8px]">
-            Resgates
-          </p>
-        </div>
-
-        <div className="flex flex-col items-center">
-          <h1
-            className="
-              flex
-              flex-row
-              items-center
-              gap-1
-              text-[24px]
-              font-bold
-            "
-          >
-            {step.rating}
-
-            <Star className="w-[25px] h-[25px] fill-[#000000]" />
-          </h1>
-
-          <p className="text-[16px] font-normal -translate-y-[8px]">
-            Avaliação
-          </p>
-        </div>
-      </div>
-
-      {/* Button */}
-      <div
-        className="
-          mx-[5px]
-          py-[18px]
-          bg-[#6B39A7]
-          text-white
-          text-[16px]
-          font-bold
-          w-full
-          rounded-[10px]
-          flex
-          justify-center
-          items-center
-        "
-      >
-        {step.buttonText}
-      </div>
-    </div>
-  );
-}
-
-/* =========================
-   CARD STEP 2
-========================= */
-
-function DonationTypeCard({ step }: any) {
-  return (
-    <div
-      className="
-        w-full
-        bg-white
-        border
-        border-[#6B39A7]
-        rounded-[20px]
-        mt-[30px]
-        pt-[40px]
-        px-[25px]
-        pb-[28px]
-        mb-[25px]
-        shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
-        flex
-        flex-col
-        items-center
-      "
-    >
-      <div
-        className="
-          w-[60px]
-          h-[60px]
-          bg-[#EBD2FF]
-          rounded-full
-          flex
-          items-center
-          justify-center
-        "
-      >
-        {step.icon}
-      </div>
-
-      <h1 className="font-semibold text-[24px] mt-[3px] text-center">
-        {step.organization}
-      </h1>
-
-      <p
-        className="
-          text-[16px]
-          font-normal
-          -translate-y-[8px]
-          mb-[20px]
-          text-center
-        "
-      >
-        {step.organizationDescription}
-      </p>
-
-      <div className="w-full flex flex-col gap-3">
-        <div
-          className="
-            border
-            border-[#6B39A7]
-            bg-[#EBD2FF]
-            rounded-[14px]
-            p-[18px]
-            flex
-            flex-row
-            justify-between
-            items-center
-          "
-        >
-          <div className="flex flex-row gap-2 items-center">
-            <div className="p-[5px] flex items-center justify-center rounded-[5px] bg-[#FFFFFF]">
-              💰
-            </div>
-
-            <div>
-              <h2 className="text-[20px] font-bold text-[#6B39A7]">
-                {step.money}
-              </h2>
-
-              <p className="text-[14px] text-[#5F5F5F]">
-                {step.DescribeMoney}
-              </p>
-            </div>
-          </div>
-
-          <div className="rounded-full p-[5px] w-[15px] h-[15px] flex justify-center items-center bg-[#6B39A7]">
-            <div className="rounded-full w-[6px] h-[6px] bg-white"></div>
-          </div>
-        </div>
-
-        <div
-          className="
-            border
-            border-[#EBD2FF]
-            rounded-[14px]
-            p-[18px]
-            flex
-            flex-row
-            justify-between
-            items-center
-          "
-        >
-          <div className="flex flex-row gap-2 items-center">
-            <div className="p-[5px] flex items-center justify-center rounded-[5px] bg-[#EBD2FF] text-white">
-              📦
-            </div>
-
-            <div>
-              <h2 className="text-[20px] font-bold text-[#6B39A7]">
-                {step.items}
-              </h2>
-
-              <p className="text-[14px] text-[#5F5F5F]">
-                {step.DescribeItems}
-              </p>
-            </div>
-          </div>
-
-          <div className="border border-[#6B39A7] rounded-full p-[5px] w-[15px] h-[15px] flex justify-center items-center"></div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* =========================
-   CARD STEP 3
-========================= */
-
-function ReviewCard({ step }: any) {
-  return (
-    <div
-      className="
-        w-full
-        bg-white
-        border
-        border-[#6B39A7]
-        rounded-[20px]
-        mt-[30px]
-        pt-[40px]
-        px-[25px]
-        pb-[28px]
-        mb-[25px]
-        shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
-        flex
-        flex-col
-        items-center
-      "
-    >
-      <div className="flex flex-col items-center">
-        <div
-          className="
-            w-[60px]
-            h-[60px]
-            bg-[#EBD2FF]
-            rounded-full
-            flex
-            items-center
-            justify-center
-          "
-        >
-          {step.icon}
-        </div>
-
-        <h1 className="font-semibold text-[24px] mt-[3px] text-center">
-          {step.money}
-        </h1>
-
-        <p className="text-[16px] text-center mb-[20px] font-normal
-          -translate-y-[8px]">
-          {step.organizationDescription}
-        </p>
-      </div>
-
-      <div className="w-full flex flex-row gap-4 justify-center">
-        <div
-          className="
-                w-full 
-                border 
-                border-[#6B39A7] 
-                bg-[#EBD2FF] 
-                flex 
-                flex-col 
-                items-center 
-                justify-center 
-                p-[15px] 
-                rounded-[14px]
-              "
-        >
-          <h1 className="font-semibold text-[24px] text-[#6B39A7]">{step.titleCard1}</h1>
-          <p className="text-[#6B39A7] -translate-y-[8px]">{step.descriptionCard1}</p>
-        </div>
-
-        <div
-          className="
-              w-full
-              border
-              border-[#6B39A7]
-              flex
-              flex-col
-              items-center
-              justify-center
-              py-[5px]
-              px-[15px]
-              rounded-[14px]
-            "
-        >
-          <h1 className="font-semibold text-[24px] text-[#6B39A7]">
-            {step.titleCard2}
-          </h1>
-
-          <div className="text-[#6B39A7] mt-[5px] -translate-y-[15px]">
-            <svg
-              width="55"
-              height="32"
-              viewBox="0 0 55 32"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <rect x="2" y="4" width="2" height="24" fill="currentColor" />
-              <rect x="6" y="4" width="1" height="24" fill="currentColor" />
-              <rect x="9" y="4" width="3" height="24" fill="currentColor" />
-              <rect x="14" y="4" width="2" height="24" fill="currentColor" />
-              <rect x="18" y="4" width="4" height="24" fill="currentColor" />
-              <rect x="24" y="4" width="1" height="24" fill="currentColor" />
-              <rect x="27" y="4" width="3" height="24" fill="currentColor" />
-              <rect x="32" y="4" width="2" height="24" fill="currentColor" />
-              <rect x="36" y="4" width="5" height="24" fill="currentColor" />
-              <rect x="43" y="4" width="1" height="24" fill="currentColor" />
-              <rect x="46" y="4" width="3" height="24" fill="currentColor" />
-              <rect x="51" y="4" width="2" height="24" fill="currentColor" />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-4 py-[18px] text-white rounded-[10px] w-full bg-[#6B39A7] flex justify-center items-center">
-        <p className="font-bold font-[16px]">{step.buttonText}</p>
-      </div>
-    </div>
-  );
-}
-
-/* =========================
-   CARD STEP 4
-========================= */
-
-function SuccessCard({ step }: any) {
-  return (
-    <div
-      className="
-        w-full
-        bg-white
-        border
-        border-[#6B39A7]
-        rounded-[20px]
-        mt-[30px]
-        pt-[40px]
-        px-[25px]
-        pb-[28px]
-        mb-[25px]
-        shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
-      "
-    >
-      <div className="flex flex-col items-center">
-        <div
-          className="
-            w-[60px]
-            h-[60px]
-            bg-[#EBD2FF]
-            rounded-full
-            flex
-            items-center
-            justify-center
-          "
-        >
-          {step.icon}
-        </div>
-
-        <h1 className="font-semibold text-[24px] mt-[3px] text-center">
-          {step.titleCard}
-        </h1>
-
-        <p className="text-[16px] text-center text-[#6B39A7] mb-[25px]">
-          {step.titleDescription}
-        </p>
-
-        <div className="gap-2 w-full flex flex-col">
-
-          <div className="rounded-[10px] py-[10px] px-[20px] border border-[#6B39A7] text-[16px] font-extrabold bg-[#EBD2FF]">
-            {step.labelCard1}
-            <div className="flex flex-row justify-between items-center">
-              <div className="bg-white py-[5px] px-[10px] w-[35%] rounded-[10px] flex justify-center items-center border border-[#6B39A7]">
-                <p className="font-semibold text-[16px]">{step.itensCard1}</p>
-              </div>
-
-              <div className="gap-2 flex flex-row justify-center items-center">
-                <div className="bg-white rounded-[10px] max-h-[20px] px-[7px] py-[10px] border border-[#6B39A7] flex items-center justify-center">
-                  <div className="w-[12px] h-[3px] bg-[#6B39A7] rounded-full"></div>
-                </div>
-                <p className="text-[16px] font-extrabold">2</p>
-                <div className="bg-white rounded-[10px] max-h-[20px] px-[7px] py-[10px] border border-[#6B39A7] flex items-center justify-center">
-                  <div className="relative w-[10px] h-[10px]">
-                    <div className="absolute top-1/2 left-0.10 -translate-y-1/2 w-[10px] h-[2px] bg-[#6B39A7] rounded-full"></div>
-
-                    <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[2px] h-[10px] bg-[#6B39A7] rounded-full"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          <div className="rounded-[10px] py-[10px] px-[20px] border border-[#6B39A7] text-[16px] font-extrabold bg-[#EBD2FF]">
-            {step.labelCard2}
-            <div className="flex flex-row justify-between items-center">
-              <div className="bg-white py-[5px] px-[10px] w-[35%] rounded-[10px] flex justify-center items-center border border-[#6B39A7]">
-                <p className="font-semibold text-[16px] text-[#838383]">{step.itensCard2}</p>
-              </div>
-
-              <div className="gap-2 flex flex-row justify-center items-center">
-                <div className="bg-white rounded-[10px] max-h-[20px] px-[7px] py-[10px] border border-[#6B39A7] flex items-center justify-center">
-                  <div className="w-[12px] h-[3px] bg-[#6B39A7] rounded-full"></div>
-                </div>
-                <p className="text-[16px] font-extrabold">0</p>
-                <div className="bg-white rounded-[10px] max-h-[20px] px-[7px] py-[10px] border border-[#6B39A7] flex items-center justify-center">
-                  <div className="relative w-[10px] h-[10px]">
-                    <div className="absolute top-1/2 left-0.10 -translate-y-1/2 w-[10px] h-[2px] bg-[#6B39A7] rounded-full"></div>
-
-                    <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[2px] h-[10px] bg-[#6B39A7] rounded-full"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          <div className="mt-[10px] rounded-[10px] w-full border border-[#6B39A7] py-[10px] flex justify-center items-center">
-            <div className="flex flex-row justify-center items-center gap-4">
-              <div className="relative w-[20px] h-[20px] flex justify-center items-center">
-                <div className="absolute top-1/2 left-0 -translate-y-1/2 w-full h-[3px] bg-[#6B39A7] rounded-full"></div>
-
-                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[3px] h-full bg-[#6B39A7] rounded-full"></div>
-              </div>
-              <p className="font-semibold text-[20px] text-[#6B39A7]">{step.buttonAdd}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-
-    </div>
-  );
-}
-
-/* =========================
-   CARD STEP 5
-========================= */
-
-function FinishCard({ step }: any) {
-  return (
-    <div
-      className="
-        w-full
-        bg-white
-        border
-        border-[#6B39A7]
-        rounded-[20px]
-        mt-[30px]
-        pt-[40px]
-        px-[25px]
-        pb-[28px]
-        mb-[25px]
-        shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
-      "
-    >
-      <div className="flex flex-col items-center">
-        <div
-          className="
-            w-[60px]
-            h-[60px]
-            bg-[#EBD2FF]
-            rounded-full
-            flex
-            items-center
-            justify-center
-          "
-        >
-          {step.icon}
-        </div>
-
-        <h1 className="font-semibold text-[24px] text-[#6B39A7] mt-[3px] text-center">
-          {step.confirmDonation}
-        </h1>
-
-        <p className="text-[16px] text-center mb-[25px]">
-          {step.confirmOrganization}
-        </p>
-
-        <div className="flex flex-col border border-[#6B39A7] bg-[#EBD2FF] rounded-[14px] w-full py-[15px] px-[30px]">
-          <div className="flex flex-row justify-between">
-            <p className="text-[16px]">Para</p>
-            <p className="font-semibold text-[#6B39A7] text-[16px]">{step.to}</p>
-          </div>
-          <div className="flex flex-row justify-between">
-            <p className="text-[16px]">Valor</p>
-            <p className="font-semibold text-[#6B39A7] text-[16px]">{step.value}</p>
-          </div>
-          <div className="flex flex-row justify-between">
-            <p className="text-[16px]">Método</p>
-            <p className="font-semibold text-[#6B39A7] text-[16px]">{step.method}</p>
-          </div>
-          <div className="flex flex-row justify-between">
-            <p className="text-[16px]">Data</p>
-            <p className="font-semibold text-[#6B39A7] text-[16px]">{step.date}</p>
-          </div>
-        </div>
-        <div className="mt-[20px]">
-          <p className="text-[16px] text-center text-[#6B39A7]">{step.confirmDescription}</p>
-        </div>
-      </div>
-
-
-    </div>
-  );
-}
-
-export default function DonationGuide() {
+export default function UserGuide() {
   const router = useRouter();
-
-  const steps = [
-    {
-      id: 1,
-      icon: <span className="text-[28px]">🐱</span>,
-      organization: "SOS Gatinhos",
-      organizationDescription:
-        "Resgate e cuidados de gatos abandonados",
-
-      donors: "423",
-      rescues: "1.2K",
-      rating: "4.9",
-
-      buttonText: "Doar para SOS Gatinhos",
-
-      label: "ENCONTRE E AJUDE",
-
-      title: "Encontre uma ONG e toque em Doar",
-
-      description:
-        "Cada ONG tem seu botão de doação na página de perfil",
-    },
-
-    {
-      id: 2,
-      icon: <span className="text-[28px]">🐱</span>,
-      organization: "Sos Gatinhos",
-      organizationDescription:
-        "Como você quer ajudar?",
-
-      money: "Dinheiro",
-      DescribeMoney: "Pix ou boleto - rápido e seguro",
-
-      items: "Itens",
-      DescribeItems: "Ração, roupas e mais",
-
-      label: "VOCÊ DECIDE COMO AJUDAR",
-
-      title: (
-        <>
-          Escolha o tipo de <br />
-          doação
-        </>
-      ),
-
-      description:
-        "Doe dinheiro ou itens físicos - do jeito que for melhor pra você",
-    },
-
-    {
-      id: 3,
-      icon: <Heart className="w-[28px] h-[28px] fill-[#6B39A7] text-[#6B39A7]" />,
-      money: "R$ 50,00",
-      organizationDescription:
-        "para SOS Gatinhos",
-
-      titleCard1: "Pix",
-      descriptionCard1:
-        "Instantâneo",
-
-      titleCard2: "Boleto",
-
-      buttonText: "Confirmar Doação",
-
-      label: "RÁPIDO E SEGURO",
-
-      title: "Doe em segundos com Segurança",
-
-      description:
-        "Pix ou boleto. Recibo e confirmação chega na hora.",
-    },
-
-    {
-      id: 4,
-      icon: <span className="text-[28px]">📦</span>,
-      titleCard: "O que você vai doar?",
-      titleDescription:
-        "Adicione os itens que deseja enviar para SOS Gatinhos",
-
-      labelCard1: "Item 1",
-      itensCard1: "Ração e shampoo",
-
-      labelCard2: "Item 2",
-      itensCard2: "Ex: remédios, coberto...",
-
-      label: "ITENS QUE FAZEM DIFERENÇA",
-
-      title: "Doe itens para quem mais precisa",
-
-      description:
-        "Adicione ração, remédios ou qualquer item da lista da ONG",
-
-      buttonAdd: "Adicionar Item",
-    },
-
-    {
-      id: 5,
-      icon: <Check className="w-[30px] h-[30px] text-[#6B39A7] stroke-[3]" />,
-      confirmDonation: "Doação Confirmada!",
-      confirmOrganization:
-        "para SOS Gatinhos",
-
-      to: "SOS Gatinhos",
-      value: "R$ 50,00",
-      method: "Pix",
-      date: "Hoje, 14h32",
-
-      confirmDescription: "Recibo enviado para o seu e-mail. Obrigado por fazer a diferença!",
-
-      label: "TUDO CERTO!",
-
-      title: "Sua doação foi um confirmada!",
-
-      description:
-        "Recibo e comprovante chegam na hora no seu e-mail",
-    },
-  ];
-
+  const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(0);
 
-  const step = steps[currentStep];
+  // O Padrão Ouro: Captura de onde o usuário veio na URL. Se não tiver parâmetro, o fallback seguro é a "/home".
+  const callbackUrl = searchParams.get("from") || "/help-center";
 
-  /* =========================
-     MAPEAMENTO DOS CARDS
-  ========================= */
-
-  const cardComponents: Record<number, any> = {
-    1: DefaultCard,
-    2: DonationTypeCard,
-    3: ReviewCard,
-    4: SuccessCard,
-    5: FinishCard,
+  const handleNext = () => {
+    if (currentStep < STEPS.length - 1) {
+      setCurrentStep((prev) => prev + 1);
+    } else {
+      router.push(callbackUrl);
+    }
   };
 
-  const CurrentCard = cardComponents[step.id] || DefaultCard;
-
-  function handleNext() {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      router.push("/help-center");
-    }
-  }
-
-  function handleBack() {
+  const handlePrev = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep((prev) => prev - 1);
     }
-  }
+  };
+
+  const handleNavigation = () => {
+    router.push(callbackUrl);
+  };
 
   return (
-    <div className="min-h-dvh px-[25px] py-[10px] flex flex-col items-center">
-      <StepHeader
-        currentStep={step.id}
-        totalSteps={steps.length}
-        onSkip={() => router.push("/help-center")}
-      />
+    <div className="flex min-h-[100dvh] w-full font-sans bg-[#F9FAFB] lg:bg-white overflow-hidden relative selection:bg-[#6B39A7] selection:text-white">
+      
+      {/* HEADER: Voltar, Contador e Botão Pular */}
+      <header className="absolute top-0 left-0 w-full p-6 sm:p-10 flex items-center justify-between z-50">
+        <div className="w-1/3 flex justify-start">
+          <button 
+            onClick={handleNavigation} 
+            className="flex items-center text-slate-500 hover:text-[#6B39A7] font-semibold transition-colors group w-fit active:scale-95"
+          >
+            <ArrowLeft size={20} className="mr-2 group-hover:-translate-x-1 transition-transform" /> 
+            <span className="hidden sm:inline">Voltar</span>
+          </button>
+        </div>
 
+        <div className="w-1/3 flex justify-center">
+          <span className="text-[#6B39A7] font-extrabold tracking-widest text-xs sm:text-sm uppercase bg-purple-100 px-3 py-1 rounded-lg">
+            {currentStep + 1} DE {STEPS.length}
+          </span>
+        </div>
 
-      <main className="max-w-[430px] flex flex-col flex-1">
+        <div className="w-1/3 flex justify-end">
+          <button
+            onClick={handleNavigation}
+            className="text-slate-400 hover:text-[#6B39A7] hover:bg-purple-50 px-4 py-2 rounded-xl font-bold text-sm sm:text-base transition-colors active:scale-95"
+          >
+            Pular
+          </button>
+        </div>
+      </header>
 
-        {/* CARD DINÂMICO */}
-        <CurrentCard step={step} />
+      {/* CONTEÚDO PRINCIPAL */}
+      <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-center min-h-screen px-6 sm:px-12 pt-24 lg:pt-0 gap-12 lg:gap-20">
+        
+        {/* LADO ESQUERDO: Mockup Fixo */}
+        <div className="w-full lg:w-1/2 flex justify-center lg:justify-end items-center relative">
+          <div className="absolute inset-0 bg-gradient-to-tr from-purple-100/50 to-transparent rounded-full blur-3xl w-72 h-72 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10"></div>
+          
+          <div className="w-full max-w-[400px] sm:max-w-[440px] lg:max-w-[480px] transition-all duration-300">
+            {STEPS[currentStep].mockup}
+          </div>
+        </div>
 
-        {/* Intro */}
-        <StepIntro
-          label={step.label ?? ""}
-          title={typeof step.title === "string" ? step.title : ""}
-          description={step.description ?? ""}
-        />
+        {/* LADO DIREITO: Textos e Controles */}
+        <div className="w-full lg:w-1/2 flex flex-col items-center text-center lg:items-start lg:text-left pb-12 lg:pb-0">
+          
+          {/* Textos */}
+          <div className="w-full max-w-[480px] min-h-[180px]">
+            <h1 className="text-4xl sm:text-[3rem] font-black text-slate-900 mb-4 tracking-tight leading-[1.1]">
+              {STEPS[currentStep].title} <br />
+              <span className="text-[#6B39A7]">{STEPS[currentStep].highlight}</span>
+            </h1>
+            <p className="text-slate-500 text-lg font-medium leading-relaxed mb-10">
+              {STEPS[currentStep].description}
+            </p>
+          </div>
 
-        {/* Indicators */}
-        <div className="mt-auto mb-6 flex justify-center gap-[5px]">
-          {steps.map((_, index) => (
-            <div
-              key={index}
-              className={`h-[10px] rounded-full transition-all duration-300 ${currentStep === index
-                ? "w-[24px] bg-[#6B39A7]"
-                : "w-[10px] bg-[#D9B8F5]"
-                }`}
+          {/* CONTROLES: Anterior, Paginação e Botão Next */}
+          <div className="w-full max-w-[480px] flex items-center justify-between mt-4">
+            
+            <div className="w-20 flex justify-start">
+              {currentStep > 0 ? (
+                <button
+                  onClick={handlePrev}
+                  className="text-slate-400 hover:text-[#6B39A7] font-bold text-base transition-colors active:scale-95"
+                >
+                  Anterior
+                </button>
+              ) : (
+                <div className="w-20"></div>
+              )}
+            </div>
+
+            {/* Paginação Dots */}
+            <div className="flex items-center gap-2">
+              {STEPS.map((_, idx) => (
+                <div
+                  key={idx}
+                  className={`h-2.5 rounded-full transition-all duration-300 ${
+                    currentStep === idx
+                      ? "w-8 bg-[#6B39A7]"
+                      : "w-2.5 bg-slate-200"
+                  }`}
+                />
+              ))}
+            </div>
+
+            {/* Botão Próximo */}
+            <div className="w-auto flex justify-end">
+              <button
+                onClick={handleNext}
+                className="flex items-center justify-center gap-2 bg-[#4A2675] hover:bg-[#3b1a66] text-white px-6 sm:px-8 h-[54px] sm:h-[60px] rounded-xl font-bold text-base sm:text-lg shadow-[0_8px_20px_-6px_rgba(74,38,117,0.5)] transition-all active:scale-[0.98] group"
+              >
+                {currentStep === STEPS.length - 1 ? "Começar" : "Próximo"}
+                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+            
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// MOCKUPS REAIS DA PLATAFORMA
+// ==========================================
+
+// Mockup 1: "Mini Home" simulando exatamente a grade (Grid) da Home
+function MockupCard1() {
+  return (
+    <div className="flex flex-col bg-slate-50 border border-slate-200 rounded-[2rem] p-5 sm:p-6 shadow-xl w-full relative overflow-hidden select-none">
+      
+      {/* Search Fake */}
+      <div className="relative mb-5 w-full">
+        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+          <Search className="h-4 w-4 text-slate-400" />
+        </div>
+        <div className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-400 text-sm font-medium shadow-sm flex items-center">
+          Pesquise uma ONG, cidade ou causa...
+        </div>
+      </div>
+
+      {/* Filtros Fake */}
+      <div className="flex gap-2.5 mb-6 overflow-hidden">
+        <span className="bg-purple-600 text-white px-3.5 py-1.5 rounded-full text-[11px] font-bold shrink-0 shadow-sm">
+          Causa Animal
+        </span>
+        <span className="bg-white border border-slate-200 text-slate-500 px-3.5 py-1.5 rounded-full text-[11px] font-bold shrink-0 hover:bg-slate-50">
+          Educação
+        </span>
+        <span className="bg-white border border-slate-200 text-slate-500 px-3.5 py-1.5 rounded-full text-[11px] font-bold shrink-0 hover:bg-slate-50">
+          Saúde
+        </span>
+      </div>
+
+      <h4 className="text-base font-extrabold text-slate-800 mb-4 tracking-tight">ONGs recomendadas</h4>
+
+      {/* Grid com 2 ONGs */}
+      <div className="grid grid-cols-2 gap-4 relative">
+        
+        {/* ONG 1 (Destaque para clique) */}
+        <div className="relative">
+          {/* Efeito de Destaque/Foco na borda externa inteira */}
+          <div className="absolute -inset-1.5 border-2 border-purple-500 rounded-[1.25rem] opacity-100 z-10 pointer-events-none"></div>
+
+          <div className="flex flex-col bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm w-full h-full relative z-0">
+            <div className="w-full aspect-[4/3] bg-slate-100 relative overflow-hidden">
+              <img 
+                src="https://images.unsplash.com/photo-1543852786-1cf6624b9987?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
+                alt="Gatinho" 
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute top-2 right-2 bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                <span className="text-[10px] font-extrabold text-slate-700">4.9</span>
+              </div>
+            </div>
+
+            <div className="p-3 flex flex-col flex-grow">
+              <div className="flex flex-wrap gap-1 mb-2">
+                <span className="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[8px] font-bold tracking-wide uppercase">
+                  Causa Animal
+                </span>
+              </div>
+              <h3 className="text-sm font-extrabold text-slate-900 leading-snug mb-3 line-clamp-1">
+                SOS Gatinhos
+              </h3>
+              {/* Botão pulsante para atrair atenção sem poluir o visual */}
+              <button className="mt-auto w-full bg-[#9333EA] text-white rounded-lg py-2 text-[11px] font-bold shadow-sm animate-pulse">
+                Apoiar causa
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ONG 2 (Visual secundário para compor a grade) */}
+        <div className="flex flex-col bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm w-full h-full opacity-60">
+          <div className="w-full aspect-[4/3] bg-slate-100 relative overflow-hidden">
+            <img 
+              src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
+              alt="Crianças" 
+              className="w-full h-full object-cover grayscale-[20%]"
             />
-          ))}
+            <div className="absolute top-2 right-2 bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
+              <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+              <span className="text-[10px] font-extrabold text-slate-700">4.8</span>
+            </div>
+          </div>
+
+          <div className="p-3 flex flex-col flex-grow">
+            <div className="flex flex-wrap gap-1 mb-2">
+              <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[8px] font-bold tracking-wide uppercase">
+                Educação
+              </span>
+            </div>
+            <h3 className="text-sm font-extrabold text-slate-900 leading-snug mb-3 line-clamp-1">
+              Inst. Crescer
+            </h3>
+            <button className="mt-auto w-full bg-slate-100 text-slate-400 rounded-lg py-2 text-[11px] font-bold shadow-sm">
+              Apoiar causa
+            </button>
+          </div>
         </div>
 
-        {/* Buttons */}
-        <div className="flex justify-center gap-[15px] pb-2">
-          {currentStep > 0 && (
-            <BackButton onClick={handleBack} />
-          )}
+      </div>
 
-          <NextButton
-            onClick={handleNext}
-            text={currentStep === steps.length - 1 ? "Concluir" : "Próximo"}
-            isFinish={currentStep === steps.length - 1}
-          />
+    </div>
+  );
+}
+
+// Mockup 2: DonateModal
+function MockupCard2() {
+  return (
+    <div className="bg-white rounded-[2rem] shadow-xl w-full border border-slate-100 px-6 py-8 flex flex-col items-center">
+      <div className="w-14 h-14 rounded-full bg-purple-600 flex items-center justify-center text-white shadow-xl shadow-purple-200 mb-4">
+        <HeartHandshake size={28} />
+      </div>
+      <h3 className="text-xl font-black text-[#3b1a66] text-center mb-6">
+        De qual forma deseja ajudar?
+      </h3>
+      <div className="w-full flex flex-col gap-4">
+        <div className="flex items-center text-left p-4 rounded-2xl border border-slate-200 bg-white shadow-sm relative overflow-hidden">
+          <div className="absolute inset-0 border-2 border-purple-500 rounded-2xl pointer-events-none"></div>
+          <div className="shrink-0 mr-4 bg-purple-50 text-purple-600 p-3.5 rounded-full animate-pulse">
+            <Banknote size={24} strokeWidth={2.5} />
+          </div>
+          <div>
+            <span className="block font-black text-slate-800">Contribuição Financeira</span>
+            <span className="block text-xs text-slate-500 mt-1 font-medium">
+              Fazer um Pix para apoiar os projetos.
+            </span>
+          </div>
         </div>
+        <div className="flex items-center text-left p-4 rounded-2xl border border-slate-200 bg-white opacity-60">
+          <div className="shrink-0 mr-4 bg-slate-50 text-slate-500 p-3.5 rounded-full">
+            <Package size={24} strokeWidth={2.5} />
+          </div>
+          <div>
+            <span className="block font-black text-slate-800">Doação de Materiais</span>
+            <span className="block text-xs text-slate-500 mt-1 font-medium">
+              Entregar alimentos, roupas ou itens.
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-      </main>
+// Mockup 3: Histórico de Doações no Perfil
+function MockupCard3() {
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Doação Monetária (Destaque) */}
+      <div className="bg-white rounded-2xl p-5 shadow-xl border border-purple-200 w-full relative">
+        <div className="absolute -top-3 -right-2 bg-purple-600 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-full shadow-md animate-bounce">
+          Novo
+        </div>
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-emerald-50">
+              <DollarSign size={20} className="text-emerald-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900">SOS Gatinhos</h3>
+              <p className="text-sm text-gray-500 flex items-center gap-1">
+                <Calendar size={14} /> 31/07/2026
+              </p>
+            </div>
+          </div>
+          <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-green-100 text-green-700">
+            Concluída
+          </span>
+        </div>
+        <div className="pt-3 border-t border-gray-50 mt-2">
+          <div className="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <span className="text-sm font-medium text-gray-500">Valor da Doação</span>
+            <span className="text-lg font-black text-emerald-600">R$ 50,00</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Doação de Material Antiga */}
+      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 w-full opacity-60">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-blue-50">
+              <Package size={20} className="text-blue-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900">Instituto Transformar</h3>
+              <p className="text-sm text-gray-500 flex items-center gap-1">
+                <Calendar size={14} /> 15/07/2026
+              </p>
+            </div>
+          </div>
+          <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-yellow-100 text-yellow-700">
+            Pendente
+          </span>
+        </div>
+        <div className="pt-2 border-t border-gray-50 text-sm text-gray-500 font-medium truncate">
+          Cestas Básicas, Roupas...
+        </div>
+      </div>
     </div>
   );
 }

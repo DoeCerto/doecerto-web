@@ -17,7 +17,7 @@ export default function Splash() {
           loop={0}
           autoplay={true}
           onComplete={() => {
-            router.push("/login");
+            router.push("/home");
           }}
         />
       </div>
