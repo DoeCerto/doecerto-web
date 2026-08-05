@@ -68,8 +68,6 @@ useEffect(() => {
       await Preferences.set({ key: "access_token", value: token });
       if (apiUserRole) await Preferences.set({ key: "userRole", value: apiUserRole });
     } catch (capacitorError) { }
-
-    localStorage.setItem("access_token", token);
     localStorage.setItem("registration_completed", "true");
     if (apiUserRole) localStorage.setItem("userRole", apiUserRole);
     if (userAvatar) localStorage.setItem("userAvatar", userAvatar);

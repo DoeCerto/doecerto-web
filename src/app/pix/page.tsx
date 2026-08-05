@@ -11,6 +11,7 @@ import { useState, Suspense, useEffect, useMemo } from "react";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { api } from "@/services/api";
 import { QRCodeSVG } from "qrcode.react";
+import DonationTutorialModal from "@/components/ui/DonationTutorial";
 
 // ==========================================
 // LÓGICA (Mantida intacta para refatorar depois)
@@ -67,6 +68,17 @@ function PixPageContent() {
   const [showPopup, setShowPopup] = useState(false);
   const [valor, setValor] = useState("20");
   const valoresRapidos = ["5", "10", "20", "50", "100"];
+
+  // Estado para controlar o modal do tutorial na página do Pix
+  const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+
+  useEffect(() => {
+    // Verifica se o usuário já marcou para não ver o tutorial novamente
+    const hideTutorial = localStorage.getItem("hideDonationTutorial");
+    if (hideTutorial !== "true") {
+      setIsTutorialOpen(true);
+    }
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -422,9 +434,16 @@ function PixPageContent() {
           </div>
         </div>
       )}
+
+      {/* MODAL DO TUTORIAL NA PÁGINA DE PIX */}
+      <DonationTutorialModal
+        open={isTutorialOpen}
+        onClose={() => setIsTutorialOpen(false)}
+      />
     </div>
   );
 }
+
 export default function PixPage() {
   return (
     <Suspense fallback={

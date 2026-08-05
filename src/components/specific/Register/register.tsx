@@ -388,7 +388,7 @@ function useRegisterForm() {
     setModalAberto(true);
   };
 
-  const submitToApi = async () => {
+const submitToApi = async () => {
     setIsPending(true);
     try {
       const data = form.getValues();
@@ -398,22 +398,33 @@ function useRegisterForm() {
           email: data.email, 
           password: data.senha, 
           cnpj: removeFormatting(data.documento),
-          contactNumber: removeFormatting(data.contactNumber) // <- Enviando pro back sem formatação
+          contactNumber: removeFormatting(data.contactNumber)
         });
-        toast.success("Documentação enviada para análise!");
+        toast.success("ONG cadastrada! Faça login para continuar.");
       } else {
         await registerDonor({ 
           name: data.nome, 
           email: data.email, 
           password: data.senha, 
           cpf: removeFormatting(data.documento),
-          contactNumber: removeFormatting(data.contactNumber) // <- Enviando pro back sem formatação
+          contactNumber: removeFormatting(data.contactNumber)
         });
-        toast.success("Doador cadastrado com sucesso!");
+        toast.success("Conta criada com sucesso! Faça login para continuar.");
       }
-      clearDraft();
+      
+      // 1. Fechamos o modal, mas removemos o `clearDraft()` daqui. 
+      // Isso impede que a tela de fundo volte para o Passo 1 e fique "piscando" enquanto espera os 1.5s
       setModalAberto(false);
-      setTimeout(() => router.push("/login"), 1500);
+      
+      // 2. Limpamos o rascunho apenas da memória para a próxima vez que ele entrar no Register
+      sessionStorage.removeItem("register_draft");
+
+      // 3. Substituímos a rota no histórico em vez de usar router.push
+      // Assim o usuário não consegue usar a seta de "voltar" para cair no formulário de novo
+      setTimeout(() => {
+        window.location.replace("/login");
+      }, 1500);
+
     } catch (err: any) {
       toast.error("Ocorreu um erro no cadastro. Tente novamente.");
     } finally {

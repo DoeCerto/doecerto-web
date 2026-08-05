@@ -21,9 +21,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userName, setUserName] = useState<string | null>(null);
 
   // Função que lê os dados do LocalStorage e atualiza o estado do React
-  const refreshSession = () => {
-    const token = localStorage.getItem("access_token");
-    setIsAuthenticated(!!token);
+const refreshSession = () => {
+    // Como você optou por manter dados leves no localStorage para a interface:
+    const hasUser = localStorage.getItem("userName") || localStorage.getItem("registration_completed");
+    
+    // Se houver usuário ou registro concluído, o usuário está autenticado visualmente
+    setIsAuthenticated(!!hasUser);
     setUserRole(localStorage.getItem("userRole"));
     setUserAvatar(localStorage.getItem("userAvatar"));
     setUserName(localStorage.getItem("userName"));

@@ -10,7 +10,6 @@ import { Preferences } from "@capacitor/preferences";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { motion } from "framer-motion";
 import { DonorService } from "@/services/donor.service";
-// ✅ 1. Importando o hook da nossa bolha global
 import { useAuth } from "@/contexts/AuthContext";
 
 type Ong = {
@@ -44,13 +43,15 @@ function OngLogo({ src, alt, className }: { src: string; alt: string; className:
   );
 }
 
-export default function HomeClient({ 
-  initialCatalog, 
+
+
+export default function HomeClient({
+  initialCatalog,
   initialIsAuthenticated,
   initialUserName,
   initialUserAvatar,
-}: { 
-  initialCatalog: any[]; 
+}: {
+  initialCatalog: any[];
   initialIsAuthenticated: boolean;
   initialUserName?: string | null;
   initialUserAvatar?: string | null;
@@ -62,11 +63,11 @@ export default function HomeClient({
   const { isAuthenticated, userName, userAvatar: contextAvatar, refreshSession } = useAuth();
 
   // Tratamento da imagem e nome vindos do contexto
-  const displayAvatar = contextAvatar 
-    ? OngsProfileService._formatImageUrl(contextAvatar) 
+  const displayAvatar = contextAvatar
+    ? OngsProfileService._formatImageUrl(contextAvatar)
     : "/default-avatar.png";
   const displayName = userName || "Usuário";
-
+  const [isTutorialOpen, setIsTutorialOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedOng, setSelectedOng] = useState<number | null>(null);
@@ -77,15 +78,15 @@ export default function HomeClient({
     async function loadUserAvatar() {
       // Usamos o isAuthenticated do contexto agora
       if (!isAuthenticated) return;
-      
+
       try {
         const userRole = localStorage.getItem("userRole")?.toUpperCase();
         if (userRole !== "ONG") {
           const profile = await DonorService.getMyProfile();
           if (profile?.avatarUrl) {
-            localStorage.setItem("userAvatar", profile.avatarUrl); 
+            localStorage.setItem("userAvatar", profile.avatarUrl);
             // ✅ 3. Atualiza o contexto global com a foto nova
-            refreshSession(); 
+            refreshSession();
           }
         }
       } catch (err) {
@@ -113,7 +114,7 @@ export default function HomeClient({
     try {
       await Preferences.remove({ key: "access_token" });
       await Preferences.remove({ key: "userRole" });
-    } catch (e) {}
+    } catch (e) { }
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -122,8 +123,12 @@ export default function HomeClient({
       console.error("Erro ao deslogar:", e);
     }
 
-    localStorage.clear();
-    
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userAvatar");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("registration_completed");
+
     // ✅ 4. Em vez de useState, dizemos ao Contexto Global que saímos
     refreshSession();
 
@@ -271,9 +276,9 @@ export default function HomeClient({
               </div>
             )}
           </div>
-       ) : (
+        ) : (
           /* APENAS FADE PURO (OPACIDADE) */
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
@@ -296,7 +301,7 @@ export default function HomeClient({
         )}
       </header>
 
-{/* CONTEÚDO PRINCIPAL */}
+      {/* CONTEÚDO PRINCIPAL */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
 
         <div className="relative mb-8 w-full">
