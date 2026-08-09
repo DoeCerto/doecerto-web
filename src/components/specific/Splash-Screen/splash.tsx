@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import Lottie from "lottie-react";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import animationData from "@/assets/animations/loading.json";
 
 export default function Splash() {
@@ -9,19 +9,20 @@ export default function Splash() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-[#6B39A7]">
-
-
-      <div className="w-[550px] h-[550px] flex items-center justify-center will-change: transform; transform: translateZ(0); backface-visibility: hidden;">
-        <Lottie
-          animationData={animationData}
-          loop={0}
+      <div className="w-[550px] h-[550px] flex items-center justify-center will-change-transform translate-z-0 backface-hidden">
+        <DotLottieReact
+          data={animationData}
+          loop={false}
           autoplay={true}
-          onComplete={() => {
-            router.push("/home");
+          dotLottieRefCallback={(dotLottie) => {
+            if (dotLottie) {
+              dotLottie.addEventListener("complete", () => {
+                router.push("/home");
+              });
+            }
           }}
         />
       </div>
-
     </div>
   );
 }

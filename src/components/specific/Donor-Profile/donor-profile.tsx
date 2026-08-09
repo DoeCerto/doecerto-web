@@ -93,6 +93,14 @@ export default function DonorProfile() {
 
   // CARREGAR PERFIL E HISTÓRICO
   useEffect(() => {
+    // Redireciona para aba Histórico se vier com parâmetro na URL
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("tab") === "history") {
+        setActiveTab("history");
+      }
+    }
+
     async function loadAllData() {
       try {
         setIsLoading(true);
@@ -510,7 +518,6 @@ export default function DonorProfile() {
                       Telefone / WhatsApp
                     </p>
                     {isEditingProfile ? (
-                      /* CONTAINER COM O +55 FIXADO DO LADO */
                       <div className="flex mt-1 rounded-xl border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-purple-500 transition-all bg-white">
                         <span className="flex items-center justify-center bg-gray-100 text-gray-500 px-3 border-r border-gray-200 text-sm font-semibold select-none">
                           +55
@@ -522,7 +529,6 @@ export default function DonorProfile() {
                           placeholder="(DDD) 99999-9999"
                           onChange={(e) => {
                             const digits = e.target.value.replace(/\D/g, "");
-                            // Salva internamente concatenando o prefixo país '55'
                             setDonorData({ ...donorData, phone: `55${digits}` });
                           }}
                         />

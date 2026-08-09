@@ -60,7 +60,7 @@ export function WhyChooseUs() {
   ];
 
   return (
-    <section ref={sectionRef} className="py-32 bg-[#F8FAFC] relative z-10 font-poppins">
+    <section ref={sectionRef} className="py-32 bg-[#F8FAFC] relative z-10 font-poppins" id="whychooseus">
       <div className="container mx-auto px-8 md:px-32">
         
         {/* Cabeçalho */}

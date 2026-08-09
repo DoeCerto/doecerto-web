@@ -1,8 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 
-// 1. Definimos o formato dos dados que vão ficar globais
 type AuthContextType = {
   isAuthenticated: boolean;
   userRole: string | null;
@@ -13,29 +12,46 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// 2. Criamos o Provedor (A "bolha" que vai envolver o app)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
 
-  // Função que lê os dados do LocalStorage e atualiza o estado do React
-const refreshSession = () => {
-    // Como você optou por manter dados leves no localStorage para a interface:
-    const hasUser = localStorage.getItem("userName") || localStorage.getItem("registration_completed");
+  const refreshSession = useCallback(() => {
+    const hasToken = !!(localStorage.getItem("access_token") || localStorage.getItem("CapacitorStorage.access_token"));
+    // Opcional: Se quiser que o front confie também na existência do cookie Web (para SSR):
+    const hasCookie = typeof document !== 'undefined' && document.cookie.includes("access_token=");
     
-    // Se houver usuário ou registro concluído, o usuário está autenticado visualmente
-    setIsAuthenticated(!!hasUser);
-    setUserRole(localStorage.getItem("userRole"));
-    setUserAvatar(localStorage.getItem("userAvatar"));
-    setUserName(localStorage.getItem("userName"));
-  };
+    if (hasToken || hasCookie) {
+      setIsAuthenticated(true);
+      setUserRole(localStorage.getItem("userRole"));
+      setUserAvatar(localStorage.getItem("userAvatar"));
+      setUserName(localStorage.getItem("userName"));
+    } else {
+      setIsAuthenticated(false);
+      setUserRole(null);
+      setUserAvatar(null);
+      setUserName(null);
+    }
+  }, []);
 
-  // Quando o app abre, ele tenta ler a sessão que já existe
   useEffect(() => {
     refreshSession();
-  }, []);
+
+    // Escuta se o usuário deslogou em outra aba
+    const handleStorageChange = () => refreshSession();
+    window.addEventListener("storage", handleStorageChange);
+
+    // Escuta o "grito" da API quando tomar 401
+    const handleAuthExpired = () => refreshSession();
+    window.addEventListener("auth_expired", handleAuthExpired);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("auth_expired", handleAuthExpired);
+    };
+  }, [refreshSession]);
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, userRole, userAvatar, userName, refreshSession }}>
@@ -44,11 +60,8 @@ const refreshSession = () => {
   );
 }
 
-// 3. Hook customizado para facilitar o uso nos componentes
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth deve ser usado dentro de um AuthProvider");
-  }
+  if (context === undefined) throw new Error("useAuth deve ser usado dentro de um AuthProvider");
   return context;
 };

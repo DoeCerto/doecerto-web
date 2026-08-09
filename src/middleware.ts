@@ -18,7 +18,10 @@ export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const userRole = token ? getUserRoleFromToken(token) : null;
 
-    const isOngPrivateRoute = pathname === '/ong' || pathname.startsWith('/ong/');
+    const isOngPrivateRoute = 
+    pathname === '/ong' || 
+    pathname.startsWith('/ong/') || 
+    pathname.startsWith('/ong-dashboard');
 
     const protectedPaths = ['/dashboard', '/admin', '/settings', '/donation'];
     const isProtected = protectedPaths.some((path) => pathname.startsWith(path)) || isOngPrivateRoute;

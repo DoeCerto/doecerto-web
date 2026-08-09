@@ -1,4 +1,5 @@
 "use client";
+
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
@@ -14,25 +15,6 @@ export function HeroSection() {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const heroRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    if ('scrollRestoration' in window.history) {
-      window.history.scrollRestoration = 'manual';
-    }
-    window.scrollTo(0, 0);
-  }, []);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      setIsScrolled(currentScrollY > 50);
-      setShowNav(currentScrollY < lastScrollY || currentScrollY < 100);
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
 
   // ==========================================
   // O TRUQUE DO LENIS NO MOBILE
@@ -53,6 +35,57 @@ export function HeroSection() {
       if ((window as any).lenis) (window as any).lenis.start();
     }
   }, [isMobileMenuOpen]);
+
+  // ==========================================
+  // CORREÇÃO DO SCROLL AO CARREGAR A PÁGINA COM #HASH
+  // ==========================================
+  // ==========================================
+  // ROLAGEM SUAVE AO VIR DE OUTRA PÁGINA
+  // ==========================================
+  useEffect(() => {
+    // 1. Desliga restauração nativa e trava no topo imediatamente
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+
+    // 2. Procura pelo parâmetro '?section=' na URL (ao invés do #)
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(window.location.search);
+      const sectionId = params.get('section');
+      
+      if (sectionId) {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          const lenis = (window as any).lenis;
+          if (lenis) {
+            // Rola suavemente usando o Lenis (duration 2 deixa bem cinematográfico)
+            lenis.scrollTo(element, { offset: -100, duration: 2 });
+          } else {
+            const y = element.getBoundingClientRect().top + window.scrollY - 100;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+          }
+        }
+        // Limpa a URL (remove o ?section=) para deixar o link bonito sem recarregar a página
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    }, 500); // Aguarda meio segundo para a HeroSection fazer o fade-in antes de rolar
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      setIsScrolled(currentScrollY > 50);
+      setShowNav(currentScrollY < lastScrollY || currentScrollY < 100);
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   // ==========================================
   // FUNÇÃO DE ROLAGEM LENIS
@@ -205,7 +238,6 @@ export function HeroSection() {
 
       {/* ========================================= */}
       {/* IMAGENS E MÁSCARAS (CAMADA PARALLAX BG) */}
-      {/* DICA: scale-110 evita que a imagem corte ao descer no parallax */}
       {/* ========================================= */}
       <div className="parallax-layer-bg absolute inset-0 w-full h-[120%] -top-[10%] scale-110 z-0 will-change-transform">
         <img src="/fotocrianca.jpg" alt="Fundo" className="absolute inset-0 w-full h-full object-cover object-center" />

@@ -55,7 +55,9 @@ export const OngsProfileService = {
         categories: profile.categories || [],
         reviews: Array.isArray(resReviews.data) ? resReviews.data : [],
         donations: profile.receivedDonations || 0,
-        distance: base.distance || "—"
+        distance: base.distance || "—",
+        // AQUI ESTÁ A MÁGICA: Repassando a flag de permissão de avaliação para a interface
+        canReview: profile.canReview ?? false,
       };
     } catch (error) {
       console.error("Erro no getPublicProfile:", error);
@@ -76,7 +78,7 @@ export const OngsProfileService = {
     return {
       ...data,
       name: data.name || "Minha ONG",
-     
+      
       description: data.description || data.about || data.bio || "",
       website: websiteValue,
       avatarUrl: this._formatImageUrl(data.avatarUrl),

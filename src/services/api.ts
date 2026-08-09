@@ -8,13 +8,11 @@ export async function api<T>(
 ): Promise<{ data: T }> {
   const headers = new Headers(options.headers);
 
-  // 1. Busca o token no Preferences (Nativo do Celular)
   let token = null;
   if (typeof window !== "undefined") {
     const { value } = await Preferences.get({ key: "access_token" });
     token = value;
 
-    // Fallback para cookies (Web)
     if (!token) {
       token = document.cookie
         .split("; ")
@@ -23,13 +21,10 @@ export async function api<T>(
     }
   }
 
-  console.log('Token found:', token ? 'Yes' : 'No');
-
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  // 2. Configuração de Headers
   if (options.body instanceof FormData) {
     headers.delete("Content-Type");
   } else if (!headers.has("Content-Type")) {
@@ -41,7 +36,6 @@ export async function api<T>(
   }
 
   try {
-    // ✅ CORREÇÃO: sintaxe correta do fetch com template literal
     const res = await fetch(`${API_URL}${endpoint}`, {
       ...options,
       headers,
@@ -51,15 +45,25 @@ export async function api<T>(
     const text = await res.text();
 
     if (!res.ok) {
+      // 👑 O PADRÃO OURO: Interceptação do 401
       if (res.status === 401) {
-        await Preferences.remove({ key: "access_token" });
+        if (typeof window !== "undefined") {
+          await Preferences.remove({ key: "access_token" });
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("CapacitorStorage.access_token");
+          localStorage.removeItem("userRole");
+          localStorage.removeItem("userAvatar");
+          localStorage.removeItem("userName");
+          localStorage.removeItem("registration_completed");
+
+          // Dispara o evento global avisando que a sessão caiu
+          window.dispatchEvent(new Event("auth_expired"));
+        }
       }
       throw new Error(text || `Erro ${res.status}`);
     }
 
-    return {
-      data: text ? JSON.parse(text) : (null as any),
-    };
+    return { data: text ? JSON.parse(text) : (null as any) };
   } catch (error) {
     console.error("[API ERROR]", error);
     throw error;

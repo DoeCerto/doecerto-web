@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Lottie from "lottie-react";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import errorAnimation from "@/assets/animations/Error-404.json"; 
 import { Home } from "lucide-react";
 import { useEffect } from "react";
@@ -23,8 +23,8 @@ export default function NotFound() {
       
       {/* Container da Animação Lottie */}
       <div className="w-[300px] h-[300px] sm:w-[450px] sm:h-[450px] flex items-center justify-center mb-0 sm:-mb-6 animate-404">
-        <Lottie 
-          animationData={errorAnimation} 
+        <DotLottieReact 
+          data={errorAnimation} 
           loop={true} 
           autoplay={true}
         />

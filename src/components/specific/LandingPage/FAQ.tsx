@@ -67,7 +67,7 @@ export function FAQ() {
   }, { scope: sectionRef });
 
   return (
-    <section ref={sectionRef} className="py-16 md:py-24 bg-white">
+    <section ref={sectionRef} id="faq" className="py-16 md:py-24 bg-white">
       <div className="container mx-auto px-6 max-w-3xl">
         {/* Adicionado opacity-0 no HTML para evitar "piscar" antes do GSAP agir */}
         <h2 className="faq-title opacity-0 text-3xl md:text-4xl font-bold text-center text-gray-900 mb-8 md:mb-12">

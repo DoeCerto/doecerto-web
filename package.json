@@ -15,6 +15,7 @@
     "@dotlottie/react-player": "^1.6.19",
     "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^5.6.0",
+    "@lottiefiles/dotlottie-react": "^0.19.13",
     "@studio-freight/lenis": "^1.0.42",
     "clsx": "^2.1.1",
     "framer-motion": "^12.43.0",

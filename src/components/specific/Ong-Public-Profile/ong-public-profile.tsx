@@ -5,11 +5,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin, HeartHandshake, Award, Phone, Home,
   Star, ArrowLeft, Image as ImageIcon, MessageSquare, X, Tag,
-  Globe, CheckCircle2, Copy, Heart, Send
+  Globe, CheckCircle2, Copy, Heart, Send, AlertCircle
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import DonateModal from "@/components/specific/DonateModal";
 import { OngsProfileService } from "@/services/ongs-profile.service";
+import { useAuth } from "@/contexts/AuthContext";
 
 // --- INTERFACES ---
 export interface Review {
@@ -34,13 +35,18 @@ export interface OngProfileData {
   rating: number;
   donations: number;
   categories: any[];
+  canReview?: boolean;
 }
 
 export default function OngPublicProfile({ ongId }: { ongId: number }) {
   const router = useRouter();
+  
+  // 1. Trazemos o estado de autenticação para saber se é anônimo ou logado
+  const { isAuthenticated } = useAuth();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [isReviewBlockedOpen, setIsReviewBlockedOpen] = useState(false);
   const [data, setData] = useState<{ ong: OngProfileData; reviews: Review[] } | null>(null);
   const [errors, setErrors] = useState({ banner: false, logo: false });
 
@@ -69,6 +75,14 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
   );
 
   const { ong, reviews } = data;
+
+  const handleReviewClick = () => {
+    if (ong.canReview === false) {
+      setIsReviewBlockedOpen(true);
+    } else {
+      setIsReviewModalOpen(true);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20 sm:pb-36 font-sans text-slate-900">
@@ -149,12 +163,16 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
             </div>
 
             <div className="flex flex-col sm:flex-row w-full md:w-auto gap-3 sm:gap-4 shrink-0">
-              <button
-                onClick={() => setIsReviewModalOpen(true)}
-                className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 border border-slate-200 rounded-2xl text-slate-600 text-sm sm:text-base font-bold hover:border-purple-600 hover:bg-purple-50 hover:text-purple-700 transition-all cursor-pointer hover:scale-105 active:scale-95 text-center"
-              >
-                Avaliar ONG
-              </button>
+              {/* 2. O botão de avaliar só é renderizado se o usuário estiver logado */}
+              {isAuthenticated && (
+                <button
+                  onClick={handleReviewClick}
+                  className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 border border-slate-200 rounded-2xl text-slate-600 text-sm sm:text-base font-bold hover:border-purple-600 hover:bg-purple-50 hover:text-purple-700 transition-all cursor-pointer hover:scale-105 active:scale-95 text-center flex items-center justify-center gap-2"
+                >
+                  <Star size={18} />
+                  Avaliar ONG
+                </button>
+              )}
 
               <button onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto px-6 sm:px-10 py-3.5 sm:py-4 bg-purple-600 text-white text-sm sm:text-base font-black rounded-2xl shadow-md hover:bg-purple-500 hover:scale-105 cursor-pointer transition-all duration-300 active:scale-95 flex items-center justify-center gap-2">
                 <Heart size={18} className="sm:w-5 sm:h-5" fill="currentColor" />
@@ -192,7 +210,7 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
                 </div>
                 <p className="text-xs sm:text-sm text-slate-600 italic">"{rev.comment || "Sem comentário."}"</p>
               </div>
-            )) : <p className="text-slate-400 text-center py-4 sm:py-6 text-sm sm:text-base font-medium">Nenhum comentário ainda. Seja o primeiro a avaliar!</p>}
+            )) : <p className="text-slate-400 text-center py-4 sm:py-6 text-sm sm:text-base font-medium">Nenhum comentário ainda. Seja o primeiro a apoiar e avaliar!</p>}
           </div>
         </div>
 
@@ -206,8 +224,22 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
         />
       )}
 
+      {/* Modal de Avaliação Liberada */}
       <AnimatePresence>
         {isReviewModalOpen && <ReviewPostModal ongId={ongId} onClose={() => setIsReviewModalOpen(false)} onSuccess={loadData} />}
+      </AnimatePresence>
+
+      {/* Modal de Avaliação Bloqueada (Regra de Negócio) */}
+      <AnimatePresence>
+        {isReviewBlockedOpen && (
+          <ReviewBlockedModal 
+            onClose={() => setIsReviewBlockedOpen(false)} 
+            onDonateClick={() => {
+              setIsReviewBlockedOpen(false);
+              setIsModalOpen(true);
+            }} 
+          />
+        )}
       </AnimatePresence>
     </div>
   );
@@ -255,9 +287,10 @@ function StatItem({ icon, value, label }: { icon: React.ReactNode, value: number
   );
 }
 
+// Modal quando a avaliação está liberada
 function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose: () => void, onSuccess: () => void }) {
-  const [score, setScore] = useState(0); // Começa zerado para forçar a escolha
-  const [hoveredScore, setHoveredScore] = useState(0); // Para o efeito de acender as estrelas
+  const [score, setScore] = useState(0); 
+  const [hoveredScore, setHoveredScore] = useState(0); 
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -273,7 +306,8 @@ function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose
       onSuccess();
       onClose();
     } catch (err: any) {
-      alert("Erro ao enviar avaliação.");
+      const errorMessage = err.response?.data?.message || err.message || "Erro desconhecido ao enviar avaliação.";
+      alert(`Ops! ${errorMessage}`);
       console.error(err);
     } finally {
       setLoading(false);
@@ -295,7 +329,6 @@ function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose
           <X size={20} />
         </button>
 
-        {/* Header do Modal com UX Writing */}
         <div className="text-center mb-6 mt-2">
           <h3 className="text-xl sm:text-2xl font-black text-[#3b1a66]">
             Avalie a Instituição
@@ -305,7 +338,6 @@ function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose
           </p>
         </div>
 
-        {/* Estrelas Interativas com borda fina (strokeWidth={1.5}) */}
         <div className="flex justify-center gap-2 sm:gap-3 mb-6">
           {[1, 2, 3, 4, 5].map((s) => (
             <button
@@ -327,7 +359,6 @@ function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose
           ))}
         </div>
 
-        {/* Feedback visual da nota */}
         <div className="text-center h-4 mb-4">
           <span className="text-sm font-bold text-yellow-500 uppercase tracking-widest">
             {score === 1 && "Muito Ruim"}
@@ -338,7 +369,6 @@ function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose
           </span>
         </div>
 
-        {/* Textarea Premium */}
         <div className="relative mb-6">
           <textarea 
             className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 sm:p-5 text-sm sm:text-base h-28 sm:h-32 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-500/10 outline-none resize-none transition-all placeholder:text-slate-400" 
@@ -348,7 +378,6 @@ function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose
           />
         </div>
 
-        {/* Botão de Envio com Ícone Send e Animação */}
         <button 
           onClick={handleSubmit} 
           disabled={loading} 
@@ -363,6 +392,57 @@ function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose
             </>
           )}
         </button>
+      </motion.div>
+    </div>
+  );
+}
+
+// Novo Modal que explica a regra de negócio do bloqueio
+function ReviewBlockedModal({ onClose, onDonateClick }: { onClose: () => void, onDonateClick: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        className="bg-white w-full max-w-md rounded-[2rem] p-8 sm:p-10 shadow-2xl relative flex flex-col items-center text-center"
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2.5 rounded-full transition-colors cursor-pointer"
+        >
+          <X size={24} />
+        </button>
+
+        <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mb-6">
+          <AlertCircle size={40} className="text-amber-600" strokeWidth={2.5} />
+        </div>
+        
+        <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mb-4 tracking-tight">
+          Avaliação Bloqueada
+        </h3>
+        
+        <div className="text-base text-slate-500 font-medium leading-relaxed mb-8 space-y-4 px-2">
+          <p>Para manter as avaliações reais e transparentes, <strong>é necessário realizar uma doação</strong> para esta instituição antes de avaliá-la.</p>
+          <p className="text-sm text-slate-400">Já doou e avaliou? Faça uma nova doação para liberar uma nova avaliação.</p>
+        </div>
+
+        <div className="w-full flex flex-col gap-3.5">
+          <button
+            onClick={onDonateClick}
+            className="w-full py-4 bg-purple-600 text-white text-base font-black rounded-2xl shadow-md hover:bg-purple-500 cursor-pointer transition-all active:scale-95 flex justify-center items-center gap-2"
+          >
+            <Heart size={20} fill="currentColor" />
+            Fazer uma Doação
+          </button>
+          
+          <button
+            onClick={onClose}
+            className="w-full py-4 bg-slate-50 border border-slate-200 text-slate-600 text-base font-bold rounded-2xl shadow-sm hover:bg-slate-100 cursor-pointer transition-all active:scale-95"
+          >
+            Entendi
+          </button>
+        </div>
       </motion.div>
     </div>
   );

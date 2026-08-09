@@ -56,7 +56,8 @@ export function PartnersSection() {
   return (
     <section 
       ref={sectionRef} 
-      className="w-full bg-white relative z-20 pt-8 pb-32 md:pt-16 md:pb-52 rounded-b-[2rem] shadow-xl"
+      id="partnerssection"
+      className="w-full id bg-white relative z-20 pt-8 pb-32 md:pt-16 md:pb-52 rounded-b-[2rem] shadow-xl"
     >
       <div className="w-full flex justify-center mb-10 md:mb-20 px-4">
         <h2 className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-zinc-800 text-xl md:text-3xl font-extralight tracking-normal text-center">

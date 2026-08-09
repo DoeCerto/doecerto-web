@@ -1,670 +1,292 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { ArrowRight, User, Star, Heart, Check } from "lucide-react";
-
-import StepHeader from "@/components/ui/StepHeader";
-import StepIntro from "@/components/ui/StepIntro";
-import NextButton from "@/components/ui/NextButton";
-import BackButton from "@/components/ui/BackButton";
-
-/* =========================
-   CARD PADRÃO
-========================= */
-
-function DefaultCard({ step }: any) {
-    return (
-        <div
-            className="
-        w-full
-        bg-white
-        border
-        border-[#6B39A7]
-        rounded-[20px]
-        p-[15px]
-        shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
-        flex
-        flex-col
-        items-center
-      "
-        >
-            <div className="w-full flex flex-row justify-between items-center">
-                <div>
-                    <Image src="/logo_roxa.svg" alt="DoeCerto" width={125} height={125} priority />
-                </div>
-
-                <div className="flex flex-row items-center">
-                    <ArrowRight className="w-[35px] h-[20px]" />
-
-                    <div className="bottom-0 border border-[#6B39A7] rounded-full w-[35px] h-[35px] flex justify-center items-center">
-
-                        <User className="w-[30px] h-[25px] text-[#6B39A7]" />
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    );
-}
-
-/* =========================
-   CARD STEP 2
-========================= */
-
-function DonationTypeCard({ step }: any) {
-  return (
-    <div
-      className="
-        w-full
-        bg-white
-        border
-        border-[#6B39A7]
-        rounded-[20px]
-        mt-[30px]
-        pt-[40px]
-        px-[25px]
-        pb-[28px]
-        mb-[25px]
-        shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
-        flex
-        flex-col
-        items-center
-      "
-    >
-      <div
-        className="
-          w-[60px]
-          h-[60px]
-          bg-[#EBD2FF]
-          rounded-full
-          flex
-          items-center
-          justify-center
-        "
-      >
-        {step.icon}
-      </div>
-
-      <h1 className="font-semibold text-[24px] mt-[3px] text-center">
-        {step.organization}
-      </h1>
-
-      <p
-        className="
-          text-[16px]
-          font-normal
-          -translate-y-[8px]
-          mb-[20px]
-          text-center
-        "
-      >
-        {step.organizationDescription}
-      </p>
-
-      <div className="w-full flex flex-col gap-3">
-        <div
-          className="
-            border
-            border-[#6B39A7]
-            bg-[#EBD2FF]
-            rounded-[14px]
-            p-[18px]
-            flex
-            flex-row
-            justify-between
-            items-center
-          "
-        >
-          <div className="flex flex-row gap-2 items-center">
-            <div className="p-[5px] flex items-center justify-center rounded-[5px] bg-[#FFFFFF]">
-              💰
-            </div>
-
-            <div>
-              <h2 className="text-[20px] font-bold text-[#6B39A7]">
-                {step.money}
-              </h2>
-
-              <p className="text-[14px] text-[#5F5F5F]">
-                {step.DescribeMoney}
-              </p>
-            </div>
-          </div>
-
-          <div className="rounded-full p-[5px] w-[15px] h-[15px] flex justify-center items-center bg-[#6B39A7]">
-            <div className="rounded-full w-[6px] h-[6px] bg-white"></div>
-          </div>
-        </div>
-
-        <div
-          className="
-            border
-            border-[#EBD2FF]
-            rounded-[14px]
-            p-[18px]
-            flex
-            flex-row
-            justify-between
-            items-center
-          "
-        >
-          <div className="flex flex-row gap-2 items-center">
-            <div className="p-[5px] flex items-center justify-center rounded-[5px] bg-[#EBD2FF] text-white">
-              📦
-            </div>
-
-            <div>
-              <h2 className="text-[20px] font-bold text-[#6B39A7]">
-                {step.items}
-              </h2>
-
-              <p className="text-[14px] text-[#5F5F5F]">
-                {step.DescribeItems}
-              </p>
-            </div>
-          </div>
-
-          <div className="border border-[#6B39A7] rounded-full p-[5px] w-[15px] h-[15px] flex justify-center items-center"></div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* =========================
-   CARD STEP 3
-========================= */
-
-function ReviewCard({ step }: any) {
-  return (
-    <div
-      className="
-        w-full
-        bg-white
-        border
-        border-[#6B39A7]
-        rounded-[20px]
-        mt-[30px]
-        pt-[40px]
-        px-[25px]
-        pb-[28px]
-        mb-[25px]
-        shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
-        flex
-        flex-col
-        items-center
-      "
-    >
-      <div className="flex flex-col items-center">
-        <div
-          className="
-            w-[60px]
-            h-[60px]
-            bg-[#EBD2FF]
-            rounded-full
-            flex
-            items-center
-            justify-center
-          "
-        >
-          {step.icon}
-        </div>
-
-        <h1 className="font-semibold text-[24px] mt-[3px] text-center">
-          {step.money}
-        </h1>
-
-        <p className="text-[16px] text-center mb-[20px] font-normal
-          -translate-y-[8px]">
-          {step.organizationDescription}
-        </p>
-      </div>
-
-      <div className="w-full flex flex-row gap-4 justify-center">
-        <div
-          className="
-                w-full 
-                border 
-                border-[#6B39A7] 
-                bg-[#EBD2FF] 
-                flex 
-                flex-col 
-                items-center 
-                justify-center 
-                p-[15px] 
-                rounded-[14px]
-              "
-        >
-          <h1 className="font-semibold text-[24px] text-[#6B39A7]">{step.titleCard1}</h1>
-          <p className="text-[#6B39A7] -translate-y-[8px]">{step.descriptionCard1}</p>
-        </div>
-
-        <div
-          className="
-              w-full
-              border
-              border-[#6B39A7]
-              flex
-              flex-col
-              items-center
-              justify-center
-              py-[5px]
-              px-[15px]
-              rounded-[14px]
-            "
-        >
-          <h1 className="font-semibold text-[24px] text-[#6B39A7]">
-            {step.titleCard2}
-          </h1>
-
-          <div className="text-[#6B39A7] mt-[5px] -translate-y-[15px]">
-            <svg
-              width="55"
-              height="32"
-              viewBox="0 0 55 32"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <rect x="2" y="4" width="2" height="24" fill="currentColor" />
-              <rect x="6" y="4" width="1" height="24" fill="currentColor" />
-              <rect x="9" y="4" width="3" height="24" fill="currentColor" />
-              <rect x="14" y="4" width="2" height="24" fill="currentColor" />
-              <rect x="18" y="4" width="4" height="24" fill="currentColor" />
-              <rect x="24" y="4" width="1" height="24" fill="currentColor" />
-              <rect x="27" y="4" width="3" height="24" fill="currentColor" />
-              <rect x="32" y="4" width="2" height="24" fill="currentColor" />
-              <rect x="36" y="4" width="5" height="24" fill="currentColor" />
-              <rect x="43" y="4" width="1" height="24" fill="currentColor" />
-              <rect x="46" y="4" width="3" height="24" fill="currentColor" />
-              <rect x="51" y="4" width="2" height="24" fill="currentColor" />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-4 py-[18px] text-white rounded-[10px] w-full bg-[#6B39A7] flex justify-center items-center">
-        <p className="font-bold font-[16px]">{step.buttonText}</p>
-      </div>
-    </div>
-  );
-}
-
-/* =========================
-   CARD STEP 4
-========================= */
-
-function SuccessCard({ step }: any) {
-  return (
-    <div
-      className="
-        w-full
-        bg-white
-        border
-        border-[#6B39A7]
-        rounded-[20px]
-        mt-[30px]
-        pt-[40px]
-        px-[25px]
-        pb-[28px]
-        mb-[25px]
-        shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
-      "
-    >
-      <div className="flex flex-col items-center">
-        <div
-          className="
-            w-[60px]
-            h-[60px]
-            bg-[#EBD2FF]
-            rounded-full
-            flex
-            items-center
-            justify-center
-          "
-        >
-          {step.icon}
-        </div>
-
-        <h1 className="font-semibold text-[24px] mt-[3px] text-center">
-          {step.titleCard}
-        </h1>
-
-        <p className="text-[16px] text-center text-[#6B39A7] mb-[25px]">
-          {step.titleDescription}
-        </p>
-
-        <div className="gap-2 w-full flex flex-col">
-
-          <div className="rounded-[10px] py-[10px] px-[20px] border border-[#6B39A7] text-[16px] font-extrabold bg-[#EBD2FF]">
-            {step.labelCard1}
-            <div className="flex flex-row justify-between items-center">
-              <div className="bg-white py-[5px] px-[10px] w-[35%] rounded-[10px] flex justify-center items-center border border-[#6B39A7]">
-                <p className="font-semibold text-[16px]">{step.itensCard1}</p>
-              </div>
-
-              <div className="gap-2 flex flex-row justify-center items-center">
-                <div className="bg-white rounded-[10px] max-h-[20px] px-[7px] py-[10px] border border-[#6B39A7] flex items-center justify-center">
-                  <div className="w-[12px] h-[3px] bg-[#6B39A7] rounded-full"></div>
-                </div>
-                <p className="text-[16px] font-extrabold">2</p>
-                <div className="bg-white rounded-[10px] max-h-[20px] px-[7px] py-[10px] border border-[#6B39A7] flex items-center justify-center">
-                  <div className="relative w-[10px] h-[10px]">
-                    <div className="absolute top-1/2 left-0.10 -translate-y-1/2 w-[10px] h-[2px] bg-[#6B39A7] rounded-full"></div>
-
-                    <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[2px] h-[10px] bg-[#6B39A7] rounded-full"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          <div className="rounded-[10px] py-[10px] px-[20px] border border-[#6B39A7] text-[16px] font-extrabold bg-[#EBD2FF]">
-            {step.labelCard2}
-            <div className="flex flex-row justify-between items-center">
-              <div className="bg-white py-[5px] px-[10px] w-[35%] rounded-[10px] flex justify-center items-center border border-[#6B39A7]">
-                <p className="font-semibold text-[16px] text-[#838383]">{step.itensCard2}</p>
-              </div>
-
-              <div className="gap-2 flex flex-row justify-center items-center">
-                <div className="bg-white rounded-[10px] max-h-[20px] px-[7px] py-[10px] border border-[#6B39A7] flex items-center justify-center">
-                  <div className="w-[12px] h-[3px] bg-[#6B39A7] rounded-full"></div>
-                </div>
-                <p className="text-[16px] font-extrabold">0</p>
-                <div className="bg-white rounded-[10px] max-h-[20px] px-[7px] py-[10px] border border-[#6B39A7] flex items-center justify-center">
-                  <div className="relative w-[10px] h-[10px]">
-                    <div className="absolute top-1/2 left-0.10 -translate-y-1/2 w-[10px] h-[2px] bg-[#6B39A7] rounded-full"></div>
-
-                    <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[2px] h-[10px] bg-[#6B39A7] rounded-full"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          <div className="mt-[10px] rounded-[10px] w-full border border-[#6B39A7] py-[10px] flex justify-center items-center">
-            <div className="flex flex-row justify-center items-center gap-4">
-              <div className="relative w-[20px] h-[20px] flex justify-center items-center">
-                <div className="absolute top-1/2 left-0 -translate-y-1/2 w-full h-[3px] bg-[#6B39A7] rounded-full"></div>
-
-                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[3px] h-full bg-[#6B39A7] rounded-full"></div>
-              </div>
-              <p className="font-semibold text-[20px] text-[#6B39A7]">{step.buttonAdd}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-
-    </div>
-  );
-}
-
-/* =========================
-   CARD STEP 5
-========================= */
-
-function FinishCard({ step }: any) {
-  return (
-    <div
-      className="
-        w-full
-        bg-white
-        border
-        border-[#6B39A7]
-        rounded-[20px]
-        mt-[30px]
-        pt-[40px]
-        px-[25px]
-        pb-[28px]
-        mb-[25px]
-        shadow-[0px_8px_16px_rgba(0,0,0,0.12)]
-      "
-    >
-      <div className="flex flex-col items-center">
-        <div
-          className="
-            w-[60px]
-            h-[60px]
-            bg-[#EBD2FF]
-            rounded-full
-            flex
-            items-center
-            justify-center
-          "
-        >
-          {step.icon}
-        </div>
-
-        <h1 className="font-semibold text-[24px] text-[#6B39A7] mt-[3px] text-center">
-          {step.confirmDonation}
-        </h1>
-
-        <p className="text-[16px] text-center mb-[25px]">
-          {step.confirmOrganization}
-        </p>
-
-        <div className="flex flex-col border border-[#6B39A7] bg-[#EBD2FF] rounded-[14px] w-full py-[15px] px-[30px]">
-          <div className="flex flex-row justify-between">
-            <p className="text-[16px]">Para</p>
-            <p className="font-semibold text-[#6B39A7] text-[16px]">{step.to}</p>
-          </div>
-          <div className="flex flex-row justify-between">
-            <p className="text-[16px]">Valor</p>
-            <p className="font-semibold text-[#6B39A7] text-[16px]">{step.value}</p>
-          </div>
-          <div className="flex flex-row justify-between">
-            <p className="text-[16px]">Método</p>
-            <p className="font-semibold text-[#6B39A7] text-[16px]">{step.method}</p>
-          </div>
-          <div className="flex flex-row justify-between">
-            <p className="text-[16px]">Data</p>
-            <p className="font-semibold text-[#6B39A7] text-[16px]">{step.date}</p>
-          </div>
-        </div>
-        <div className="mt-[20px]">
-          <p className="text-[16px] text-center text-[#6B39A7]">{step.confirmDescription}</p>
-        </div>
-      </div>
-
-
-    </div>
-  );
-}
-
-export default function DonationGuide() {
-    const router = useRouter();
-
-    const steps = [
-        {
-            id: 1,
-
-            label: "Passo 1",
-
-            title: "Acesse seu Perfil",
-
-            description:
-                "Toque no seu avatar no canto superior direito da home",
-        },
-
-        {
-            id: 2,
-            icon: <span className="text-[28px]">🐱</span>,
-            organization: "SOS Gatinhos",
-            organizationDescription:
-                "Como você quer ajudar?",
-
-            money: "Dinheiro",
-            DescribeMoney: "Pix ou boleto - rápido e seguro",
-
-            items: "Itens",
-            DescribeItems: "Ração, roupas e mais",
-
-            label: "VOCÊ DECIDE COMO AJUDAR",
-
-            title: (
-                <>
-                    Escolha o tipo de <br />
-                    doação
-                </>
-            ),
-
-            description:
-                "Doe dinheiro ou itens físicos - do jeito que for melhor pra você",
-        },
-
-        {
-            id: 3,
-            icon: <Heart className="w-[28px] h-[28px] fill-[#6B39A7] text-[#6B39A7]" />,
-            money: "R$ 50,00",
-            organizationDescription:
-                "para SOS Gatinhos",
-
-            titleCard1: "Pix",
-            descriptionCard1:
-                "Instantâneo",
-
-            titleCard2: "Boleto",
-
-            buttonText: "Confirmar Doação",
-
-            label: "RÁPIDO E SEGURO",
-
-            title: "Doe em segundos com Segurança",
-
-            description:
-                "Pix ou boleto. Recibo e confirmação chega na hora.",
-        },
-
-        {
-            id: 4,
-            icon: <span className="text-[28px]">📦</span>,
-            titleCard: "O que você vai doar?",
-            titleDescription:
-                "Adicione os itens que deseja enviar para SOS Gatinhos",
-
-            labelCard1: "Item 1",
-            itensCard1: "Ração e shampoo",
-
-            labelCard2: "Item 2",
-            itensCard2: "Ex: remédios, coberto...",
-
-            label: "ITENS QUE FAZEM DIFERENÇA",
-
-            title: "Doe itens para quem mais precisa",
-
-            description:
-                "Adicione ração, remédios ou qualquer item da lista da ONG",
-
-            buttonAdd: "Adicionar Item",
-        },
-
-        {
-            id: 5,
-            icon: <Check className="w-[30px] h-[30px] text-[#6B39A7] stroke-[3]" />,
-            confirmDonation: "Doação Confirmada!",
-            confirmOrganization:
-                "para SOS Gatinhos",
-
-            to: "SOS Gatinhos",
-            value: "R$ 50,00",
-            method: "Pix",
-            date: "Hoje, 14h32",
-
-            confirmDescription: "Recibo enviado para o seu e-mail. Obrigado por fazer a diferença!",
-
-            label: "TUDO CERTO!",
-
-            title: "Sua doação foi um confirmada!",
-
-            description:
-                "Recibo e comprovante chegam na hora no seu e-mail",
-        },
-    ];
-
-    const [currentStep, setCurrentStep] = useState(0);
-
-    const step = steps[currentStep];
-
-    /* =========================
-       MAPEAMENTO DOS CARDS
-    ========================= */
-
-    const cardComponents: Record<number, any> = {
-        1: DefaultCard,
-        2: DonationTypeCard,
-        3: ReviewCard,
-        4: SuccessCard,
-        5: FinishCard,
-    };
-
-    const CurrentCard = cardComponents[step.id] || DefaultCard;
-
-    function handleNext() {
-        if (currentStep < steps.length - 1) {
-            setCurrentStep(currentStep + 1);
-        } else {
-            router.push("/help-center");
-        }
+import React, { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { 
+  ArrowRight, 
+  ArrowLeft, 
+  DollarSign, 
+  Calendar, 
+  Package,
+  User,
+  Heart,
+  HelpCircle,
+  ChevronDown,
+  CheckCircle2,
+  Clock
+} from "lucide-react";
+
+const STEPS = [
+  {
+    id: 1,
+    title: "Acesse pelo",
+    highlight: "menu rápido",
+    description: "Clique na sua foto de perfil no canto superior direito e vá direto em 'Minhas Doações' para acessar seu histórico de forma instantânea.",
+    mockup: <MockupCard1 />,
+  },
+  {
+    id: 2,
+    title: "Tudo em um",
+    highlight: "só lugar",
+    description: "Dentro do seu perfil, navegue até a aba 'Histórico' para visualizar todas as suas contribuições financeiras e envios de materiais.",
+    mockup: <MockupCard2 />,
+  },
+  {
+    id: 3,
+    title: "Acompanhe o",
+    highlight: "status",
+    description: "Veja em tempo real se a sua doação financeira foi concluída ou se a entrega de materiais ainda está pendente de confirmação pela ONG.",
+    mockup: <MockupCard3 />,
+  },
+];
+
+export default function HistoryGuide() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [currentStep, setCurrentStep] = useState(0);
+
+  const callbackUrl = searchParams.get("from") || "/help-center";
+
+  const handleNext = () => {
+    if (currentStep < STEPS.length - 1) {
+      setCurrentStep((prev) => prev + 1);
+    } else {
+      router.push(callbackUrl);
     }
+  };
 
-    function handleBack() {
-        if (currentStep > 0) {
-            setCurrentStep(currentStep - 1);
-        }
+  const handlePrev = () => {
+    if (currentStep > 0) {
+      setCurrentStep((prev) => prev - 1);
     }
+  };
 
-    return (
-        <div className="min-h-dvh px-[25px] py-[10px] flex flex-col items-center">
-          <StepHeader
-            currentStep={step.id}
-            totalSteps={steps.length}
-            onSkip={() => router.push("/help-center")}
-          />
-    
-    
-          <main className="max-w-[430px] flex flex-col flex-1">
-    
-            {/* CARD DINÂMICO */}
-            <CurrentCard step={step} />
-    
-            {/* Intro */}
-            <StepIntro
-              label={step.label ?? ""}
-              title={typeof step.title === "string" ? step.title : ""}
-              description={step.description ?? ""}
-            />
-    
-            {/* Indicators */}
-            <div className="mt-auto mb-6 flex justify-center gap-[5px]">
-              {steps.map((_, index) => (
+  const handleNavigation = () => {
+    router.push(callbackUrl);
+  };
+
+  return (
+    <div className="flex min-h-[100dvh] w-full font-sans bg-[#F9FAFB] lg:bg-white overflow-hidden relative selection:bg-[#6B39A7] selection:text-white">
+      
+      <header className="absolute top-0 left-0 w-full p-6 sm:p-10 flex items-center justify-between z-50">
+        <div className="w-1/3 flex justify-start">
+          <button 
+            onClick={handleNavigation} 
+            className="flex items-center text-slate-500 hover:text-[#6B39A7] font-semibold transition-colors group w-fit active:scale-95 cursor-pointer"
+          >
+            <ArrowLeft size={20} className="mr-2 group-hover:-translate-x-1 transition-transform" /> 
+            <span className="hidden sm:inline">Voltar</span>
+          </button>
+        </div>
+
+        <div className="w-1/3 flex justify-center">
+          <span className="text-[#6B39A7] font-extrabold tracking-widest text-xs sm:text-sm uppercase bg-purple-100 px-3 py-1 rounded-lg">
+            {currentStep + 1} DE {STEPS.length}
+          </span>
+        </div>
+
+        <div className="w-1/3 flex justify-end">
+          <button
+            onClick={handleNavigation}
+            className="text-slate-400 hover:text-[#6B39A7] hover:bg-purple-50 px-4 py-2 rounded-xl font-bold text-sm sm:text-base transition-colors active:scale-95 cursor-pointer"
+          >
+            Pular
+          </button>
+        </div>
+      </header>
+
+      <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-center min-h-screen px-6 sm:px-12 pt-24 lg:pt-0 gap-12 lg:gap-20">
+        
+        <div className="w-full lg:w-1/2 flex justify-center lg:justify-end items-center relative">
+          <div className="absolute inset-0 bg-gradient-to-tr from-purple-100/50 to-transparent rounded-full blur-3xl w-72 h-72 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10"></div>
+          
+          <div className="w-full max-w-[400px] sm:max-w-[440px] lg:max-w-[480px] transition-all duration-300">
+            {STEPS[currentStep].mockup}
+          </div>
+        </div>
+
+        <div className="w-full lg:w-1/2 flex flex-col items-center text-center lg:items-start lg:text-left pb-12 lg:pb-0">
+          
+          <div className="w-full max-w-[480px] min-h-[180px]">
+            <h1 className="text-4xl sm:text-[3rem] font-black text-slate-900 mb-4 tracking-tight leading-[1.1]">
+              {STEPS[currentStep].title} <br />
+              <span className="text-[#6B39A7]">{STEPS[currentStep].highlight}</span>
+            </h1>
+            <p className="text-slate-500 text-lg font-medium leading-relaxed mb-10">
+              {STEPS[currentStep].description}
+            </p>
+          </div>
+
+          <div className="w-full max-w-[480px] flex items-center justify-between mt-4">
+            
+            <div className="w-20 flex justify-start">
+              {currentStep > 0 ? (
+                <button
+                  onClick={handlePrev}
+                  className="text-slate-400 hover:text-[#6B39A7] font-bold text-base transition-colors active:scale-95 cursor-pointer"
+                >
+                  Anterior
+                </button>
+              ) : (
+                <div className="w-20"></div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {STEPS.map((_, idx) => (
                 <div
-                  key={index}
-                  className={`h-[10px] rounded-full transition-all duration-300 ${currentStep === index
-                    ? "w-[24px] bg-[#6B39A7]"
-                    : "w-[10px] bg-[#D9B8F5]"
-                    }`}
+                  key={idx}
+                  className={`h-2.5 rounded-full transition-all duration-300 ${
+                    currentStep === idx
+                      ? "w-8 bg-[#6B39A7]"
+                      : "w-2.5 bg-slate-200"
+                  }`}
                 />
               ))}
             </div>
-    
-            {/* Buttons */}
-            <div className="flex justify-center gap-[15px] pb-2">
-              {currentStep > 0 && (
-                <BackButton onClick={handleBack} />
-              )}
-    
-              <NextButton
+
+            <div className="w-auto flex justify-end">
+              <button
                 onClick={handleNext}
-                text={currentStep === steps.length - 1 ? "Concluir" : "Próximo"}
-                isFinish={currentStep === steps.length - 1}
-              />
+                className="flex items-center justify-center gap-2 bg-[#4A2675] hover:bg-[#3b1a66] text-white px-6 sm:px-8 h-[54px] sm:h-[60px] rounded-xl font-bold text-base sm:text-lg shadow-[0_8px_20px_-6px_rgba(74,38,117,0.5)] transition-all active:scale-[0.98] group cursor-pointer"
+              >
+                {currentStep === STEPS.length - 1 ? "Começar" : "Próximo"}
+                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              </button>
             </div>
-    
-          </main>
+            
+          </div>
         </div>
-      );
-    }
+        
+      </div>
+    </div>
+  );
+}
+
+function MockupCard1() {
+  return (
+    <div className="flex flex-col items-center sm:items-end w-full select-none sm:pl-10">
+      <div className="bg-white border border-slate-200 rounded-full px-4 py-2.5 flex items-center gap-3 shadow-sm mb-4">
+        <ChevronDown size={16} className="text-purple-700 rotate-180" />
+        <span className="font-bold text-sm text-purple-700">João Silva</span>
+        <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+          <User size={16} className="text-purple-700" />
+        </div>
+      </div>
+
+      <div className="w-full sm:w-64 bg-white border border-slate-100 rounded-2xl shadow-xl p-2 flex flex-col gap-1">
+        <div className="flex items-center gap-3 p-3 rounded-xl opacity-50">
+          <User size={18} className="text-slate-500" />
+          <span className="font-bold text-slate-500">Meu Perfil</span>
+        </div>
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-purple-50 border border-purple-100 shadow-sm relative overflow-hidden">
+          <div className="absolute -inset-1 border-2 border-purple-400 rounded-xl animate-pulse pointer-events-none"></div>
+          <Heart size={18} className="text-rose-500" />
+          <span className="font-bold text-slate-700">Minhas Doações</span>
+        </div>
+        <div className="flex items-center gap-3 p-3 rounded-xl opacity-50">
+          <HelpCircle size={18} className="text-slate-500" />
+          <span className="font-bold text-slate-500">Central de Ajuda</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MockupCard2() {
+  return (
+    <div className="flex flex-col bg-slate-50 border border-slate-200 rounded-[2rem] p-5 sm:p-6 shadow-xl w-full relative overflow-hidden select-none">
+      
+      <div className="flex flex-col items-center mb-6">
+        <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-3 shadow-sm border-2 border-white">
+          <img 
+            src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" 
+            alt="Avatar" 
+            className="w-full h-full object-cover rounded-full"
+          />
+        </div>
+        <h3 className="text-lg font-extrabold text-slate-900">João Silva</h3>
+        <p className="text-sm text-slate-500 font-medium">joao@email.com</p>
+      </div>
+
+      <div className="flex gap-2 bg-white rounded-xl p-1 shadow-sm mb-6 w-full border border-slate-100">
+        <div className="flex-1 py-2 rounded-lg font-semibold text-center text-slate-400 text-sm">
+          Informações
+        </div>
+        <div className="flex-1 py-2 rounded-lg font-semibold text-center bg-purple-600 text-white shadow-sm text-sm relative">
+          Histórico
+          <div className="absolute -inset-1 border-2 border-purple-400 rounded-xl animate-pulse pointer-events-none"></div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 w-full relative opacity-80">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600">
+            <DollarSign size={18} />
+          </div>
+          <div>
+            <h4 className="font-bold text-slate-900 text-sm">SOS Gatinhos</h4>
+            <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+              <Calendar size={12} /> Ontem
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between pt-3 border-t border-slate-50">
+          <span className="text-xs font-medium text-slate-500">Doação Monetária</span>
+          <span className="text-sm font-black text-emerald-600">R$ 50,00</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MockupCard3() {
+  return (
+    <div className="flex flex-col gap-4 w-full select-none">
+      
+      <div className="bg-white rounded-[2rem] shadow-xl w-full border border-slate-100 p-5 sm:p-6 flex flex-col relative">
+        <div className="flex items-center justify-between mb-2">
+          <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+            <Package size={24} />
+          </div>
+          <div className="bg-yellow-100 text-yellow-700 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-sm animate-pulse border border-yellow-200 flex items-center gap-1">
+            <Clock size={12} /> Pendente
+          </div>
+        </div>
+        
+        <div className="mb-4">
+          <h3 className="font-black text-slate-900">Instituto Crescer</h3>
+          <p className="text-sm text-slate-500 font-medium">Doação de Materiais</p>
+        </div>
+        
+        <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+          <p className="text-sm text-slate-600 font-medium leading-relaxed">
+            Aguardando a confirmação de entrega dos itens na sede da ONG.
+          </p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-[2rem] shadow-sm w-full border border-slate-200 p-5 sm:p-6 flex flex-col opacity-60">
+        <div className="flex items-center justify-between mb-2">
+          <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <DollarSign size={24} />
+          </div>
+          <div className="bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-sm border border-emerald-100 flex items-center gap-1">
+            <CheckCircle2 size={12} /> Concluída
+          </div>
+        </div>
+        
+        <div>
+          <h3 className="font-black text-slate-900">SOS Gatinhos</h3>
+          <p className="text-sm text-slate-500 font-medium mb-3">Doação Monetária</p>
+        </div>
+        
+        <div className="flex items-center justify-between bg-emerald-50/50 rounded-xl p-3 border border-emerald-100">
+          <span className="text-sm text-emerald-700 font-bold">Valor doado</span>
+          <span className="font-black text-emerald-700">R$ 50,00</span>
+        </div>
+      </div>
+
+    </div>
+  );
+}
