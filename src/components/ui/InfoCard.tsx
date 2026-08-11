@@ -9,12 +9,14 @@ type InfoCardProps = {
 export default function InfoCard({ icon, title, description }: InfoCardProps) {
   return (
     <div
-      className="w-full p-[20px] flex flex-row gap-2 bg-white rounded-[10px] shadow-[0px_8px_16px_rgba(0,0,0,0.12)] hover:shadow-[0px_10px_20px_rgba(0,0,0,0.15)] transition mb-3"
+      className="w-full p-[20px] flex flex-row items-center gap-2 bg-white rounded-[10px] shadow-[0px_8px_16px_rgba(0,0,0,0.12)] hover:shadow-[0px_10px_20px_rgba(0,0,0,0.15)] transition mb-3"
     >
+      <div>
       <div
-        className="p-[8px] rounded-[10px] bg-[#EBD2FF] flex items-center justify-center"
+        className="p-[10px] rounded-[10px] flex items-center justify-center"
       >
         {icon}
+      </div>
       </div>
 
       <div className="flex flex-col">

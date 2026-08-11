@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import ActionCard from "@/components/ui/HelpCenterActionCard";
 import InfoCard from "@/components/ui/InfoCard";
 import StepIntro from "@/components/ui/StepIntro"
-import { X, ClipboardList, Star, Heart, User } from "lucide-react";
+import { X, ListChecks, Star, Heart, User, Package, LockKeyhole } from "lucide-react";
 import { FiSearch } from "react-icons/fi";
 import Link from "next/link";
 
@@ -42,7 +42,7 @@ export default function HelpCenterPage() {
         <div className="flex gap-4 items-stretch">
           <Link href="/donation-guide" className="flex-1">
             <ActionCard
-              icon="💰"
+              icon={<span className="text-[#6B39A7] font-semibold text-lg">$</span>}
               title="Como doar dinheiro"
               description="Pix e boleto"
             />
@@ -50,7 +50,7 @@ export default function HelpCenterPage() {
 
           <Link href="/donation-guide" className="flex-1">
             <ActionCard
-              icon="📦"
+              icon={<Package className="w-5 h-5 text-[#6B39A7]" />}
               title="Como doar itens"
               description="Ração, roupas e mais"
             />
@@ -62,13 +62,15 @@ export default function HelpCenterPage() {
             HISTÓRICO E AVALIAÇÕES
           </h1>
 
+          <Link href="/donation-history-guide">
           <InfoCard
-            icon={<ClipboardList className="w-[30px] h-[25px] fill-[#FFFFFF]" />}
+            icon={<ListChecks className="w-5 h-5 text-[#6B39A7]" />}
             title="Ver histórico de doações"
             description="Tudo que você já doou"
           />
+          </Link>
           <InfoCard
-            icon={<Star className="w-[30px] h-[25px] fill-[#FFD700]" />}
+            icon={<Star className="w-5 h-5 text-[#6B39A7]" />}
             title="Avaliar uma ONG"
             description="Comentários e estrelas"
           />
@@ -80,12 +82,12 @@ export default function HelpCenterPage() {
           </h1>
 
           <InfoCard
-            icon={<FiSearch className="w-[30px] h-[25px]" strokeWidth={3} />}
+            icon={<FiSearch className="w-5 h-5 text-[#6B39A7]" strokeWidth={3} />}
             title="Buscar e filtrar ONGs"
             description="Encontre a causa certa"
           />
           <InfoCard
-            icon={<Heart className="w-[30px] h-[25px] fill-[#FF0000]" />}
+            icon={<Heart className="w-5 h-5 text-[#6B39A7]" />}
             title="Favoritar ONGs"
             description="Salve as que você mais gosta"
           />
@@ -97,30 +99,12 @@ export default function HelpCenterPage() {
           </h1>
 
           <InfoCard
-            icon={<User className="w-[30px] h-[25px]" />}
+            icon={<User className="w-5 h-5 text-[#6B39A7]" />}
             title="Perfil e configurações"
             description="Dados pessoais e senha"
           />
           <InfoCard
-            icon={<svg width="30" height="25" viewBox="0 0 24 24">
-              {/* Alça */}
-              <path
-                d="M7 10V7a5 5 0 0110 0v3"
-                stroke="#333333"
-                strokeWidth="3"
-                fill="none"
-              />
-
-              {/* Corpo */}
-              <rect
-                x="2"
-                y="10"
-                width="20"
-                height="15"
-                rx="2"
-                fill="#FFA500"
-              />
-            </svg>}
+            icon={<LockKeyhole className="w-5 h-5 text-[#6B39A7]" />}
             title="Segurança e privacidade"
             description="Como seus dados são usados"
           />
