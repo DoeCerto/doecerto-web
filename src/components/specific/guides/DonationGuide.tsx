@@ -8,10 +8,12 @@ import StepIntro from "@/components/ui/StepIntro";
 import NextButton from "@/components/ui/NextButton";
 import BackButton from "@/components/ui/BackButton";
 
+import { FaUserFriends, FaPaw } from "react-icons/fa";
 import {
   Star,
   Heart,
-  Check
+  Check,
+  ShieldCheck
 } from "lucide-react";
 
 /* =========================
@@ -29,7 +31,7 @@ function DefaultCard({ step }: any) {
         rounded-[20px]
         pt-[30px]
         px-[35px]
-        pb-[40px]
+        pb-[30px]
         shadow-[0px_18px_60px_rgba(149,64,255,0.1)]
         flex
         flex-col
@@ -37,7 +39,7 @@ function DefaultCard({ step }: any) {
         lg:flex-1
       "
     >
-      <div className="flex flex-col gap-[5px] mb-[25px] items-center">
+      <div className="flex flex-col gap-[4px] mb-[25px] items-center">
         <div
           className="
           w-[80px]
@@ -57,9 +59,9 @@ function DefaultCard({ step }: any) {
         </h1>
 
         <div className="bg-[#F3E8FF] py-[5px] px-[42px] gap-[10px] rounded-[999px] flex justify-center items-center">
-          <div className="w-[30px] h-[30px] bg-[#6B39A7] text-white">
-            1
-          </div>
+          
+            <ShieldCheck className="w-[30px] h-[30px] text-[#6B39A7]" />
+          
           <p className="text-[18px] font-semibold text-[#6B39A7]">
             ONG verificada
           </p>
@@ -106,8 +108,8 @@ function DefaultCard({ step }: any) {
       sm:px-6
     "
         >
-          <div className="w-[30px] h-[30px] mb-[8px] bg-[#6B39A7] flex items-center justify-center shrink-0">
-            1
+          <div className="mb-[5px] flex items-center justify-center shrink-0">
+            <FaUserFriends size={32} color="#6B39A7" />
           </div>
 
           <p className="text-[clamp(24px,2.2vw,30px)] font-bold">
@@ -137,8 +139,8 @@ function DefaultCard({ step }: any) {
       sm:px-6
     "
         >
-          <div className="w-[30px] h-[30px] mb-[8px] bg-[#6B39A7] flex items-center justify-center shrink-0">
-            1
+          <div className="mb-[5px] flex items-center justify-center shrink-0">
+            <FaPaw size={30} color="#6B39A7" />
           </div>
 
           <p className="text-[clamp(24px,2.2vw,30px)] font-bold">
@@ -166,7 +168,7 @@ function DefaultCard({ step }: any) {
       sm:px-6
     "
         >
-          <div className="w-[30px] h-[30px] mb-[8px] bg-[#6B39A7] flex items-center justify-center shrink-0">
+          <div className="w-[30px] h-[30px] mb-[5px] bg-[#6B39A7] flex items-center justify-center shrink-0">
             1
           </div>
 
@@ -187,7 +189,7 @@ function DefaultCard({ step }: any) {
       {/* Button */}
       <div
         className="
-          py-[18px]
+          py-[15px]
           bg-[linear-gradient(to_bottom,#7A39D9_0%,#9540FF_100%)]
           text-white
           text-[20px]
@@ -612,7 +614,7 @@ export default function DonationGuide() {
   const steps = [
     {
       id: 1,
-      icon: <span className="text-[28px]">🐱</span>,
+      icon: <span className="text-[30px]">🐱</span>,
       organization: "SOS Gatinhos",
       organizationDescription:
         "Resgate e cuidados de gatos abandonados",
@@ -755,14 +757,14 @@ export default function DonationGuide() {
   }
 
   return (
-    <div className="min-h-screen max-w-7xl mx-auto sm:px-6 lg:px-8 flex flex-col items-center p-[10px]">
+    <div className="min-h-screen max-w-7xl mx-auto sm:px-6 lg:px-8 flex flex-col items-center p-[15px] mt-[5px]">
       <StepHeader
         currentStep={step.id}
         totalSteps={steps.length}
         onSkip={() => router.push("/help-center")}
       />
 
-      <main className="lg:flex-1 flex justify-center items-center w-full mt-[15px] px-[10px]">
+      <main className="lg:flex-1 flex justify-center items-center w-full mt-[10px] px-[10px]">
 
         <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-40 lg:items-center">
 

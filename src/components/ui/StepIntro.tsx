@@ -13,7 +13,7 @@ export default function StepIntro({
 }: StepIntroProps) {
   return (
     <div className="flex flex-col">
-      <span className={`inline-block w-fit text-[#000000] font-extrabold text-[60px] leading-[50px] mb-[40px] ${labelClassName}`}>
+      <span className={`inline-block w-fit text-[#000000] font-extrabold text-[40px] sm:text-[60px] leading-[50px] mb-[40px] ${labelClassName}`}>
         {label}
       </span>
 
