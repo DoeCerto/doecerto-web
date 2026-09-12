@@ -1,6 +1,3 @@
-"use client";
-
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { 
   ArrowLeft, 
@@ -49,21 +46,20 @@ function HelpCard({ title, description, icon, href, colorClass, bgClass }: HelpC
   );
 }
 
+// Como não usamos mais hooks (useRouter), essa página agora roda 100% no servidor!
 export default function HelpCenterPage() {
-  const router = useRouter();
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-24 selection:bg-purple-600 selection:text-white">
       
-      {/* Container mais largo: max-w-4xl */}
       <header className="pt-16 pb-10 px-6 max-w-4xl mx-auto">
-        <button 
-          onClick={() => router.push('/home')} 
+        {/* ✅ Substituímos o <button> por um <Link> nativo */}
+        <Link 
+          href="/home" 
           className="flex items-center text-slate-500 hover:text-purple-700 font-bold transition-colors group w-fit active:scale-95 cursor-pointer mb-12 text-lg"
         >
           <ArrowLeft size={24} className="mr-2 group-hover:-translate-x-1 transition-transform" /> 
           Voltar
-        </button>
+        </Link>
         
         <div className="flex flex-col items-start">
           <div className="w-20 h-20 bg-purple-100 rounded-[1.8rem] flex items-center justify-center mb-8 shadow-sm border border-purple-50">

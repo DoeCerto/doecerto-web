@@ -3,9 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { 
-  Search, MapPin, Star, SlidersHorizontal, ChevronDown, ChevronLeft, ChevronRight, FileText, Menu, 
-  Info, Layers, Heart, ShieldCheck, Handshake, MessageCircle 
+import {
+  Search, MapPin, Star, SlidersHorizontal, ChevronDown, ChevronLeft, ChevronRight, FileText, Menu,
+  Info, Layers, Heart, ShieldCheck, Handshake, MessageCircle
 } from "lucide-react";
 import { FiGlobe, FiUser, FiHelpCircle, FiLogOut, FiX, FiHeart } from "react-icons/fi";
 import { useRouter } from "next/navigation";
@@ -159,7 +159,7 @@ export default function HomeClient({
         const userRole = localStorage.getItem("userRole")?.toUpperCase();
         if (userRole !== "ONG") {
           const profile = await DonorService.getMyProfile().catch(() => null);
-          
+
           if (!isMounted) return;
 
           if (!profile) {
@@ -352,52 +352,52 @@ export default function HomeClient({
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
-      
+
       {/* 
         HEADER RESPONSIVO
         Desktop: 3 colunas iguais (w-1/3) para garantir alinhamento perfeito do centro.
       */}
       <header className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between relative z-50">
-        
+
         {/* LADO ESQUERDO (w-1/3 no Desktop) */}
-        <div 
-          className="hidden sm:flex w-1/3 justify-start relative h-12 items-center" 
+        <div
+          className="hidden sm:flex w-1/3 justify-start relative h-12 items-center"
           onMouseEnter={() => setIsAboutMenuOpen(true)}
           onMouseLeave={() => setIsAboutMenuOpen(false)}
         >
           <button className="flex items-center gap-2 text-slate-600 hover:text-purple-700 font-bold transition-colors cursor-pointer text-lg">
-            Sobre 
+            Sobre
             <motion.div animate={{ rotate: isAboutMenuOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-              <ChevronDown size={18} /> 
+              <ChevronDown size={18} />
             </motion.div>
           </button>
 
           <AnimatePresence>
             {isAboutMenuOpen && (
               <motion.div
-                initial={{ opacity: 0, y: 12, scale: 0.98 }} 
+                initial={{ opacity: 0, y: 12, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 12, scale: 0.98 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                className="absolute top-full left-0 pt-5" 
+                className="absolute top-full left-0 pt-5"
               >
                 {/* MENU GIGANTE E LEGÍVEL (Restaurado) */}
                 <div className="w-[640px] bg-white rounded-3xl shadow-[0_24px_64px_-16px_rgba(0,0,0,0.12)] border border-slate-100 p-4 origin-top-left flex gap-3">
-                  
+
                   {/* COLUNA 1: A Plataforma */}
-                  <div className="flex-1 bg-slate-50 rounded-2xl p-6 flex flex-col gap-2"> 
-                    <h4 className="text-[11px] font-black text-purple-600 uppercase tracking-widest mb-4 ml-2">A Plataforma</h4> 
-                    
+                  <div className="flex-1 bg-slate-50 rounded-2xl p-6 flex flex-col gap-2">
+                    <h4 className="text-[11px] font-black text-purple-600 uppercase tracking-widest mb-4 ml-2">A Plataforma</h4>
+
                     <a href="/?section=whatisdoecerto" className="group flex items-start gap-4 p-3.5 rounded-xl hover:bg-white hover:shadow-sm transition-all border border-transparent hover:border-slate-100">
                       <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100 text-purple-600 group-hover:text-purple-700 group-hover:scale-105 transition-transform flex-shrink-0">
-                        <Info size={22} strokeWidth={2.5} /> 
+                        <Info size={22} strokeWidth={2.5} />
                       </div>
                       <div className="flex-1">
-                        <span className="block text-base font-bold text-slate-800 mb-1">O que é o DoeCerto</span> 
-                        <span className="block text-sm text-slate-500 font-medium leading-relaxed">Conheça nossa missão e como conectamos você às ONGs de forma segura.</span> 
+                        <span className="block text-base font-bold text-slate-800 mb-1">O que é o DoeCerto</span>
+                        <span className="block text-sm text-slate-500 font-medium leading-relaxed">Conheça nossa missão e como conectamos você às ONGs de forma segura.</span>
                       </div>
                     </a>
-                    
+
                     <a href="/?section=howitworks" className="group flex items-start gap-4 p-3.5 rounded-xl hover:bg-white hover:shadow-sm transition-all border border-transparent hover:border-slate-100">
                       <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100 text-purple-600 group-hover:text-purple-700 group-hover:scale-105 transition-transform flex-shrink-0">
                         <Layers size={22} strokeWidth={2.5} />
@@ -408,7 +408,7 @@ export default function HomeClient({
                       </div>
                     </a>
 
-                    <a href="/?section=whychooseus" className="group flex items-start gap-4 p-3.5 rounded-xl hover:bg-white hover:shadow-sm transition-all border border-transparent hover:border-slate-100"> 
+                    <a href="/?section=whychooseus" className="group flex items-start gap-4 p-3.5 rounded-xl hover:bg-white hover:shadow-sm transition-all border border-transparent hover:border-slate-100">
                       <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100 text-purple-600 group-hover:text-purple-700 group-hover:scale-105 transition-transform flex-shrink-0">
                         <Heart size={22} strokeWidth={2.5} />
                       </div>
@@ -420,26 +420,26 @@ export default function HomeClient({
                   </div>
 
                   {/* COLUNA 2: Transparência & Links Rápidos */}
-                  <div className="flex-1 p-6 flex flex-col gap-2"> 
+                  <div className="flex-1 p-6 flex flex-col gap-2">
                     <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4 ml-2">Transparência & Ajuda</h4>
-                    
+
                     <a href="/?section=verificationbadge" className="group flex items-center gap-4 p-3.5 rounded-xl hover:bg-slate-50 transition-all">
                       <ShieldCheck size={20} className="text-slate-400 group-hover:text-purple-600 transition-colors" />
                       <span className="text-base font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">Selo de Verificação</span>
                     </a>
-                    
+
                     <a href="/?section=visitscarousel" className="group flex items-center gap-4 p-3.5 rounded-xl hover:bg-slate-50 transition-all">
                       <MapPin size={20} className="text-slate-400 group-hover:text-purple-600 transition-colors" />
                       <span className="text-base font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">Nossas Visitas</span>
                     </a>
-                    
+
                     <a href="/?section=partnerssection" className="group flex items-center gap-4 p-3.5 rounded-xl hover:bg-slate-50 transition-all">
                       <Handshake size={20} className="text-slate-400 group-hover:text-purple-600 transition-colors" />
                       <span className="text-base font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">Parceiros</span>
                     </a>
-                    
+
                     <div className="h-px bg-slate-100 my-3 mx-2"></div>
-                    
+
                     <a href="/?section=faq" className="group flex items-center gap-4 p-3.5 rounded-xl hover:bg-slate-50 transition-all">
                       <MessageCircle size={20} className="text-slate-400 group-hover:text-purple-600 transition-colors" />
                       <span className="text-base font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">Dúvidas (FAQ)</span>
@@ -464,7 +464,7 @@ export default function HomeClient({
         <div className="flex justify-end w-auto sm:w-1/3 relative z-20" ref={menuRef}>
           {isAuth ? (
             <>
-              {/* DESKTOP E MOBILE: Botão de Perfil Logado */}
+              {/* DESKTOP: Botão de Perfil Logado (Com nome e dropdown) */}
               <div className="hidden sm:block">
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -486,51 +486,61 @@ export default function HomeClient({
                     )}
                   </div>
                 </button>
-                
-                <AnimatePresence>
-                  {isMenuOpen && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute top-full right-0 mt-3 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 origin-top-right"
-                    >
-                      <button onClick={goToProfile} className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition text-left cursor-pointer">
-                        <FiUser size={18} className="text-blue-600" />
-                        <span className="font-bold text-slate-700">Meu Perfil</span>
-                      </button>
-                      <button onClick={goToDonations} className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition text-left cursor-pointer">
-                        <FiHeart size={18} className="text-rose-500" />
-                        <span className="font-bold text-slate-700">Minhas Doações</span>
-                      </button>
-                      <button onClick={() => { router.push("/help-center"); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition text-left cursor-pointer">
-                        <FiHelpCircle size={18} className="text-purple-600" />
-                        <span className="font-bold text-slate-700">Central de Ajuda</span>
-                      </button>
-                      <button onClick={() => { router.push("/terms"); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition text-left cursor-pointer">
-                        <FileText size={18} className="text-slate-500" />
-                        <span className="font-bold text-slate-700">Termos & Políticas</span>
-                      </button>
-                      <div className="border-t border-slate-100 my-1"></div>
-                      <button onClick={handleLogout} className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition text-left cursor-pointer">
-                        <FiLogOut size={18} className="text-slate-500" />
-                        <span className="font-bold text-slate-500">Sair</span>
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </div>
 
-              {/* MOBILE ONLY: Hamburger (Se logado) */}
-              <div className="sm:hidden">
-                <button 
-                  onClick={() => setIsMobileMenuOpen(true)} 
-                  className="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
+              {/* MOBILE ONLY: Avatar (Abre Dropdown) + Hamburger (Abre Gaveta) */}
+              <div className="flex items-center gap-3 sm:hidden">
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="w-8 h-8 shrink-0 rounded-full overflow-hidden ring-2 ring-purple-100 cursor-pointer active:scale-95 transition-transform"
+                >
+                  {displayAvatar && displayAvatar !== "/default-avatar.png" ? (
+                    <img src={displayAvatar} alt="avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-purple-100 flex items-center justify-center">
+                      <FiUser size={16} className="text-purple-700" />
+                    </div>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => setIsMobileMenuOpen(true)}
+                  className="p-1 text-slate-600 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
                 >
                   <Menu size={24} />
                 </button>
               </div>
+
+              {/* DROPDOWN COMPARTILHADO (Abre no Desktop e no Mobile pelo Avatar) */}
+              <AnimatePresence>
+                {isMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute top-full right-0 mt-3 sm:mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-[100] origin-top-right"
+                  >
+                    <button onClick={goToProfile} className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition text-left cursor-pointer">
+                      <FiUser size={18} className="text-blue-600" />
+                      <span className="font-bold text-slate-700">Meu Perfil</span>
+                    </button>
+                    <button onClick={goToDonations} className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition text-left cursor-pointer">
+                      <FiHeart size={18} className="text-rose-500" />
+                      <span className="font-bold text-slate-700">Minhas Doações</span>
+                    </button>
+                    <button onClick={() => { router.push("/help-center"); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition text-left cursor-pointer">
+                      <FiHelpCircle size={18} className="text-purple-600" />
+                      <span className="font-bold text-slate-700">Central de Ajuda</span>
+                    </button>
+                    <div className="border-t border-slate-100 my-1"></div>
+                    <button onClick={handleLogout} className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition text-left cursor-pointer">
+                      <FiLogOut size={18} className="text-slate-500" />
+                      <span className="font-bold text-slate-500">Sair</span>
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </>
           ) : (
             <>
@@ -546,9 +556,9 @@ export default function HomeClient({
 
               {/* MOBILE ONLY: Hamburger (Se deslogado) */}
               <div className="sm:hidden">
-                <button 
-                  onClick={() => setIsMobileMenuOpen(true)} 
-                  className="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
+                <button
+                  onClick={() => setIsMobileMenuOpen(true)}
+                  className="p-1 text-slate-600 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
                 >
                   <Menu size={24} />
                 </button>
@@ -570,9 +580,9 @@ export default function HomeClient({
               onClick={() => setIsMobileMenuOpen(false)}
               className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[200] sm:hidden cursor-pointer"
             />
-            
+
             {/* Menu Lateral Deslizante */}
-            <motion.div 
+            <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
@@ -604,27 +614,14 @@ export default function HomeClient({
                 <div className="border-t border-slate-100"></div>
 
                 {isAuth ? (
-                  /* Usuário Logado */
-                  <div>
-                    <span className="text-[10px] font-black text-purple-600 uppercase tracking-widest mb-3 block">Minha Conta</span>
-                    <div className="flex flex-col gap-1">
-                      <button onClick={() => { goToProfile(); setIsMobileMenuOpen(false); }} className="w-full flex items-center gap-3 py-2.5 px-3 rounded-lg text-slate-700 font-bold hover:bg-purple-50 transition-colors cursor-pointer">
-                        <FiUser size={18} className="text-blue-600" /> Meu Perfil
-                      </button>
-                      <button onClick={() => { goToDonations(); setIsMobileMenuOpen(false); }} className="w-full flex items-center gap-3 py-2.5 px-3 rounded-lg text-slate-700 font-bold hover:bg-purple-50 transition-colors cursor-pointer">
-                        <FiHeart size={18} className="text-rose-500" /> Minhas Doações
-                      </button>
-                      <button onClick={() => { router.push("/help-center"); setIsMobileMenuOpen(false); }} className="w-full flex items-center gap-3 py-2.5 px-3 rounded-lg text-slate-700 font-bold hover:bg-purple-50 transition-colors cursor-pointer">
-                        <FiHelpCircle size={18} className="text-purple-600" /> Central de Ajuda
-                      </button>
-                    </div>
-
-                    <button onClick={handleLogout} className="mt-8 w-full flex items-center justify-center gap-2 py-3.5 bg-slate-100 text-slate-600 font-bold rounded-xl active:scale-95 transition-all cursor-pointer">
+                  /* Usuário Logado - Apenas o botão de Sair na gaveta */
+                  <div className="mt-2">
+                    <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 py-3.5 bg-slate-100 text-slate-600 font-bold rounded-xl active:scale-95 transition-all cursor-pointer hover:bg-slate-200">
                       <FiLogOut size={18} /> Sair
                     </button>
                   </div>
                 ) : (
-                  /* Usuário Deslogado */
+                  /* Usuário Deslogado - Botões de Entrar/Criar Conta */
                   <div className="flex flex-col gap-3 mt-4">
                     <button onClick={() => router.push('/login')} className="w-full py-3.5 rounded-xl border-2 border-purple-100 bg-white text-purple-700 font-black hover:bg-purple-50 active:scale-95 transition-all cursor-pointer">
                       Entrar
@@ -716,7 +713,7 @@ export default function HomeClient({
                   <div className="w-full aspect-[16/10] bg-slate-100 relative overflow-hidden">
                     <OngLogo src={ong.img} alt={ong.name} className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105" />
                   </div>
-                  
+
                   <div className="p-4 flex flex-col flex-grow">
                     {ong.categories.length > 0 && (
                       <div className="flex items-center gap-1 mb-2">
@@ -725,16 +722,16 @@ export default function HomeClient({
                         </span>
                       </div>
                     )}
-                    
+
                     <div className="flex items-center gap-1.5 mb-1 min-w-0">
                       <h3 className="text-base font-extrabold text-slate-900 leading-snug truncate">
                         {ong.name}
                       </h3>
                       <VerifiedBadge variant="shimmer" size={16} />
                     </div>
-                    
+
                     <div className="flex-grow"></div>
-                    
+
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -765,7 +762,7 @@ export default function HomeClient({
             {filteredCatalog.length === 0 ? (
               <div className="col-span-full bg-white rounded-3xl p-12 text-center shadow-sm border border-slate-100">
                 <p className="text-slate-500 font-medium text-lg">
-                  {sortBy === 'distance' 
+                  {sortBy === 'distance'
                     ? "Nenhuma ONG encontrada dentro do raio de 10km da sua localização."
                     : "Nenhuma ONG encontrada com estes filtros."}
                 </p>
@@ -789,12 +786,12 @@ export default function HomeClient({
                         </span>
                       </div>
                     )}
-                    
+
                     <div className="flex items-center justify-between gap-2 mb-4">
                       <h3 className="text-lg font-extrabold text-slate-900 leading-snug truncate">
                         {ong.name}
                       </h3>
-                      
+
                       {/* Rating limpo, sem o fundo amarelo */}
                       <div className="flex items-center gap-1 shrink-0">
                         <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
@@ -808,7 +805,7 @@ export default function HomeClient({
                         <span className="text-xs font-bold">{ong.distance}</span>
                       </div>
                     )}
-                    
+
                     <div className="flex-grow"></div>
 
                     <button
@@ -903,32 +900,32 @@ export default function HomeClient({
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-white w-full max-w-sm rounded-[2rem] overflow-hidden shadow-2xl p-8 flex flex-col items-center text-center">
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-6">
                 {guestModal.type === 'donate' ? (
-                   <FiUser size={32} className="text-purple-700" />
+                  <FiUser size={32} className="text-purple-700" />
                 ) : (
-                   <MapPin size={32} className="text-purple-700" />
+                  <MapPin size={32} className="text-purple-700" />
                 )}
               </div>
-              
+
               <h2 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">
                 {guestModal.type === 'donate' ? 'Fazer o bem faz bem!' : 'Precisamos da sua localização'}
               </h2>
               <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">
-                {guestModal.type === 'donate' 
+                {guestModal.type === 'donate'
                   ? 'Você pode criar uma conta para acompanhar o impacto das suas doações, ou seguir de forma anônima.'
                   : 'Faça login ou cadastre-se para informar seu endereço e descobrir quais ONGs estão perto de você.'}
               </p>
-              
+
               <div className="w-full flex flex-col gap-3">
                 <button onClick={() => router.push("/register")} className="w-full bg-purple-600 text-white font-black py-4 rounded-xl shadow-lg shadow-purple-200 active:scale-95 transition-all cursor-pointer">
                   Criar Conta / Entrar
                 </button>
-                
+
                 {guestModal.type === 'donate' && (
                   <button onClick={() => { setGuestModal({ ...guestModal, isOpen: false }); setIsModalOpen(true); }} className="w-full py-3.5 text-purple-600 border-2 border-purple-100 font-bold rounded-xl hover:bg-purple-50 active:scale-95 transition-all cursor-pointer">
                     Doar Anonimamente
                   </button>
                 )}
-                
+
                 <button onClick={() => setGuestModal({ ...guestModal, isOpen: false })} className="mt-3 text-slate-400 font-bold text-sm hover:text-slate-600 transition-colors cursor-pointer">
                   Cancelar
                 </button>

@@ -38,16 +38,23 @@ export interface OngProfileData {
   canReview?: boolean;
 }
 
-export default function OngPublicProfile({ ongId }: { ongId: number }) {
+// AQUI ESTAVA O SEU ERRO! A assinatura da função agora aceita o initialData
+export default function OngPublicProfileClient({ 
+  ongId, 
+  initialData 
+}: { 
+  ongId: number;
+  initialData: { ong: OngProfileData; reviews: Review[] } | null;
+}) {
   const router = useRouter();
-  
-  // 1. Trazemos o estado de autenticação para saber se é anônimo ou logado
   const { isAuthenticated } = useAuth();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isReviewBlockedOpen, setIsReviewBlockedOpen] = useState(false);
-  const [data, setData] = useState<{ ong: OngProfileData; reviews: Review[] } | null>(null);
+  
+  // INICIA COM OS DADOS DO SERVIDOR
+  const [data, setData] = useState<{ ong: OngProfileData; reviews: Review[] } | null>(initialData);
   const [errors, setErrors] = useState({ banner: false, logo: false });
 
   const loadData = async () => {
@@ -66,7 +73,11 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
     }
   };
 
-  useEffect(() => { loadData(); }, [ongId]);
+  useEffect(() => { 
+    if (!initialData || isAuthenticated) {
+      loadData(); 
+    }
+  }, [ongId, isAuthenticated]);
 
   if (!data) return (
     <div className="min-h-screen flex items-center justify-center bg-white">
@@ -86,7 +97,6 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20 sm:pb-36 font-sans text-slate-900">
-      {/* Banner Section - Responsivo */}
       <div className="relative w-full h-[200px] sm:h-[250px] md:h-[300px] bg-slate-200">
         {ong.banner && !errors.banner ? (
           <img src={ong.banner} className="w-full h-full object-cover" alt="Capa" onError={() => setErrors(prev => ({ ...prev, banner: true }))} />
@@ -101,13 +111,10 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
         </button>
       </div>
 
-      {/* Container Principal Centralizado */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 -mt-16 sm:-mt-24 relative z-10 flex flex-col gap-4 sm:gap-6">
 
-        {/* CARTÃO 1: Perfil da ONG + Estatísticas */}
         <div className="bg-white rounded-3xl p-5 sm:p-8 lg:p-12 shadow-sm border border-slate-100 flex flex-col items-center text-center">
 
-          {/* Logo - Escalonada */}
           <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl shadow-md mb-4 sm:mb-6 flex items-center justify-center overflow-hidden bg-slate-100 border-4 border-white ring-1 ring-slate-100 shrink-0">
             {ong.logo && !errors.logo ? (
               <img src={ong.logo} className="w-full h-full object-cover" alt="Logo" onError={() => setErrors(prev => ({ ...prev, logo: true }))} />
@@ -116,7 +123,6 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
             )}
           </div>
 
-          {/* Nome da ONG e Selo de Verificação Lado a Lado */}
           <div className="flex items-center justify-center gap-1">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 leading-none">
               {ong.name}
@@ -146,7 +152,6 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
             ))}
           </div>
 
-          {/* Painel de Estatísticas - Responsivo */}
           <div className="w-full grid grid-cols-3 gap-2 sm:gap-3 lg:gap-6 mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-slate-100">
             <StatItem icon={<Star className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" fill="#facc15" />} value={ong.rating?.toFixed(1) || "0.0"} label="Nota Geral" />
             <StatItem icon={<MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />} value={ong.numberOfRatings} label="Feedbacks" />
@@ -154,7 +159,6 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
           </div>
         </div>
 
-        {/* CARTÃO 2: Ações */}
         <div className="bg-white rounded-3xl p-5 sm:p-8 lg:p-10 shadow-sm border border-slate-100">
           <div className="flex flex-col md:flex-row items-center justify-between gap-5 sm:gap-6">
             <div className="text-center md:text-left w-full">
@@ -163,7 +167,6 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
             </div>
 
             <div className="flex flex-col sm:flex-row w-full md:w-auto gap-3 sm:gap-4 shrink-0">
-              {/* 2. O botão de avaliar só é renderizado se o usuário estiver logado */}
               {isAuthenticated && (
                 <button
                   onClick={handleReviewClick}
@@ -182,7 +185,6 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
           </div>
         </div>
 
-        {/* CARTÃO 3: Sobre */}
         <div className="p-5 sm:p-8 lg:p-10 rounded-3xl bg-white shadow-sm border border-slate-100">
           <h2 className="text-lg sm:text-xl font-black text-purple-600 mb-4 sm:mb-6">Sobre a instituição</h2>
           <p className="text-sm sm:text-base lg:text-lg text-slate-700 leading-relaxed">{ong.description}</p>
@@ -194,7 +196,6 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
           </div>
         </div>
 
-        {/* CARTÃO 4: Comentários */}
         <div className="p-5 sm:p-8 lg:p-10 rounded-3xl bg-white shadow-sm border border-slate-100">
           <h3 className="text-lg sm:text-xl font-black text-purple-600 mb-4 sm:mb-6">Comentários de Doadores</h3>
           <div className="space-y-3 sm:space-y-4 max-h-[350px] sm:max-h-[400px] overflow-y-auto pr-1 sm:pr-2">
@@ -224,12 +225,10 @@ export default function OngPublicProfile({ ongId }: { ongId: number }) {
         />
       )}
 
-      {/* Modal de Avaliação Liberada */}
       <AnimatePresence>
         {isReviewModalOpen && <ReviewPostModal ongId={ongId} onClose={() => setIsReviewModalOpen(false)} onSuccess={loadData} />}
       </AnimatePresence>
 
-      {/* Modal de Avaliação Bloqueada (Regra de Negócio) */}
       <AnimatePresence>
         {isReviewBlockedOpen && (
           <ReviewBlockedModal 
@@ -287,7 +286,6 @@ function StatItem({ icon, value, label }: { icon: React.ReactNode, value: number
   );
 }
 
-// Modal quando a avaliação está liberada
 function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose: () => void, onSuccess: () => void }) {
   const [score, setScore] = useState(0); 
   const [hoveredScore, setHoveredScore] = useState(0); 
@@ -397,7 +395,6 @@ function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose
   );
 }
 
-// Novo Modal que explica a regra de negócio do bloqueio
 function ReviewBlockedModal({ onClose, onDonateClick }: { onClose: () => void, onDonateClick: () => void }) {
   return (
     <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">

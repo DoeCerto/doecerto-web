@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
   ArrowRight, 
@@ -40,12 +40,12 @@ const STEPS = [
   },
 ];
 
-export default function UserGuide() {
+function DonationGuideContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(0);
 
-  // O Padrão Ouro: Captura de onde o usuário veio na URL. Se não tiver parâmetro, o fallback seguro é a "/home".
+  // O Padrão Ouro: Captura de onde o usuário veio na URL. Se não tiver parâmetro, o fallback seguro é a "/help-center".
   const callbackUrl = searchParams.get("from") || "/help-center";
 
   const handleNext = () => {
@@ -74,7 +74,7 @@ export default function UserGuide() {
         <div className="w-1/3 flex justify-start">
           <button 
             onClick={handleNavigation} 
-            className="flex items-center text-slate-500 hover:text-[#6B39A7] font-semibold transition-colors group w-fit active:scale-95"
+            className="flex items-center text-slate-500 hover:text-[#6B39A7] font-semibold transition-colors group w-fit active:scale-95 cursor-pointer"
           >
             <ArrowLeft size={20} className="mr-2 group-hover:-translate-x-1 transition-transform" /> 
             <span className="hidden sm:inline">Voltar</span>
@@ -90,7 +90,7 @@ export default function UserGuide() {
         <div className="w-1/3 flex justify-end">
           <button
             onClick={handleNavigation}
-            className="text-slate-400 hover:text-[#6B39A7] hover:bg-purple-50 px-4 py-2 rounded-xl font-bold text-sm sm:text-base transition-colors active:scale-95"
+            className="text-slate-400 hover:text-[#6B39A7] hover:bg-purple-50 px-4 py-2 rounded-xl font-bold text-sm sm:text-base transition-colors active:scale-95 cursor-pointer"
           >
             Pular
           </button>
@@ -130,7 +130,7 @@ export default function UserGuide() {
               {currentStep > 0 ? (
                 <button
                   onClick={handlePrev}
-                  className="text-slate-400 hover:text-[#6B39A7] font-bold text-base transition-colors active:scale-95"
+                  className="text-slate-400 hover:text-[#6B39A7] font-bold text-base transition-colors active:scale-95 cursor-pointer"
                 >
                   Anterior
                 </button>
@@ -157,7 +157,7 @@ export default function UserGuide() {
             <div className="w-auto flex justify-end">
               <button
                 onClick={handleNext}
-                className="flex items-center justify-center gap-2 bg-[#4A2675] hover:bg-[#3b1a66] text-white px-6 sm:px-8 h-[54px] sm:h-[60px] rounded-xl font-bold text-base sm:text-lg shadow-[0_8px_20px_-6px_rgba(74,38,117,0.5)] transition-all active:scale-[0.98] group"
+                className="flex items-center justify-center gap-2 bg-[#4A2675] hover:bg-[#3b1a66] text-white px-6 sm:px-8 h-[54px] sm:h-[60px] rounded-xl font-bold text-base sm:text-lg shadow-[0_8px_20px_-6px_rgba(74,38,117,0.5)] transition-all active:scale-[0.98] group cursor-pointer"
               >
                 {currentStep === STEPS.length - 1 ? "Começar" : "Próximo"}
                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
@@ -374,5 +374,18 @@ function MockupCard3() {
         </div>
       </div>
     </div>
+  );
+}
+
+// 2. Export default embrulhado em Suspense
+export default function DonationGuide() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB]">
+        <div className="w-10 h-10 border-4 border-[#6B39A7] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <DonationGuideContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
   ArrowRight, 
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 const STEPS = [
+  // ... (Mantenha o conteúdo original da constante STEPS)
   {
     id: 1,
     title: "Encontre e ajude",
@@ -47,7 +48,7 @@ const STEPS = [
   },
 ];
 
-export default function ItemDonationGuide() {
+function ItemDonationGuideContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(0);
@@ -169,6 +170,20 @@ export default function ItemDonationGuide() {
     </div>
   );
 }
+
+export default function ItemDonationGuide() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB]">
+        <div className="w-10 h-10 border-4 border-[#6B39A7] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <ItemDonationGuideContent />
+    </Suspense>
+  );
+}
+
+// ... (MANTENHA TODOS OS MOCKUPS A PARTIR DAQUI SEM MEXER)
 
 function MockupCard1() {
   return (

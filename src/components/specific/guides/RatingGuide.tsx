@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
   ArrowRight, 
@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 const STEPS = [
+  // ... (Mantenha o conteúdo original da constante STEPS)
   {
     id: 1,
     title: "Encontre uma",
@@ -46,7 +47,7 @@ const STEPS = [
   },
 ];
 
-export default function RatingGuide() {
+function RatingGuideContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(0);
@@ -168,6 +169,20 @@ export default function RatingGuide() {
     </div>
   );
 }
+
+export default function RatingGuide() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB]">
+        <div className="w-10 h-10 border-4 border-[#6B39A7] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <RatingGuideContent />
+    </Suspense>
+  );
+}
+
+// ... (MANTENHA TODOS OS MOCKUPS A PARTIR DAQUI SEM MEXER)
 
 // MOCKUPS VISUAIS
 

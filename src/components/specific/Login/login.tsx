@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation"; // ✅ useSearchParams importado
+// ✅ Suspense adicionado aos imports do React
+import { useState, useRef, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation"; 
 import toast, { Toaster } from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { login } from "@/services/login.service";
@@ -10,9 +11,10 @@ import { Eye, EyeClosed, Lock, Mail, Compass } from "lucide-react";
 import { Preferences } from "@capacitor/preferences";
 import gsap from "gsap";
 
-export default function LoginPage() {
+// 1. Mudamos o nome da função principal para LoginContent (sem o export default)
+function LoginContent() {
   const router = useRouter();
-  const searchParams = useSearchParams(); // ✅ Inicializando o searchParams
+  const searchParams = useSearchParams(); 
   const { refreshSession } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,8 +25,8 @@ export default function LoginPage() {
   const mainWrapperRef = useRef(null);
   const imageRef = useRef(null);
 
-  // 1. Verifica se já está logado
-useEffect(() => {
+  // Verifica se já está logado
+  useEffect(() => {
     const checkAuth = async () => {
       const { value: token } = await Preferences.get({ key: "access_token" });
       const localToken = localStorage.getItem("access_token");
@@ -37,7 +39,7 @@ useEffect(() => {
     checkAuth();
   }, [router]);
 
-  // 2. Inicializa o GSAP
+  // Inicializa o GSAP
   useEffect(() => {
     let ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
@@ -55,7 +57,7 @@ useEffect(() => {
     return () => ctx.revert();
   }, []);
 
-  // 3. Função auxiliar para salvar a sessão
+  // Função auxiliar para salvar a sessão
   const saveSessionAndRedirect = async (data: any) => {
     const token = data?.accessToken || data?.access_token || data?.token;
     const apiUserRole = data?.user?.role || data?.role;
@@ -69,8 +71,6 @@ useEffect(() => {
     } catch (capacitorError) { }
 
     localStorage.setItem("registration_completed", "true");
-    
-    // 🛡️ userRole removido do cliente (localStorage / Preferences) com sucesso!
     
     // Mantemos apenas dados visuais/estéticos no navegador
     if (userAvatar) localStorage.setItem("userAvatar", userAvatar);
@@ -89,7 +89,7 @@ useEffect(() => {
     // Atualiza o estado global de contexto visual
     refreshSession();
 
-    // 🚀 Lógica de redirecionamento inteligente
+    // Lógica de redirecionamento inteligente
     const fromUrl = searchParams?.get("from");
     const roleLower = finalRole?.toLowerCase() || "";
     let redirectPath = "/home";
@@ -108,7 +108,7 @@ useEffect(() => {
     }, 1500);
   };
 
-  // 4. Fluxo de Login Normal
+  // Fluxo de Login Normal
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email || !password) return toast.error("Preencha todos os campos");
@@ -297,5 +297,18 @@ useEffect(() => {
         </div>
       </div>
     </div>
+  );
+}
+
+// 2. Novo export default que empacota tudo no Suspense
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB] lg:bg-white">
+        <div className="w-10 h-10 border-4 border-[#6B39A7] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }
