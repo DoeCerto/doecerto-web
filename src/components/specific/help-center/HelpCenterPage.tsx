@@ -6,7 +6,7 @@ import {
   History, 
   Star, 
   Search, 
-  Heart, 
+  Layers, 
   User, 
   ShieldCheck, 
   ChevronRight,
@@ -139,12 +139,12 @@ export default function HelpCenterPage() {
               bgClass="bg-indigo-50" 
             />
             <HelpCard 
-              title="Minhas favoritas" 
-              description="Gerencie as causas que você mais ama." 
-              icon={<Heart size={28} strokeWidth={2.5} />} 
-              href="/dashboard" 
-              colorClass="text-rose-600" 
-              bgClass="bg-rose-50" 
+              title="Categorias e Causas" 
+              description="Entenda como explorar e filtrar por categorias." 
+              icon={<Layers size={28} strokeWidth={2.5} />} 
+              href="/categories-guide" 
+              colorClass="text-teal-600" 
+              bgClass="bg-teal-50" 
             />
           </div>
         </section>
