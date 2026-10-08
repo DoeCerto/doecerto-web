@@ -14,6 +14,15 @@ export interface OngAdminData {
   status: OngStatus;
   rejectionReason?: string;
   createdAt: string;
+  presidentName?: string;
+  presidentCpf?: string;
+  estatutoUrl?: string;
+  ataUrl?: string;
+  cartaoCnpjUrl?: string;
+  riskScore?: number;
+  isRestricted?: boolean;
+  lastAuditAt?: string;
+  auditResults?: any[];
 }
 
 interface ApiResponse {
@@ -37,6 +46,15 @@ function normalizeOng(raw: any, status: OngStatus): OngAdminData {
     status: status, // Forçamos o status baseado na rota chamada
     rejectionReason: data.rejectionReason ?? data.rejectionMessage,
     createdAt: data.createdAt ?? new Date().toISOString(),
+    presidentName: data.presidentName,
+    presidentCpf: data.presidentCpf,
+    estatutoUrl: data.estatutoUrl,
+    ataUrl: data.ataUrl,
+    cartaoCnpjUrl: data.cartaoCnpjUrl,
+    riskScore: data.riskScore,
+    isRestricted: data.isRestricted,
+    lastAuditAt: data.lastAuditAt,
+    auditResults: data.auditResults,
   };
 }
 
@@ -74,13 +92,13 @@ export async function searchOngs(searchTerm: string, status: OngStatus) {
 }
 
 // --- Serviços de Escrita (Ações) ---
-export async function approveOng(ongId: number) {
+export async function approveOng(ongId: number, releaseRestriction?: boolean) {
   // ✅ CORREÇÃO APLICADA: 
   // 1. Parênteses ao redor do template literal
   // 2. ongId convertido para string (API espera "numeric string")
   await api(`/ongs/${ongId}/verification/approve`, { 
     method: "PATCH",
-    body: JSON.stringify({ ongId: ongId.toString() })
+    body: JSON.stringify({ ongId: ongId.toString(), releaseRestriction })
   });
 }
 

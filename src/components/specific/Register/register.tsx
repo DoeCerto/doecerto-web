@@ -366,13 +366,20 @@ function useRegisterForm() {
     try {
       const data = form.getValues();
       if (data.accountType === 'ong') {
-        await registerOng({ 
-          name: data.nome, 
-          email: data.email, 
-          password: data.senha, 
-          cnpj: removeFormatting(data.documento)
-        });
-        toast.success("ONG cadastrada! Faça login para continuar.");
+        const formData = new FormData();
+        formData.append('name', data.nome);
+        formData.append('email', data.email);
+        formData.append('password', data.senha);
+        formData.append('cnpj', removeFormatting(data.documento));
+        formData.append('presidentName', data.nomePresidente || '');
+        formData.append('presidentCpf', removeFormatting(data.cpfPresidente || ''));
+        
+        if (fileEstatuto) formData.append('estatuto', fileEstatuto);
+        if (fileAta) formData.append('ata', fileAta);
+        if (fileCartaoCnpj) formData.append('cartaoCnpj', fileCartaoCnpj);
+
+        await registerOng(formData);
+        toast.success("ONG cadastrada! Iniciando a triagem de Compliance...");
       } else {
         await registerDonor({ 
           name: data.nome, 
