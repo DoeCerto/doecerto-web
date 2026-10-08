@@ -16,6 +16,7 @@ import { Preferences } from '@capacitor/preferences';
 import { logout } from '@/services/login.service';
 import toast from 'react-hot-toast';
 import MetricsPanel from '../specific/Adm-Dashboard/dashboard-metrics/MetricsPanel';
+import { useAuth } from '@/contexts/AuthContext';
 
 type AdminLayoutProps = {
   children: React.ReactNode;
@@ -26,6 +27,7 @@ type AdminLayoutProps = {
 
 export default function AdminLayout({ children, activeMenu: initialActiveMenu = 'home', adminName = 'Administrador', onMenuChange }: AdminLayoutProps) {
   const router = useRouter();
+  const { refreshSession } = useAuth();
   const [activeMenu, setActiveMenu] = useState<'home' | 'dashboard'>(initialActiveMenu);
 
   const handleMenuChange = (menu: 'home' | 'dashboard' ) => {
@@ -35,21 +37,27 @@ export default function AdminLayout({ children, activeMenu: initialActiveMenu = 
 
   const handleLogout = async () => {
     try {
+      await Preferences.remove({ key: "access_token" });
+      await Preferences.remove({ key: "userRole" });
+    } catch (e) { }
+
+    try {
       await logout();
-      // Clear native storage
-      await Preferences.remove({ key: 'access_token' });
-      // Clear browser storage
-      localStorage.removeItem('access_token');
-      sessionStorage.clear();
-      toast.success('Logout realizado com sucesso!');
-      router.push('/login');
     } catch (error) {
       console.error('Erro no logout:', error);
-      // Even if API fails, clear local storage and redirect
-      await Preferences.remove({ key: 'access_token' });
-      localStorage.removeItem('access_token');
-      router.push('/login');
     }
+
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("CapacitorStorage.access_token");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userAvatar");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("registration_completed");
+    sessionStorage.clear();
+
+    refreshSession();
+    toast.success('Logout realizado com sucesso!');
+    router.push('/login');
   };
 
   return (
