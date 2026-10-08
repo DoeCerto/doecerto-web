@@ -12,7 +12,6 @@
     "@capacitor/android": "^7.4.4",
     "@capacitor/core": "^7.4.4",
     "@capacitor/preferences": "^7.0.0",
-    "@dotlottie/react-player": "^1.6.19",
     "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^5.6.0",
     "@lottiefiles/dotlottie-react": "^0.19.13",
