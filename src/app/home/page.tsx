@@ -8,7 +8,7 @@ export default async function HomePageServer() {
   let isAuthenticated = false;
   
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const token = cookieStore.get("access_token")?.value || cookieStore.get("refresh_token")?.value;
     if (token) {
       isAuthenticated = true;
