@@ -45,8 +45,42 @@ export async function api<T>(
     const text = await res.text();
 
     if (!res.ok) {
-      // 👑 O PADRÃO OURO: Interceptação do 401
-      if (res.status === 401) {
+      if (res.status === 401 && !endpoint.includes('/auth/refresh') && !endpoint.includes('/auth/login')) {
+        try {
+          // Tentativa de renovar o token (Silent Refresh)
+          const refreshRes = await fetch(`${API_URL}/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include' // Envia os cookies (refresh_token)
+          });
+
+          if (refreshRes.ok) {
+            const refreshData = await refreshRes.json();
+            
+            if (typeof window !== "undefined" && refreshData.accessToken) {
+              await Preferences.set({ key: "access_token", value: refreshData.accessToken });
+              localStorage.setItem("access_token", refreshData.accessToken);
+            }
+
+            // Refaz a request original com o novo token
+            headers.set("Authorization", `Bearer ${refreshData.accessToken}`);
+            const retryRes = await fetch(`${API_URL}${endpoint}`, {
+              ...options,
+              headers,
+              credentials: "include",
+            });
+
+            const retryText = await retryRes.text();
+            if (retryRes.ok) {
+              return { data: retryText ? JSON.parse(retryText) : (null as any) };
+            }
+            throw new Error(retryText || `Erro ${retryRes.status}`);
+          }
+        } catch (refreshErr) {
+          console.error("Falha ao renovar token:", refreshErr);
+        }
+
+        // Se chegou aqui, o refresh falhou (token de renovação expirou ou é inválido)
         if (typeof window !== "undefined") {
           await Preferences.remove({ key: "access_token" });
           localStorage.removeItem("access_token");
