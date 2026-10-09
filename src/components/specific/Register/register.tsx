@@ -10,6 +10,7 @@ import gsap from "gsap";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Importações dos serviços
 import { registerOng } from "@/services/register-ong.service";
@@ -277,6 +278,7 @@ function useRegisterForm() {
   const [accountType, setAccountType] = useState<AccountType>(null);
   const [modalAberto, setModalAberto] = useState(false);
   const [isPending, setIsPending] = useState(false);
+  const [successModalAberto, setSuccessModalAberto] = useState(false);
 
   const [fileEstatuto, setFileEstatuto] = useState<File | null>(null);
   const [fileAta, setFileAta] = useState<File | null>(null);
@@ -379,7 +381,10 @@ function useRegisterForm() {
         if (fileCartaoCnpj) formData.append('cartaoCnpj', fileCartaoCnpj);
 
         await registerOng(formData);
-        toast.success("ONG cadastrada! Iniciando a triagem de Compliance...");
+        
+        setModalAberto(false);
+        sessionStorage.removeItem("register_draft");
+        setSuccessModalAberto(true);
       } else {
         await registerDonor({ 
           name: data.nome, 
@@ -388,15 +393,12 @@ function useRegisterForm() {
           cpf: removeFormatting(data.documento)
         });
         toast.success("Conta criada com sucesso! Faça login para continuar.");
+        setModalAberto(false);
+        sessionStorage.removeItem("register_draft");
+        setTimeout(() => {
+          window.location.replace("/login");
+        }, 1500);
       }
-      
-      setModalAberto(false);
-      sessionStorage.removeItem("register_draft");
-
-      setTimeout(() => {
-        window.location.replace("/login");
-      }, 1500);
-
     } catch (err: any) {
       toast.error("Ocorreu um erro no cadastro. Tente novamente.");
     } finally {
@@ -405,7 +407,7 @@ function useRegisterForm() {
   };
 
   return {
-    form, step, setStep, accountType, isChecking, modalAberto, setModalAberto, isPending, clearDraft, handleSelectType, handleNextStep, handleFinalSubmit, submitToApi,
+    form, step, setStep, accountType, isChecking, modalAberto, setModalAberto, isPending, successModalAberto, setSuccessModalAberto, clearDraft, handleSelectType, handleNextStep, handleFinalSubmit, submitToApi,
     files: { fileEstatuto, setFileEstatuto, fileAta, setFileAta, fileCartaoCnpj, setFileCartaoCnpj }
   };
 }
@@ -414,7 +416,7 @@ function useRegisterForm() {
 // 4. TELA PRINCIPAL (O Componente Register)
 // ==========================================
 export default function Register() {
-  const { form, step, setStep, accountType, isChecking, modalAberto, setModalAberto, isPending, clearDraft, handleSelectType, handleNextStep, handleFinalSubmit, submitToApi, files } = useRegisterForm();
+  const { form, step, setStep, accountType, isChecking, modalAberto, setModalAberto, isPending, successModalAberto, setSuccessModalAberto, clearDraft, handleSelectType, handleNextStep, handleFinalSubmit, submitToApi, files } = useRegisterForm();
   const { register, formState: { errors }, setValue, clearErrors, trigger } = form;
   
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -434,9 +436,49 @@ export default function Register() {
   if (isChecking) return <div className="min-h-[100dvh] w-full bg-[#F9FAFB] lg:bg-white"></div>;
 
   return (
-    <div className="flex h-[100dvh] w-full font-sans selection:bg-[#6B39A7] selection:text-white bg-[#F9FAFB] lg:bg-white overflow-hidden">
+    <div className="flex h-[100dvh] w-full font-sans selection:bg-[#6B39A7] selection:text-white bg-[#F9FAFB] lg:bg-white overflow-hidden relative">
       <Toaster position="top-center" />
       <TermosModal isOpen={modalAberto} onConfirm={submitToApi} onCancel={() => setModalAberto(false)} isLoading={isPending} />
+
+      {/* MODAL DE SUCESSO ONG */}
+      <AnimatePresence>
+        {successModalAberto && (
+          <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              onClick={() => {}}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="relative w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#9F7AEA] to-[#6B39A7]"></div>
+              
+              <div className="w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-6 shadow-inner ring-4 ring-emerald-50">
+                <CheckCircle size={40} strokeWidth={2.5} />
+              </div>
+              
+              <h2 className="text-3xl font-black text-slate-800 mb-4 tracking-tight">Cadastro Enviado!</h2>
+              <p className="text-slate-600 text-[17px] leading-relaxed mb-8 px-2">
+                Recebemos seus dados e a documentação. Sua conta já foi criada e o nosso time de <strong className="text-[#6B39A7]">Compliance e Auditoria</strong> está analisando seu perfil. Você já pode fazer login para acompanhar o status da aprovação!
+              </p>
+              
+              <button
+                onClick={() => window.location.replace("/login")}
+                className="w-full py-4 bg-[#6B39A7] hover:bg-[#5b2f8e] text-white rounded-xl font-bold text-lg shadow-lg shadow-purple-500/20 active:scale-[0.98] transition-all"
+              >
+                Fazer Login Agora
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* COLUNA ESQUERDA */}
       <div ref={scrollRef} className="w-full lg:w-1/2 h-full overflow-y-auto flex flex-col items-center px-6 sm:px-12 py-10 sm:py-12 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

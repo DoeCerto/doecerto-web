@@ -73,9 +73,10 @@ function PixPageContent() {
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
 
   useEffect(() => {
-    // Verifica se o usuário já marcou para não ver o tutorial novamente
-    const hideTutorial = localStorage.getItem("hideDonationTutorial");
-    if (hideTutorial !== "true") {
+    // Verifica se o usuário já marcou para não ver o tutorial novamente (local ou session)
+    const hideLocal = localStorage.getItem("hideDonationTutorial");
+    const hideSession = sessionStorage.getItem("hideDonationTutorial");
+    if (hideLocal !== "true" && hideSession !== "true") {
       setIsTutorialOpen(true);
     }
   }, []);

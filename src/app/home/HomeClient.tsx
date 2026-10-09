@@ -167,7 +167,12 @@ export default function HomeClient({
 
           if (!profile) {
             console.debug("Sessão expirada no servidor. Encerrando sessão local...");
-            localStorage.clear();
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("CapacitorStorage.access_token");
+            localStorage.removeItem("userRole");
+            localStorage.removeItem("userAvatar");
+            localStorage.removeItem("userName");
+            localStorage.removeItem("registration_completed");
             refreshSession();
             return;
           }
@@ -265,9 +270,10 @@ export default function HomeClient({
     localStorage.removeItem("userAvatar");
     localStorage.removeItem("userName");
     localStorage.removeItem("registration_completed");
+    localStorage.removeItem("hideDonationTutorial");
 
     refreshSession();
-    router.refresh();
+    window.location.reload();
   }
 
   const scrollCarousel = (direction: 'left' | 'right') => {

@@ -53,11 +53,12 @@ export default function AdminLayout({ children, activeMenu: initialActiveMenu = 
     localStorage.removeItem("userAvatar");
     localStorage.removeItem("userName");
     localStorage.removeItem("registration_completed");
+    localStorage.removeItem("hideDonationTutorial");
     sessionStorage.clear();
 
     refreshSession();
     toast.success('Logout realizado com sucesso!');
-    router.push('/login');
+    window.location.replace('/login');
   };
 
   return (

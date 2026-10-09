@@ -11,6 +11,7 @@ import {
   X,
   Heart,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const STEPS = [
   {
@@ -56,19 +57,24 @@ export default function DonationTutorialModal({
   open,
   onClose,
 }: DonationTutorialModalProps) {
+  const { isAuthenticated } = useAuth();
   const [stepIndex, setStepIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
-  const handleClose = useCallback(() => {
-    if (dontShowAgain) {
-      localStorage.setItem("hideDonationTutorial", "true");
+  const handleToggleDontShowAgain = (checked: boolean) => {
+    setDontShowAgain(checked);
+    const storage = isAuthenticated ? localStorage : sessionStorage;
+    if (checked) {
+      storage.setItem("hideDonationTutorial", "true");
     } else {
-      localStorage.removeItem("hideDonationTutorial");
+      storage.removeItem("hideDonationTutorial");
     }
+  };
 
+  const handleClose = useCallback(() => {
     onClose();
-  }, [dontShowAgain, onClose]);
+  }, [onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -89,10 +95,10 @@ export default function DonationTutorialModal({
 
   useEffect(() => {
     if (!open) return;
-
-    const hidden = localStorage.getItem("hideDonationTutorial");
+    const storage = isAuthenticated ? localStorage : sessionStorage;
+    const hidden = storage.getItem("hideDonationTutorial");
     setDontShowAgain(hidden === "true");
-  }, [open]);
+  }, [open, isAuthenticated]);
 
   const handleStepChange = (newIndex: number) => {
     setIsTransitioning(true);
@@ -225,7 +231,7 @@ export default function DonationTutorialModal({
             <input
               type="checkbox"
               checked={dontShowAgain}
-              onChange={(e) => setDontShowAgain(e.target.checked)}
+              onChange={(e) => handleToggleDontShowAgain(e.target.checked)}
               className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer accent-purple-600 transition-all"
             />
             <span className="text-xs font-semibold group-hover:underline">

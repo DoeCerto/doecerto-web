@@ -8,6 +8,7 @@ import {
   Camera, AlertCircle, Tag, MessageSquare, AlertTriangle, ExternalLink,
   LogOut, Download
 } from "lucide-react";
+import VerifiedBadge from "@/components/ui/verified-badge";
 import { useRouter } from "next/navigation";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { DonationService } from "@/services/donations.service";
@@ -47,6 +48,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
   const [confirmModal, setConfirmModal] = useState<{ id: number; type: 'accept' | 'reject' } | null>(null);
   const [selectedDonation, setSelectedDonation] = useState<any | null>(null);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
+  const [showPendingModal, setShowPendingModal] = useState(false);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const handleLogout = async (e?: React.MouseEvent) => {
@@ -69,9 +71,10 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
     localStorage.removeItem("userAvatar");
     localStorage.removeItem("userName");
     localStorage.removeItem("registration_completed");
+    localStorage.removeItem("hideDonationTutorial");
 
     await refreshSession();
-    router.replace("/login");
+    window.location.replace("/login");
   };
 
   const donorPhone = selectedDonation?.donor?.profile?.contactNumber ?? "";
@@ -224,6 +227,13 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
 
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-32">
+      {ong.verificationStatus === 'verified' && ong.isRestricted && (
+        <div className="w-full bg-red-50 text-red-800 border-b border-red-200 px-4 sm:px-6 py-3 flex items-center justify-center gap-2 sm:gap-3 z-50 text-xs sm:text-sm shadow-sm relative">
+          <AlertCircle size={18} className="shrink-0 text-red-600" />
+          <span className="font-semibold text-center leading-tight">Sua conta foi restringida por medidas de segurança. Entre em contato com o suporte.</span>
+        </div>
+      )}
+
       {/* Header / Banner */}
       <div className="relative w-full h-[220px] sm:h-[360px] bg-gray-100 border-b border-purple-100 flex items-center justify-center">
         {ong.bannerUrl ? (
@@ -299,7 +309,24 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
 
       {/* Conteúdo Abaixo do Header */}
       <div className="px-4 sm:px-10 mt-16 sm:mt-20">
-        <h1 className="text-2xl sm:text-4xl font-black text-gray-900">{ong.name || "Minha ONG"}</h1>
+        <h1 className="text-2xl sm:text-4xl font-black text-gray-900 flex items-center flex-wrap gap-2 sm:gap-3">
+          <span>{ong.name || "Minha ONG"}</span>
+          {ong.verificationStatus !== 'verified' && (
+            <button 
+              onClick={() => setShowPendingModal(true)} 
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-amber-100 text-amber-700 text-xs sm:text-sm font-bold shadow-sm hover:bg-amber-200 hover:scale-[1.02] transition-all active:scale-95 shrink-0"
+              title="Sua conta está em análise"
+            >
+              <Clock size={14} strokeWidth={3} className="sm:w-4 sm:h-4" />
+              Em Análise
+            </button>
+          )}
+          {ong.verificationStatus === 'verified' && !ong.isRestricted && (
+            <div title="Perfil Verificado e Aprovado" className="shrink-0 flex items-center pt-1">
+              <VerifiedBadge size={28} className="drop-shadow-sm" />
+            </div>
+          )}
+        </h1>
 
         <div className="text-gray-500 mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm sm:text-lg font-medium">
           <span className="flex items-center gap-1.5">
@@ -623,6 +650,96 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                   </div>
                 )}
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Análise Pendente */}
+      <AnimatePresence>
+        {showPendingModal && (
+          <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              onClick={() => setShowPendingModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="relative w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center overflow-hidden"
+            >
+              <button 
+                onClick={() => setShowPendingModal(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:bg-gray-100 hover:text-gray-700 p-2 rounded-full transition-colors cursor-pointer"
+              >
+                <X size={20} strokeWidth={2.5} />
+              </button>
+              
+              <div className="w-20 h-20 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mb-6 shadow-inner ring-4 ring-amber-50">
+                <Clock size={40} strokeWidth={2.5} />
+              </div>
+              
+              <h2 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">Em Análise</h2>
+              <p className="text-slate-600 text-[16px] leading-relaxed mb-8 px-2">
+                O seu perfil já está criado! Neste momento, nosso time de <strong className="text-amber-600">Compliance e Auditoria</strong> está avaliando a sua documentação para garantir a segurança da plataforma. Aguarde a liberação oficial para começar a receber doações.
+              </p>
+              
+              <button
+                onClick={() => setShowPendingModal(false)}
+                className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-lg shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all cursor-pointer"
+              >
+                Entendi
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Análise Pendente */}
+      <AnimatePresence>
+        {showPendingModal && (
+          <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              onClick={() => setShowPendingModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="relative w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center overflow-hidden"
+            >
+              <button 
+                onClick={() => setShowPendingModal(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:bg-gray-100 hover:text-gray-700 p-2 rounded-full transition-colors cursor-pointer"
+              >
+                <X size={20} strokeWidth={2.5} />
+              </button>
+              
+              <div className="w-20 h-20 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mb-6 shadow-inner ring-4 ring-amber-50">
+                <Clock size={40} strokeWidth={2.5} />
+              </div>
+              
+              <h2 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">Em Análise</h2>
+              <p className="text-slate-600 text-[16px] leading-relaxed mb-8 px-2">
+                O seu perfil já está criado! Neste momento, nosso time de <strong className="text-amber-600">Compliance e Auditoria</strong> está avaliando a sua documentação para garantir a segurança da plataforma. Aguarde a liberação oficial para começar a receber doações.
+              </p>
+              
+              <button
+                onClick={() => setShowPendingModal(false)}
+                className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-lg shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all cursor-pointer"
+              >
+                Entendi
+              </button>
             </motion.div>
           </div>
         )}

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin, HeartHandshake, Award, Phone, Home,
   Star, ArrowLeft, Image as ImageIcon, MessageSquare, X, Tag,
-  Globe, CheckCircle2, Copy, Heart, Send, AlertCircle
+  Globe, CheckCircle2, Copy, Heart, Send, AlertCircle, User
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import DonateModal from "@/components/specific/DonateModal";
@@ -52,6 +52,7 @@ export default function OngPublicProfileClient({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isReviewBlockedOpen, setIsReviewBlockedOpen] = useState(false);
+  const [guestModal, setGuestModal] = useState<{ isOpen: boolean; type: 'donate' | 'location' }>({ isOpen: false, type: 'donate' });
   
   // INICIA COM OS DADOS DO SERVIDOR
   const [data, setData] = useState<{ ong: OngProfileData; reviews: Review[] } | null>(initialData);
@@ -177,7 +178,16 @@ export default function OngPublicProfileClient({
                 </button>
               )}
 
-              <button onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto px-6 sm:px-10 py-3.5 sm:py-4 bg-purple-600 text-white text-sm sm:text-base font-black rounded-2xl shadow-md hover:bg-purple-500 hover:scale-105 cursor-pointer transition-all duration-300 active:scale-95 flex items-center justify-center gap-2">
+              <button 
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    setGuestModal({ isOpen: true, type: 'donate' });
+                  } else {
+                    setIsModalOpen(true);
+                  }
+                }} 
+                className="w-full sm:w-auto px-6 sm:px-10 py-3.5 sm:py-4 bg-purple-600 text-white text-sm sm:text-base font-black rounded-2xl shadow-md hover:bg-purple-500 hover:scale-105 cursor-pointer transition-all duration-300 active:scale-95 flex items-center justify-center gap-2"
+              >
                 <Heart size={18} className="sm:w-5 sm:h-5" fill="currentColor" />
                 Doar Agora
               </button>
@@ -216,6 +226,48 @@ export default function OngPublicProfileClient({
         </div>
 
       </div>
+
+      <AnimatePresence>
+        {guestModal.isOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setGuestModal({ ...guestModal, isOpen: false })} />
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-white w-full max-w-sm rounded-[2rem] overflow-hidden shadow-2xl p-8 flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-6">
+                {guestModal.type === 'donate' ? (
+                  <User size={32} className="text-purple-700" />
+                ) : (
+                  <MapPin size={32} className="text-purple-700" />
+                )}
+              </div>
+
+              <h2 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">
+                {guestModal.type === 'donate' ? 'Fazer o bem faz bem!' : 'Precisamos da sua localização'}
+              </h2>
+              <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">
+                {guestModal.type === 'donate'
+                  ? 'Você pode criar uma conta para acompanhar o impacto das suas doações, ou seguir de forma anônima.'
+                  : 'Faça login ou cadastre-se para informar seu endereço e descobrir quais ONGs estão perto de você.'}
+              </p>
+
+              <div className="w-full flex flex-col gap-3">
+                <button onClick={() => router.push("/register")} className="w-full bg-purple-600 text-white font-black py-4 rounded-xl shadow-lg shadow-purple-200 active:scale-95 transition-all cursor-pointer">
+                  Criar Conta / Entrar
+                </button>
+
+                {guestModal.type === 'donate' && (
+                  <button onClick={() => { setGuestModal({ ...guestModal, isOpen: false }); setIsModalOpen(true); }} className="w-full py-3.5 text-purple-600 border-2 border-purple-100 font-bold rounded-xl hover:bg-purple-50 active:scale-95 transition-all cursor-pointer">
+                    Doar Anonimamente
+                  </button>
+                )}
+
+                <button onClick={() => setGuestModal({ ...guestModal, isOpen: false })} className="mt-3 text-slate-400 font-bold text-sm hover:text-slate-600 transition-colors cursor-pointer">
+                  Cancelar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {isModalOpen && (
         <DonateModal
