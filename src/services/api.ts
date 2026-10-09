@@ -64,8 +64,11 @@ export async function api<T>(
     }
 
     return { data: text ? JSON.parse(text) : (null as any) };
-  } catch (error) {
-    console.error("[API ERROR]", error);
+  } catch (error: any) {
+    // Evita o popup vermelho chato do Next.js no Dev mode para erros 401 (que são normais quando o usuário não está logado)
+    if (!error?.message?.includes("401")) {
+      console.error("[API ERROR]", error);
+    }
     throw error;
   }
 }

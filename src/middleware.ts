@@ -41,6 +41,14 @@ export function middleware(request: NextRequest) {
         if (pathname.startsWith('/admin') && userRole !== 'admin') {
             return NextResponse.redirect(new URL('/', request.url));
         }
+
+        if (pathname.startsWith('/dashboard') && userRole === 'ong') {
+            return NextResponse.redirect(new URL('/ong-dashboard', request.url));
+        }
+
+        if ((pathname === '/' || pathname.startsWith('/home')) && userRole === 'ong') {
+            return NextResponse.redirect(new URL('/ong-dashboard', request.url));
+        }
     }
 
     const authPaths = ['/login', '/register'];

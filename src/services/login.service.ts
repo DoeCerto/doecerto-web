@@ -28,3 +28,9 @@ export async function logout() {
     method: "POST",
   });
 }
+
+export async function getMe() {
+  return await api<{ user: any }>("/auth/me", {
+    method: "GET",
+  });
+}

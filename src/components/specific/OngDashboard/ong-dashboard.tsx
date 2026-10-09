@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin, Heart, Award, X, Phone, Home, Star, Pencil,
@@ -12,6 +12,8 @@ import { useRouter } from "next/navigation";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { DonationService } from "@/services/donations.service";
 import { api } from "@/services/api";
+import { Preferences } from "@capacitor/preferences";
+import { useAuth } from "@/contexts/AuthContext";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -21,6 +23,8 @@ interface OngDashboardProps {
 
 export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
   const router = useRouter();
+  const { refreshSession } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isReviewsOpen, setIsReviewsOpen] = useState(false);
   const [loading, setLoading] = useState(!initialOng);
@@ -28,16 +32,46 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
   const [reviews, setReviews] = useState<any[]>([]);
   const [donations, setDonations] = useState<any[]>([]);
 
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const [confirmModal, setConfirmModal] = useState<{ id: number; type: 'accept' | 'reject' } | null>(null);
   const [selectedDonation, setSelectedDonation] = useState<any | null>(null);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    sessionStorage.clear();
-    localStorage.removeItem("user");
-    router.push("/login");
+  const handleLogout = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setIsMenuOpen(false);
+
+    try {
+      await Preferences.remove({ key: "access_token" });
+      await Preferences.remove({ key: "userRole" });
+    } catch (e) {}
+
+    try {
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+      await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" });
+    } catch (e) {}
+
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("CapacitorStorage.access_token");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userAvatar");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("registration_completed");
+
+    await refreshSession();
+    router.replace("/login");
   };
 
   const donorPhone = selectedDonation?.donor?.profile?.contactNumber ?? "";
@@ -205,20 +239,51 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
           <div className="absolute inset-0 bg-gradient-to-tr from-purple-100 via-violet-50 to-pink-100" />
         )}
 
-        <div className="absolute top-4 right-4 z-50 flex gap-2">
-          <motion.button
-            onClick={() => router.push(`/ong-profilesetup`)}
-            className="flex items-center gap-2 bg-white border-2 border-[#6B39A7] px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold text-[#6B39A7] shadow-sm hover:bg-purple-50 transition-colors text-xs sm:text-base"
-          >
-            <Pencil size={16} /> <span>Editar Perfil</span>
-          </motion.button>
+        <div className="absolute top-4 right-4 sm:right-10 z-50">
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="flex items-center gap-2 bg-white px-3 py-2 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-slate-200 hover:shadow-[0_8px_30px_rgba(0,0,0,0.25)] transition-all active:scale-95 cursor-pointer"
+            >
+              <div className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 rounded-full overflow-hidden ring-2 ring-purple-100 shadow-inner">
+                {ong.avatarUrl ? (
+                  <img src={ong.avatarUrl} className="w-full h-full object-cover" alt="Avatar" />
+                ) : (
+                  <div className="w-full h-full bg-[#6B39A7] flex items-center justify-center text-white font-bold">
+                    {ong.name?.charAt(0) || 'O'}
+                  </div>
+                )}
+              </div>
+              <span className="hidden sm:block min-w-0 truncate text-slate-800 font-extrabold text-sm px-1">
+                {ong.name || "ONG"}
+              </span>
+              <motion.div className="shrink-0 text-[#6B39A7] mr-1" animate={{ rotate: isMenuOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </motion.div>
+            </button>
 
-          <motion.button
-            onClick={handleLogout}
-            className="flex items-center gap-2 bg-red-50 border-2 border-red-200 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold text-red-600 shadow-sm hover:bg-red-100 transition-colors text-xs sm:text-base"
-          >
-            <LogOut size={16} /> <span>Sair</span>
-          </motion.button>
+            <AnimatePresence>
+              {isMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute top-full right-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-[100] origin-top-right"
+                >
+                  <button onClick={() => { setIsMenuOpen(false); router.push(`/ong-profilesetup`); }} className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition text-left cursor-pointer">
+                    <Pencil size={18} className="text-[#6B39A7]" />
+                    <span className="font-bold text-slate-700">Editar Perfil</span>
+                  </button>
+                  <div className="border-t border-slate-100 my-1"></div>
+                  <button onClick={handleLogout} className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition text-left cursor-pointer">
+                    <LogOut size={18} className="text-red-500" />
+                    <span className="font-bold text-red-500">Sair</span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         <motion.div className="absolute -bottom-14 left-6 sm:left-10 z-50 w-28 h-28 sm:w-40 sm:h-40 rounded-2xl sm:rounded-3xl overflow-hidden border-4 border-white shadow-xl bg-white flex items-center justify-center">

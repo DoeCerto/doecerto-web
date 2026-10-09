@@ -62,6 +62,7 @@ export default function HomeClient({
   initialIsAuthenticated,
   initialUserName,
   initialUserAvatar,
+  initialUserRole,
 }: {
   initialCatalog: any[];
   initialIsAuthenticated: boolean;
@@ -73,8 +74,9 @@ export default function HomeClient({
   const menuRef = useRef<HTMLDivElement | null>(null);
   const carouselRef = useRef<HTMLDivElement | null>(null);
 
-  const { isAuthenticated: contextIsAuth, userName: contextName, userAvatar: contextAvatar, refreshSession } = useAuth();
+  const { isAuthenticated: contextIsAuth, userName: contextName, userAvatar: contextAvatar, userRole: contextRole, refreshSession } = useAuth();
   const [isAuth, setIsAuth] = useState(initialIsAuthenticated);
+  const [role, setRole] = useState(initialUserRole || contextRole);
 
   // DESLIGA SCROLL RESTORATION NA HOME PARA VOLTAR SEMPRE NO TOPO
   useEffect(() => {
@@ -86,7 +88,8 @@ export default function HomeClient({
 
   useEffect(() => {
     setIsAuth(contextIsAuth);
-  }, [contextIsAuth]);
+    if (contextRole) setRole(contextRole);
+  }, [contextIsAuth, contextRole]);
 
   const displayName = isAuth ? (contextName || initialUserName || "Usuário") : null;
   const rawAvatar = isAuth ? (contextAvatar || initialUserAvatar) : null;
@@ -156,8 +159,8 @@ export default function HomeClient({
       if (!isAuth) return;
 
       try {
-        const userRole = localStorage.getItem("userRole")?.toUpperCase();
-        if (userRole !== "ONG") {
+        const currentUserRole = role?.toUpperCase();
+        if (currentUserRole !== "ONG") {
           const profile = await DonorService.getMyProfile().catch(() => null);
 
           if (!isMounted) return;
@@ -232,7 +235,7 @@ export default function HomeClient({
     return () => {
       isMounted = false;
     };
-  }, [isAuth, refreshSession]);
+  }, [isAuth, role, refreshSession]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -331,8 +334,7 @@ export default function HomeClient({
   }
 
   function goToProfile() {
-    const userRole = localStorage.getItem("userRole") || "";
-    if (userRole.toUpperCase() === "ONG") {
+    if (role?.toUpperCase() === "ONG") {
       router.push("/ong-dashboard");
     } else {
       router.push("/dashboard");
@@ -341,8 +343,7 @@ export default function HomeClient({
   }
 
   function goToDonations() {
-    const userRole = localStorage.getItem("userRole") || "";
-    if (userRole.toUpperCase() === "ONG") {
+    if (role?.toUpperCase() === "ONG") {
       router.push("/ong-dashboard?tab=history");
     } else {
       router.push("/dashboard?tab=history");

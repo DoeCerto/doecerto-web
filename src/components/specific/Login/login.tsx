@@ -15,7 +15,7 @@ import gsap from "gsap";
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams(); 
-  const { refreshSession } = useAuth();
+  const { refreshSession, isAuthenticated, isLoading, userRole } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isPending, setIsPending] = useState(false);
@@ -25,19 +25,26 @@ function LoginContent() {
   const mainWrapperRef = useRef(null);
   const imageRef = useRef(null);
 
-  // Verifica se já está logado
+  // Verifica se já está logado usando o AuthContext (Padrão Ouro /me)
   useEffect(() => {
-    const checkAuth = async () => {
-      const { value: token } = await Preferences.get({ key: "access_token" });
-      const localToken = localStorage.getItem("access_token");
-      if (token || localToken) {
-        const role = localStorage.getItem("userRole") || "";
-        const redirect = role.toLowerCase() === 'ong' ? '/ong-dashboard' : '/dashboard';
-        router.replace(redirect);
+    // Se isPending for true, significa que o usuário acabou de clicar em "Entrar" 
+    // e o redirect será tratado inteligentemente na função saveSessionAndRedirect.
+    if (!isLoading && isAuthenticated && !isPending) {
+      const roleLower = userRole?.toLowerCase() || "";
+      let redirect = "/home";
+      
+      const fromUrl = searchParams?.get("from");
+      if (fromUrl) {
+        redirect = fromUrl;
+      } else if (roleLower === "admin") {
+        redirect = "/adm-dashboard";
+      } else if (roleLower === "ong") {
+        redirect = "/ong-dashboard";
       }
-    };
-    checkAuth();
-  }, [router]);
+
+      router.replace(redirect);
+    }
+  }, [isLoading, isAuthenticated, userRole, isPending, router, searchParams]);
 
   // Inicializa o GSAP
   useEffect(() => {
@@ -86,8 +93,8 @@ function LoginContent() {
       } catch (e) { }
     }
 
-    // Atualiza o estado global de contexto visual
-    refreshSession();
+    // Atualiza o estado global de contexto visual puxando do backend (/me)
+    await refreshSession();
 
     // Lógica de redirecionamento inteligente
     const fromUrl = searchParams?.get("from");
