@@ -74,7 +74,7 @@ export default function HomeClient({
   const menuRef = useRef<HTMLDivElement | null>(null);
   const carouselRef = useRef<HTMLDivElement | null>(null);
 
-  const { isAuthenticated: contextIsAuth, userName: contextName, userAvatar: contextAvatar, userRole: contextRole, refreshSession } = useAuth();
+  const { isAuthenticated: contextIsAuth, userName: contextName, userAvatar: contextAvatar, userRole: contextRole, refreshSession, isLoading } = useAuth();
   const [isAuth, setIsAuth] = useState(initialIsAuthenticated);
   const [role, setRole] = useState(initialUserRole || contextRole);
 
@@ -87,9 +87,13 @@ export default function HomeClient({
   }, []);
 
   useEffect(() => {
-    setIsAuth(contextIsAuth);
-    if (contextRole) setRole(contextRole);
-  }, [contextIsAuth, contextRole]);
+    // Só atualiza o estado local baseado no contexto se o contexto JÁ tiver terminado de carregar
+    // Evita o "Flash" de botão Entrar enquanto a API responde o GET /me
+    if (!isLoading) {
+      setIsAuth(contextIsAuth);
+      if (contextRole) setRole(contextRole);
+    }
+  }, [contextIsAuth, contextRole, isLoading]);
 
   const displayName = isAuth ? (contextName || initialUserName || "Usuário") : null;
   const rawAvatar = isAuth ? (contextAvatar || initialUserAvatar) : null;
@@ -473,42 +477,54 @@ export default function HomeClient({
             <>
               {/* DESKTOP: Botão de Perfil Logado (Com nome e dropdown) */}
               <div className="hidden sm:block">
-                <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center gap-2 bg-white px-3 py-2 rounded-full shadow-sm border border-slate-200 hover:shadow-md transition-all active:scale-95 cursor-pointer"
-                >
-                  <motion.div className="shrink-0" animate={{ rotate: isMenuOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                    <ChevronDown size={16} className="text-purple-700" />
-                  </motion.div>
-                  <span className="flex-1 min-w-0 truncate text-purple-700 font-bold text-sm px-2">
-                    {displayName}
-                  </span>
-                  <div className="w-9 h-9 shrink-0 rounded-full overflow-hidden ring-2 ring-purple-100">
-                    {displayAvatar && displayAvatar !== "/default-avatar.png" ? (
-                      <img src={displayAvatar} alt="avatar" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-purple-100 flex items-center justify-center">
-                        <FiUser size={18} className="text-purple-700" />
-                      </div>
-                    )}
+                {isLoading ? (
+                  <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-full shadow-sm border border-slate-200">
+                    <div className="w-4 h-4 rounded-full bg-slate-200 animate-pulse"></div>
+                    <div className="w-20 h-4 bg-slate-200 animate-pulse rounded"></div>
+                    <div className="w-9 h-9 rounded-full bg-slate-200 animate-pulse"></div>
                   </div>
-                </button>
+                ) : (
+                  <button
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    className="flex items-center gap-2 bg-white px-3 py-2 rounded-full shadow-sm border border-slate-200 hover:shadow-md transition-all active:scale-95 cursor-pointer"
+                  >
+                    <motion.div className="shrink-0" animate={{ rotate: isMenuOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                      <ChevronDown size={16} className="text-purple-700" />
+                    </motion.div>
+                    <span className="flex-1 min-w-0 truncate text-purple-700 font-bold text-sm px-2">
+                      {displayName}
+                    </span>
+                    <div className="w-9 h-9 shrink-0 rounded-full overflow-hidden ring-2 ring-purple-100">
+                      {displayAvatar && displayAvatar !== "/default-avatar.png" ? (
+                        <img src={displayAvatar} alt="avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-purple-100 flex items-center justify-center">
+                          <FiUser size={18} className="text-purple-700" />
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                )}
               </div>
 
               {/* MOBILE ONLY: Avatar (Abre Dropdown) + Hamburger (Abre Gaveta) */}
               <div className="flex items-center gap-3 sm:hidden">
-                <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="w-8 h-8 shrink-0 rounded-full overflow-hidden ring-2 ring-purple-100 cursor-pointer active:scale-95 transition-transform"
-                >
-                  {displayAvatar && displayAvatar !== "/default-avatar.png" ? (
-                    <img src={displayAvatar} alt="avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-purple-100 flex items-center justify-center">
-                      <FiUser size={16} className="text-purple-700" />
-                    </div>
-                  )}
-                </button>
+                {isLoading ? (
+                  <div className="w-8 h-8 shrink-0 rounded-full bg-slate-200 animate-pulse"></div>
+                ) : (
+                  <button
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    className="w-8 h-8 shrink-0 rounded-full overflow-hidden ring-2 ring-purple-100 cursor-pointer active:scale-95 transition-transform"
+                  >
+                    {displayAvatar && displayAvatar !== "/default-avatar.png" ? (
+                      <img src={displayAvatar} alt="avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-purple-100 flex items-center justify-center">
+                        <FiUser size={16} className="text-purple-700" />
+                      </div>
+                    )}
+                  </button>
+                )}
 
                 <button
                   onClick={() => setIsMobileMenuOpen(true)}
