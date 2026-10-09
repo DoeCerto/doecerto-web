@@ -46,9 +46,39 @@ const StatusBadge = ({ status }: { status: string }) => {
 };
 
 const ApproveModal = ({ isOpen, onClose, onConfirm, ong, status }: any) => {
+  const [isConfirming, setIsConfirming] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) setIsConfirming(false);
+  }, [isOpen]);
+
   if (!isOpen) return null;
   const isHighRisk = ong?.riskScore === 0 || ong?.isRestricted;
   const isRestrictedTab = status === 'restricted';
+
+  if (isConfirming) {
+    return (
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+        <div className="bg-white rounded-3xl max-w-sm w-full p-8 text-center shadow-2xl">
+          <div className="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertTriangle size={40} strokeWidth={3} />
+          </div>
+          <h3 className="text-2xl font-black text-gray-900 mb-2">Tem certeza absoluta?</h3>
+          <p className="text-gray-500 mb-6">
+            Você está prestes a aprovar a ONG <span className="font-bold text-gray-900">{ong?.name}</span>. Essa ação a tornará pública e apta a receber doações.
+          </p>
+          <div className="flex flex-col gap-3">
+            <button onClick={() => onConfirm(isRestrictedTab || isHighRisk)} className="w-full text-white py-3 rounded-2xl font-black shadow-lg transition-colors bg-green-600 hover:bg-green-700 shadow-green-200">
+              Sim, Confirmar Aprovação
+            </button>
+            <button onClick={() => setIsConfirming(false)} className="w-full bg-gray-100 text-gray-700 py-3 rounded-2xl font-black hover:bg-gray-200 transition-colors mt-2">
+              Voltar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
@@ -81,11 +111,11 @@ const ApproveModal = ({ isOpen, onClose, onConfirm, ong, status }: any) => {
 
         <div className="flex flex-col gap-3">
           {isRestrictedTab || isHighRisk ? (
-            <button onClick={() => onConfirm(true)} className="w-full text-white py-3 rounded-2xl font-black shadow-lg transition-colors bg-red-600 hover:bg-red-700 shadow-red-200">
+            <button onClick={() => setIsConfirming(true)} className="w-full text-white py-3 rounded-2xl font-black shadow-lg transition-colors bg-red-600 hover:bg-red-700 shadow-red-200">
               Aprovar e Liberar Restrição
             </button>
           ) : (
-            <button onClick={() => onConfirm(false)} className="w-full text-white py-3 rounded-2xl font-black shadow-lg transition-colors bg-green-600 hover:bg-green-700 shadow-green-200">
+            <button onClick={() => setIsConfirming(true)} className="w-full text-white py-3 rounded-2xl font-black shadow-lg transition-colors bg-green-600 hover:bg-green-700 shadow-green-200">
               Aprovar
             </button>
           )}
