@@ -1,24 +1,23 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-// Update the import path below if AdminLayout is located elsewhere
 import AdminLayout from '../../layouts/AdminLayout';
 import DashboardHome from './DashboardHome';
 import OngTable from './OngTable';
 import { getMyProfile, getOngsByStatus } from '@/services/admin.service';
 
-type ViewType = 'home' | 'pending' | 'approved' | 'rejected';
+type ViewType = 'home' | 'pending' | 'approved' | 'rejected' | 'restricted';
 
 export default function AdminDashboard() {
   const [currentView, setCurrentView] = useState<ViewType>('home');
   const [stats, setStats] = useState({
     pending: 0,
     approved: 0,
-    rejected: 0
+    rejected: 0,
+    restricted: 0
   });
   const [adminName, setAdminName] = useState<string>('');
 
-  // Carregar informações reais da API
   useEffect(() => {
     loadAdminProfile();
     loadStats();
@@ -27,33 +26,29 @@ export default function AdminDashboard() {
   const loadAdminProfile = async () => {
     try {
       const profile = await getMyProfile();
-      console.log('Admin profile loaded:', profile);
-      const name = profile.user.name || 'Administrador';
-      console.log('Using name:', name);
-      setAdminName(name);
+      setAdminName(profile.user.name || 'Administrador');
     } catch (error) {
-      console.error('Erro ao carregar perfil do admin:', error);
       setAdminName('Administrador');
     }
   };
 
   const loadStats = async () => {
     try {
-      // Carregar contagens de cada status
-      const [pendingRes, approvedRes, rejectedRes] = await Promise.all([
+      const [pendingRes, approvedRes, rejectedRes, restrictedRes] = await Promise.all([
         getOngsByStatus('pending', 0, 1),
         getOngsByStatus('approved', 0, 1),
-        getOngsByStatus('rejected', 0, 1)
+        getOngsByStatus('rejected', 0, 1),
+        getOngsByStatus('restricted', 0, 1)
       ]);
 
       setStats({
         pending: pendingRes.total,
         approved: approvedRes.total,
-        rejected: rejectedRes.total
+        rejected: rejectedRes.total,
+        restricted: restrictedRes.total
       });
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error);
-      // Manter valores zerados em caso de erro
     }
   };
 
@@ -63,16 +58,15 @@ export default function AdminDashboard() {
 
   const handleBackToHome = () => {
     setCurrentView('home');
-    loadStats(); // Recarregar estatísticas ao voltar
+    loadStats();
   };
 
   const handleUpdate = () => {
-    loadStats(); // Recarregar estatísticas após ações
+    loadStats();
   };
 
   return (
     <AdminLayout activeMenu="home" adminName={adminName}>
-      {/* Renderização condicional sem reload */}
       {currentView === 'home' && (
         <DashboardHome 
           onNavigate={handleNavigate}
@@ -83,31 +77,25 @@ export default function AdminDashboard() {
 
       {currentView === 'pending' && (
         <div className="p-8 h-full">
-          <OngTable 
-            status="pending"
-            onClose={handleBackToHome}
-            onUpdate={handleUpdate}
-          />
+          <OngTable status="pending" onClose={handleBackToHome} onUpdate={handleUpdate} />
         </div>
       )}
 
       {currentView === 'approved' && (
         <div className="p-8 h-full">
-          <OngTable 
-            status="approved"
-            onClose={handleBackToHome}
-            onUpdate={handleUpdate}
-          />
+          <OngTable status="approved" onClose={handleBackToHome} onUpdate={handleUpdate} />
         </div>
       )}
 
       {currentView === 'rejected' && (
         <div className="p-8 h-full">
-          <OngTable 
-            status="rejected"
-            onClose={handleBackToHome}
-            onUpdate={handleUpdate}
-          />
+          <OngTable status="rejected" onClose={handleBackToHome} onUpdate={handleUpdate} />
+        </div>
+      )}
+
+      {currentView === 'restricted' && (
+        <div className="p-8 h-full">
+          <OngTable status="restricted" onClose={handleBackToHome} onUpdate={handleUpdate} />
         </div>
       )}
     </AdminLayout>

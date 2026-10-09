@@ -34,8 +34,9 @@ const StatusBadge = ({ status }: { status: string }) => {
     verified: 'bg-green-100 text-green-700 border-green-200',
     rejected: 'bg-red-100 text-red-700 border-red-200',
     pending: 'bg-amber-100 text-amber-700 border-amber-200',
+    restricted: 'bg-gray-800 text-white border-gray-900',
   };
-  const label = (status === 'approved' || status === 'verified') ? 'Aprovada' : status === 'rejected' ? 'Rejeitada' : 'Pendente';
+  const label = (status === 'approved' || status === 'verified') ? 'Aprovada' : status === 'rejected' ? 'Rejeitada' : status === 'restricted' ? 'Restrita' : 'Pendente';
 
   return (
     <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border ${styles[status as keyof typeof styles] || styles.pending}`}>
@@ -47,16 +48,12 @@ const StatusBadge = ({ status }: { status: string }) => {
 const ApproveModal = ({ isOpen, onClose, onConfirm, ong, status }: any) => {
   if (!isOpen) return null;
   const isHighRisk = ong?.riskScore === 0 || ong?.isRestricted;
-  const isAlreadyApproved = status === 'approved' && ong?.isRestricted;
+  const isRestrictedTab = status === 'restricted';
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
       <div className="bg-white rounded-3xl max-w-sm w-full p-8 text-center shadow-2xl">
-        {isAlreadyApproved ? (
-          <div className="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6">
-            <AlertTriangle size={40} strokeWidth={3} />
-          </div>
-        ) : isHighRisk ? (
+        {isRestrictedTab || isHighRisk ? (
           <div className="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
             <AlertTriangle size={40} strokeWidth={3} />
           </div>
@@ -67,41 +64,26 @@ const ApproveModal = ({ isOpen, onClose, onConfirm, ong, status }: any) => {
         )}
 
         <h3 className="text-2xl font-black text-gray-900 mb-2">
-          {isAlreadyApproved ? 'Liberar Restrição?' : 'Aprovar ONG?'}
+          {isRestrictedTab || isHighRisk ? 'Remover Restrição?' : 'Aprovar ONG?'}
         </h3>
         <p className="text-gray-500 mb-6">
-          {isAlreadyApproved
-            ? <>Deseja liberar a ONG <br /><span className="font-bold text-gray-900">{ong?.name}</span> para aparecer publicamente na Home?</>
+          {isRestrictedTab || isHighRisk
+            ? <>Deseja remover a restrição e aprovar a ONG <br /><span className="font-bold text-gray-900">{ong?.name}</span> para uso público?</>
             : <>Deseja confirmar a aprovação da ONG <br /><span className="font-bold text-gray-900">{ong?.name}</span>?</>
           }
         </p>
 
-        {isHighRisk && !isAlreadyApproved && (
+        {(isRestrictedTab || isHighRisk) && (
           <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-xs font-bold mb-6 text-left">
-            ATENÇÃO: Esta ONG possui restrições de compliance. Escolha se deseja remover a restrição para exibi-la publicamente.
-          </div>
-        )}
-
-        {isAlreadyApproved && (
-          <div className="bg-amber-50 border border-amber-200 text-amber-700 p-4 rounded-xl text-xs font-bold mb-6 text-left">
-            Esta ONG já está aprovada, mas com restrição ativa. Ao liberar, ela passará a aparecer na Home para os doadores.
+            ATENÇÃO: Esta ONG possui um alerta ou restrição de compliance ativa. A aprovação irá remover a restrição e liberar a ONG para a plataforma.
           </div>
         )}
 
         <div className="flex flex-col gap-3">
-          {isAlreadyApproved ? (
-            <button onClick={() => onConfirm(true)} className="w-full text-white py-3 rounded-2xl font-black shadow-lg transition-colors bg-green-600 hover:bg-green-700 shadow-green-200">
-              Liberar para Home
+          {isRestrictedTab || isHighRisk ? (
+            <button onClick={() => onConfirm(true)} className="w-full text-white py-3 rounded-2xl font-black shadow-lg transition-colors bg-red-600 hover:bg-red-700 shadow-red-200">
+              Aprovar e Liberar Restrição
             </button>
-          ) : isHighRisk ? (
-            <>
-              <button onClick={() => onConfirm(false)} className="w-full bg-red-100 text-red-700 py-3 rounded-2xl font-black hover:bg-red-200 transition-colors shadow-sm">
-                Aprovar, mas Manter Restrição
-              </button>
-              <button onClick={() => onConfirm(true)} className="w-full text-white py-3 rounded-2xl font-black shadow-lg transition-colors bg-red-600 hover:bg-red-700 shadow-red-200">
-                Aprovar e Liberar Restrição
-              </button>
-            </>
           ) : (
             <button onClick={() => onConfirm(false)} className="w-full text-white py-3 rounded-2xl font-black shadow-lg transition-colors bg-green-600 hover:bg-green-700 shadow-green-200">
               Aprovar
@@ -411,8 +393,9 @@ export default function OngTableWithAPI({ status, onClose, onUpdate }: any) {
   const config = {
     pending: { title: 'ONGs Pendentes', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
     approved: { title: 'ONGs Aprovadas', color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200' },
-    rejected: { title: 'ONGs Recusadas', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' }
-  }[status as OngStatus];
+    rejected: { title: 'ONGs Recusadas', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
+    restricted: { title: 'ONGs Restritas', color: 'text-gray-800', bg: 'bg-gray-100', border: 'border-gray-300' }
+  }[status as OngStatus] || { title: 'ONGs', color: 'text-gray-600', bg: 'bg-gray-50', border: 'border-gray-200' };
 
   return (
     <div className="h-full flex flex-col bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-100">

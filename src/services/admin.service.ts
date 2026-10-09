@@ -1,7 +1,7 @@
 import { api } from "./api";
 
 // --- Tipos ---
-export type OngStatus = 'pending' | 'approved' | 'rejected';
+export type OngStatus = 'pending' | 'approved' | 'rejected' | 'restricted';
 
 export interface OngAdminData {
   id: number;
