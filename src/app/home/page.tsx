@@ -38,6 +38,13 @@ export default async function HomePageServer() {
       }
     }
 
+    // Padrão Netflix (Cookie "pas" / Atributos Rápidos):
+    // Se o usuário trocou de foto recentemente, o cookie rápido reflete a nova foto antes do JWT ser recriado
+    const fastAvatar = cookieStore.get("user_avatar")?.value;
+    const fastName = cookieStore.get("user_name")?.value;
+    if (fastAvatar) initialUserAvatar = decodeURIComponent(fastAvatar);
+    if (fastName) initialUserName = decodeURIComponent(fastName);
+
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
     const res = await fetch(`${apiUrl}/catalog`, { cache: "no-store" });
     if (res.ok) initialCatalog = await res.json();

@@ -26,9 +26,11 @@ import { useRouter } from "next/navigation";
 import { MonetaryDonationDetails } from "@/components/ui/MonetaryDonationDetails";
 import { MaterialDonationDetails } from "@/components/ui/MaterialDonationDetails";
 import { DonorService, type UpdateProfileDTO, type DonationHistory, Address } from "@/services/donor.service";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function DonorProfile() {
   const router = useRouter();
+  const { refreshSession } = useAuth();
   const [activeTab, setActiveTab] = useState<"info" | "history">("info");
   const [showCompleteModal, setShowCompleteModal] = useState(false);
 
@@ -188,6 +190,9 @@ export default function DonorProfile() {
 
       if (isNameValid) {
         await DonorService.updateAccountName(donorData.name.trim());
+        document.cookie = `user_name=${encodeURIComponent(donorData.name.trim())}; path=/; max-age=604800; SameSite=Lax`;
+        localStorage.setItem("userName", donorData.name.trim());
+        refreshSession();
       }
 
       if (address) {
@@ -236,6 +241,11 @@ export default function DonorProfile() {
       formData.append("file", file);
       const updatedProfile = await DonorService.updateProfile(formData as any);
       setProfileImage(updatedProfile.avatarUrl ?? null);
+      if (updatedProfile.avatarUrl) {
+        document.cookie = `user_avatar=${encodeURIComponent(updatedProfile.avatarUrl)}; path=/; max-age=604800; SameSite=Lax`;
+        localStorage.setItem("userAvatar", updatedProfile.avatarUrl);
+        await refreshSession();
+      }
       toast.success("Foto de perfil atualizada!");
     } catch (error) {
       toast.error("Erro ao salvar imagem.");

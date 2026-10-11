@@ -34,9 +34,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUserAvatar(avatar);
         if (user.avatarUrl) {
           localStorage.setItem("userAvatar", user.avatarUrl);
+          document.cookie = `user_avatar=${encodeURIComponent(user.avatarUrl)}; path=/; max-age=604800; SameSite=Lax`;
         }
         if (user.name) {
           localStorage.setItem("userName", user.name);
+          document.cookie = `user_name=${encodeURIComponent(user.name)}; path=/; max-age=604800; SameSite=Lax`;
         }
       } else {
         throw new Error("Não autenticado");
@@ -62,6 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUserRole(null);
       setUserName(null);
       setUserAvatar(null);
+      document.cookie = "user_avatar=; path=/; max-age=0";
+      document.cookie = "user_name=; path=/; max-age=0";
     };
     window.addEventListener("auth_expired", handleAuthExpired);
 

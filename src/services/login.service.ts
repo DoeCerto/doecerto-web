@@ -24,6 +24,10 @@ export async function login(data: LoginDTO) {
 }
 
 export async function logout() {
+  if (typeof document !== "undefined") {
+    document.cookie = "user_avatar=; path=/; max-age=0";
+    document.cookie = "user_name=; path=/; max-age=0";
+  }
   return await api("/auth/logout", {
     method: "POST",
   });
