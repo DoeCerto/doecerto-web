@@ -49,6 +49,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
   const [selectedDonation, setSelectedDonation] = useState<any | null>(null);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [showPendingModal, setShowPendingModal] = useState(false);
+  const [showRestrictedModal, setShowRestrictedModal] = useState(false);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const handleLogout = async (e?: React.MouseEvent) => {
@@ -228,10 +229,15 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-32">
       {ong.verificationStatus === 'verified' && ong.isRestricted && (
-        <div className="w-full bg-red-50 text-red-800 border-b border-red-200 px-4 sm:px-6 py-3 flex items-center justify-center gap-2 sm:gap-3 z-50 text-xs sm:text-sm shadow-sm relative">
-          <AlertCircle size={18} className="shrink-0 text-red-600" />
-          <span className="font-semibold text-center leading-tight">Sua conta foi restringida por medidas de segurança. Entre em contato com o suporte.</span>
-        </div>
+        <button
+          onClick={() => setShowRestrictedModal(true)}
+          className="w-full bg-red-50 hover:bg-red-100 text-red-800 border-b border-red-200 px-4 sm:px-6 py-2.5 flex items-center justify-center gap-2 sm:gap-3 z-50 text-xs sm:text-sm shadow-sm relative transition-colors cursor-pointer group"
+        >
+          <AlertCircle size={18} className="shrink-0 text-red-600 group-hover:scale-110 transition-transform" />
+          <span className="font-semibold text-center leading-tight">
+            Sua conta foi restringida por medidas de segurança. <span className="underline font-bold text-red-700">Clique para ver detalhes</span>.
+          </span>
+        </button>
       )}
 
       {/* Header / Banner */}
@@ -311,21 +317,29 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
       <div className="px-4 sm:px-10 mt-16 sm:mt-20">
         <h1 className="text-2xl sm:text-4xl font-black text-gray-900 flex items-center flex-wrap gap-2 sm:gap-3">
           <span>{ong.name || "Minha ONG"}</span>
-          {ong.verificationStatus !== 'verified' && (
+          {ong.isRestricted ? (
+            <button 
+              onClick={() => setShowRestrictedModal(true)} 
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-red-100 text-red-700 text-xs sm:text-sm font-bold shadow-sm hover:bg-red-200 hover:scale-[1.02] transition-all active:scale-95 shrink-0 cursor-pointer"
+              title="Sua conta foi restringida por medidas de segurança"
+            >
+              <AlertTriangle size={14} strokeWidth={2.5} className="sm:w-4 sm:h-4 text-red-600" />
+              Restringida
+            </button>
+          ) : ong.verificationStatus !== 'verified' ? (
             <button 
               onClick={() => setShowPendingModal(true)} 
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-amber-100 text-amber-700 text-xs sm:text-sm font-bold shadow-sm hover:bg-amber-200 hover:scale-[1.02] transition-all active:scale-95 shrink-0"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-amber-100 text-amber-700 text-xs sm:text-sm font-bold shadow-sm hover:bg-amber-200 hover:scale-[1.02] transition-all active:scale-95 shrink-0 cursor-pointer"
               title="Sua conta está em análise"
             >
               <Clock size={14} strokeWidth={3} className="sm:w-4 sm:h-4" />
               Em Análise
             </button>
-          )}
-          {ong.verificationStatus === 'verified' && !ong.isRestricted && (
+          ) : ong.verificationStatus === 'verified' ? (
             <div title="Perfil Verificado e Aprovado" className="shrink-0 flex items-center pt-1">
               <VerifiedBadge size={28} className="drop-shadow-sm" />
             </div>
-          )}
+          ) : null}
         </h1>
 
         <div className="text-gray-500 mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm sm:text-lg font-medium">
@@ -700,16 +714,16 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
         )}
       </AnimatePresence>
 
-      {/* Modal de Análise Pendente */}
+      {/* Modal de Conta Restringida */}
       <AnimatePresence>
-        {showPendingModal && (
+        {showRestrictedModal && (
           <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-              onClick={() => setShowPendingModal(false)}
+              onClick={() => setShowRestrictedModal(false)}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -719,27 +733,42 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
               className="relative w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center overflow-hidden"
             >
               <button 
-                onClick={() => setShowPendingModal(false)}
+                onClick={() => setShowRestrictedModal(false)}
                 className="absolute top-4 right-4 text-gray-400 hover:bg-gray-100 hover:text-gray-700 p-2 rounded-full transition-colors cursor-pointer"
               >
                 <X size={20} strokeWidth={2.5} />
               </button>
               
-              <div className="w-20 h-20 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mb-6 shadow-inner ring-4 ring-amber-50">
-                <Clock size={40} strokeWidth={2.5} />
+              <div className="w-20 h-20 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-6 shadow-inner ring-4 ring-red-50">
+                <AlertTriangle size={40} strokeWidth={2.5} />
               </div>
               
-              <h2 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">Em Análise</h2>
-              <p className="text-slate-600 text-[16px] leading-relaxed mb-8 px-2">
-                O seu perfil já está criado! Neste momento, nosso time de <strong className="text-amber-600">Compliance e Auditoria</strong> está avaliando a sua documentação para garantir a segurança da plataforma. Aguarde a liberação oficial para começar a receber doações.
+              <h2 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">Conta Restringida</h2>
+              <p className="text-slate-600 text-[15px] sm:text-[16px] leading-relaxed mb-6 px-1">
+                Por medidas de conformidade e segurança da plataforma, a sua conta foi temporariamente <strong className="text-red-600">restringida</strong> pela auditoria. Durante este período, o recebimento de doações e a exibição pública ficam suspensos.
               </p>
+
+              <div className="w-full bg-slate-50 border border-slate-200/80 rounded-2xl p-4 mb-6 text-left space-y-1">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">O que fazer?</span>
+                <p className="text-sm text-slate-700 leading-normal">
+                  Entre em contato com nossa equipe de suporte para regularizar a documentação ou obter mais detalhes.
+                </p>
+              </div>
               
-              <button
-                onClick={() => setShowPendingModal(false)}
-                className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-lg shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all cursor-pointer"
-              >
-                Entendi
-              </button>
+              <div className="w-full flex flex-col sm:flex-row gap-3">
+                <a
+                  href="mailto:suporte@doecerto.com.br?subject=Suporte%20-%20Conta%20Restringida"
+                  className="flex-1 py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-base shadow-lg shadow-red-600/20 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center"
+                >
+                  Falar com Suporte
+                </a>
+                <button
+                  onClick={() => setShowRestrictedModal(false)}
+                  className="py-3.5 px-6 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-base active:scale-[0.98] transition-all cursor-pointer"
+                >
+                  Entendi
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
