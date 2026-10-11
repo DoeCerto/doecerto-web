@@ -30,7 +30,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsAuthenticated(true);
         setUserRole(user.role);
         setUserName(user.name || localStorage.getItem("userName"));
-        setUserAvatar(localStorage.getItem("userAvatar")); // Mantém avatar estético
+        const avatar = user.avatarUrl || localStorage.getItem("userAvatar");
+        setUserAvatar(avatar);
+        if (user.avatarUrl) {
+          localStorage.setItem("userAvatar", user.avatarUrl);
+        }
+        if (user.name) {
+          localStorage.setItem("userName", user.name);
+        }
       } else {
         throw new Error("Não autenticado");
       }

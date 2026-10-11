@@ -95,6 +95,7 @@ export default function HomeClient({
     }
   }, [contextIsAuth, contextRole, isLoading]);
 
+  const hasLoadedUserData = Boolean(contextName || initialUserName);
   const displayName = isAuth ? (contextName || initialUserName || "Usuário") : null;
   const rawAvatar = isAuth ? (contextAvatar || initialUserAvatar) : null;
   const displayAvatar = rawAvatar ? OngsProfileService._formatImageUrl(rawAvatar) : null;
@@ -477,7 +478,7 @@ export default function HomeClient({
             <>
               {/* DESKTOP: Botão de Perfil Logado (Com nome e dropdown) */}
               <div className="hidden sm:block">
-                {isLoading ? (
+                {isLoading && !hasLoadedUserData ? (
                   <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-full shadow-sm border border-slate-200">
                     <div className="w-4 h-4 rounded-full bg-slate-200 animate-pulse"></div>
                     <div className="w-20 h-4 bg-slate-200 animate-pulse rounded"></div>
@@ -509,7 +510,7 @@ export default function HomeClient({
 
               {/* MOBILE ONLY: Avatar (Abre Dropdown) + Hamburger (Abre Gaveta) */}
               <div className="flex items-center gap-3 sm:hidden">
-                {isLoading ? (
+                {isLoading && !hasLoadedUserData ? (
                   <div className="w-8 h-8 shrink-0 rounded-full bg-slate-200 animate-pulse"></div>
                 ) : (
                   <button
