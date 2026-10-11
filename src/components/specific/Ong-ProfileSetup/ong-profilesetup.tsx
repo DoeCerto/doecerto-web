@@ -20,7 +20,8 @@ import {
   Info,
   Navigation,
   Flag,
-  ExternalLink
+  ExternalLink,
+  LogOut
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
@@ -32,14 +33,42 @@ import { BankAccountService } from "@/services/bank-account.service";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { OngSetupService } from "@/services/ongSetup.service";
 import { WishlistService } from "@/services/wishlist.service";
+import { Preferences } from "@capacitor/preferences";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function OngSetupProfile() {
   const router = useRouter();
+  const { refreshSession } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [ongName, setOngName] = useState("Minha ONG");
   const [availableCategories, setAvailableCategories] = useState<any[]>([]);
+
+  const handleLogout = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      await Preferences.remove({ key: "access_token" });
+      await Preferences.remove({ key: "userRole" });
+    } catch (e) {}
+
+    try {
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+      await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" });
+    } catch (e) {}
+
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("CapacitorStorage.access_token");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userAvatar");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("registration_completed");
+    localStorage.removeItem("hideDonationTutorial");
+    sessionStorage.removeItem("dismiss_ong_setup_prompt");
+
+    await refreshSession();
+    window.location.replace("/login");
+  };
 
   // Campos do Perfil
   const [description, setDescription] = useState("");
@@ -316,9 +345,20 @@ export default function OngSetupProfile() {
 
         <button
           onClick={() => router.push("/ong-dashboard")}
-          className="absolute top-4 left-4 bg-white/90 p-2 rounded-full z-30 shadow-md text-gray-900 hover:bg-white transition-colors"
+          className="absolute top-4 left-4 bg-white/90 hover:bg-white px-3.5 py-2 rounded-full z-30 shadow-md text-gray-700 font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 border border-slate-200"
+          title="Voltar ao Painel"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={16} />
+          <span>Painel</span>
+        </button>
+
+        <button
+          onClick={handleLogout}
+          className="absolute top-4 right-4 bg-white/90 hover:bg-white hover:text-red-600 px-3.5 py-2 rounded-full z-30 shadow-md text-gray-700 font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 border border-slate-200"
+          title="Sair da conta"
+        >
+          <LogOut size={16} className="text-red-500" />
+          <span>Sair</span>
         </button>
 
         <div className="absolute -bottom-14 left-6 sm:left-10 z-40">

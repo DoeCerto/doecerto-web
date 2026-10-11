@@ -276,9 +276,10 @@ export default function HomeClient({
     localStorage.removeItem("userName");
     localStorage.removeItem("registration_completed");
     localStorage.removeItem("hideDonationTutorial");
+    sessionStorage.removeItem("dismiss_ong_setup_prompt");
 
-    refreshSession();
-    window.location.reload();
+    await refreshSession();
+    window.location.replace("/login");
   }
 
   const scrollCarousel = (direction: 'left' | 'right') => {

@@ -50,6 +50,19 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [showRestrictedModal, setShowRestrictedModal] = useState(false);
+  const [dismissSetupPrompt, setDismissSetupPrompt] = useState(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("dismiss_ong_setup_prompt") === "true";
+    }
+    return false;
+  });
+
+  const handleDismissSetup = () => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("dismiss_ong_setup_prompt", "true");
+    }
+    setDismissSetupPrompt(true);
+  };
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const handleLogout = async (e?: React.MouseEvent) => {
@@ -73,6 +86,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
     localStorage.removeItem("userName");
     localStorage.removeItem("registration_completed");
     localStorage.removeItem("hideDonationTutorial");
+    sessionStorage.removeItem("dismiss_ong_setup_prompt");
 
     await refreshSession();
     window.location.replace("/login");
@@ -209,7 +223,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
     }
   };
 
-  if (!ong || !ong.description) {
+  if ((!ong || !ong.description) && !dismissSetupPrompt) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6 text-gray-900">
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white p-8 rounded-[32px] shadow-xl border border-gray-100 max-w-md w-full text-center">
@@ -217,10 +231,29 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
             <AlertCircle size={40} className="text-[#6B39A7]" />
           </div>
           <h2 className="text-2xl font-black text-gray-900 mb-3">Complete seu Perfil</h2>
-          <p className="text-gray-600 mb-8 leading-relaxed">Sua ONG ainda não possui as informações configuradas. Complete seu perfil para começar a receber doações.</p>
-          <button onClick={() => router.push('/ong-profilesetup')} className="w-full bg-[#6B39A7] text-white font-bold py-4 rounded-2xl shadow-lg flex items-center justify-center gap-2">
-            Configurar agora <ArrowRight size={20} />
-          </button>
+          <p className="text-gray-600 mb-6 leading-relaxed">
+            Sua ONG ainda não possui as informações configuradas. Complete seu perfil para começar a receber doações.
+          </p>
+          <div className="space-y-3">
+            <button 
+              onClick={() => router.push('/ong-profilesetup')} 
+              className="w-full bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold py-3.5 sm:py-4 rounded-2xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
+            >
+              Configurar agora <ArrowRight size={20} />
+            </button>
+            <button
+              onClick={handleDismissSetup}
+              className="w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl active:scale-95 transition-all cursor-pointer"
+            >
+              Configurar mais tarde
+            </button>
+            <button
+              onClick={handleLogout}
+              className="w-full pt-2 flex items-center justify-center gap-2 text-slate-400 hover:text-red-600 text-sm font-semibold transition-colors cursor-pointer"
+            >
+              <LogOut size={16} /> Sair da conta
+            </button>
+          </div>
         </motion.div>
       </div>
     );
@@ -359,6 +392,26 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                 <Tag size={12} className="text-purple-400" /> {cat.name || cat}
               </span>
             ))}
+          </div>
+        )}
+
+        {!ong?.description && (
+          <div className="mt-6 p-4 rounded-2xl bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
+            <div className="flex items-center gap-3 text-purple-900">
+              <div className="w-10 h-10 rounded-xl bg-purple-100 text-[#6B39A7] flex items-center justify-center shrink-0">
+                <AlertCircle size={22} />
+              </div>
+              <div>
+                <p className="font-bold text-sm sm:text-base">Seu perfil ainda não está completo</p>
+                <p className="text-xs sm:text-sm text-purple-700/80">Complete as informações e documentos para poder receber doações na plataforma.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => router.push('/ong-profilesetup')}
+              className="w-full sm:w-auto px-5 py-2.5 bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold rounded-xl text-sm shrink-0 active:scale-95 transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+            >
+              Completar Perfil <ArrowRight size={16} />
+            </button>
           </div>
         )}
 
