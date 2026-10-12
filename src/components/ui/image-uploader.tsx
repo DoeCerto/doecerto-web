@@ -124,8 +124,8 @@ export function ImageUploader({ image, onImageChange, onCropChange, variant, lab
             >
               <div className="w-full max-w-5xl flex flex-col gap-6">
                 <div className="text-center">
-                  <h2 className="text-white text-xl font-black uppercase tracking-widest mb-1">Ajustar Enquadramento</h2>
-                  <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest">Arraste a imagem para focar na área desejada</p>
+                  <h2 className="text-white text-2xl sm:text-3xl font-black tracking-tight mb-2">Ajustar Enquadramento</h2>
+                  <p className="text-white/70 text-sm sm:text-base font-medium">Arraste a imagem para focar na área desejada</p>
                 </div>
 
                 <div className="relative w-full aspect-video sm:aspect-[3/1] bg-[#111] overflow-hidden rounded-[1.5rem] sm:rounded-[2.5rem] border border-white/10 shadow-2xl">
@@ -145,15 +145,15 @@ export function ImageUploader({ image, onImageChange, onCropChange, variant, lab
                 <div className="flex items-center justify-center gap-4">
                   <button 
                     onClick={() => setEditing(false)} 
-                    className="px-6 py-4 text-white/40 hover:text-white font-black text-[10px] uppercase tracking-widest"
+                    className="px-8 py-4 text-white/60 hover:text-white font-bold text-base transition-colors rounded-2xl hover:bg-white/10 cursor-pointer"
                   >
                     Cancelar
                   </button>
                   <button 
                     onClick={finalizeEditing} 
-                    className="bg-white text-black px-10 py-4 rounded-2xl font-black text-xs hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                    className="bg-white text-slate-900 px-10 py-4 rounded-2xl font-black text-base hover:bg-slate-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-2.5 shadow-xl cursor-pointer"
                   >
-                    <Check size={18} /> CONFIRMAR AJUSTE
+                    <Check size={20} strokeWidth={2.5} /> Confirmar Ajuste
                   </button>
                 </div>
               </div>

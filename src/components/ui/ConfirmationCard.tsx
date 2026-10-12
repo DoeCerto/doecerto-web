@@ -67,10 +67,10 @@ export function ConfirmationCard({
         </div>
       </div>
 
-      <h2 className="text-xl md:text-2xl font-black text-[#2e134d] mb-2">
+      <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 tracking-tight">
         {title || (isMoney ? "Revise os dados da doação!" : "Doação Agendada!")}
       </h2>
-      <p className="text-sm md:text-base text-gray-500 font-medium max-w-xs md:max-w-sm mb-6 leading-relaxed">
+      <p className="text-base sm:text-lg text-slate-600 font-medium max-w-md mb-8 leading-relaxed">
         {description ||
           (isMoney
             ? "Confira as informações abaixo antes de confirmar sua doação. Após a confirmação, o comprovante será enviado para análise da ONG."
@@ -78,24 +78,24 @@ export function ConfirmationCard({
       </p>
 
       <div
-        className={`w-full bg-gradient-to-br ${theme.bgLight} border ${theme.border} rounded-2xl p-4 md:p-5 flex flex-col gap-3 text-left mb-8`}
+        className={`w-full bg-gradient-to-br ${theme.bgLight} border ${theme.border} rounded-2xl p-5 md:p-6 flex flex-col gap-4 text-left mb-8`}
       >
         <div>
-          <span className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-wider block mb-0.5">
+          <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">
             {isMoney ? "Valor da Doação" : "Total de Itens"}
           </span>
           <span
-            className={`text-xl md:text-2xl font-black ${theme.textPrimary}`}
+            className={`text-2xl sm:text-3xl font-black ${theme.textPrimary}`}
           >
             {amountOrQuantity}
           </span>
         </div>
 
-        <div className="border-t border-gray-100/50 pt-2.5">
-          <span className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-wider block mb-1">
+        <div className="border-t border-gray-100/60 pt-3">
+          <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1.5">
             {detailsLabel || (isMoney ? "Identificador Pix" : "Resumo do Lote")}
           </span>
-          <div className="text-xs md:text-sm text-gray-700 font-bold bg-white/60 backdrop-blur-sm px-3 py-2.5 rounded-xl border border-white/40 break-all leading-relaxed">
+          <div className="text-sm sm:text-base text-slate-800 font-bold bg-white/70 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/60 break-all leading-relaxed">
             {detailsContent ?? detailsText}
           </div>
         </div>
@@ -108,14 +108,14 @@ export function ConfirmationCard({
           className={`w-full bg-gradient-to-r ${theme.buttonGradient} text-white font-black py-4 rounded-2xl shadow-md flex items-center justify-center gap-2 text-base md:text-lg transition-all transform active:scale-[0.98]`}
         >
           {primaryButtonText}
-          <ArrowRight size={18} />
+          <ArrowRight size={20} />
         </button>
 
         {secondaryButtonText && onSecondaryAction && (
           <button
             type="button"
             onClick={onSecondaryAction}
-            className="w-full bg-transparent text-gray-400 font-bold text-sm md:text-base py-2 hover:text-gray-600 transition-colors"
+            className="w-full bg-transparent text-slate-400 font-bold text-base py-2.5 hover:text-slate-600 transition-colors"
           >
             {secondaryButtonText}
           </button>

@@ -859,34 +859,34 @@ export default function HomeClient({
               exit={{ opacity: 0, y: 100 }}
               className="bg-white w-full sm:max-w-lg rounded-t-[2rem] sm:rounded-[2rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
             >
-              <div className="flex items-center justify-between p-6 border-b border-slate-100">
-                <h2 className="text-xl font-black text-slate-900">Filtros</h2>
-                <button onClick={() => setIsFilterModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-full hover:bg-slate-100 cursor-pointer">
+              <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Filtros</h2>
+                <button onClick={() => setIsFilterModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-100 cursor-pointer">
                   <FiX size={24} />
                 </button>
               </div>
 
-              <div className="p-6 overflow-y-auto flex-1 space-y-8">
+              <div className="p-6 sm:p-7 overflow-y-auto flex-1 space-y-8 custom-scrollbar">
                 <div>
-                  <h3 className="text-base font-extrabold text-slate-900 mb-4">Ordenar por</h3>
+                  <h3 className="text-lg font-black text-slate-900 mb-4 tracking-tight">Ordenar por</h3>
                   <div className="flex flex-wrap gap-3">
-                    <button onClick={() => setSortBy('default')} className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${sortBy === 'default' ? 'bg-purple-700 text-white shadow-md shadow-purple-200' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
+                    <button onClick={() => setSortBy('default')} className={`px-4.5 py-3 rounded-2xl text-base font-bold transition-all cursor-pointer ${sortBy === 'default' ? 'bg-purple-700 text-white shadow-md shadow-purple-200' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
                       Padrão
                     </button>
-                    <button onClick={() => setSortBy('rating')} className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${sortBy === 'rating' ? 'bg-purple-700 text-white shadow-md shadow-purple-200' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
+                    <button onClick={() => setSortBy('rating')} className={`px-4.5 py-3 rounded-2xl text-base font-bold transition-all cursor-pointer ${sortBy === 'rating' ? 'bg-purple-700 text-white shadow-md shadow-purple-200' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
                       Melhor Avaliação
                     </button>
-                    <button onClick={handleDistanceFilterClick} className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${sortBy === 'distance' ? 'bg-purple-700 text-white shadow-md shadow-purple-200' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
+                    <button onClick={handleDistanceFilterClick} className={`px-4.5 py-3 rounded-2xl text-base font-bold transition-all cursor-pointer ${sortBy === 'distance' ? 'bg-purple-700 text-white shadow-md shadow-purple-200' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
                       Menor Distância
                     </button>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-base font-extrabold text-slate-900 mb-4">Categorias</h3>
+                  <h3 className="text-lg font-black text-slate-900 mb-4 tracking-tight">Categorias</h3>
                   <div className="flex flex-wrap gap-2.5">
                     {availableCategories.length === 0 ? (
-                      <p className="text-sm text-slate-500">Nenhuma categoria disponível no momento.</p>
+                      <p className="text-base text-slate-500 font-medium">Nenhuma categoria disponível no momento.</p>
                     ) : (
                       availableCategories.map((cat, i) => {
                         const isSelected = activeCategories.includes(cat);
@@ -894,7 +894,7 @@ export default function HomeClient({
                           <button
                             key={i}
                             onClick={() => toggleCategory(cat)}
-                            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border cursor-pointer ${isSelected ? 'bg-purple-50 border-purple-200 text-purple-700 shadow-sm' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50'}`}
+                            className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all border cursor-pointer ${isSelected ? 'bg-purple-50 border-purple-200 text-purple-700 shadow-sm' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50'}`}
                           >
                             {cat}
                           </button>
@@ -908,7 +908,7 @@ export default function HomeClient({
               <div className="p-6 border-t border-slate-100 bg-slate-50">
                 <button
                   onClick={() => setIsFilterModalOpen(false)}
-                  className="w-full bg-purple-700 hover:bg-purple-800 text-white font-black py-4 rounded-xl shadow-lg shadow-purple-200 active:scale-95 transition-all cursor-pointer"
+                  className="w-full bg-purple-700 hover:bg-purple-800 text-white font-black py-4 rounded-2xl shadow-lg shadow-purple-200 active:scale-[0.98] transition-all cursor-pointer text-base"
                 >
                   Ver {filteredCatalog.length} resultados
                 </button>

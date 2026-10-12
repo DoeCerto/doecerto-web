@@ -83,3 +83,23 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #CBD5E1 transparent;
 }
+
+/* Seleção de texto global da marca (estilo roxinho da landing page) */
+::selection {
+  background-color: #d8b4fe;
+  color: #1e1b4b;
+}
+
+.text-\[\#6B21A8\]::selection,
+.text-\[\#6B39A7\]::selection {
+  background-color: #6B39A7 !important;
+  color: #ffffff !important;
+}
+
+.bg-\[\#6B21A8\] ::selection,
+.bg-\[\#6B39A7\] ::selection,
+.bg-purple-600 ::selection,
+.bg-purple-700 ::selection {
+  background-color: #f8fafc;
+  color: #6B39A7;
+}

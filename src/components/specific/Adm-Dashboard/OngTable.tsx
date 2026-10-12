@@ -59,19 +59,19 @@ const ApproveModal = ({ isOpen, onClose, onConfirm, ong, status }: any) => {
   if (isConfirming) {
     return (
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-        <div className="bg-white rounded-3xl max-w-sm w-full p-8 text-center shadow-2xl">
-          <div className="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6">
-            <AlertTriangle size={40} strokeWidth={3} />
+        <div className="bg-white rounded-3xl max-w-md w-full p-8 text-center shadow-2xl border border-gray-100">
+          <div className="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-amber-50">
+            <AlertTriangle size={40} strokeWidth={2.5} />
           </div>
-          <h3 className="text-2xl font-black text-gray-900 mb-2">Tem certeza absoluta?</h3>
-          <p className="text-gray-500 mb-6">
-            Você está prestes a aprovar a ONG <span className="font-bold text-gray-900">{ong?.name}</span>. Essa ação a tornará pública e apta a receber doações.
+          <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 tracking-tight">Tem certeza absoluta?</h3>
+          <p className="text-base sm:text-lg text-slate-600 mb-8 font-medium leading-relaxed">
+            Você está prestes a aprovar a ONG <strong className="text-slate-900 font-bold">{ong?.name}</strong>. Essa ação a tornará pública e apta a receber doações.
           </p>
           <div className="flex flex-col gap-3">
-            <button onClick={() => onConfirm(isRestrictedTab || isHighRisk)} className="w-full text-white py-3 rounded-2xl font-black shadow-lg transition-colors bg-green-600 hover:bg-green-700 shadow-green-200">
+            <button onClick={() => onConfirm(isRestrictedTab || isHighRisk)} className="w-full text-white py-4 rounded-2xl font-black text-base shadow-lg transition-all bg-green-600 hover:bg-green-700 shadow-green-600/20 active:scale-[0.98]">
               Sim, Confirmar Aprovação
             </button>
-            <button onClick={() => setIsConfirming(false)} className="w-full bg-gray-100 text-gray-700 py-3 rounded-2xl font-black hover:bg-gray-200 transition-colors mt-2">
+            <button onClick={() => setIsConfirming(false)} className="w-full bg-slate-100 text-slate-700 py-3.5 rounded-2xl font-bold text-base hover:bg-slate-200 transition-colors">
               Voltar
             </button>
           </div>
@@ -82,44 +82,44 @@ const ApproveModal = ({ isOpen, onClose, onConfirm, ong, status }: any) => {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-      <div className="bg-white rounded-3xl max-w-sm w-full p-8 text-center shadow-2xl">
+      <div className="bg-white rounded-3xl max-w-md w-full p-8 text-center shadow-2xl border border-gray-100">
         {isRestrictedTab || isHighRisk ? (
-          <div className="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
-            <AlertTriangle size={40} strokeWidth={3} />
+          <div className="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-red-50">
+            <AlertTriangle size={40} strokeWidth={2.5} />
           </div>
         ) : (
-          <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Check size={40} strokeWidth={3} />
+          <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-emerald-50">
+            <Check size={40} strokeWidth={2.5} />
           </div>
         )}
 
-        <h3 className="text-2xl font-black text-gray-900 mb-2">
+        <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 tracking-tight">
           {isRestrictedTab || isHighRisk ? 'Remover Restrição?' : 'Aprovar ONG?'}
         </h3>
-        <p className="text-gray-500 mb-6">
+        <p className="text-base sm:text-lg text-slate-600 mb-6 font-medium leading-relaxed">
           {isRestrictedTab || isHighRisk
-            ? <>Deseja remover a restrição e aprovar a ONG <br /><span className="font-bold text-gray-900">{ong?.name}</span> para uso público?</>
-            : <>Deseja confirmar a aprovação da ONG <br /><span className="font-bold text-gray-900">{ong?.name}</span>?</>
+            ? <>Deseja remover a restrição e aprovar a ONG <br /><strong className="text-slate-900 font-bold">{ong?.name}</strong> para uso público?</>
+            : <>Deseja confirmar a aprovação da ONG <br /><strong className="text-slate-900 font-bold">{ong?.name}</strong>?</>
           }
         </p>
 
         {(isRestrictedTab || isHighRisk) && (
-          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-xs font-bold mb-6 text-left">
+          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-2xl text-sm font-bold mb-6 text-left leading-relaxed">
             ATENÇÃO: Esta ONG possui um alerta ou restrição de compliance ativa. A aprovação irá remover a restrição e liberar a ONG para a plataforma.
           </div>
         )}
 
         <div className="flex flex-col gap-3">
           {isRestrictedTab || isHighRisk ? (
-            <button onClick={() => setIsConfirming(true)} className="w-full text-white py-3 rounded-2xl font-black shadow-lg transition-colors bg-red-600 hover:bg-red-700 shadow-red-200">
+            <button onClick={() => setIsConfirming(true)} className="w-full text-white py-4 rounded-2xl font-black text-base shadow-lg transition-all bg-red-600 hover:bg-red-700 shadow-red-600/20 active:scale-[0.98]">
               Aprovar e Liberar Restrição
             </button>
           ) : (
-            <button onClick={() => setIsConfirming(true)} className="w-full text-white py-3 rounded-2xl font-black shadow-lg transition-colors bg-green-600 hover:bg-green-700 shadow-green-200">
+            <button onClick={() => setIsConfirming(true)} className="w-full text-white py-4 rounded-2xl font-black text-base shadow-lg transition-all bg-green-600 hover:bg-green-700 shadow-green-600/20 active:scale-[0.98]">
               Aprovar
             </button>
           )}
-          <button onClick={onClose} className="w-full bg-gray-100 text-gray-700 py-3 rounded-2xl font-black hover:bg-gray-200 transition-colors mt-2">Cancelar</button>
+          <button onClick={onClose} className="w-full bg-slate-100 text-slate-700 py-3.5 rounded-2xl font-bold text-base hover:bg-slate-200 transition-colors">Cancelar</button>
         </div>
       </div>
     </div>
@@ -131,20 +131,20 @@ const RejectModal = ({ isOpen, onClose, onConfirm, reason, setReason }: any) => 
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-      <div className="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl">
-        <h3 className="text-2xl font-black text-gray-900 mb-6">Motivo da Rejeição</h3>
+      <div className="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl border border-gray-100">
+        <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mb-5 tracking-tight">Motivo da Rejeição</h3>
         <textarea
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="Descreva o motivo..."
-          className="w-full px-4 py-4 border-2 border-gray-100 rounded-2xl focus:border-red-200 focus:outline-none h-32 mb-6 resize-none"
+          placeholder="Descreva o motivo detalhado..."
+          className="w-full px-5 py-4 border-2 border-slate-100 rounded-2xl focus:border-red-300 focus:outline-none font-medium text-base text-slate-800 h-36 mb-6 resize-none transition-all"
         />
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-2xl font-black hover:bg-gray-200">Cancelar</button>
+          <button onClick={onClose} className="flex-1 bg-slate-100 text-slate-700 py-4 rounded-2xl font-bold text-base hover:bg-slate-200 transition-colors">Cancelar</button>
           <button
             disabled={!reason.trim()}
             onClick={() => onConfirm(reason)}
-            className="flex-1 bg-red-600 text-white py-3 rounded-2xl font-black hover:bg-red-700 disabled:opacity-50 shadow-lg shadow-red-200 transition-all"
+            className="flex-1 bg-red-600 text-white py-4 rounded-2xl font-black text-base hover:bg-red-700 disabled:opacity-50 shadow-lg shadow-red-600/20 transition-all active:scale-[0.98]"
           >
             Rejeitar
           </button>

@@ -8,7 +8,6 @@ import {
   Camera, AlertCircle, Tag, MessageSquare, AlertTriangle, ExternalLink,
   LogOut, Download
 } from "lucide-react";
-import VerifiedBadge from "@/components/ui/verified-badge";
 import { useRouter } from "next/navigation";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { DonationService } from "@/services/donations.service";
@@ -369,9 +368,15 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
               Em Análise
             </button>
           ) : ong.verificationStatus === 'verified' ? (
-            <div title="Perfil Verificado e Aprovado" className="shrink-0 flex items-center pt-1">
-              <VerifiedBadge size={28} className="drop-shadow-sm" />
-            </div>
+            <motion.img
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
+              src="/iconeselo.svg"
+              alt="Selo DoeCerto"
+              title="ONG Verificada Oficialmente"
+              className="w-6 h-6 sm:w-[32px] sm:h-[32px] lg:w-[35px] lg:h-[35px] shrink-0 drop-shadow-sm cursor-help translate-y-[3.5px] sm:translate-y-[5px] lg:translate-y-[5.5px] -ml-2 sm:-ml-2.5 lg:-ml-3"
+            />
           ) : null}
         </h1>
 
@@ -471,31 +476,31 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
         {isHistoryOpen && (
           <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm">
             <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="bg-white w-full max-w-lg rounded-t-[24px] md:rounded-[32px] overflow-hidden shadow-2xl">
-              <div className="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <div className="p-5 sm:p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/70">
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">Doações Recebidas</h3>
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900">Doações Recebidas</h3>
                 </div>
-                <button onClick={() => setIsHistoryOpen(false)} className="p-2 bg-white rounded-full shadow-sm text-gray-900"><X size={18} /></button>
+                <button onClick={() => setIsHistoryOpen(false)} className="p-2.5 bg-white hover:bg-gray-100 rounded-full shadow-sm text-gray-700 transition-colors"><X size={20} /></button>
               </div>
-              <div className="p-4 sm:p-6 max-h-[60vh] overflow-y-auto space-y-4">
+              <div className="p-5 sm:p-6 max-h-[60vh] overflow-y-auto space-y-4 custom-scrollbar">
                 {donations.length > 0 ? donations.map((item) => (
-                  <div key={item.id} className="p-4 rounded-2xl border border-gray-100 bg-white shadow-sm">
+                  <div key={item.id} className="p-4 sm:p-5 rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-start gap-3">
-                        {item.type === "monetary" ? <Heart size={20} className="text-green-500 mt-1" fill="currentColor" /> : <Package size={20} className="text-blue-500 mt-1" />}
+                      <div className="flex items-start gap-3.5">
+                        {item.type === "monetary" ? <Heart size={22} className="text-green-500 mt-0.5" fill="currentColor" /> : <Package size={22} className="text-blue-500 mt-0.5" />}
                         <div>
-                          <p className="font-bold text-gray-900 text-base">{item.type === "monetary" ? "Doação em Dinheiro" : "Doação de Material"}</p>
-                          <p className="text-sm text-gray-600 mt-0.5 line-clamp-1">{item.type === "monetary" ? `Valor: R$ ${item.amount}` : item.materialDescription}</p>
-                          <p className="text-[10px] text-gray-400 mt-1">{new Date(item.createdAt).toLocaleDateString('pt-BR')}</p>
+                          <p className="font-black text-slate-900 text-base sm:text-lg">{item.type === "monetary" ? "Doação em Dinheiro" : "Doação de Material"}</p>
+                          <p className="text-sm sm:text-base text-slate-600 font-medium mt-1 line-clamp-1">{item.type === "monetary" ? `Valor: R$ ${item.amount}` : item.materialDescription}</p>
+                          <p className="text-xs font-semibold text-slate-400 mt-1.5">{new Date(item.createdAt).toLocaleDateString('pt-BR')}</p>
                         </div>
                       </div>
-                      <span className={`text-[10px] px-2 py-1 rounded-full font-bold uppercase shrink-0 ${item.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : item.status === 'CANCELED' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                      <span className={`text-xs px-3 py-1 rounded-full font-bold uppercase shrink-0 ${item.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : item.status === 'CANCELED' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
                         {item.status === 'COMPLETED' ? 'Recebido' : item.status === 'CANCELED' ? 'Rejeitado' : 'Pendente'}
                       </span>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-gray-50 flex gap-2">
-                      <button onClick={() => setSelectedDonation(item)} className="flex-1 py-2 bg-purple-50 text-[#6B39A7] text-xs font-bold rounded-lg hover:bg-purple-100 transition-colors flex items-center justify-center gap-1">
-                        <FileText size={14} /> Ver Detalhes
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex gap-2">
+                      <button onClick={() => setSelectedDonation(item)} className="flex-1 py-2.5 bg-purple-50 text-[#6B39A7] hover:bg-purple-100 text-sm font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5">
+                        <FileText size={16} /> Ver Detalhes
                       </button>
                     </div>
                   </div>
@@ -515,19 +520,19 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
       <AnimatePresence>
         {selectedDonation && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 sm:p-6 text-gray-900">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl relative">
-              <button onClick={() => setSelectedDonation(null)} className="absolute top-4 right-4 z-10 p-2 bg-black/10 hover:bg-black/20 rounded-full transition-colors">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl relative">
+              <button onClick={() => setSelectedDonation(null)} className="absolute top-4 right-4 z-10 p-2.5 bg-black/10 hover:bg-black/20 rounded-full transition-colors">
                 <X size={20} className="text-gray-700" />
               </button>
 
-              <div className="p-6">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className={`p-3 rounded-2xl ${selectedDonation.type === 'monetary' ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'}`}>
-                    {selectedDonation.type === 'monetary' ? <Heart fill="currentColor" /> : <Package />}
+              <div className="p-6 sm:p-8">
+                <div className="flex items-center gap-3.5 mb-6">
+                  <div className={`p-3.5 rounded-2xl ${selectedDonation.type === 'monetary' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
+                    {selectedDonation.type === 'monetary' ? <Heart size={26} fill="currentColor" /> : <Package size={26} />}
                   </div>
                   <div>
-                    <h4 className="font-black text-xl text-gray-900 leading-tight">Detalhes da Doação</h4>
-                    <p className="text-sm text-gray-500 font-medium">Protocolo #{selectedDonation.id}</p>
+                    <h4 className="font-black text-2xl sm:text-3xl text-slate-900 leading-tight">Detalhes da Doação</h4>
+                    <p className="text-base text-slate-500 font-medium mt-0.5">Protocolo #{selectedDonation.id}</p>
                   </div>
                 </div>
 
@@ -664,16 +669,22 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
       {/* --- MODAL DE CONFIRMAÇÃO --- */}
       <AnimatePresence>
         {confirmModal && (
-          <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-6 text-gray-900">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white w-full max-w-xs rounded-[32px] p-6 shadow-2xl text-center border border-gray-100">
-              <div className={`w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center ${confirmModal.type === 'accept' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-                {confirmModal.type === 'accept' ? <CheckCircle2 size={32} /> : <AlertTriangle size={32} />}
+          <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4 sm:p-6 text-gray-900">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl text-center border border-gray-100">
+              <div className={`w-20 h-20 rounded-full mx-auto mb-5 flex items-center justify-center ring-4 ${confirmModal.type === 'accept' ? 'bg-green-100 text-green-600 ring-green-50' : 'bg-red-100 text-red-600 ring-red-50'}`}>
+                {confirmModal.type === 'accept' ? <CheckCircle2 size={40} strokeWidth={2.5} /> : <AlertTriangle size={40} strokeWidth={2.5} />}
               </div>
-              <h4 className="text-xl font-black text-gray-900">Confirmação</h4>
-              <p className="text-sm text-gray-500 mt-2 leading-relaxed">Deseja {confirmModal.type === 'accept' ? 'aceitar' : 'rejeitar'} esta doação? Esta ação não pode ser desfeita.</p>
-              <div className="flex flex-col gap-2 mt-6">
-                <button onClick={handleConfirmAction} className={`w-full py-3.5 rounded-2xl font-bold text-white transition-all active:scale-95 ${confirmModal.type === 'accept' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}>Sim, continuar</button>
-                <button onClick={() => setConfirmModal(null)} className="w-full py-3.5 rounded-2xl font-bold text-gray-400 hover:text-gray-600 transition-colors">Cancelar</button>
+              <h4 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Confirmação</h4>
+              <p className="text-base sm:text-lg text-slate-600 font-medium mt-3 leading-relaxed">
+                Deseja {confirmModal.type === 'accept' ? 'aceitar' : 'rejeitar'} esta doação? Esta ação não pode ser desfeita.
+              </p>
+              <div className="flex flex-col gap-3 mt-8">
+                <button onClick={handleConfirmAction} className={`w-full py-4 rounded-2xl font-black text-base text-white shadow-lg transition-all active:scale-[0.98] ${confirmModal.type === 'accept' ? 'bg-green-600 hover:bg-green-700 shadow-green-600/20' : 'bg-red-600 hover:bg-red-700 shadow-red-600/20'}`}>
+                  Sim, continuar
+                </button>
+                <button onClick={() => setConfirmModal(null)} className="w-full py-3.5 rounded-2xl font-bold text-base text-slate-500 hover:text-slate-800 transition-colors">
+                  Cancelar
+                </button>
               </div>
             </motion.div>
           </div>
@@ -695,26 +706,28 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
       <AnimatePresence>
         {isReviewsOpen && (
           <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm text-gray-900">
-            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="bg-white w-full max-w-lg rounded-t-[24px] md:rounded-[32px] overflow-hidden shadow-2xl">
-              <div className="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-center bg-yellow-50">
-                <h3 className="text-lg font-bold flex items-center gap-2"><Star className="text-yellow-500" fill="currentColor" size={20} /> O que dizem sobre nós</h3>
-                <button onClick={() => setIsReviewsOpen(false)} className="p-2 bg-white rounded-full shadow-sm text-gray-900"><X size={18} /></button>
+            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="bg-white w-full max-w-lg rounded-t-[24px] md:rounded-3xl overflow-hidden shadow-2xl">
+              <div className="p-5 sm:p-6 border-b border-gray-100 flex justify-between items-center bg-amber-50/70">
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2.5">
+                  <Star className="text-amber-500" fill="currentColor" size={24} /> O que dizem sobre nós
+                </h3>
+                <button onClick={() => setIsReviewsOpen(false)} className="p-2.5 bg-white hover:bg-gray-100 rounded-full shadow-sm text-gray-700 transition-colors"><X size={20} /></button>
               </div>
-              <div className="p-4 sm:p-6 max-h-[60vh] overflow-y-auto space-y-4">
+              <div className="p-5 sm:p-6 max-h-[60vh] overflow-y-auto space-y-4 custom-scrollbar">
                 {reviews.length > 0 ? reviews.map((r, index) => (
-                  <div key={r.id || index} className="p-4 rounded-2xl border border-gray-100 bg-gray-50/50">
+                  <div key={r.id || index} className="p-4 sm:p-5 rounded-2xl border border-gray-100 bg-gray-50/60 shadow-sm">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="font-bold text-sm text-gray-900">{r.donor?.user?.name || "Doador Anônimo"}</span>
-                      <div className="flex gap-0.5">
+                      <span className="font-black text-base text-slate-900">{r.donor?.user?.name || "Doador Anônimo"}</span>
+                      <div className="flex gap-1">
                         {[1, 2, 3, 4, 5].map((star) => (
-                          <Star key={star} size={12} fill={star <= r.stars ? "#facc15" : "transparent"} className={star <= r.stars ? "text-yellow-400" : "text-gray-200"} />
+                          <Star key={star} size={15} fill={star <= r.stars ? "#facc15" : "transparent"} className={star <= r.stars ? "text-yellow-400" : "text-gray-200"} />
                         ))}
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600 leading-relaxed">{r.comment || "Sem comentário enviado."}</p>
+                    <p className="text-base text-slate-700 leading-relaxed font-medium mt-1">{r.comment || "Sem comentário enviado."}</p>
                   </div>
                 )) : (
-                  <div className="text-center py-10 text-gray-500">
+                  <div className="text-center py-12 text-slate-500 font-medium text-base">
                     <p>Sua ONG ainda não recebeu avaliações.</p>
                   </div>
                 )}
@@ -740,11 +753,11 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              className="relative w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center overflow-hidden"
+              className="relative w-full max-w-lg bg-white rounded-3xl p-8 sm:p-10 shadow-2xl flex flex-col items-center text-center overflow-hidden"
             >
               <button 
                 onClick={() => setShowPendingModal(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:bg-gray-100 hover:text-gray-700 p-2 rounded-full transition-colors cursor-pointer"
+                className="absolute top-4 right-4 text-gray-400 hover:bg-gray-100 hover:text-gray-700 p-2.5 rounded-full transition-colors cursor-pointer"
               >
                 <X size={20} strokeWidth={2.5} />
               </button>
@@ -753,14 +766,14 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                 <Clock size={40} strokeWidth={2.5} />
               </div>
               
-              <h2 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">Em Análise</h2>
-              <p className="text-slate-600 text-[16px] leading-relaxed mb-8 px-2">
-                O seu perfil já está criado! Neste momento, nosso time de <strong className="text-amber-600">Compliance e Auditoria</strong> está avaliando a sua documentação para garantir a segurança da plataforma. Aguarde a liberação oficial para começar a receber doações.
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 tracking-tight">Em Análise</h2>
+              <p className="text-base sm:text-lg text-slate-600 font-medium leading-relaxed mb-8 px-2">
+                O seu perfil já está criado! Neste momento, nosso time de <strong className="text-amber-600 font-bold">Compliance e Auditoria</strong> está avaliando a sua documentação para garantir a segurança da plataforma. Aguarde a liberação oficial para começar a receber doações.
               </p>
               
               <button
                 onClick={() => setShowPendingModal(false)}
-                className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-lg shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all cursor-pointer"
+                className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-bold text-base sm:text-lg shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all cursor-pointer"
               >
                 Entendi
               </button>

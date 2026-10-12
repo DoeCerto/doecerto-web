@@ -119,29 +119,29 @@ export default function DonationTutorialModal({
       onClick={handleClose}
     >
       <div
-        className="bg-white w-full max-w-md rounded-[2rem] overflow-hidden shadow-[0_25px_80px_rgba(0,0,0,0.25)] relative flex flex-col max-h-[calc(100vh-2rem)]"
+        className="bg-white w-full max-w-lg rounded-3xl sm:rounded-[2rem] overflow-hidden shadow-[0_25px_80px_rgba(0,0,0,0.25)] relative flex flex-col max-h-[calc(100vh-2rem)] border border-gray-100"
         onClick={(e) => e.stopPropagation()}
       >
         {/* HEADER */}
-        <div className="p-5 sm:p-6 border-b border-gray-100 flex-shrink-0">
+        <div className="p-6 sm:p-7 border-b border-gray-100 flex-shrink-0 bg-gray-50/50">
           <div className="flex items-start justify-between">
             <div>
-              <span className="inline-flex items-center gap-2 bg-purple-100 text-purple-700 text-[11px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full">
+              <span className="inline-flex items-center gap-2 bg-purple-100 text-purple-700 text-xs font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full">
                 Guia rápido
               </span>
 
-              <h2 className="mt-3 text-xl sm:text-2xl font-black text-[#3b1a66] leading-tight">
+              <h2 className="mt-3 text-2xl sm:text-3xl font-black text-slate-900 leading-tight tracking-tight">
                 Como funciona a doação?
               </h2>
 
-              <p className="text-xs sm:text-sm text-gray-700 mt-1 font-medium">
+              <p className="text-sm sm:text-base text-slate-500 mt-1.5 font-medium">
                 Leva menos de 1 minuto para concluir.
               </p>
             </div>
 
             <button
               onClick={handleClose}
-              className="text-gray-400 hover:text-gray-700 transition-colors p-1 hover:bg-gray-50 rounded-full"
+              className="text-gray-400 hover:text-gray-700 transition-colors p-2 hover:bg-gray-100 rounded-full"
               aria-label="Fechar tutorial"
             >
               <X size={22} />
@@ -156,7 +156,7 @@ export default function DonationTutorialModal({
             }`}
           >
             <div
-              className={`w-20 h-20 sm:w-28 sm:h-28 rounded-[1.5rem] sm:rounded-[2rem] ${step.bg} flex items-center justify-center mb-5 sm:mb-6 shadow-sm flex-shrink-0`}
+              className={`w-20 h-20 sm:w-28 sm:h-28 rounded-3xl ${step.bg} flex items-center justify-center mb-5 sm:mb-6 shadow-sm flex-shrink-0`}
             >
               <Icon
                 className={`${step.color} w-10 h-10 sm:w-[50px] sm:h-[50px]`}
@@ -167,11 +167,11 @@ export default function DonationTutorialModal({
               Passo {stepIndex + 1} de {STEPS.length}
             </span>
 
-            <h3 className="text-xl sm:text-[28px] font-black text-[#3b1a66] mt-4 leading-tight">
+            <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mt-4 leading-tight tracking-tight">
               {step.title}
             </h3>
 
-            <p className="text-gray-700 text-sm sm:text-[15px] leading-relaxed mt-3 max-w-xs font-medium">
+            <p className="text-slate-600 text-base sm:text-lg leading-relaxed mt-3 max-w-sm font-medium">
               {step.description}
             </p>
 
@@ -198,30 +198,30 @@ export default function DonationTutorialModal({
             <button
               onClick={() => handleStepChange(stepIndex - 1)}
               disabled={stepIndex === 0}
-              className={`flex items-center gap-2 font-bold text-sm sm:text-base transition-colors ${
+              className={`flex items-center gap-2 font-bold text-base transition-colors ${
                 stepIndex === 0
                   ? "text-gray-300 cursor-not-allowed"
                   : "text-purple-600 hover:text-purple-700"
               }`}
             >
-              <ChevronLeft size={18} />
+              <ChevronLeft size={20} />
               Voltar
             </button>
 
             {stepIndex < STEPS.length - 1 ? (
               <button
                 onClick={() => handleStepChange(stepIndex + 1)}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-2xl font-black text-sm sm:text-base flex items-center gap-2 transition-all shadow-lg shadow-purple-200 hover:scale-[1.02] active:scale-[0.98]"
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3.5 rounded-2xl font-black text-base flex items-center gap-2 transition-all shadow-lg shadow-purple-200 hover:scale-[1.02] active:scale-[0.98]"
               >
                 Próximo
-                <ChevronRight size={18} />
+                <ChevronRight size={20} />
               </button>
             ) : (
               <button
                 onClick={handleClose}
-                className="bg-green-600 hover:bg-green-700 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-2xl font-black text-sm sm:text-base flex items-center gap-2 transition-all shadow-lg shadow-green-200 hover:scale-[1.02] active:scale-[0.98]"
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3.5 rounded-2xl font-black text-base flex items-center gap-2 transition-all shadow-lg shadow-green-200 hover:scale-[1.02] active:scale-[0.98]"
               >
-                <CheckCircle2 size={18} />
+                <CheckCircle2 size={20} />
                 Começar a doar
               </button>
             )}

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Donation, { DonationData } from "../../components/specific/Donation/donation";
 import { DonationService } from "@/services/donations.service";
+import { CheckCircle2 } from "lucide-react";
 
 export default function DonationClient() {
   const router = useRouter();
@@ -67,27 +68,25 @@ export default function DonationClient() {
 
       {/* Popup de Sucesso */}
       {showPopup && (
-        <div className="fixed inset-0 flex items-center justify-center z-[100] backdrop-blur-sm bg-black/40 px-4">
-          <div className="bg-white rounded-[32px] shadow-2xl p-8 w-full max-w-[420px] text-center border border-gray-100 animate-in fade-in zoom-in duration-300">
-            <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
-              </svg>
+        <div className="fixed inset-0 flex items-center justify-center z-[100] backdrop-blur-sm bg-slate-900/40 px-4">
+          <div className="bg-white rounded-3xl p-8 sm:p-10 w-full max-w-md text-center border border-gray-100 shadow-2xl animate-in fade-in zoom-in duration-300">
+            <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-emerald-50 text-emerald-600">
+              <CheckCircle2 size={40} strokeWidth={2.5} />
             </div>
 
-            <h2 className="text-2xl font-black text-gray-900 mb-2">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 tracking-tight">
               Doação enviada!
             </h2>
 
-            <p className="text-gray-600 mb-8 leading-relaxed">
-              A ONG <span className="font-bold text-[#6B39A7]">{ongName}</span> recebeu sua intenção de doação e entrará em contato.
+            <p className="text-base sm:text-lg text-slate-600 mb-8 leading-relaxed font-medium">
+              A ONG <strong className="font-bold text-slate-800">{ongName}</strong> recebeu sua intenção de doação e entrará em contato.
             </p>
 
             <button
               onClick={() => router.push("/home")}
-              className="w-full bg-[#6B39A7] text-white py-4 rounded-2xl font-bold shadow-lg shadow-purple-100 hover:bg-[#3a1661] transition-all"
+              className="w-full bg-[#6B39A7] hover:bg-[#5b2f8e] text-white py-4 rounded-2xl font-bold text-base sm:text-lg shadow-lg shadow-purple-500/20 active:scale-[0.98] transition-all"
             >
-              Ok
+              Voltar ao Início
             </button>
           </div>
         </div>

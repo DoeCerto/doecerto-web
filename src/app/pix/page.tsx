@@ -418,17 +418,17 @@ function PixPageContent() {
       {/* MODAL DE SUCESSO */}
       {showPopup && (
         <div className="fixed inset-0 flex items-center justify-center z-[100] bg-slate-900/40 backdrop-blur-sm px-4 transition-opacity">
-          <div className="bg-white rounded-3xl p-8 lg:p-10 w-full max-w-[400px] text-center shadow-2xl">
-            <div className="inline-flex items-center justify-center bg-green-100 rounded-full p-5 mb-5">
-              <CheckCircle2 className="text-green-600" size={40} strokeWidth={2.5} />
+          <div className="bg-white rounded-3xl p-8 sm:p-10 w-full max-w-md text-center shadow-2xl border border-gray-100">
+            <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-emerald-50 text-emerald-600">
+              <CheckCircle2 size={40} strokeWidth={2.5} />
             </div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">Tudo certo!</h2>
-            <p className="text-slate-500 text-sm mb-8 leading-relaxed">
-              Sua doação para <span className="font-bold text-slate-700">{ongData?.name || "a ONG"}</span> foi informada com sucesso. Muito obrigado por ajudar!
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 tracking-tight">Tudo certo!</h2>
+            <p className="text-base sm:text-lg text-slate-600 mb-8 leading-relaxed font-medium">
+              Sua doação para <strong className="text-slate-800 font-bold">{ongData?.name || "a ONG"}</strong> foi informada com sucesso. Muito obrigado por ajudar!
             </p>
             <button 
               onClick={() => router.push("/home")} 
-              className="w-full bg-slate-800 text-white py-3.5 rounded-xl font-bold text-sm hover:bg-slate-900 transition-all active:scale-[0.98]"
+              className="w-full bg-[#6B39A7] hover:bg-[#5b2f8e] text-white py-4 rounded-2xl font-bold text-base sm:text-lg shadow-lg shadow-purple-500/20 active:scale-[0.98] transition-all"
             >
               Voltar ao Início
             </button>

@@ -365,12 +365,12 @@ function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose
   };
 
   return (
-    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <motion.div
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="bg-white w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl relative flex flex-col"
+        className="bg-white w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl relative flex flex-col"
       >
         <button
           onClick={onClose}
@@ -380,10 +380,10 @@ function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose
         </button>
 
         <div className="text-center mb-6 mt-2">
-          <h3 className="text-xl sm:text-2xl font-black text-[#3b1a66]">
+          <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
             Avalie a Instituição
           </h3>
-          <p className="text-sm text-slate-500 mt-2 font-medium leading-relaxed px-2">
+          <p className="text-base text-slate-600 mt-2 font-medium leading-relaxed px-2">
             Sua opinião ajuda a dar mais transparência e credibilidade para o trabalho da ONG.
           </p>
         </div>
@@ -421,7 +421,7 @@ function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose
 
         <div className="relative mb-6">
           <textarea
-            className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 sm:p-5 text-sm sm:text-base h-28 sm:h-32 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-500/10 outline-none resize-none transition-all placeholder:text-slate-400"
+            className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 sm:p-5 text-base font-medium h-28 sm:h-32 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-500/10 outline-none resize-none transition-all placeholder:text-slate-400"
             placeholder="Conte o que achou do trabalho da ONG..."
             value={comment}
             onChange={(e) => setComment(e.target.value)}
@@ -431,7 +431,7 @@ function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="w-full py-4 bg-purple-600 text-white text-sm sm:text-base font-black rounded-2xl shadow-md hover:bg-purple-500 cursor-pointer transition-all active:scale-95 flex items-center justify-center gap-2.5 group disabled:opacity-70 disabled:cursor-not-allowed"
+          className="w-full py-4 bg-[#6B39A7] hover:bg-[#582d8c] text-white text-base font-black rounded-2xl shadow-lg shadow-purple-500/20 cursor-pointer transition-all active:scale-[0.98] flex items-center justify-center gap-2.5 group disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {loading ? (
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -449,12 +449,12 @@ function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose
 
 function ReviewBlockedModal({ onClose, onDonateClick }: { onClose: () => void, onDonateClick: () => void }) {
   return (
-    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <motion.div
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="bg-white w-full max-w-md rounded-[2rem] p-8 sm:p-10 shadow-2xl relative flex flex-col items-center text-center"
+        className="bg-white w-full max-w-lg rounded-3xl sm:rounded-[2rem] p-8 sm:p-10 shadow-2xl relative flex flex-col items-center text-center"
       >
         <button
           onClick={onClose}
@@ -463,7 +463,7 @@ function ReviewBlockedModal({ onClose, onDonateClick }: { onClose: () => void, o
           <X size={24} />
         </button>
 
-        <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mb-6">
+        <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mb-6 ring-4 ring-amber-50">
           <AlertCircle size={40} className="text-amber-600" strokeWidth={2.5} />
         </div>
 
@@ -471,15 +471,15 @@ function ReviewBlockedModal({ onClose, onDonateClick }: { onClose: () => void, o
           Avaliação Bloqueada
         </h3>
 
-        <div className="text-base text-slate-500 font-medium leading-relaxed mb-8 space-y-4 px-2">
-          <p>Para manter as avaliações reais e transparentes, <strong>é necessário realizar uma doação</strong> para esta instituição antes de avaliá-la.</p>
-          <p className="text-sm text-slate-400">Já doou e avaliou? Faça uma nova doação para liberar uma nova avaliação.</p>
+        <div className="text-base text-slate-600 font-medium leading-relaxed mb-8 space-y-3 px-2">
+          <p>Para manter as avaliações reais e transparentes, <strong className="text-slate-900 font-bold">é necessário realizar uma doação</strong> para esta instituição antes de avaliá-la.</p>
+          <p className="text-sm sm:text-base text-slate-500 font-medium">Já doou e avaliou? Faça uma nova doação para liberar uma nova avaliação.</p>
         </div>
 
-        <div className="w-full flex flex-col gap-3.5">
+        <div className="w-full flex flex-col gap-3">
           <button
             onClick={onDonateClick}
-            className="w-full py-4 bg-purple-600 text-white text-base font-black rounded-2xl shadow-md hover:bg-purple-500 cursor-pointer transition-all active:scale-95 flex justify-center items-center gap-2"
+            className="w-full py-4 bg-[#6B39A7] hover:bg-[#582d8c] text-white text-base font-black rounded-2xl shadow-lg shadow-purple-500/20 cursor-pointer transition-all active:scale-[0.98] flex justify-center items-center gap-2"
           >
             <Heart size={20} fill="currentColor" />
             Fazer uma Doação
@@ -487,7 +487,7 @@ function ReviewBlockedModal({ onClose, onDonateClick }: { onClose: () => void, o
 
           <button
             onClick={onClose}
-            className="w-full py-4 bg-slate-50 border border-slate-200 text-slate-600 text-base font-bold rounded-2xl shadow-sm hover:bg-slate-100 cursor-pointer transition-all active:scale-95"
+            className="w-full py-3 rounded-2xl text-base font-bold text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
           >
             Entendi
           </button>

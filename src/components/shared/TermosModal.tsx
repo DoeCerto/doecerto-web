@@ -38,37 +38,38 @@ export default function TermosModal({
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden"
+            className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden"
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
           >
-            
-            <div className="bg-[#6B39A7] px-6 pt-6 pb-5 relative">
+            {/* Cabeçalho */}
+            <div className="bg-[#6B39A7] px-6 sm:px-8 pt-7 pb-6 relative">
               <button
                 onClick={handleCancel}
-                className="absolute top-4 right-4 text-[#6B39A7] hover:text-white transition-colors"
+                className="absolute top-4 right-4 text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors"
               >
-                <X size={20} />
+                <X size={22} />
               </button>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center">
-                  <ShieldCheck size={20} className="text-white" />
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center shrink-0">
+                  <ShieldCheck size={26} className="text-white" />
                 </div>
                 <div>
-                  <h2 className="text-white font-bold text-lg leading-tight">
+                  <h2 className="text-white font-black text-xl sm:text-2xl leading-tight tracking-tight">
                     Antes de continuar
                   </h2>
-                  <p className="text-purple-300 text-sm mt-0.5">
+                  <p className="text-purple-200 text-sm sm:text-base mt-1 font-medium">
                     Confirme as declarações abaixo
                   </p>
                 </div>
               </div>
             </div>
 
-           
-            <div className="px-6 py-5 flex flex-col gap-5">
+            {/* Conteúdo e Botões */}
+            <div className="bg-white">
+              <div className="px-6 py-5 flex flex-col gap-5">
 
               
               <label className="flex items-start gap-4 cursor-pointer group">
@@ -173,9 +174,9 @@ export default function TermosModal({
               </label>
 
               {/* Aviso legal */}
-              <div className="flex items-start gap-2 bg-purple-50 rounded-xl px-4 py-3 border border-purple-100">
-                <FileText size={15} className="text-purple-400 mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-purple-600 leading-relaxed">
+              <div className="flex items-start gap-2.5 bg-purple-50 rounded-2xl p-4 border border-purple-100/80">
+                <FileText size={18} className="text-purple-500 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-purple-800 leading-relaxed font-medium">
                   Ao confirmar, você registra sua concordância com os documentos
                   legais do DoeCerto, conforme exigido pela LGPD (Lei nº 13.709/2018).
                 </p>
@@ -183,13 +184,13 @@ export default function TermosModal({
             </div>
 
             {/* Botões */}
-            <div className="px-6 pb-6 flex flex-col gap-2">
+            <div className="px-6 sm:px-8 pb-7 flex flex-col gap-3">
               <button
                 onClick={onConfirm}
                 disabled={!podeConfirmar || isLoading}
-                className={`w-full py-4 rounded-xl font-bold text-base flex items-center justify-center transition-all active:scale-95 ${
+                className={`w-full py-4 rounded-2xl font-black text-base flex items-center justify-center transition-all active:scale-[0.98] ${
                   podeConfirmar && !isLoading
-                    ? "bg-[#6B39A7] text-white shadow-md hover:bg-purple-900"
+                    ? "bg-[#6B39A7] text-white shadow-lg shadow-purple-500/20 hover:bg-[#582d8c]"
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"
                 }`}
               >
@@ -203,12 +204,13 @@ export default function TermosModal({
               <button
                 onClick={handleCancel}
                 disabled={isLoading}
-                className="w-full py-2.5 rounded-xl text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors"
+                className="w-full py-3 rounded-2xl text-base font-bold text-slate-400 hover:text-slate-600 transition-colors"
               >
                 Cancelar
               </button>
             </div>
-          </motion.div>
+          </div>
+        </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
