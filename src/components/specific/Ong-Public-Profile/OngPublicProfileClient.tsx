@@ -39,10 +39,10 @@ export interface OngProfileData {
 }
 
 // AQUI ESTAVA O SEU ERRO! A assinatura da função agora aceita o initialData
-export default function OngPublicProfileClient({ 
-  ongId, 
-  initialData 
-}: { 
+export default function OngPublicProfileClient({
+  ongId,
+  initialData
+}: {
   ongId: number;
   initialData: { ong: OngProfileData; reviews: Review[] } | null;
 }) {
@@ -53,7 +53,7 @@ export default function OngPublicProfileClient({
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isReviewBlockedOpen, setIsReviewBlockedOpen] = useState(false);
   const [guestModal, setGuestModal] = useState<{ isOpen: boolean; type: 'donate' | 'location' }>({ isOpen: false, type: 'donate' });
-  
+
   // INICIA COM OS DADOS DO SERVIDOR
   const [data, setData] = useState<{ ong: OngProfileData; reviews: Review[] } | null>(initialData);
   const [errors, setErrors] = useState({ banner: false, logo: false });
@@ -74,9 +74,9 @@ export default function OngPublicProfileClient({
     }
   };
 
-  useEffect(() => { 
+  useEffect(() => {
     if (!initialData || isAuthenticated) {
-      loadData(); 
+      loadData();
     }
   }, [ongId, isAuthenticated]);
 
@@ -136,7 +136,7 @@ export default function OngPublicProfileClient({
               src="/iconeselo.svg"
               alt="Selo DoeCerto"
               title="ONG Verificada Oficialmente"
-              className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 lg:translate-y-[5px] xl:translate-y-[5px] shrink-0 drop-shadow-sm cursor-help sm:translate-y-[4px] translate-x-[-4px] translate-y-[3px] sm:translate-x-[-3px] md:translate-x-[-4px]" 
+              className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 lg:translate-y-[5px] xl:translate-y-[5px] shrink-0 drop-shadow-sm cursor-help sm:translate-y-[4px] translate-x-[-4px] translate-y-[3px] sm:translate-x-[-3px] md:translate-x-[-4px]"
             />
           </div>
 
@@ -178,14 +178,14 @@ export default function OngPublicProfileClient({
                 </button>
               )}
 
-              <button 
+              <button
                 onClick={() => {
                   if (!isAuthenticated) {
                     setGuestModal({ isOpen: true, type: 'donate' });
                   } else {
                     setIsModalOpen(true);
                   }
-                }} 
+                }}
                 className="w-full sm:w-auto px-6 sm:px-10 py-3.5 sm:py-4 bg-purple-600 text-white text-sm sm:text-base font-black rounded-2xl shadow-md hover:bg-purple-500 hover:scale-105 cursor-pointer transition-all duration-300 active:scale-95 flex items-center justify-center gap-2"
               >
                 <Heart size={18} className="sm:w-5 sm:h-5" fill="currentColor" />
@@ -231,7 +231,7 @@ export default function OngPublicProfileClient({
         {guestModal.isOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setGuestModal({ ...guestModal, isOpen: false })} />
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-white w-full max-w-sm rounded-[2rem] overflow-hidden shadow-2xl p-8 flex flex-col items-center text-center">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-white w-full max-w-md rounded-[2rem] overflow-hidden shadow-2xl p-8 flex flex-col items-center text-center">
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-6">
                 {guestModal.type === 'donate' ? (
                   <User size={32} className="text-purple-700" />
@@ -240,10 +240,10 @@ export default function OngPublicProfileClient({
                 )}
               </div>
 
-              <h2 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 tracking-tight">
                 {guestModal.type === 'donate' ? 'Fazer o bem faz bem!' : 'Precisamos da sua localização'}
               </h2>
-              <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">
+              <p className="text-base sm:text-lg text-slate-600 mb-8 font-medium leading-relaxed">
                 {guestModal.type === 'donate'
                   ? 'Você pode criar uma conta para acompanhar o impacto das suas doações, ou seguir de forma anônima.'
                   : 'Faça login ou cadastre-se para informar seu endereço e descobrir quais ONGs estão perto de você.'}
@@ -283,12 +283,12 @@ export default function OngPublicProfileClient({
 
       <AnimatePresence>
         {isReviewBlockedOpen && (
-          <ReviewBlockedModal 
-            onClose={() => setIsReviewBlockedOpen(false)} 
+          <ReviewBlockedModal
+            onClose={() => setIsReviewBlockedOpen(false)}
             onDonateClick={() => {
               setIsReviewBlockedOpen(false);
               setIsModalOpen(true);
-            }} 
+            }}
           />
         )}
       </AnimatePresence>
@@ -339,8 +339,8 @@ function StatItem({ icon, value, label }: { icon: React.ReactNode, value: number
 }
 
 function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose: () => void, onSuccess: () => void }) {
-  const [score, setScore] = useState(0); 
-  const [hoveredScore, setHoveredScore] = useState(0); 
+  const [score, setScore] = useState(0);
+  const [hoveredScore, setHoveredScore] = useState(0);
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -366,14 +366,14 @@ function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose
 
   return (
     <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <motion.div 
-        initial={{ scale: 0.95, opacity: 0, y: 20 }} 
-        animate={{ scale: 1, opacity: 1, y: 0 }} 
-        exit={{ scale: 0.95, opacity: 0, y: 20 }} 
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
         className="bg-white w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl relative flex flex-col"
       >
-        <button 
-          onClick={onClose} 
+        <button
+          onClick={onClose}
           className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-full transition-colors cursor-pointer"
         >
           <X size={20} />
@@ -398,12 +398,12 @@ function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose
               onClick={() => setScore(s)}
               className="transition-transform hover:scale-110 active:scale-95 cursor-pointer p-1"
             >
-              <Star 
-                size={36} 
+              <Star
+                size={36}
                 strokeWidth={1.5}
-                className="sm:w-10 sm:h-10 transition-colors duration-200" 
-                fill={s <= (hoveredScore || score) ? "#facc15" : "transparent"} 
-                color={s <= (hoveredScore || score) ? "#facc15" : "#cbd5e1"} 
+                className="sm:w-10 sm:h-10 transition-colors duration-200"
+                fill={s <= (hoveredScore || score) ? "#facc15" : "transparent"}
+                color={s <= (hoveredScore || score) ? "#facc15" : "#cbd5e1"}
               />
             </button>
           ))}
@@ -420,17 +420,17 @@ function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose
         </div>
 
         <div className="relative mb-6">
-          <textarea 
-            className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 sm:p-5 text-sm sm:text-base h-28 sm:h-32 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-500/10 outline-none resize-none transition-all placeholder:text-slate-400" 
-            placeholder="Conte o que achou do trabalho da ONG..." 
-            value={comment} 
-            onChange={(e) => setComment(e.target.value)} 
+          <textarea
+            className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 sm:p-5 text-sm sm:text-base h-28 sm:h-32 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-500/10 outline-none resize-none transition-all placeholder:text-slate-400"
+            placeholder="Conte o que achou do trabalho da ONG..."
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
           />
         </div>
 
-        <button 
-          onClick={handleSubmit} 
-          disabled={loading} 
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
           className="w-full py-4 bg-purple-600 text-white text-sm sm:text-base font-black rounded-2xl shadow-md hover:bg-purple-500 cursor-pointer transition-all active:scale-95 flex items-center justify-center gap-2.5 group disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {loading ? (
@@ -466,11 +466,11 @@ function ReviewBlockedModal({ onClose, onDonateClick }: { onClose: () => void, o
         <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mb-6">
           <AlertCircle size={40} className="text-amber-600" strokeWidth={2.5} />
         </div>
-        
+
         <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mb-4 tracking-tight">
           Avaliação Bloqueada
         </h3>
-        
+
         <div className="text-base text-slate-500 font-medium leading-relaxed mb-8 space-y-4 px-2">
           <p>Para manter as avaliações reais e transparentes, <strong>é necessário realizar uma doação</strong> para esta instituição antes de avaliá-la.</p>
           <p className="text-sm text-slate-400">Já doou e avaliou? Faça uma nova doação para liberar uma nova avaliação.</p>
@@ -484,7 +484,7 @@ function ReviewBlockedModal({ onClose, onDonateClick }: { onClose: () => void, o
             <Heart size={20} fill="currentColor" />
             Fazer uma Doação
           </button>
-          
+
           <button
             onClick={onClose}
             className="w-full py-4 bg-slate-50 border border-slate-200 text-slate-600 text-base font-bold rounded-2xl shadow-sm hover:bg-slate-100 cursor-pointer transition-all active:scale-95"

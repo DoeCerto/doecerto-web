@@ -21,7 +21,19 @@ export async function api<T>(
     }
   }
 
-  if (token) {
+  function isTokenExpired(t: string): boolean {
+    try {
+      const base64Url = t.split('.')[1];
+      if (!base64Url) return true;
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const decoded = JSON.parse(atob(base64));
+      return decoded?.exp ? decoded.exp * 1000 <= Date.now() : true;
+    } catch {
+      return true;
+    }
+  }
+
+  if (token && !isTokenExpired(token)) {
     headers.set("Authorization", `Bearer ${token}`);
   }
 

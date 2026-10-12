@@ -231,7 +231,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
             <AlertCircle size={40} className="text-[#6B39A7]" />
           </div>
           <h2 className="text-2xl font-black text-gray-900 mb-3">Complete seu Perfil</h2>
-          <p className="text-gray-600 mb-6 leading-relaxed">
+          <p className="text-base sm:text-lg text-gray-600 mb-6 leading-relaxed font-medium">
             Sua ONG ainda não possui as informações configuradas. Complete seu perfil para começar a receber doações.
           </p>
           <div className="space-y-3">
@@ -353,7 +353,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
           {ong.isRestricted ? (
             <button 
               onClick={() => setShowRestrictedModal(true)} 
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-red-100 text-red-700 text-xs sm:text-sm font-bold shadow-sm hover:bg-red-200 hover:scale-[1.02] transition-all active:scale-95 shrink-0 cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-red-100 text-red-700 text-xs sm:text-sm font-bold shadow-sm hover:bg-red-200 hover:scale-[1.02] transition-all active:scale-95 shrink-0 cursor-pointer translate-y-0.5 sm:translate-y-1"
               title="Sua conta foi restringida por medidas de segurança"
             >
               <AlertTriangle size={14} strokeWidth={2.5} className="sm:w-4 sm:h-4 text-red-600" />
@@ -362,7 +362,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
           ) : ong.verificationStatus !== 'verified' ? (
             <button 
               onClick={() => setShowPendingModal(true)} 
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-amber-100 text-amber-700 text-xs sm:text-sm font-bold shadow-sm hover:bg-amber-200 hover:scale-[1.02] transition-all active:scale-95 shrink-0 cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-amber-100 text-amber-700 text-xs sm:text-sm font-bold shadow-sm hover:bg-amber-200 hover:scale-[1.02] transition-all active:scale-95 shrink-0 cursor-pointer translate-y-0.5 sm:translate-y-1"
               title="Sua conta está em análise"
             >
               <Clock size={14} strokeWidth={3} className="sm:w-4 sm:h-4" />
@@ -396,21 +396,23 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
         )}
 
         {!ong?.description && (
-          <div className="mt-6 p-4 rounded-2xl bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
-            <div className="flex items-center gap-3 text-purple-900">
-              <div className="w-10 h-10 rounded-xl bg-purple-100 text-[#6B39A7] flex items-center justify-center shrink-0">
-                <AlertCircle size={22} />
+          <div className="mt-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-50 via-indigo-50/60 to-purple-50 border border-purple-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-3.5 text-purple-900">
+              <div className="w-11 h-11 rounded-2xl bg-purple-100 text-[#6B39A7] flex items-center justify-center shrink-0 shadow-sm">
+                <AlertCircle size={24} />
               </div>
               <div>
-                <p className="font-bold text-sm sm:text-base">Seu perfil ainda não está completo</p>
-                <p className="text-xs sm:text-sm text-purple-700/80">Complete as informações e documentos para poder receber doações na plataforma.</p>
+                <p className="font-black text-base sm:text-lg text-purple-950 tracking-tight">Seu perfil ainda não está completo</p>
+                <p className="text-sm sm:text-base text-purple-800 font-medium mt-0.5 leading-relaxed">
+                  Complete as informações e documentos para poder receber doações na plataforma.
+                </p>
               </div>
             </div>
             <button
               onClick={() => router.push('/ong-profilesetup')}
-              className="w-full sm:w-auto px-5 py-2.5 bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold rounded-xl text-sm shrink-0 active:scale-95 transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full sm:w-auto px-6 py-3 bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold rounded-2xl text-sm sm:text-base shrink-0 active:scale-95 transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
             >
-              Completar Perfil <ArrowRight size={16} />
+              Completar Perfil <ArrowRight size={18} />
             </button>
           </div>
         )}
@@ -783,7 +785,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              className="relative w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center overflow-hidden"
+              className="relative w-full max-w-lg bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center overflow-hidden"
             >
               <button 
                 onClick={() => setShowRestrictedModal(false)}
@@ -797,13 +799,13 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
               </div>
               
               <h2 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">Conta Restringida</h2>
-              <p className="text-slate-600 text-[15px] sm:text-[16px] leading-relaxed mb-6 px-1">
-                Por medidas de conformidade e segurança da plataforma, a sua conta foi temporariamente <strong className="text-red-600">restringida</strong> pela auditoria. Durante este período, o recebimento de doações e a exibição pública ficam suspensos.
+              <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-medium mb-6 px-1">
+                Por medidas de conformidade e segurança da plataforma, a sua conta foi temporariamente <strong className="text-red-600 font-bold">restringida</strong> pela auditoria. Durante este período, o recebimento de doações e a exibição pública ficam suspensos.
               </p>
 
-              <div className="w-full bg-slate-50 border border-slate-200/80 rounded-2xl p-4 mb-6 text-left space-y-1">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">O que fazer?</span>
-                <p className="text-sm text-slate-700 leading-normal">
+              <div className="w-full bg-slate-50 border border-slate-200/80 rounded-2xl p-5 mb-6 text-left space-y-1.5">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">O que fazer?</span>
+                <p className="text-base text-slate-700 leading-relaxed font-medium">
                   Entre em contato com nossa equipe de suporte para regularizar a documentação ou obter mais detalhes.
                 </p>
               </div>

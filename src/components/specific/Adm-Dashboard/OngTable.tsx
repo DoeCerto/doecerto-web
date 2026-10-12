@@ -166,6 +166,7 @@ const DetailsModal = ({ ong, onClose, status, onApproveClick, onRejectClick }: a
           motivo: item.motivo,
           orgao: item.orgaoSuperior?.nome,
           data: item.dataReferencia,
+          dataFim: item.dataFimSancao || item.dataFinal || 'Até regularização da pendência',
           processo: item.convenio?.numero
         };
       case 'CNEP':
@@ -173,7 +174,10 @@ const DetailsModal = ({ ong, onClose, status, onApproveClick, onRejectClick }: a
         return {
           motivo: item.tipoSancao?.descricaoResumida,
           orgao: item.orgaoSancionador?.nome,
-          data: item.dataInicioSancao || item.dataReferencia,
+          data: item.dataInicioSancao || item.dataPublicacaoSancao || item.dataReferencia,
+          dataFim: item.dataFimSancao && item.dataFimSancao !== 'Sem informação'
+            ? item.dataFimSancao
+            : (item.dataFimSancao === 'Sem informação' ? 'Sem informação / Indeterminado' : 'Indeterminado'),
           processo: item.numeroProcesso
         };
       case 'CEAF':
@@ -181,10 +185,11 @@ const DetailsModal = ({ ong, onClose, status, onApproveClick, onRejectClick }: a
           motivo: item.tipoPunicao?.descricao,
           orgao: item.orgaoLotacao?.nome,
           data: item.punicao?.dataReferencia || item.dataPublicacao,
+          dataFim: item.dataFimSancao || 'Penalidade expulsória (permanente)',
           processo: item.punicao?.processo
         };
       default:
-        return { motivo: 'Sanção registada', orgao: 'N/A', data: 'N/A', processo: 'N/A' };
+        return { motivo: 'Sanção registada', orgao: 'N/A', data: 'N/A', dataFim: 'N/A', processo: 'N/A' };
     }
   };
 
@@ -207,7 +212,8 @@ const DetailsModal = ({ ong, onClose, status, onApproveClick, onRejectClick }: a
                 <p><strong>Órgão:</strong> {details.orgao || 'N/A'}</p>
                 <p><strong>Processo/Convênio:</strong> {details.processo || 'N/A'}</p>
                 <p><strong>Motivo:</strong> {details.motivo || 'N/A'}</p>
-                <p><strong>Data:</strong> {details.data || 'N/A'}</p>
+                <p><strong>Início da Sanção:</strong> {details.data || 'N/A'}</p>
+                <p><strong>Término da Sanção:</strong> {details.dataFim || 'Sem informação'}</p>
               </div>
             );
           })}
@@ -236,14 +242,22 @@ const DetailsModal = ({ ong, onClose, status, onApproveClick, onRejectClick }: a
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-[2.5rem] max-w-5xl w-full p-12 max-h-[85vh] overflow-y-auto shadow-2xl border border-gray-100">
+      <div className="bg-white rounded-[2.5rem] max-w-5xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-gray-100 overflow-hidden">
 
-        <div className="flex items-center justify-between mb-10">
-          <h3 className="text-4xl font-black text-gray-900">Dossiê da ONG</h3>
-          <button onClick={onClose} className="p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all"><X size={28} /></button>
+        {/* Header fixo do Modal */}
+        <div className="flex items-center justify-between px-10 py-7 border-b border-gray-100 shrink-0 bg-white">
+          <h3 className="text-3xl font-black text-gray-900 tracking-tight">Dossiê da ONG</h3>
+          <button 
+            onClick={onClose} 
+            className="p-3 bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-gray-900 rounded-2xl transition-all"
+            title="Fechar"
+          >
+            <X size={24} />
+          </button>
         </div>
 
-        <div className="space-y-10">
+        {/* Corpo rolável com barra de rolagem integrada e recuada */}
+        <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 mr-1.5 custom-scrollbar">
           {/* Header Básico */}
           <div className="flex items-center justify-between p-6 bg-gray-50 rounded-3xl border border-gray-100">
             <StatusBadge status={ong.verificationStatus || status} />
@@ -342,14 +356,18 @@ const DetailsModal = ({ ong, onClose, status, onApproveClick, onRejectClick }: a
               )}
             </div>
           </div>
+        </div>
 
-          {/* Ações */}
-          <div className="flex gap-4 pt-8 border-t border-gray-100">
+        {/* Footer Fixo com as Ações ou espaçamento de respiro */}
+        {(status !== 'approved' || (status === 'approved' && ong.isRestricted) || status !== 'rejected') ? (
+          <div className="px-10 py-6 border-t border-gray-100 bg-white shrink-0 flex gap-4">
             {status !== 'approved' && <button onClick={() => onApproveClick(ong)} className="flex-1 bg-green-600 text-white py-4 rounded-2xl font-black hover:bg-green-700 shadow-lg shadow-green-100 transition-all active:scale-95">Aprovar</button>}
             {status === 'approved' && ong.isRestricted && <button onClick={() => onApproveClick(ong)} className="flex-1 bg-green-600 text-white py-4 rounded-2xl font-black hover:bg-green-700 shadow-lg shadow-green-100 transition-all active:scale-95">Liberar Restrição</button>}
             {status !== 'rejected' && <button onClick={() => onRejectClick(ong.userId || ong.id)} className="flex-1 bg-red-600 text-white py-4 rounded-2xl font-black hover:bg-red-700 shadow-lg shadow-red-100 transition-all active:scale-95">Rejeitar</button>}
           </div>
-        </div>
+        ) : (
+          <div className="h-6 shrink-0 bg-white" />
+        )}
       </div>
     </div>
   );

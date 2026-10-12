@@ -922,7 +922,7 @@ export default function HomeClient({
         {guestModal.isOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setGuestModal({ ...guestModal, isOpen: false })} />
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-white w-full max-w-sm rounded-[2rem] overflow-hidden shadow-2xl p-8 flex flex-col items-center text-center">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-white w-full max-w-md rounded-[2rem] overflow-hidden shadow-2xl p-8 flex flex-col items-center text-center">
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-6">
                 {guestModal.type === 'donate' ? (
                   <FiUser size={32} className="text-purple-700" />
@@ -931,10 +931,10 @@ export default function HomeClient({
                 )}
               </div>
 
-              <h2 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 tracking-tight">
                 {guestModal.type === 'donate' ? 'Fazer o bem faz bem!' : 'Precisamos da sua localização'}
               </h2>
-              <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">
+              <p className="text-base sm:text-lg text-slate-600 mb-8 font-medium leading-relaxed">
                 {guestModal.type === 'donate'
                   ? 'Você pode criar uma conta para acompanhar o impacto das suas doações, ou seguir de forma anônima.'
                   : 'Faça login ou cadastre-se para informar seu endereço e descobrir quais ONGs estão perto de você.'}
