@@ -11,6 +11,11 @@ interface SuccessModalProps {
   description?: string;
   homePath?: string;
   onResetFlow: () => void;
+  extraContent?: React.ReactNode;
+  primaryButtonText?: string;
+  onPrimaryClick?: () => void;
+  secondaryButtonText?: string;
+  onSecondaryClick?: () => void;
 }
 
 export function SuccessModal({
@@ -19,6 +24,11 @@ export function SuccessModal({
   description,
   homePath = "/home",
   onResetFlow,
+  extraContent,
+  primaryButtonText,
+  onPrimaryClick,
+  secondaryButtonText,
+  onSecondaryClick,
 }: SuccessModalProps) {
   const router = useRouter();
 
@@ -32,7 +42,7 @@ export function SuccessModal({
           
           <div className="relative w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center border border-purple-100/60 p-3.5 shrink-0">
             <Image 
-              src="/logo-icon.png" 
+              src="/logo-icon.svg" 
               alt="DoeCerto"
               width={36}
               height={36}
@@ -63,25 +73,40 @@ export function SuccessModal({
 
         {/* Descrição Dinâmica */}
         {description && (
-          <p className="text-base sm:text-lg text-slate-600 mb-8 leading-relaxed font-medium px-1">
+          <p className="text-base sm:text-lg text-slate-600 mb-6 leading-relaxed font-medium px-1">
             {description}
           </p>
+        )}
+
+        {extraContent && (
+          <div className="mb-6">
+            {extraContent}
+          </div>
         )}
 
         {/* Botões de Ação */}
         <div className="flex flex-col gap-3 w-full">
           <button
-            onClick={() => router.push(homePath)}
-            className="w-full bg-[#6B39A7] hover:bg-[#55278d] text-white py-4 rounded-2xl font-black shadow-lg shadow-purple-500/20 active:scale-[0.98] transition-all text-base sm:text-lg"
+            onClick={
+              onPrimaryClick ||
+              (() => {
+                onResetFlow();
+                router.push(homePath);
+              })
+            }
+            className="w-full bg-[#6B39A7] hover:bg-[#55278d] text-white py-4 rounded-2xl font-black shadow-lg shadow-purple-500/20 active:scale-[0.98] transition-all text-base sm:text-lg cursor-pointer"
           >
-            Ir para o Início
+            {primaryButtonText || "Ir para o Início"}
           </button>
           
           <button
-            onClick={onResetFlow}
-            className="w-full bg-transparent text-slate-400 hover:text-slate-600 py-2.5 font-bold text-base transition-colors"
+            onClick={
+              onSecondaryClick ||
+              onResetFlow
+            }
+            className="w-full bg-transparent text-slate-400 hover:text-slate-600 py-2.5 font-bold text-base transition-colors cursor-pointer"
           >
-            Fazer outra Doação
+            {secondaryButtonText || "Fazer outra Doação"}
           </button>
         </div>
       </div>

@@ -30,6 +30,11 @@ export const DonationService = {
     wishlistItemId: number | null | string;
     quantity: number;
     description: string;
+    isAnonymous?: boolean;
+    guestEmail?: string;
+    guestName?: string;
+    guestPhone?: string;
+    acceptedTerms?: boolean;
   }) {
     try {
       const body: any = {
@@ -39,7 +44,13 @@ export const DonationService = {
         donationType: 'material'
       };
 
-      console.log("📦 Enviando apenas o que o backend permite:", body);
+      if (payload.isAnonymous !== undefined) {
+        body.isAnonymous = payload.isAnonymous;
+      }
+      if (payload.guestEmail) body.guestEmail = payload.guestEmail;
+      if (payload.guestName) body.guestName = payload.guestName;
+      if (payload.guestPhone) body.guestPhone = payload.guestPhone;
+      if (payload.acceptedTerms !== undefined) body.acceptedTerms = payload.acceptedTerms;
 
       const response = await api<any>(`/donations`, {
         method: 'POST',
@@ -48,7 +59,6 @@ export const DonationService = {
 
       return response?.data ?? response;
     } catch (error: any) {
-
       console.error("❌ Erro retornado pelo servidor:", error);
       throw error;
     }
@@ -81,12 +91,15 @@ export const DonationService = {
           materialQuantity: item.materialQuantity,
           proofUrl: formattedProofUrl,
           createdAt: item.createdAt,
+          isAnonymous: item.isAnonymous,
           donor: {
             user: {
-              name: item.donor?.user?.name || "Doador Anônimo"
+              name: item.isAnonymous
+                ? "Doador Anônimo"
+                : (item.donor?.user?.name || item.guestName || "Doador Anônimo")
             },
             profile: {
-              contactNumber: item.donor?.profile?.contactNumber || ""
+              contactNumber: item.donor?.profile?.contactNumber || item.guestPhone || ""
             }
           }
         };

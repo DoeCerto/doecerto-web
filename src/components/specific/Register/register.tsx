@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState, useRef, useEffect, forwardRef, InputHTMLAttributes } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
-import { Eye, EyeClosed, Lock, Mail, User, Building2, ArrowLeft, FileText, IdCard, UploadCloud, CheckCircle, X, LucideIcon } from "lucide-react";
+import { Eye, EyeClosed, Lock, Mail, User, Building2, ArrowLeft, FileText, IdCard, UploadCloud, CheckCircle, X, LucideIcon, Loader2 } from "lucide-react";
 import gsap from "gsap";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 // Importações dos serviços
 import { registerOng } from "@/services/register-ong.service";
-import { registerDonor } from "@/services/register.service"; 
+import { registerDonor, checkAvailability } from "@/services/register.service"; 
 import { formatCNPJ, removeFormatting, validateCNPJ, formatCPF, validateCPF } from "@/utils/documentValidation";
 import TermosModal from "@/components/shared/TermosModal";
 
@@ -70,10 +70,11 @@ interface InputFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   icon: LucideIcon;
   error?: string;
+  isLoading?: boolean;
 }
 
 const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
-  ({ label, icon: Icon, error, type = "text", ...props }, ref) => {
+  ({ label, icon: Icon, error, isLoading, type = "text", ...props }, ref) => {
     const [showPassword, setShowPassword] = useState(false);
     const isPassword = type === "password";
     const inputType = isPassword ? (showPassword ? "text" : "password") : type;
@@ -86,10 +87,15 @@ const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
           <input
             ref={ref}
             type={inputType}
-            className={`w-full bg-white border text-gray-900 rounded-xl pl-12 ${isPassword ? 'pr-12' : 'pr-4'} py-4 focus:outline-none focus:ring-2 transition-all placeholder:text-gray-400 text-lg font-medium shadow-sm ${error ? "border-red-400 focus:border-red-500 ring-red-100 ring-2 animate-[shake_0.5s_ease-in-out]" : "border-gray-200 focus:ring-[#6B39A7]/20 focus:border-[#6B39A7]"}`}
+            className={`w-full bg-white border text-gray-900 rounded-xl pl-12 ${isPassword || isLoading ? 'pr-12' : 'pr-4'} py-4 focus:outline-none focus:ring-2 transition-all placeholder:text-gray-400 text-lg font-medium shadow-sm ${error ? "border-red-400 focus:border-red-500 ring-red-100 ring-2 animate-[shake_0.5s_ease-in-out]" : "border-gray-200 focus:ring-[#6B39A7]/20 focus:border-[#6B39A7]"}`}
             {...props}
           />
-          {isPassword && (
+          {isLoading && (
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6B39A7]">
+              <Loader2 size={20} className="animate-spin" />
+            </div>
+          )}
+          {isPassword && !isLoading && (
             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#6B39A7] w-6 h-6 flex items-center justify-center cursor-pointer">
               <div className={`absolute transition-all duration-300 ${showPassword ? 'opacity-0 scale-50 rotate-90' : 'opacity-100 scale-100 rotate-0'}`}>
                 <Eye size={22} />
@@ -100,7 +106,9 @@ const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
             </button>
           )}
         </div>
-        {error && <span className="text-red-500 text-sm font-bold mt-1">{error}</span>}
+        {error && (
+          <span className="text-red-500 text-sm font-bold mt-1">{error}</span>
+        )}
       </div>
     );
   }
@@ -284,6 +292,9 @@ function useRegisterForm() {
   const [fileAta, setFileAta] = useState<File | null>(null);
   const [fileCartaoCnpj, setFileCartaoCnpj] = useState<File | null>(null);
 
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [isCheckingDocumento, setIsCheckingDocumento] = useState(false);
+
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: { 
@@ -342,13 +353,95 @@ function useRegisterForm() {
     setStep(2);
   };
 
+  const handleEmailBlur = async (emailValue: string) => {
+    const clean = emailValue.trim().toLowerCase();
+    if (!clean) return;
+    const isSyntaxValid = await form.trigger("email");
+    if (!isSyntaxValid) return;
+
+    setIsCheckingEmail(true);
+    try {
+      const res = await checkAvailability({ email: clean });
+      if (!res.available) {
+        form.setError("email", {
+          type: "manual",
+          message: res.message || "Este e-mail já está cadastrado no DoeCerto.",
+        });
+      } else {
+        form.clearErrors("email");
+      }
+    } catch {
+      /* noop */
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  };
+
+  const handleDocumentoBlur = async (docValue: string) => {
+    const clean = removeFormatting(docValue);
+    if (!clean) return;
+    const isSyntaxValid = await form.trigger("documento");
+    if (!isSyntaxValid) return;
+
+    setIsCheckingDocumento(true);
+    try {
+      const query = accountType === "ong" ? { cnpj: clean } : { cpf: clean };
+      const res = await checkAvailability(query);
+      if (!res.available) {
+        form.setError("documento", {
+          type: "manual",
+          message: res.message || (accountType === "ong" ? "Este CNPJ já possui cadastro no DoeCerto." : "Este CPF já possui cadastro no DoeCerto."),
+        });
+      } else {
+        form.clearErrors("documento");
+      }
+    } catch {
+      /* noop */
+    } finally {
+      setIsCheckingDocumento(false);
+    }
+  };
+
   const handleNextStep = async () => {
     const isValid = await form.trigger(["nome", "email", "senha", "confirmarSenha", "documento"]);
-    if (isValid) {
+    if (!isValid) {
+      toast.error("Por favor, verifique os campos destacados em vermelho.");
+      return;
+    }
+
+    // Validação assíncrona de duplicidade no backend antes de prosseguir
+    const data = form.getValues();
+    setIsPending(true);
+    try {
+      const docClean = removeFormatting(data.documento);
+      const query = {
+        email: data.email.trim(),
+        ...(accountType === "ong" ? { cnpj: docClean } : { cpf: docClean }),
+      };
+      const res = await checkAvailability(query);
+      if (!res.available) {
+        if (res.field === "email") {
+          form.setError("email", {
+            type: "manual",
+            message: res.message || "Este e-mail já está cadastrado no DoeCerto.",
+          });
+          toast.error(res.message || "Este e-mail já está cadastrado no DoeCerto.");
+        } else {
+          form.setError("documento", {
+            type: "manual",
+            message: res.message || "Este documento já possui cadastro no DoeCerto.",
+          });
+          toast.error(res.message || "Este documento já possui cadastro no DoeCerto.");
+        }
+        return;
+      }
+
       if (accountType === "ong") setStep(3);
       else setModalAberto(true);
-    } else {
-      toast.error("Corrija os campos em vermelho.");
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao verificar dados. Tente novamente.");
+    } finally {
+      setIsPending(false);
     }
   };
 
@@ -400,7 +493,34 @@ function useRegisterForm() {
         }, 1500);
       }
     } catch (err: any) {
-      toast.error("Ocorreu um erro no cadastro. Tente novamente.");
+      setModalAberto(false);
+      const errorMsg = err?.message || "Ocorreu um erro ao processar o cadastro.";
+      const lower = errorMsg.toLowerCase();
+
+      if (lower.includes("e-mail") || lower.includes("email")) {
+        setStep(2);
+        form.setError("email", {
+          type: "manual",
+          message: "Este e-mail já está cadastrado no DoeCerto.",
+        });
+        toast.error("Este e-mail já está cadastrado no DoeCerto.");
+      } else if (lower.includes("cpf")) {
+        setStep(2);
+        form.setError("documento", {
+          type: "manual",
+          message: "Este CPF já possui cadastro no DoeCerto.",
+        });
+        toast.error("Este CPF já possui cadastro no DoeCerto.");
+      } else if (lower.includes("cnpj")) {
+        setStep(2);
+        form.setError("documento", {
+          type: "manual",
+          message: "Este CNPJ já possui cadastro no DoeCerto.",
+        });
+        toast.error("Este CNPJ já possui cadastro no DoeCerto.");
+      } else {
+        toast.error(errorMsg);
+      }
     } finally {
       setIsPending(false);
     }
@@ -408,6 +528,7 @@ function useRegisterForm() {
 
   return {
     form, step, setStep, accountType, isChecking, modalAberto, setModalAberto, isPending, successModalAberto, setSuccessModalAberto, clearDraft, handleSelectType, handleNextStep, handleFinalSubmit, submitToApi,
+    isCheckingEmail, isCheckingDocumento, handleEmailBlur, handleDocumentoBlur,
     files: { fileEstatuto, setFileEstatuto, fileAta, setFileAta, fileCartaoCnpj, setFileCartaoCnpj }
   };
 }
@@ -416,7 +537,7 @@ function useRegisterForm() {
 // 4. TELA PRINCIPAL (O Componente Register)
 // ==========================================
 export default function Register() {
-  const { form, step, setStep, accountType, isChecking, modalAberto, setModalAberto, isPending, successModalAberto, setSuccessModalAberto, clearDraft, handleSelectType, handleNextStep, handleFinalSubmit, submitToApi, files } = useRegisterForm();
+  const { form, step, setStep, accountType, isChecking, modalAberto, setModalAberto, isPending, successModalAberto, setSuccessModalAberto, clearDraft, handleSelectType, handleNextStep, handleFinalSubmit, submitToApi, isCheckingEmail, isCheckingDocumento, handleEmailBlur, handleDocumentoBlur, files } = useRegisterForm();
   const { register, formState: { errors }, setValue, clearErrors, trigger } = form;
   
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -517,21 +638,29 @@ export default function Register() {
                   label={accountType === 'ong' ? 'CNPJ' : 'CPF'} icon={IdCard} 
                   placeholder={accountType === 'ong' ? "00.000.000/0000-00" : "000.000.000-00"} 
                   maxLength={accountType === 'ong' ? 18 : 14}
+                  isLoading={isCheckingDocumento}
                   {...register("documento")} 
                   onChange={(e: any) => {
                     const val = accountType === 'ong' ? formatCNPJ(e.target.value) : formatCPF(e.target.value);
                     setValue("documento", val);
                     clearErrors("documento");
                   }}
-                  onBlur={(e: any) => { register("documento").onBlur(e); if(e.target.value.trim() !== "") trigger("documento"); }}
+                  onBlur={(e: any) => { 
+                    register("documento").onBlur(e); 
+                    handleDocumentoBlur(e.target.value);
+                  }}
                   error={errors.documento?.message} 
                 />
 
                 <InputField 
                   label="Endereço de Email" icon={Mail} type="email" placeholder="exemplo@email.com" 
+                  isLoading={isCheckingEmail}
                   {...register("email")} 
                   onChange={(e: any) => { register("email").onChange(e); clearErrors("email"); }}
-                  onBlur={(e: any) => { register("email").onBlur(e); if(e.target.value.trim() !== "") trigger("email"); }}
+                  onBlur={(e: any) => { 
+                    register("email").onBlur(e); 
+                    handleEmailBlur(e.target.value);
+                  }}
                   error={errors.email?.message} 
                 />
                 

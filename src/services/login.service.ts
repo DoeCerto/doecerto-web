@@ -34,7 +34,21 @@ export async function logout() {
 }
 
 export async function getMe() {
-  return await api<{ user: any }>("/auth/me", {
-    method: "GET",
-  });
+  try {
+    return await api<{ user: any }>("/auth/me", {
+      method: "GET",
+    });
+  } catch (error: any) {
+    const isUnauthorized =
+      error?.status === 401 ||
+      error?.statusCode === 401 ||
+      error?.message?.includes("401") ||
+      error?.message?.toLowerCase().includes("jwt token") ||
+      error?.message?.toLowerCase().includes("unauthorized");
+
+    if (isUnauthorized) {
+      return { data: { user: null } };
+    }
+    throw error;
+  }
 }

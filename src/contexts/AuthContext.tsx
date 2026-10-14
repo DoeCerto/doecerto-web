@@ -41,7 +41,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           document.cookie = `user_name=${encodeURIComponent(user.name)}; path=/; max-age=604800; SameSite=Lax`;
         }
       } else {
-        throw new Error("Não autenticado");
+        setIsAuthenticated(false);
+        setUserRole(null);
+        setUserName(null);
+        setUserAvatar(null);
       }
     } catch (error) {
       setIsAuthenticated(false);

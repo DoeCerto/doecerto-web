@@ -2,6 +2,18 @@ import { Preferences } from '@capacitor/preferences';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+export class ApiError extends Error {
+  status: number;
+  data?: any;
+
+  constructor(message: string, status: number, data?: any) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.data = data;
+  }
+}
+
 export async function api<T>(
   endpoint: string,
   options: RequestInit = {}
@@ -86,13 +98,13 @@ export async function api<T>(
             if (retryRes.ok) {
               return { data: retryText ? JSON.parse(retryText) : (null as any) };
             }
-            throw new Error(retryText || `Erro ${retryRes.status}`);
+            throw new ApiError(retryText || `Erro ${retryRes.status}`, retryRes.status);
           }
         } catch (refreshErr) {
-          console.error("Falha ao renovar token:", refreshErr);
+          // Silent refresh falhou de forma esperada quando não há cookie de renovação
         }
 
-        // Se chegou aqui, o refresh falhou (token de renovação expirou ou é inválido)
+        // Se chegou aqui, o refresh falhou (token de renovação expirou ou é inexistente)
         if (typeof window !== "undefined") {
           await Preferences.remove({ key: "access_token" });
           localStorage.removeItem("access_token");
@@ -106,13 +118,35 @@ export async function api<T>(
           window.dispatchEvent(new Event("auth_expired"));
         }
       }
-      throw new Error(text || `Erro ${res.status}`);
+
+      let parsedMessage = text;
+      let jsonPayload: any = null;
+      try {
+        const json = JSON.parse(text);
+        jsonPayload = json;
+        if (json?.message) {
+          parsedMessage = Array.isArray(json.message) ? json.message.join(", ") : json.message;
+        } else if (json?.error) {
+          parsedMessage = json.error;
+        }
+      } catch {
+        /* noop */
+      }
+      throw new ApiError(parsedMessage || `Erro ${res.status}`, res.status, jsonPayload);
     }
 
     return { data: text ? JSON.parse(text) : (null as any) };
   } catch (error: any) {
-    // Evita o popup vermelho chato do Next.js no Dev mode para erros 401 (que são normais quando o usuário não está logado)
-    if (!error?.message?.includes("401")) {
+    // Evita o popup vermelho chato do Next.js no Dev mode para erros 401 (normais quando usuário é visitante)
+    const isUnauthorized =
+      error?.status === 401 ||
+      error?.statusCode === 401 ||
+      error?.message?.includes("401") ||
+      error?.message?.toLowerCase().includes("jwt token") ||
+      error?.message?.toLowerCase().includes("unauthorized") ||
+      error?.message?.toLowerCase().includes("não autorizado");
+
+    if (!isUnauthorized) {
       console.error("[API ERROR]", error);
     }
     throw error;

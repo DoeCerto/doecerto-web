@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { login } from "@/services/login.service";
-import { Eye, EyeClosed, Lock, Mail, Compass } from "lucide-react";
+import { Eye, EyeClosed, Lock, Mail, Compass, AlertCircle } from "lucide-react";
 import { Preferences } from "@capacitor/preferences";
 import gsap from "gsap";
 
@@ -20,6 +20,8 @@ function LoginContent() {
   const [password, setPassword] = useState("");
   const [isPending, setIsPending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   // Refs para o GSAP
   const mainWrapperRef = useRef(null);
@@ -115,10 +117,65 @@ function LoginContent() {
     }, 1500);
   };
 
+  function translateAuthError(err: any): string {
+    let msg = err?.response?.data?.message || err?.message || "E-mail ou senha incorretos";
+    if (Array.isArray(msg)) {
+      msg = msg[0] || "E-mail ou senha incorretos";
+    }
+    if (typeof msg !== "string") return "E-mail ou senha incorretos";
+
+    const lower = msg.toLowerCase();
+
+    if (lower.includes("password must be at least") || lower.includes("at least 8 characters")) {
+      return "A senha deve ter pelo menos 8 caracteres.";
+    }
+    if (lower.includes("password should not be empty") || lower.includes("password is required")) {
+      return "A senha é obrigatória.";
+    }
+    if (lower.includes("invalid email") || lower.includes("email must be valid")) {
+      return "Endereço de e-mail inválido.";
+    }
+    if (lower.includes("email should not be empty") || lower.includes("email is required")) {
+      return "O e-mail é obrigatório.";
+    }
+    if (
+      lower.includes("invalid credentials") ||
+      lower.includes("unauthorized") ||
+      lower.includes("credentials") ||
+      lower.includes("access denied")
+    ) {
+      return "E-mail ou senha incorretos. Verifique suas informações e tente novamente.";
+    }
+    if (lower.includes("user not found")) {
+      return "Usuário não encontrado. Verifique seu e-mail.";
+    }
+    if (lower.includes("password is too long")) {
+      return "A senha é muito longa.";
+    }
+    if (lower.includes("email is too long")) {
+      return "O e-mail é muito longo.";
+    }
+    return msg;
+  }
+
   // Fluxo de Login Normal
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email || !password) return toast.error("Preencha todos os campos");
+    setLoginError(null);
+    setPasswordError(null);
+
+    if (!email) {
+      setLoginError("Informe seu endereço de e-mail.");
+      return;
+    }
+    if (!password) {
+      setPasswordError("Informe sua senha.");
+      return;
+    }
+    if (password.length < 8) {
+      setPasswordError("A senha deve ter pelo menos 8 caracteres.");
+      return;
+    }
 
     setIsPending(true);
     try {
@@ -128,9 +185,12 @@ function LoginContent() {
       const data = (response?.data || response) as any;
       await saveSessionAndRedirect(data);
     } catch (err: any) {
-      const errorMessage =
-        err?.response?.data?.message || err?.message || "Email ou senha inválidos";
-      toast.error(errorMessage);
+      const friendlyMsg = translateAuthError(err);
+      if (friendlyMsg.toLowerCase().includes("pelo menos 8 caracteres")) {
+        setPasswordError(friendlyMsg);
+      } else {
+        setLoginError(friendlyMsg);
+      }
       setIsPending(false);
     }
   }
@@ -156,13 +216,20 @@ function LoginContent() {
           </div>
 
           <form onSubmit={handleSubmit} className="animate-item flex flex-col gap-6">
+            {loginError && (
+              <div className="flex items-center gap-3 p-4 bg-red-50/90 border border-red-200/90 rounded-2xl text-red-700 text-sm font-semibold animate-in fade-in slide-in-from-top-1 duration-300">
+                <AlertCircle size={20} className="shrink-0 text-red-500" />
+                <span>{loginError}</span>
+              </div>
+            )}
+
             <div className="flex flex-col gap-2">
               <label htmlFor="email" className="text-gray-800 text-base font-bold tracking-wide">
                 Endereço de Email
               </label>
               <div className="relative group">
                 <Mail
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#6B39A7] transition-colors"
+                  className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${loginError ? "text-red-500" : "text-gray-400 group-focus-within:text-[#6B39A7]"}`}
                   size={22}
                 />
                 <input
@@ -171,8 +238,11 @@ function LoginContent() {
                   required
                   placeholder="Digite seu email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white border border-gray-200 text-gray-900 rounded-xl pl-12 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-[#6B39A7]/20 focus:border-[#6B39A7] transition-all placeholder:text-gray-400 text-lg font-medium shadow-sm"
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (loginError) setLoginError(null);
+                  }}
+                  className={`w-full bg-white border text-gray-900 rounded-xl pl-12 pr-4 py-4 focus:outline-none focus:ring-2 transition-all placeholder:text-gray-400 text-lg font-medium shadow-sm ${loginError ? "border-red-400 focus:border-red-500 ring-red-100 ring-2" : "border-gray-200 focus:ring-[#6B39A7]/20 focus:border-[#6B39A7]"}`}
                 />
               </div>
             </div>
@@ -191,7 +261,7 @@ function LoginContent() {
               </div>
               <div className="relative group">
                 <Lock
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#6B39A7] transition-colors"
+                  className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${loginError || passwordError ? "text-red-500" : "text-gray-400 group-focus-within:text-[#6B39A7]"}`}
                   size={22}
                 />
                 <input
@@ -200,8 +270,12 @@ function LoginContent() {
                   required
                   placeholder="Digite sua senha"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-white border border-gray-200 text-gray-900 rounded-xl pl-12 pr-12 py-4 focus:outline-none focus:ring-2 focus:ring-[#6B39A7]/20 focus:border-[#6B39A7] transition-all placeholder:text-gray-400 text-lg font-medium shadow-sm"
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (loginError) setLoginError(null);
+                    if (passwordError) setPasswordError(null);
+                  }}
+                  className={`w-full bg-white border text-gray-900 rounded-xl pl-12 pr-12 py-4 focus:outline-none focus:ring-2 transition-all placeholder:text-gray-400 text-lg font-medium shadow-sm ${loginError || passwordError ? "border-red-400 focus:border-red-500 ring-red-100 ring-2" : "border-gray-200 focus:ring-[#6B39A7]/20 focus:border-[#6B39A7]"}`}
                 />
 
                 <button
@@ -218,6 +292,11 @@ function LoginContent() {
                 </button>
 
               </div>
+              {passwordError && (
+                <span className="text-red-500 text-sm font-bold mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                  {passwordError}
+                </span>
+              )}
             </div>
 
             <div className="flex items-center gap-2 mt-2">

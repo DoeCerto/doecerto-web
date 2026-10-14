@@ -314,7 +314,7 @@ export default function OngSetupProfile() {
     } catch (error: any) {
       const msg = error.message?.includes("avatar")
         ? "A imagem da logo é muito grande ou inválida."
-        : "Ocorreu um erro ao salvar os dados. Verifique sua conexão.";
+        : (error?.response?.data?.message || error?.message || "Não foi possível salvar os dados do perfil. Verifique as informações e tente novamente.");
       toast.error(msg);
     } finally {
       setLoading(false);

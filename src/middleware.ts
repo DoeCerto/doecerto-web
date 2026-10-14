@@ -83,7 +83,8 @@ export async function middleware(request: NextRequest) {
         '/donation-history-guide',
         '/donation-item-guide',
         '/rating-guide',
-        '/pix'
+        '/pix',
+        '/donation'
     ];
 
     // Verifica se a rota atual está na whitelist de rotas públicas

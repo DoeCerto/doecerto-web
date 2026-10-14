@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import {
   Search, MapPin, Star, SlidersHorizontal, ChevronDown, ChevronLeft, ChevronRight, FileText, Menu,
   Info, Layers, Heart, ShieldCheck, Handshake, MessageCircle
@@ -156,6 +156,12 @@ export default function HomeClient({
       categories: ong.categories?.map((c: any) => c.name) || [],
     }));
   });
+
+  const selectedOngName = useMemo(() => {
+    if (!selectedOng) return undefined;
+    const all = Array.from(new Map([...premiumOngs, ...allOngs].map((o) => [o.id, o])).values());
+    return all.find((o) => o.id === selectedOng)?.name;
+  }, [selectedOng, premiumOngs, allOngs]);
 
   useEffect(() => {
     let isMounted = true;
@@ -336,6 +342,7 @@ export default function HomeClient({
     const all = Array.from(new Map([...premiumOngs, ...allOngs].map(o => [o.id, o])).values());
     const ong = all.find((o) => o.id === selectedOng);
     if (!ong) return;
+    setIsModalOpen(false);
     router.push(`/donation?ongId=${selectedOng}&ong=${encodeURIComponent(ong.name)}`);
   }
 
@@ -960,7 +967,14 @@ export default function HomeClient({
         )}
       </AnimatePresence>
 
-      {isModalOpen && <DonateModal onClose={() => setIsModalOpen(false)} onDonateMoney={goToDonateMoney} onDonateItems={goToDonateItems} />}
+      {isModalOpen && (
+        <DonateModal
+          onClose={() => setIsModalOpen(false)}
+          onDonateMoney={goToDonateMoney}
+          onDonateItems={goToDonateItems}
+          ongName={selectedOngName}
+        />
+      )}
     </div>
   );
 }

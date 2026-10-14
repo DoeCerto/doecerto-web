@@ -272,6 +272,7 @@ export default function OngPublicProfileClient({
       {isModalOpen && (
         <DonateModal
           onClose={() => setIsModalOpen(false)}
+          ongName={ong.name}
           onDonateMoney={() => router.push(`/pix?id=${ong.id}`)}
           onDonateItems={() => router.push(`/donation?ongId=${ong.id}&ong=${encodeURIComponent(ong.name)}`)}
         />
