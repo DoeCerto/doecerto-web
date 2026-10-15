@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useMemo } from "react";
 import {
   Search, MapPin, Star, SlidersHorizontal, ChevronDown, ChevronLeft, ChevronRight, FileText, Menu,
-  Info, Layers, Heart, ShieldCheck, Handshake, MessageCircle
+  Info, Layers, Heart, ShieldCheck, Handshake, MessageCircle, Sparkles
 } from "lucide-react";
 import { FiGlobe, FiUser, FiHelpCircle, FiLogOut, FiX, FiHeart } from "react-icons/fi";
 import { useRouter } from "next/navigation";
@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { DonorService } from "@/services/donor.service";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { useAuth } from "@/contexts/AuthContext";
+import { getPublicImpactMetrics, PublicImpactMetrics } from "@/services/metrics.service";
 
 type Ong = {
   id: number;
@@ -110,6 +111,19 @@ export default function HomeClient({
   const [isAboutMenuOpen, setIsAboutMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [impactMetrics, setImpactMetrics] = useState<PublicImpactMetrics | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    getPublicImpactMetrics()
+      .then((data) => {
+        if (isMounted) setImpactMetrics(data);
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const [guestModal, setGuestModal] = useState<{ isOpen: boolean; type: 'donate' | 'location' }>({ isOpen: false, type: 'donate' });
 
@@ -443,6 +457,11 @@ export default function HomeClient({
                   <div className="flex-1 p-6 flex flex-col gap-2">
                     <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4 ml-2">Transparência & Ajuda</h4>
 
+                    <a href="/metodologia" className="group flex items-center gap-4 p-3.5 rounded-xl hover:bg-slate-50 transition-all">
+                      <Sparkles size={20} className="text-slate-400 group-hover:text-purple-600 transition-colors" />
+                      <span className="text-base font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">Metodologia de Impacto</span>
+                    </a>
+
                     <a href="/?section=verificationbadge" className="group flex items-center gap-4 p-3.5 rounded-xl hover:bg-slate-50 transition-all">
                       <ShieldCheck size={20} className="text-slate-400 group-hover:text-purple-600 transition-colors" />
                       <span className="text-base font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">Selo de Verificação</span>
@@ -634,6 +653,7 @@ export default function HomeClient({
                   <span className="text-[10px] font-black text-purple-600 uppercase tracking-widest mb-3 block">Conheça o DoeCerto</span>
                   <div className="flex flex-col gap-1">
                     <a href="/?section=whatisdoecerto" onClick={() => setIsMobileMenuOpen(false)} className="block py-2.5 px-3 rounded-lg text-slate-700 font-bold hover:bg-purple-50 transition-colors">O que é?</a>
+                    <a href="/metodologia" onClick={() => setIsMobileMenuOpen(false)} className="block py-2.5 px-3 rounded-lg text-slate-700 font-bold hover:bg-purple-50 transition-colors">Metodologia de Impacto</a>
                     <a href="/?section=howitworks" onClick={() => setIsMobileMenuOpen(false)} className="block py-2.5 px-3 rounded-lg text-slate-700 font-bold hover:bg-purple-50 transition-colors">Como funciona</a>
                     <a href="/?section=whychooseus" onClick={() => setIsMobileMenuOpen(false)} className="block py-2.5 px-3 rounded-lg text-slate-700 font-bold hover:bg-purple-50 transition-colors">Por que escolher</a>
                     <a href="/?section=verificationbadge" onClick={() => setIsMobileMenuOpen(false)} className="block py-2.5 px-3 rounded-lg text-slate-700 font-bold hover:bg-purple-50 transition-colors">Selo de Verificação</a>
@@ -670,6 +690,38 @@ export default function HomeClient({
       </AnimatePresence>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        {/* BANNER DE IMPACTO COLETIVO AUDITADO */}
+        <div className="mb-6 bg-gradient-to-r from-purple-50 via-indigo-50/50 to-purple-50 border border-purple-100/90 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-purple-300">
+              <Sparkles size={20} />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-purple-700 uppercase tracking-wider flex items-center gap-1.5">
+                Comunidade DoeCerto
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+              </div>
+              <p className="text-sm font-medium text-slate-800">
+                Juntos já amparamos mais de{" "}
+                <span className="font-extrabold text-purple-900">
+                  {impactMetrics ? (
+                    `+${impactMetrics.totalLivesImpacted.toLocaleString('pt-BR')} vidas`
+                  ) : (
+                    <span className="inline-block w-16 h-3.5 bg-purple-200/70 animate-pulse rounded align-middle mx-1" />
+                  )}
+                </span>{" "}
+                com doações 100% auditadas e repasse direto às ONGs.
+              </p>
+            </div>
+          </div>
+          <a
+            href="/metodologia"
+            className="text-xs sm:text-sm font-bold text-purple-700 hover:text-purple-900 bg-white hover:bg-purple-100/60 border border-purple-200/80 px-4 py-2 rounded-xl transition-all active:scale-95 shrink-0 flex items-center gap-1.5 shadow-xs"
+          >
+            Ver metodologia de impacto <ChevronRight size={16} />
+          </a>
+        </div>
+
         <div className="relative mb-6 w-full">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             <Search className="h-5 w-5 text-slate-400" />

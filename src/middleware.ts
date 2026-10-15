@@ -75,6 +75,7 @@ export async function middleware(request: NextRequest) {
         '/splash',
         '/terms',
         '/privacy',
+        '/metodologia',
         '/help-center',
         '/ong-public-profile',
         '/donate',

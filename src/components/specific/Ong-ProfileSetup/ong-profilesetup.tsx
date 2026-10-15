@@ -84,6 +84,7 @@ export default function OngSetupProfile() {
   const [country, setCountry] = useState("Brasil");
   const [years, setYears] = useState("");
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
+  const [primaryCategoryId, setPrimaryCategoryId] = useState<number | null>(null);
 
   // Imagens
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -143,8 +144,16 @@ export default function OngSetupProfile() {
 
           if (profile.yearsOfOperation) setYears(profile.yearsOfOperation.toString());
           if (profile.avatarUrl) setLogoPreview(profile.avatarUrl);
-          if (profile.bannerUrl) setBannerPreview(profile.bannerUrl);
-          if (profile.categories) setSelectedCategoryIds(profile.categories.map((c: any) => c.id));
+          if (profile.categories) {
+            setSelectedCategoryIds(profile.categories.map((c: any) => c.id));
+          }
+          if (profile.primaryCategoryId) {
+            setPrimaryCategoryId(profile.primaryCategoryId);
+          } else if (profile.primaryCategory?.id) {
+            setPrimaryCategoryId(profile.primaryCategory.id);
+          } else if (profile.categories && profile.categories.length > 0) {
+            setPrimaryCategoryId(profile.categories[0].id);
+          }
         }
 
         const bankData = await BankAccountService.getMyAccount();
@@ -192,9 +201,18 @@ export default function OngSetupProfile() {
   };
 
   const toggleCategory = (id: number) => {
-    setSelectedCategoryIds(prev =>
-      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
-    );
+    setSelectedCategoryIds(prev => {
+      const isRemoving = prev.includes(id);
+      const next = isRemoving ? prev.filter(c => c !== id) : [...prev, id];
+
+      // Ajusta a causa principal se necessário
+      if (isRemoving && primaryCategoryId === id) {
+        setPrimaryCategoryId(next.length > 0 ? next[0] : null);
+      } else if (!isRemoving && (primaryCategoryId === null || next.length === 1)) {
+        setPrimaryCategoryId(id);
+      }
+      return next;
+    });
   };
 
   const handleAddItems = async () => {
@@ -264,6 +282,7 @@ export default function OngSetupProfile() {
     if (!city.trim()) { toast.error("A cidade é obrigatória."); return false; }
     if (!state.trim()) { toast.error("O estado (UF) é obrigatório."); return false; }
     if (selectedCategoryIds.length === 0) { toast.error("Selecione pelo menos uma categoria."); return false; }
+    if (!primaryCategoryId) { toast.error("Selecione a Causa Principal da sua ONG."); return false; }
 
     if (!bankName.trim() || !pixKey.trim()) {
       toast.error("Complete os dados bancários para receber doações.");
@@ -285,6 +304,7 @@ export default function OngSetupProfile() {
         contactNumber: cleanPhone,
         websiteUrls: website?.trim() ? [website.trim()] : undefined,
         categoryIds: selectedCategoryIds,
+        primaryCategoryId: primaryCategoryId || (selectedCategoryIds.length > 0 ? selectedCategoryIds[0] : undefined),
         yearsOfOperation: years ? Number(years) : undefined,
         address: { street, number, complement, neighborhood, city, state, zipCode, country },
       };
@@ -510,22 +530,62 @@ export default function OngSetupProfile() {
             </div>
           </FormSection>
 
-          <FormSection title="Categorias de Causa * (Selecione pelo menos uma)" icon={Tag}>
+          <FormSection title="Categorias de Atuação * (Selecione todas as que se aplicam)" icon={Tag}>
             <div className="flex flex-wrap gap-2">
-              {availableCategories.map((cat) => (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => toggleCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-xl text-[11px] sm:text-sm font-bold transition-all border ${selectedCategoryIds.includes(cat.id)
-                    ? "bg-[#6B39A7] text-white border-[#6B39A7] shadow-md"
-                    : "bg-gray-50 text-gray-500 border-gray-100 hover:bg-purple-50"
+              {availableCategories.map((cat) => {
+                const isSelected = selectedCategoryIds.includes(cat.id);
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => toggleCategory(cat.id)}
+                    className={`px-3 py-1.5 rounded-xl text-[11px] sm:text-sm font-bold transition-all border cursor-pointer ${
+                      isSelected
+                        ? "bg-[#6B39A7] text-white border-[#6B39A7] shadow-md"
+                        : "bg-gray-50 text-gray-500 border-gray-100 hover:bg-purple-50"
                     }`}
-                >
-                  {cat.name}
-                </button>
-              ))}
+                  >
+                    {isSelected ? "✓ " : ""}{cat.name}
+                  </button>
+                );
+              })}
             </div>
+
+            {selectedCategoryIds.length > 0 && (
+              <div className="mt-4 p-4 rounded-xl bg-purple-50/70 border border-purple-100 flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-amber-500 font-bold text-base">⭐</span>
+                  <span className="text-xs sm:text-sm font-bold text-purple-950">
+                    Qual é a sua Causa Principal (Missão Central da ONG)? *
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Dentre as causas marcadas acima, selecione a que melhor define o propósito central da sua instituição. Ela terá destaque no seu perfil e guiará as métricas de impacto das suas doações.
+                </p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {availableCategories
+                    .filter((cat) => selectedCategoryIds.includes(cat.id))
+                    .map((cat) => {
+                      const isPrimary = primaryCategoryId === cat.id;
+                      return (
+                        <button
+                          key={`primary-${cat.id}`}
+                          type="button"
+                          onClick={() => setPrimaryCategoryId(cat.id)}
+                          className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                            isPrimary
+                              ? "bg-purple-700 text-white border-purple-700 shadow-sm ring-2 ring-purple-200"
+                              : "bg-white text-slate-700 border-purple-200 hover:bg-purple-100/60"
+                          }`}
+                        >
+                          <span>{isPrimary ? "⭐ Causa Principal:" : "Definir como:"}</span>
+                          <span className="underline decoration-purple-300 font-black">{cat.name}</span>
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
           </FormSection>
 
           <FormSection

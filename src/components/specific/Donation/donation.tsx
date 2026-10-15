@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -22,6 +22,8 @@ import {
   saveGuestPhone,
   clearGuestEmail,
 } from "./GuestEmailModal";
+import { calculateImpact } from "@/utils/impactCalculator";
+import { CategoryImpactIcon } from "@/components/ui/CategoryImpactIcon";
 
 export interface DonationData {
   tipoItem: string;
@@ -209,6 +211,17 @@ export default function Donation({
     .join(", ");
 
   const effectiveOngName = ongData?.name || ongName;
+
+  // Calcula o impacto social tangível em tempo real baseado nos itens materiais e na Causa Principal da ONG
+  const materialImpact = useMemo(() => {
+    const firstItem = listaEnvio[0];
+    return calculateImpact({
+      donationType: "material",
+      materialQuantity: totalItens,
+      materialDescription: firstItem?.itemName || "",
+      primaryCategoryName: ongData?.primaryCategory?.name || ongData?.categories?.[0]?.name || null,
+    });
+  }, [listaEnvio, totalItens, ongData]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 pb-16 font-sans overflow-x-hidden">
@@ -526,6 +539,25 @@ export default function Donation({
                 </label>
               )}
 
+              {/* Box Dinâmica de Impacto Social Tangível (Doação Material) */}
+              {listaEnvio.length > 0 && materialImpact && (
+                <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-purple-50/70 border border-purple-200/80 flex items-center gap-3 sm:gap-3.5 transition-all">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white border border-purple-100 flex items-center justify-center text-purple-700 shadow-xs shrink-0 select-none">
+                    <CategoryImpactIcon category={ongData?.primaryCategory?.name || listaEnvio[0]?.itemName} size={22} className="text-[#6B39A7]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-purple-700 bg-purple-100/70 px-2 py-0.5 rounded-md">
+                        Impacto Estimado
+                      </span>
+                    </div>
+                    <p className="text-xs sm:text-sm font-bold text-purple-950 leading-snug">
+                      {materialImpact.impactText}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Resumo da Transparência DoeCerto */}
               <div className="bg-slate-50/90 rounded-xl p-3.5 sm:p-5 my-5 border border-slate-200">
                 <div className="flex flex-col min-[440px]:flex-row min-[440px]:justify-between min-[440px]:items-center text-sm sm:text-base font-medium text-slate-600 mb-2.5 gap-1">
@@ -628,6 +660,21 @@ export default function Donation({
             <p className="text-base sm:text-lg text-slate-600 mb-6 leading-relaxed font-medium">
               Sua intenção de doação para <strong className="text-slate-800 font-bold">{effectiveOngName}</strong> foi enviada para agendamento. Muito obrigado pelo seu apoio!
             </p>
+
+            {/* Destaque do Impacto Gerado em Materiais */}
+            {materialImpact && materialImpact.units > 0 && (
+              <div className="bg-purple-50 border border-purple-200/90 rounded-2xl p-4 text-left mb-6 flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-white border border-purple-100 flex items-center justify-center text-purple-700 shrink-0 shadow-xs mt-0.5">
+                  <CategoryImpactIcon category={ongData?.primaryCategory?.name || listaEnvio[0]?.itemName} size={20} className="text-[#6B39A7]" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-purple-700">Impacto Estimado da sua Doação</p>
+                  <p className="text-sm sm:text-base font-bold text-purple-950 mt-0.5 leading-snug">
+                    {materialImpact.impactText}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {!isAuthenticated && lastGuestEmail && (
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 text-left mb-6 flex items-start gap-3">

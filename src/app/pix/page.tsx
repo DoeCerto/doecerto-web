@@ -15,6 +15,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { QRCodeSVG } from "qrcode.react";
 import DonationTutorialModal from "@/components/ui/DonationTutorial";
 import { GuestEmailModal, readGuestEmail, saveGuestEmail, clearGuestEmail } from "@/components/specific/Donation/GuestEmailModal";
+import { calculateImpact } from "@/utils/impactCalculator";
+import { CategoryImpactIcon } from "@/components/ui/CategoryImpactIcon";
 
 // ==========================================
 // LÓGICA (Mantida intacta para refatorar depois)
@@ -120,6 +122,20 @@ function PixPageContent() {
     }
     fetchData();
   }, [ongId, router]);
+
+  // Calcula o impacto social tangível em tempo real baseado no valor e na Causa Principal da ONG
+  const primaryCategoryName = useMemo(() => {
+    return ongData?.primaryCategory?.name || ongData?.categories?.[0]?.name || null;
+  }, [ongData]);
+
+  const impact = useMemo(() => {
+    const numValor = parseFloat(valor);
+    return calculateImpact({
+      amount: isNaN(numValor) ? 0 : numValor,
+      primaryCategoryName,
+      donationType: "monetary",
+    });
+  }, [valor, primaryCategoryName]);
 
   const pixCopiaECola = useMemo(() => {
     let baseKey = bankData?.pixKey?.trim();
@@ -416,6 +432,30 @@ function PixPageContent() {
                   className="w-full bg-slate-50/60 border-2 border-slate-200 focus:bg-white focus:border-[#6B39A7] focus:ring-4 focus:ring-purple-100/70 rounded-xl py-3 sm:py-3.5 pl-12 pr-4 font-bold text-base sm:text-lg text-slate-900 transition-all outline-none placeholder:font-medium placeholder:text-slate-400" 
                 />
               </div>
+
+              {/* Box Dinâmica de Impacto Social Tangível (Padrão Tecnológico) */}
+              {impact && (
+                <div className="mt-4 p-3.5 sm:p-4 rounded-xl bg-purple-50/70 border border-purple-200/80 flex items-center gap-3 sm:gap-3.5 transition-all">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white border border-purple-100 flex items-center justify-center text-purple-700 shadow-xs shrink-0 select-none">
+                    <CategoryImpactIcon category={primaryCategoryName} size={22} className="text-[#6B39A7]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-purple-700 bg-purple-100/70 px-2 py-0.5 rounded-md">
+                        Impacto Estimado
+                      </span>
+                      {primaryCategoryName && (
+                        <span className="text-[10px] sm:text-xs font-semibold text-slate-500 truncate">
+                          • {primaryCategoryName}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs sm:text-sm font-bold text-purple-950 leading-snug">
+                      {impact.impactText}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -707,6 +747,21 @@ function PixPageContent() {
             <p className="text-base sm:text-lg text-slate-600 mb-6 leading-relaxed font-medium">
               Sua doação para <strong className="text-slate-800 font-bold">{ongData?.name || "a instituição"}</strong> foi enviada para validação. Muito obrigado pelo seu apoio!
             </p>
+
+            {/* Destaque do Impacto Gerado */}
+            {impact && impact.units > 0 && (
+              <div className="bg-purple-50 border border-purple-200/90 rounded-2xl p-4 text-left mb-6 flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-white border border-purple-100 flex items-center justify-center text-purple-700 shrink-0 shadow-xs mt-0.5">
+                  <CategoryImpactIcon category={primaryCategoryName} size={20} className="text-[#6B39A7]" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-purple-700">Impacto Estimado da sua Doação</p>
+                  <p className="text-sm sm:text-base font-bold text-purple-950 mt-0.5 leading-snug">
+                    {impact.impactText}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {!isAuthenticated && lastGuestEmail && (
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 text-left mb-6 flex items-start gap-3">

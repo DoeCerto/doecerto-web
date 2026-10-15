@@ -146,9 +146,17 @@ export async function api<T>(
       error?.message?.toLowerCase().includes("unauthorized") ||
       error?.message?.toLowerCase().includes("não autorizado");
 
-    if (!isUnauthorized) {
+    const isClientError =
+      (error?.status >= 400 && error?.status < 500) ||
+      (error?.statusCode >= 400 && error?.statusCode < 500);
+
+    // Evita disparar o overlay vermelho/preto de erro do Next.js Turbopack para erros esperados de validação (4xx)
+    if (!isUnauthorized && !isClientError) {
       console.error("[API ERROR]", error);
+    } else if (isClientError && !isUnauthorized && process.env.NODE_ENV !== "production") {
+      console.warn("[API CLIENT ERROR]", error?.message || error);
     }
     throw error;
   }
+
 }

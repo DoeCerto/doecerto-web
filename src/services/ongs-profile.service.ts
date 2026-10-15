@@ -53,6 +53,8 @@ export const OngsProfileService = {
         rating: Number(profile.rating?.average || 0),
         numberOfRatings: profile.rating?.count || 0,
         categories: profile.categories || [],
+        primaryCategory: profile.primaryCategory || (profile.categories && profile.categories.length > 0 ? profile.categories[0] : null),
+        primaryCategoryId: profile.primaryCategoryId || (profile.categories && profile.categories.length > 0 ? profile.categories[0].id : null),
         reviews: Array.isArray(resReviews.data) ? resReviews.data : [],
         donations: profile.receivedDonations || 0,
         distance: base.distance || "—",
