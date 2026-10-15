@@ -75,6 +75,14 @@ export default function MetodologiaClient({ initialMetrics }: MetodologiaClientP
     });
   }, [simulatedResult.units]);
 
+  // Garante que a página de metodologia SEMPRE comece no topo (0, 0)
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+    if (typeof window !== "undefined" && (window as any).lenis) {
+      (window as any).lenis.scrollTo(0, { immediate: true });
+    }
+  }, []);
+
   // ANIMAÇÕES GSAP & SCROLLTRIGGER
   useGSAP(() => {
     // 1. Objeto de controle dos contadores numéricos
@@ -255,7 +263,7 @@ export default function MetodologiaClient({ initialMetrics }: MetodologiaClientP
           <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link 
-                href="/"
+                href="/#whychooseus"
                 className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center gap-2 text-sm font-semibold"
               >
                 <ArrowLeft size={18} />
@@ -667,7 +675,7 @@ export default function MetodologiaClient({ initialMetrics }: MetodologiaClientP
             <div className="flex gap-6">
               <Link href="/terms" className="hover:text-purple-700 transition-colors">Termos de Uso</Link>
               <Link href="/privacy" className="hover:text-purple-700 transition-colors">Privacidade</Link>
-              <Link href="/" className="hover:text-purple-700 transition-colors">Página Inicial</Link>
+              <Link href="/#whychooseus" className="hover:text-purple-700 transition-colors">Página Inicial</Link>
             </div>
           </div>
         </footer>

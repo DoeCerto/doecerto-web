@@ -313,6 +313,13 @@ export function WhyChooseUs() {
 
           <Link
             href="/metodologia"
+            scroll={true}
+            onClick={() => {
+              if (typeof window !== "undefined") {
+                window.history.replaceState(null, '', '/#whychooseus');
+                sessionStorage.setItem("restoreSection", "#whychooseus");
+              }
+            }}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-sm shadow-sm transition-all active:scale-95 shrink-0"
           >
             Conhecer a metodologia
