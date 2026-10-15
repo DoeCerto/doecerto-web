@@ -44,6 +44,7 @@ useEffect(() => {
 
       gsap.ticker.add(rafRef.current);
       gsap.ticker.lagSmoothing(0);
+      ScrollTrigger.refresh();
     }, 100);
 
     return () => {
