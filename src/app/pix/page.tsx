@@ -417,20 +417,34 @@ function PixPageContent() {
                 })}
               </div>
                 
-              {/* Campo para outro valor */}
-              <div className="relative group w-full">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none">
-                  <span className="font-bold text-base sm:text-lg text-slate-400">R$</span>
+              {/* Campo de valor inteligente com impacto integrado (Estilo Fintech) */}
+              <div className="w-full rounded-2xl border-2 border-slate-200 bg-white focus-within:border-[#6B39A7] focus-within:ring-4 focus-within:ring-purple-100/70 transition-all overflow-hidden shadow-2xs">
+                <div className="relative flex items-center px-4 py-3 sm:py-3.5">
+                  <span className="font-bold text-base sm:text-lg text-slate-400 mr-2.5 select-none">R$</span>
+                  <input 
+                    type="number" 
+                    min="1"
+                    step="any"
+                    placeholder="Ou digite outro valor (ex: 35)" 
+                    value={valor} 
+                    onChange={(e) => setValor(e.target.value)} 
+                    className="w-full bg-transparent font-bold text-base sm:text-lg text-slate-900 outline-none placeholder:font-medium placeholder:text-slate-400" 
+                  />
                 </div>
-                <input 
-                  type="number" 
-                  min="1"
-                  step="any"
-                  placeholder="Ou digite outro valor (ex: 35)" 
-                  value={valor} 
-                  onChange={(e) => setValor(e.target.value)} 
-                  className="w-full bg-slate-50/60 border-2 border-slate-200 focus:bg-white focus:border-[#6B39A7] focus:ring-4 focus:ring-purple-100/70 rounded-xl py-3 sm:py-3.5 pl-12 pr-4 font-bold text-base sm:text-lg text-slate-900 transition-all outline-none placeholder:font-medium placeholder:text-slate-400" 
-                />
+
+                {impact && impact.units > 0 && (
+                  <div className="bg-purple-50/60 border-t border-slate-100 px-4 py-2.5 flex items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-2 text-slate-600 min-w-0">
+                      <CategoryImpactIcon category={primaryCategoryName} size={16} className="text-[#6B39A7] shrink-0" />
+                      <span className="truncate">
+                        Impacto estimado: <strong className="text-purple-900 font-bold">{impact.units === 1 ? `1 ${impact.unitLabel}` : `${impact.units} ${impact.unitLabel}`}</strong>
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-mono text-purple-700 font-medium shrink-0 hidden sm:inline">
+                      100% repasse direto
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
