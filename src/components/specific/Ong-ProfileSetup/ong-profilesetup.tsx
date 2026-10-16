@@ -23,9 +23,7 @@ import {
   ExternalLink,
   LogOut,
   ChevronDown,
-  Check,
-  Sparkles,
-  Target
+  Check
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
@@ -40,7 +38,6 @@ import { WishlistService } from "@/services/wishlist.service";
 import { Preferences } from "@capacitor/preferences";
 import { useAuth } from "@/contexts/AuthContext";
 import { CategoryImpactIcon } from "@/components/ui/CategoryImpactIcon";
-import { CATEGORY_IMPACT_CONFIG } from "@/utils/impactCalculator";
 
 export default function OngSetupProfile() {
   const router = useRouter();
@@ -127,7 +124,6 @@ export default function OngSetupProfile() {
   const accountTypeOptions = ["Corrente", "Poupança", "Aplicação"];
 
   const primaryCategoryObj = availableCategories.find((c) => c.id === primaryCategoryId);
-  const primaryImpactBenchmark = primaryCategoryObj ? CATEGORY_IMPACT_CONFIG[primaryCategoryObj.name] : null;
 
   useEffect(() => {
     async function loadInitialData() {
@@ -551,230 +547,128 @@ export default function OngSetupProfile() {
             </div>
           </FormSection>
 
-          <FormSection title="Categorias e Causa Principal *" icon={Tag}>
+          <FormSection title="Categorias de Atuação *" icon={Tag}>
             <div className="space-y-6">
-              {/* BLOCO 1: ÁREAS DE ATUAÇÃO (TAGS MULTISSELEÇÃO) */}
+              {/* Tags de categorias */}
               <div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-3">
-                  <div>
-                    <h3 className="text-xs font-black uppercase text-slate-500 tracking-wider">
-                      1. Áreas de Atuação da Instituição
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Marque todas as frentes em que sua ONG atua com projetos ou atendimento.
-                    </p>
-                  </div>
-                  <span className="self-start sm:self-auto text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200/80 px-2.5 py-1 rounded-lg shrink-0">
-                    {selectedCategoryIds.length} {selectedCategoryIds.length === 1 ? "área selecionada" : "áreas selecionadas"}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-2 sm:gap-2.5">
+                <label className="text-xs font-black uppercase text-gray-400 tracking-wider ml-1 mb-2.5 block">
+                  Selecione todas as causas que sua ONG atende
+                </label>
+                <div className="flex flex-wrap gap-2">
                   {availableCategories.map((cat) => {
                     const isSelected = selectedCategoryIds.includes(cat.id);
-                    const isPrimary = primaryCategoryId === cat.id;
                     return (
                       <button
                         key={cat.id}
                         type="button"
                         onClick={() => toggleCategory(cat.id)}
-                        className={`group px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all border flex items-center gap-2 cursor-pointer ${
+                        className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all border flex items-center gap-2 cursor-pointer ${
                           isSelected
-                            ? "bg-[#6B39A7] text-white border-[#6B39A7] shadow-xs ring-2 ring-purple-100"
-                            : "bg-white text-slate-700 border-slate-200/90 hover:border-purple-300 hover:bg-purple-50/50 shadow-2xs"
+                            ? "bg-[#6B39A7] text-white border-[#6B39A7] shadow-sm"
+                            : "bg-gray-50 text-gray-600 border-gray-100 hover:bg-purple-50/60 hover:text-purple-700 hover:border-purple-200"
                         }`}
                       >
                         <CategoryImpactIcon
                           category={cat.name}
                           size={16}
-                          className={isSelected ? "text-purple-200" : "text-slate-400 group-hover:text-purple-600 transition-colors"}
+                          className={isSelected ? "text-purple-200" : "text-gray-400"}
                         />
                         <span>{cat.name}</span>
-                        {isSelected && (
-                          <Check size={14} className="stroke-[3] text-purple-200" />
-                        )}
-                        {isPrimary && (
-                          <span className="ml-0.5 px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-white/20 text-white">
-                            Principal
-                          </span>
-                        )}
+                        {isSelected && <Check size={14} className="stroke-[3] text-purple-200" />}
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* BLOCO 2: CAUSA PRINCIPAL (DROPDOWN SELECTOR TECNOLÓGICO) */}
-              <div className="pt-5 border-t border-slate-100">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
-                      <Target size={16} />
-                    </div>
-                    <h3 className="text-sm font-bold text-slate-900 tracking-tight">
-                      2. Causa Principal (Missão Central da ONG) *
-                    </h3>
-                  </div>
-                  <span className="self-start sm:self-auto text-[11px] font-bold text-purple-800 bg-purple-50 border border-purple-200/80 px-2.5 py-0.5 rounded-full shrink-0">
-                    Selo Oficial & Impacto Pix
-                  </span>
+              {/* Seletor da Causa Principal */}
+              <div className="pt-5 border-t border-gray-100">
+                <div className="space-y-1 mb-2 ml-1">
+                  <label className="text-xs font-black uppercase text-gray-400 tracking-wider block">
+                    Causa Principal da Instituição *
+                  </label>
+                  <p className="text-xs text-gray-500 font-medium">
+                    Escolha qual das causas acima melhor representa a missão central da ONG.
+                  </p>
                 </div>
-                <p className="text-xs text-slate-600 mb-3.5 leading-relaxed">
-                  Defina qual causa representa o propósito central da sua instituição. Ela terá destaque permanente no seu perfil público e guiará as métricas de impacto calculadas para quem doar via Pix.
-                </p>
 
-                {/* Dropdown Container com posicionamento relativo e listener click-outside */}
                 <div className="relative" ref={primaryDropdownRef}>
                   {selectedCategoryIds.length === 0 ? (
-                    <div className="w-full p-4 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 text-slate-500 font-medium text-xs sm:text-sm flex items-center gap-3">
-                      <Info size={18} className="text-slate-400 shrink-0" />
-                      <span>
-                        Selecione ao menos uma <strong>área de atuação</strong> acima para habilitar a definição da sua causa principal.
-                      </span>
+                    <div className="w-full bg-gray-50 p-4 rounded-xl border border-gray-100 text-gray-400 text-sm font-medium flex items-center justify-between cursor-not-allowed select-none">
+                      <span>Selecione as categorias acima primeiro</span>
+                      <ChevronDown size={18} className="text-gray-300" />
                     </div>
                   ) : (
                     <>
                       <button
                         type="button"
                         onClick={() => setIsPrimaryDropdownOpen(!isPrimaryDropdownOpen)}
-                        className={`w-full p-3 sm:p-3.5 rounded-xl border-2 transition-all flex items-center justify-between text-left cursor-pointer shadow-xs ${
+                        className={`w-full bg-white p-3.5 sm:p-4 rounded-xl border flex items-center justify-between text-left transition-all shadow-xs cursor-pointer ${
                           isPrimaryDropdownOpen
-                            ? "border-[#6B39A7] ring-4 ring-purple-100/70 bg-white"
-                            : "border-slate-200 hover:border-purple-300 bg-white"
+                            ? "border-[#6B39A7] ring-2 ring-purple-100"
+                            : "border-gray-200 hover:border-purple-300"
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-200/80 text-[#6B39A7] flex items-center justify-center shrink-0 shadow-2xs">
-                            <CategoryImpactIcon category={primaryCategoryObj?.name} size={20} />
+                          <div className="w-8 h-8 rounded-lg bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0">
+                            <CategoryImpactIcon category={primaryCategoryObj?.name} size={18} />
                           </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[11px] uppercase font-bold tracking-wider text-purple-700">
-                                Causa Principal Ativa
-                              </span>
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            </div>
-                            <p className="text-sm sm:text-base font-bold text-slate-900 truncate">
-                              {primaryCategoryObj?.name || "Selecione uma causa..."}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0 pl-2">
-                          <span className="text-xs font-semibold text-slate-500 hidden sm:inline">
-                            Alterar
+                          <span className="truncate text-sm sm:text-base font-bold text-gray-900">
+                            {primaryCategoryObj?.name || "Selecione a causa principal"}
                           </span>
-                          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                            <ChevronDown
-                              size={18}
-                              className={`transition-transform duration-200 ${
-                                isPrimaryDropdownOpen ? "rotate-180 text-purple-700" : ""
-                              }`}
-                            />
-                          </div>
                         </div>
+                        <ChevronDown
+                          size={18}
+                          className={`text-purple-600 transition-transform duration-200 shrink-0 ml-2 ${
+                            isPrimaryDropdownOpen ? "rotate-180" : ""
+                          }`}
+                        />
                       </button>
 
-                      {/* Dropdown Menu suspenso */}
                       <AnimatePresence>
                         {isPrimaryDropdownOpen && (
                           <motion.div
-                            initial={{ opacity: 0, y: -6, scale: 0.99 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -6, scale: 0.99 }}
+                            initial={{ opacity: 0, y: -6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -6 }}
                             transition={{ duration: 0.15 }}
-                            className="absolute top-[calc(100%+8px)] left-0 w-full bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden p-2"
+                            className="absolute top-[calc(100%+6px)] left-0 w-full bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden p-1.5"
                           >
-                            <div className="px-3 py-2 border-b border-slate-100 flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
-                              <span>Escolha entre suas áreas marcadas</span>
-                              <span>{selectedCategoryIds.length} opções</span>
-                            </div>
-
-                            <div className="max-h-60 overflow-y-auto space-y-1 py-1.5">
+                            <div className="max-h-60 overflow-y-auto space-y-1">
                               {availableCategories
                                 .filter((c) => selectedCategoryIds.includes(c.id))
                                 .map((cat) => {
                                   const isCurrent = primaryCategoryId === cat.id;
-                                  const bench = CATEGORY_IMPACT_CONFIG[cat.name];
                                   return (
                                     <button
-                                      key={`dropdown-primary-${cat.id}`}
+                                      key={`primary-opt-${cat.id}`}
                                       type="button"
                                       onClick={() => {
                                         setPrimaryCategoryId(cat.id);
                                         setIsPrimaryDropdownOpen(false);
                                       }}
-                                      className={`w-full p-2.5 sm:p-3 rounded-xl transition-all flex items-center justify-between text-left cursor-pointer ${
+                                      className={`w-full p-3 rounded-lg flex items-center justify-between text-left transition-colors cursor-pointer ${
                                         isCurrent
-                                          ? "bg-purple-50/90 border border-purple-200/90 text-purple-950 font-bold"
-                                          : "hover:bg-slate-50 text-slate-700 font-semibold border border-transparent"
+                                          ? "bg-purple-50 text-[#6B39A7] font-bold"
+                                          : "text-gray-700 font-semibold hover:bg-gray-50"
                                       }`}
                                     >
-                                      <div className="flex items-center gap-3 min-w-0">
+                                      <div className="flex items-center gap-2.5 min-w-0">
                                         <div
-                                          className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border ${
-                                            isCurrent
-                                              ? "bg-[#6B39A7] text-white border-[#6B39A7]"
-                                              : "bg-slate-100 text-slate-600 border-slate-200/70"
+                                          className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${
+                                            isCurrent ? "text-[#6B39A7]" : "text-gray-400"
                                           }`}
                                         >
-                                          <CategoryImpactIcon category={cat.name} size={18} />
+                                          <CategoryImpactIcon category={cat.name} size={16} />
                                         </div>
-                                        <div className="min-w-0">
-                                          <p className="text-sm font-bold text-slate-900 truncate">
-                                            {cat.name}
-                                          </p>
-                                          {bench && (
-                                            <p className="text-xs text-slate-500 truncate">
-                                              Impacto: {bench.actionVerb} {bench.unitPlural}
-                                            </p>
-                                          )}
-                                        </div>
+                                        <span className="truncate text-sm">{cat.name}</span>
                                       </div>
-                                      {isCurrent ? (
-                                        <span className="flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md shrink-0">
-                                          <Check size={14} className="stroke-[3]" /> Foco Atual
-                                        </span>
-                                      ) : (
-                                        <span className="text-xs text-slate-400 font-medium shrink-0">
-                                          Definir como Principal
-                                        </span>
+                                      {isCurrent && (
+                                        <Check size={16} className="text-[#6B39A7] shrink-0 ml-2" />
                                       )}
                                     </button>
                                   );
                                 })}
-
-                              {/* Categorias ainda não marcadas (permite selecionar e marcar ao mesmo tempo) */}
-                              {availableCategories.some((c) => !selectedCategoryIds.includes(c.id)) && (
-                                <>
-                                  <div className="px-3 pt-3 pb-1 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                                    <span>Outras categorias</span>
-                                  </div>
-                                  {availableCategories
-                                    .filter((c) => !selectedCategoryIds.includes(c.id))
-                                    .map((cat) => (
-                                      <button
-                                        key={`dropdown-other-${cat.id}`}
-                                        type="button"
-                                        onClick={() => {
-                                          setSelectedCategoryIds((prev) => [...prev, cat.id]);
-                                          setPrimaryCategoryId(cat.id);
-                                          setIsPrimaryDropdownOpen(false);
-                                        }}
-                                        className="w-full p-2.5 rounded-xl hover:bg-purple-50/50 text-slate-600 hover:text-purple-950 font-medium text-xs sm:text-sm flex items-center justify-between text-left transition-colors cursor-pointer"
-                                      >
-                                        <div className="flex items-center gap-2.5 truncate">
-                                          <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-400 flex items-center justify-center shrink-0">
-                                            <CategoryImpactIcon category={cat.name} size={15} />
-                                          </div>
-                                          <span className="truncate">{cat.name}</span>
-                                        </div>
-                                        <span className="text-xs text-purple-600 font-semibold shrink-0">
-                                          + Ativar e Definir
-                                        </span>
-                                      </button>
-                                    ))}
-                                </>
-                              )}
                             </div>
                           </motion.div>
                         )}
@@ -782,27 +676,6 @@ export default function OngSetupProfile() {
                     </>
                   )}
                 </div>
-
-                {/* Card Informativo de Telemetria de Impacto */}
-                {primaryCategoryObj && primaryImpactBenchmark && (
-                  <div className="mt-3 p-3.5 rounded-xl bg-purple-50/50 border border-purple-100 flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-white border border-purple-200 text-purple-700 flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
-                      <Sparkles size={16} />
-                    </div>
-                    <div className="text-xs leading-relaxed">
-                      <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                        <span>Impacto calculado nas doações via Pix</span>
-                      </div>
-                      <p className="text-slate-600 mt-0.5">
-                        As doações recebidas serão convertidas visualmente em{" "}
-                        <strong className="text-purple-700 font-bold">
-                          {primaryImpactBenchmark.unitPlural}
-                        </strong>{" "}
-                        ({primaryImpactBenchmark.actionVerb} {primaryImpactBenchmark.timeScope || ""}) para engajar seus doadores.
-                      </p>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </FormSection>
