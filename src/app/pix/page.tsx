@@ -8,8 +8,7 @@ import {
   Key, Copy, CheckCircle2, FileText, Image as ImageIcon,
   Paperclip, X, UploadCloud, Lock, ShieldCheck, Heart, AlertCircle, AlertTriangle
 } from "lucide-react";
-import { useState, Suspense, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, Suspense, useEffect, useMemo, useRef } from "react";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { api } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -58,6 +57,68 @@ function getPixKeyType(key: string): "email" | "cpf" | "cnpj" | "phone" | "rando
 // ==========================================
 // COMPONENTE PRINCIPAL (UX/UI Refatorada)
 // ==========================================
+
+function TypewriterImpactText({ 
+  targetText, 
+  prefix = "Sua doação ajuda a viabilizar" 
+}: { 
+  targetText: string; 
+  prefix?: string; 
+}) {
+  const [displayedText, setDisplayedText] = useState("");
+  const currentTextRef = useRef("");
+  const targetTextRef = useRef(targetText);
+  targetTextRef.current = targetText;
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    let isCancelled = false;
+
+    const tick = () => {
+      if (isCancelled) return;
+
+      const current = currentTextRef.current;
+      const target = targetTextRef.current;
+
+      if (current === target) return;
+
+      // Se o target não começa com o texto atual, apaga letra a letra (backspace)
+      if (!target.startsWith(current)) {
+        const next = current.slice(0, -1);
+        currentTextRef.current = next;
+        setDisplayedText(next);
+        timeoutId = setTimeout(tick, 10); // Velocidade de apagar rápida (10ms)
+      } else {
+        // Digita a próxima letra do target
+        const next = target.slice(0, current.length + 1);
+        currentTextRef.current = next;
+        setDisplayedText(next);
+        timeoutId = setTimeout(tick, 20); // Velocidade natural de digitação (20ms)
+      }
+    };
+
+    tick();
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [targetText]);
+
+  const hasPrefix = displayedText.startsWith(prefix);
+  const prefixPart = hasPrefix ? prefix : displayedText;
+  const dynamicPart = hasPrefix ? displayedText.slice(prefix.length).trimStart() : "";
+
+  return (
+    <p className="text-slate-600 text-base sm:text-lg font-medium mt-1 leading-normal min-h-[28px] flex items-center flex-wrap">
+      <span>{prefixPart}</span>
+      {dynamicPart && (
+        <strong className="text-purple-700 font-bold ml-1.5">{dynamicPart}</strong>
+      )}
+      <span className="inline-block w-[2px] h-[1.1em] bg-purple-700 ml-1 align-middle animate-pulse" />
+    </p>
+  );
+}
 
 function PixPageContent() {
   const searchParams = useSearchParams();
@@ -384,36 +445,13 @@ function PixPageContent() {
                 <h3 className="font-bold text-lg sm:text-2xl text-slate-900 tracking-tight">
                   Defina o valor da contribuição
                 </h3>
-                <div className="min-h-[28px] overflow-hidden">
-                  <AnimatePresence mode="wait">
-                    {impact && impact.units > 0 ? (
-                      <motion.p 
-                        key={`impact-${impact.units}-${impact.unitLabel}`}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        transition={{ duration: 0.22, ease: "easeOut" }}
-                        className="text-slate-600 text-base sm:text-lg font-medium mt-1 leading-normal"
-                      >
-                        Sua doação ajuda a viabilizar{" "}
-                        <strong className="text-purple-700 font-bold">
-                          {impact.units === 1 ? `1 ${impact.unitLabel}` : `${impact.units} ${impact.unitLabel}`}
-                        </strong>.
-                      </motion.p>
-                    ) : (
-                      <motion.p
-                        key="fallback"
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        transition={{ duration: 0.22, ease: "easeOut" }}
-                        className="text-slate-600 text-base sm:text-lg font-medium mt-1 leading-normal"
-                      >
-                        100% do valor vai direto para a conta oficial da instituição.
-                      </motion.p>
-                    )}
-                  </AnimatePresence>
-                </div>
+                <TypewriterImpactText
+                  targetText={
+                    impact && impact.units > 0
+                      ? `Sua doação ajuda a viabilizar ${impact.units === 1 ? `1 ${impact.unitLabel}` : `${impact.units} ${impact.unitLabel}`}.`
+                      : "100% do valor vai direto para a conta oficial da instituição."
+                  }
+                />
               </div>
 
               {/* Botões de valores rápidos adaptáveis a qualquer largura de tela */}
