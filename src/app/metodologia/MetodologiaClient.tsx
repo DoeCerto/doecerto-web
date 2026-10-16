@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Poppins } from "next/font/google";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -37,6 +38,16 @@ interface MetodologiaClientProps {
 }
 
 export default function MetodologiaClient({ initialMetrics }: MetodologiaClientProps) {
+  const router = useRouter();
+
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/");
+    }
+  };
+
   // Inicializado diretamente com os dados pré-renderizados no servidor (SSR)
   const [metrics] = useState<PublicImpactMetrics>(initialMetrics);
   
@@ -262,15 +273,25 @@ export default function MetodologiaClient({ initialMetrics }: MetodologiaClientP
         <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 transition-all">
           <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link 
-                href="/#whychooseus"
-                className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center gap-2 text-sm font-semibold"
+              <button 
+                type="button"
+                onClick={handleBack}
+                className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center gap-2 text-sm font-semibold cursor-pointer"
               >
                 <ArrowLeft size={18} />
                 <span className="hidden sm:inline">Voltar ao início</span>
-              </Link>
+              </button>
               <div className="h-5 w-px bg-slate-200 hidden sm:block" />
-              <Link href="/" className="flex items-center">
+              <Link 
+                href="/" 
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    sessionStorage.removeItem("landingScrollPos");
+                    sessionStorage.removeItem("restoreSection");
+                  }
+                }}
+                className="flex items-center"
+              >
                 <img src="/logo-roxa.svg" alt="DoeCerto" className="h-6 object-contain" />
               </Link>
             </div>
@@ -675,7 +696,18 @@ export default function MetodologiaClient({ initialMetrics }: MetodologiaClientP
             <div className="flex gap-6">
               <Link href="/terms" className="hover:text-purple-700 transition-colors">Termos de Uso</Link>
               <Link href="/privacy" className="hover:text-purple-700 transition-colors">Privacidade</Link>
-              <Link href="/#whychooseus" className="hover:text-purple-700 transition-colors">Página Inicial</Link>
+              <Link 
+                href="/" 
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    sessionStorage.removeItem("landingScrollPos");
+                    sessionStorage.removeItem("restoreSection");
+                  }
+                }}
+                className="hover:text-purple-700 transition-colors"
+              >
+                Página Inicial
+              </Link>
             </div>
           </div>
         </footer>
