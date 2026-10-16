@@ -9,6 +9,7 @@ import {
   Paperclip, X, UploadCloud, Lock, ShieldCheck, Heart, AlertCircle, AlertTriangle
 } from "lucide-react";
 import { useState, Suspense, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { api } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -383,15 +384,36 @@ function PixPageContent() {
                 <h3 className="font-bold text-lg sm:text-2xl text-slate-900 tracking-tight">
                   Defina o valor da contribuição
                 </h3>
-                {impact && impact.units > 0 ? (
-                  <p className="text-slate-600 text-sm sm:text-base font-medium mt-1 transition-all">
-                    Sua doação ajuda a viabilizar <strong className="text-purple-700 font-bold">{impact.units === 1 ? `1 ${impact.unitLabel}` : `${impact.units} ${impact.unitLabel}`}</strong>.
-                  </p>
-                ) : (
-                  <p className="text-slate-600 text-sm sm:text-base font-medium mt-1">
-                    100% do valor vai direto para a conta oficial da instituição.
-                  </p>
-                )}
+                <div className="min-h-[28px] overflow-hidden">
+                  <AnimatePresence mode="wait">
+                    {impact && impact.units > 0 ? (
+                      <motion.p 
+                        key={`impact-${impact.units}-${impact.unitLabel}`}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.22, ease: "easeOut" }}
+                        className="text-slate-600 text-base sm:text-lg font-medium mt-1 leading-normal"
+                      >
+                        Sua doação ajuda a viabilizar{" "}
+                        <strong className="text-purple-700 font-bold">
+                          {impact.units === 1 ? `1 ${impact.unitLabel}` : `${impact.units} ${impact.unitLabel}`}
+                        </strong>.
+                      </motion.p>
+                    ) : (
+                      <motion.p
+                        key="fallback"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.22, ease: "easeOut" }}
+                        className="text-slate-600 text-base sm:text-lg font-medium mt-1 leading-normal"
+                      >
+                        100% do valor vai direto para a conta oficial da instituição.
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
 
               {/* Botões de valores rápidos adaptáveis a qualquer largura de tela */}
