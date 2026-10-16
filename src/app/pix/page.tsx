@@ -380,12 +380,30 @@ function PixPageContent() {
 
             <div className="bg-white rounded-2xl p-4 sm:p-7 shadow-xs border border-slate-200/90">
               <div className="mb-4 sm:mb-5">
-                <h3 className="font-bold text-lg sm:text-2xl text-slate-900 tracking-tight">
-                  Defina o valor da contribuição
-                </h3>
-                <p className="text-slate-600 text-xs sm:text-base font-medium mt-1">
-                  100% do valor vai direto para a conta oficial da instituição.
-                </p>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <h3 className="font-bold text-lg sm:text-2xl text-slate-900 tracking-tight">
+                    Defina o valor da contribuição
+                  </h3>
+                  {primaryCategoryName && (
+                    <span className="text-[10px] sm:text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200/60 shadow-2xs">
+                      {primaryCategoryName}
+                    </span>
+                  )}
+                </div>
+                {impact && impact.units > 0 ? (
+                  <p className="text-purple-900 text-xs sm:text-sm font-semibold mt-1.5 flex items-center gap-2 transition-all">
+                    <span className="w-6 h-6 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                      <CategoryImpactIcon category={primaryCategoryName} size={14} className="text-[#6B39A7]" />
+                    </span>
+                    <span>
+                      Com <strong className="font-mono text-purple-950 font-black">R$ {parseFloat(valor || "0").toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</strong>, sua doação ajuda a viabilizar <strong className="text-purple-950 font-bold">{impact.units === 1 ? `1 ${impact.unitLabel}` : `${impact.units} ${impact.unitLabel}`}</strong>.
+                    </span>
+                  </p>
+                ) : (
+                  <p className="text-slate-600 text-xs sm:text-base font-medium mt-1">
+                    100% do valor vai direto para a conta oficial da instituição.
+                  </p>
+                )}
               </div>
 
               {/* Botões de valores rápidos adaptáveis a qualquer largura de tela */}
@@ -417,34 +435,20 @@ function PixPageContent() {
                 })}
               </div>
                 
-              {/* Campo de valor inteligente com impacto integrado (Estilo Fintech) */}
-              <div className="w-full rounded-2xl border-2 border-slate-200 bg-white focus-within:border-[#6B39A7] focus-within:ring-4 focus-within:ring-purple-100/70 transition-all overflow-hidden shadow-2xs">
-                <div className="relative flex items-center px-4 py-3 sm:py-3.5">
-                  <span className="font-bold text-base sm:text-lg text-slate-400 mr-2.5 select-none">R$</span>
-                  <input 
-                    type="number" 
-                    min="1"
-                    step="any"
-                    placeholder="Ou digite outro valor (ex: 35)" 
-                    value={valor} 
-                    onChange={(e) => setValor(e.target.value)} 
-                    className="w-full bg-transparent font-bold text-base sm:text-lg text-slate-900 outline-none placeholder:font-medium placeholder:text-slate-400" 
-                  />
+              {/* Campo para outro valor */}
+              <div className="relative group w-full">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none">
+                  <span className="font-bold text-base sm:text-lg text-slate-400">R$</span>
                 </div>
-
-                {impact && impact.units > 0 && (
-                  <div className="bg-purple-50/60 border-t border-slate-100 px-4 py-2.5 flex items-center justify-between gap-3 text-xs">
-                    <div className="flex items-center gap-2 text-slate-600 min-w-0">
-                      <CategoryImpactIcon category={primaryCategoryName} size={16} className="text-[#6B39A7] shrink-0" />
-                      <span className="truncate">
-                        Impacto estimado: <strong className="text-purple-900 font-bold">{impact.units === 1 ? `1 ${impact.unitLabel}` : `${impact.units} ${impact.unitLabel}`}</strong>
-                      </span>
-                    </div>
-                    <span className="text-[11px] font-mono text-purple-700 font-medium shrink-0 hidden sm:inline">
-                      100% repasse direto
-                    </span>
-                  </div>
-                )}
+                <input 
+                  type="number" 
+                  min="1"
+                  step="any"
+                  placeholder="Ou digite outro valor (ex: 35)" 
+                  value={valor} 
+                  onChange={(e) => setValor(e.target.value)} 
+                  className="w-full bg-slate-50/60 border-2 border-slate-200 focus:bg-white focus:border-[#6B39A7] focus:ring-4 focus:ring-purple-100/70 rounded-xl py-3 sm:py-3.5 pl-12 pr-4 font-bold text-base sm:text-lg text-slate-900 transition-all outline-none placeholder:font-medium placeholder:text-slate-400" 
+                />
               </div>
             </div>
           </div>
