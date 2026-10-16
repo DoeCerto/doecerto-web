@@ -592,142 +592,102 @@ export default function MetodologiaClient({ initialMetrics }: MetodologiaClientP
             </div>
           </section>
 
-          {/* 6. PROCESSO DE AUDITORIA E SELO DOECERTO (DOSSIÊ CGU / CEPIM, CEIS, CNEP, CEAF) */}
+          {/* 5. PROCESSO DE AUDITORIA E SELO DOECERTO (DOSSIÊ CGU / CEPIM, CEIS, CNEP, CEAF) */}
           <section className="anim-sec-audit bg-white p-8 sm:p-10 rounded-[2rem] border border-slate-200/80 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-[#F3E8FF] text-[#6B39A7] flex items-center justify-center font-bold text-lg">
-                5
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#F3E8FF] text-[#6B39A7] flex items-center justify-center font-bold text-lg shrink-0">
+                  5
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-purple-600 uppercase tracking-wider block">Auditoria Governamental Contínua</span>
+                  <h2 className="text-2xl font-bold text-slate-900">Como auditamos cada instituição</h2>
+                </div>
               </div>
-              <div>
-                <span className="text-xs font-bold text-purple-600 uppercase tracking-wider block">Auditoria em Bases Governamentais (CGU)</span>
-                <h2 className="text-2xl font-bold text-slate-900">Como auditamos cada instituição</h2>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-xs text-emerald-800 self-start sm:self-center font-medium">
+                <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
+                <span>Score de Integridade <strong>100/100</strong></span>
               </div>
             </div>
 
             <p className="text-slate-600 font-light text-base leading-relaxed mb-6">
-              Diferente de inspeções presenciais pontuais que não escalam, o DoeCerto opera um <strong className="text-slate-800 font-medium">motor tecnológico de auditoria contínua</strong> integrado diretamente às bases oficiais da <strong className="text-slate-800 font-medium">Controladoria-Geral da União (CGU)</strong> e do <strong className="text-slate-800 font-medium">Portal da Transparência</strong> do Governo Federal:
+              Para assegurar idoneidade técnica sem depender de vistorias manuais lentas, o DoeCerto opera um motor de checagem automatizada conectado às bases oficiais da <strong className="text-slate-800 font-medium">Controladoria-Geral da União (CGU)</strong> e do <strong className="text-slate-800 font-medium">Portal da Transparência</strong>:
             </p>
 
-            {/* CARD DE DESTAQUE: SCORE DE INTEGRIDADE & COMPLIANCE */}
-            <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-purple-50/70 via-white to-slate-50 border border-purple-100 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-200">
-                  <ShieldCheck size={24} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-slate-900 text-base">Score de Integridade DoeCerto</h3>
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold text-xs">
-                      100/100 REGULAR
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Somente ONGs com pontuação máxima de conformidade (zero sanções ativas) recebem o Selo Oficial e são homologadas para repasses.
-                  </p>
-                </div>
-              </div>
-              <div className="shrink-0 text-xs font-mono font-bold text-purple-700 bg-white px-3.5 py-2 rounded-xl border border-purple-200 shadow-2xs">
-                CGU • Portal da Transparência
-              </div>
-            </div>
-
-            {/* GRID DAS 4 BASES OFICIAIS DE SANÇÃO E COMPLIANCE */}
-            <div className="anim-audit-grid grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* GRID DAS 4 BASES OFICIAIS */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               
               {/* 1. CEPIM */}
-              <div className="anim-audit-card p-5 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex flex-col justify-between hover:border-purple-200 hover:bg-purple-50/20 transition-all">
-                <div>
-                  <div className="w-10 h-10 rounded-xl bg-purple-100/70 text-purple-700 flex items-center justify-center font-bold text-sm mb-3 border border-purple-200/60">
-                    <FileWarning size={19} />
+              <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/70 hover:border-purple-200 transition-colors">
+                <div className="flex items-center gap-3 mb-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                    <FileWarning size={18} />
                   </div>
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <h3 className="font-bold text-slate-900 text-sm">1. CEPIM — Entidades Impedidas</h3>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white text-purple-700 border border-slate-200 font-bold shrink-0">
-                      CGU / Portal
-                    </span>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm">CEPIM</h3>
+                    <p className="text-[11px] text-purple-700 font-medium">Entidades Privadas Impedidas</p>
                   </div>
-                  <p className="text-xs text-slate-500 leading-relaxed font-light">
-                    Consulta direta ao <strong>Cadastro de Entidades Privadas Sem Fins Lucrativos Impedidas</strong>. Rastreia e veta qualquer ONG proibida de firmar convênios ou parcerias por irregularidades em prestações de contas ou desvio de recursos públicos.
-                  </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-200/60 text-[11px] font-mono font-medium text-purple-700 flex items-center gap-1.5">
-                  <CheckCircle2 size={13} className="text-emerald-600" /> Veto a Entidades com Inadimplência Pública
-                </div>
+                <p className="text-xs text-slate-500 font-light leading-relaxed">
+                  Identifica e veta instituições proibidas de celebrar convênios ou parcerias públicas por irregularidades em prestações de contas.
+                </p>
               </div>
 
               {/* 2. CEIS */}
-              <div className="anim-audit-card p-5 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex flex-col justify-between hover:border-purple-200 hover:bg-purple-50/20 transition-all">
-                <div>
-                  <div className="w-10 h-10 rounded-xl bg-purple-100/70 text-purple-700 flex items-center justify-center font-bold text-sm mb-3 border border-purple-200/60">
-                    <ShieldAlert size={19} />
+              <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/70 hover:border-purple-200 transition-colors">
+                <div className="flex items-center gap-3 mb-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                    <ShieldAlert size={18} />
                   </div>
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <h3 className="font-bold text-slate-900 text-sm">2. CEIS — Entidades Inidôneas & Suspensas</h3>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white text-purple-700 border border-slate-200 font-bold shrink-0">
-                      CGU / Federal
-                    </span>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm">CEIS</h3>
+                    <p className="text-[11px] text-purple-700 font-medium">Empresas e Entidades Inidôneas</p>
                   </div>
-                  <p className="text-xs text-slate-500 leading-relaxed font-light">
-                    Varredura no <strong>Cadastro Nacional de Empresas Inidôneas e Suspensas</strong>. Identifica sanções restritivas aplicadas por órgãos públicos contra organizações que praticaram infrações legais graves ou atos de inidoneidade.
-                  </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-200/60 text-[11px] font-mono font-medium text-purple-700 flex items-center gap-1.5">
-                  <CheckCircle2 size={13} className="text-emerald-600" /> Bloqueio de Sanções Restritivas Ativas
-                </div>
+                <p className="text-xs text-slate-500 font-light leading-relaxed">
+                  Varredura de sanções restritivas aplicadas por órgãos públicos contra organizações que praticaram infrações legais graves.
+                </p>
               </div>
 
               {/* 3. CNEP */}
-              <div className="anim-audit-card p-5 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex flex-col justify-between hover:border-purple-200 hover:bg-purple-50/20 transition-all">
-                <div>
-                  <div className="w-10 h-10 rounded-xl bg-purple-100/70 text-purple-700 flex items-center justify-center font-bold text-sm mb-3 border border-purple-200/60">
-                    <Scale size={19} />
+              <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/70 hover:border-purple-200 transition-colors">
+                <div className="flex items-center gap-3 mb-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                    <Scale size={18} />
                   </div>
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <h3 className="font-bold text-slate-900 text-sm">3. CNEP — Lei Anticorrupção</h3>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white text-purple-700 border border-slate-200 font-bold shrink-0">
-                      Lei 12.846/13
-                    </span>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm">CNEP</h3>
+                    <p className="text-[11px] text-purple-700 font-medium">Lei Anticorrupção (12.846/13)</p>
                   </div>
-                  <p className="text-xs text-slate-500 leading-relaxed font-light">
-                    Checagem no <strong>Cadastro Nacional de Empresas Punidas</strong> com base na Lei Anticorrupção. Veta entidades que tenham sofrido sanções ou multas por atos lesivos contra o patrimônio público ou a administração social.
-                  </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-200/60 text-[11px] font-mono font-medium text-purple-700 flex items-center gap-1.5">
-                  <CheckCircle2 size={13} className="text-emerald-600" /> Conformidade Rígida com a Lei Anticorrupção
-                </div>
+                <p className="text-xs text-slate-500 font-light leading-relaxed">
+                  Checagem rigorosa de multas ou condenações por atos lesivos contra o patrimônio ou a administração pública.
+                </p>
               </div>
 
               {/* 4. CEAF */}
-              <div className="anim-audit-card p-5 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex flex-col justify-between hover:border-purple-200 hover:bg-purple-50/20 transition-all">
-                <div>
-                  <div className="w-10 h-10 rounded-xl bg-purple-100/70 text-purple-700 flex items-center justify-center font-bold text-sm mb-3 border border-purple-200/60">
-                    <UserCheck size={19} />
+              <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/70 hover:border-purple-200 transition-colors">
+                <div className="flex items-center gap-3 mb-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                    <UserCheck size={18} />
                   </div>
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <h3 className="font-bold text-slate-900 text-sm">4. CEAF — Compliance de Representantes (CPF)</h3>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white text-purple-700 border border-slate-200 font-bold shrink-0">
-                      Auditoria de CPFs
-                    </span>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm">CEAF (CPF)</h3>
+                    <p className="text-[11px] text-purple-700 font-medium">Ficha Limpa dos Dirigentes</p>
                   </div>
-                  <p className="text-xs text-slate-500 leading-relaxed font-light">
-                    Auditoria no <strong>Cadastro de Expulsões da Administração Federal</strong> cruzando o CPF do presidente e administradores estatutários, garantindo que os líderes da ONG possuem ficha limpa e nunca foram expulsos por improbidade.
-                  </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-200/60 text-[11px] font-mono font-medium text-purple-700 flex items-center gap-1.5">
-                  <CheckCircle2 size={13} className="text-emerald-600" /> Ficha Limpa de Presidentes e Diretores
-                </div>
+                <p className="text-xs text-slate-500 font-light leading-relaxed">
+                  Auditoria no Cadastro de Expulsões cruzando o CPF dos administradores estatutários para atestar ausência de sanções funcionais.
+                </p>
               </div>
 
             </div>
 
-            {/* TRAVA FINAL: REPASSE BANCÁRIO & SUSPENSÃO AUTOMÁTICA */}
-            <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-500">
-              <span className="flex items-center gap-2 font-medium text-slate-700">
-                <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-                Auditoria contínua: Qualquer nova sanção em base governamental acarreta suspensão imediata do Selo e veto de novos repasses.
-              </span>
-              <span className="text-[11px] font-mono text-purple-700 shrink-0">
-                PIX Institucional Direto ao CNPJ
+            {/* TRAVA FINAL: AUDITORIA CONTÍNUA E SUSPENSÃO AUTOMÁTICA */}
+            <div className="mt-5 pt-4 border-t border-slate-100 flex items-center gap-2.5 text-xs text-slate-500 font-light">
+              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+              <span>
+                <strong className="font-medium text-slate-700">Auditoria contínua:</strong> A homologação é dinâmica. Qualquer registro superveniente nas bases oficiais revoga o Selo DoeCerto e bloqueia novos repasses.
               </span>
             </div>
           </section>
