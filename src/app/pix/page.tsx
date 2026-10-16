@@ -66,6 +66,7 @@ function TypewriterImpactText({
   prefix?: string; 
 }) {
   const [displayedText, setDisplayedText] = useState("");
+  const [isTyping, setIsTyping] = useState(true);
   const currentTextRef = useRef("");
   const targetTextRef = useRef(targetText);
   targetTextRef.current = targetText;
@@ -74,13 +75,22 @@ function TypewriterImpactText({
     let timeoutId: NodeJS.Timeout;
     let isCancelled = false;
 
+    if (currentTextRef.current !== targetText) {
+      setIsTyping(true);
+    }
+
     const tick = () => {
       if (isCancelled) return;
 
       const current = currentTextRef.current;
       const target = targetTextRef.current;
 
-      if (current === target) return;
+      if (current === target) {
+        setIsTyping(false); // Concluiu a escrita: cursor desaparece!
+        return;
+      }
+
+      setIsTyping(true);
 
       // Se o target não começa com o texto atual, apaga letra a letra (backspace)
       if (!target.startsWith(current)) {
@@ -115,7 +125,9 @@ function TypewriterImpactText({
       {dynamicPart && (
         <strong className="text-purple-700 font-bold ml-1.5">{dynamicPart}</strong>
       )}
-      <span className="inline-block w-[2px] h-[1.1em] bg-purple-700 ml-1 align-middle animate-pulse" />
+      {isTyping && (
+        <span className="inline-block w-[2px] h-[1.1em] bg-purple-700 ml-1 align-middle animate-pulse" />
+      )}
     </p>
   );
 }
@@ -146,7 +158,7 @@ function PixPageContent() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
-  const [valor, setValor] = useState("20");
+  const [valor, setValor] = useState("");
   const valoresRapidos = ["5", "10", "20", "50", "100"];
 
   // Estado para controlar o modal do tutorial na página do Pix
@@ -445,13 +457,15 @@ function PixPageContent() {
                 <h3 className="font-bold text-lg sm:text-2xl text-slate-900 tracking-tight">
                   Defina o valor da contribuição
                 </h3>
-                <TypewriterImpactText
-                  targetText={
-                    impact && impact.units > 0
-                      ? `Sua doação ajuda a viabilizar ${impact.units === 1 ? `1 ${impact.unitLabel}` : `${impact.units} ${impact.unitLabel}`}.`
-                      : "100% do valor vai direto para a conta oficial da instituição."
-                  }
-                />
+                {valor && impact && impact.units > 0 ? (
+                  <TypewriterImpactText
+                    targetText={`Sua doação ajuda a viabilizar ${impact.units === 1 ? `1 ${impact.unitLabel}` : `${impact.units} ${impact.unitLabel}`}.`}
+                  />
+                ) : (
+                  <p className="text-slate-600 text-base sm:text-lg font-medium mt-1 leading-normal min-h-[28px]">
+                    100% do valor vai direto para a conta oficial da instituição.
+                  </p>
+                )}
               </div>
 
               {/* Botões de valores rápidos adaptáveis a qualquer largura de tela */}
