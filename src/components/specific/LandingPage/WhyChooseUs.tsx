@@ -259,7 +259,7 @@ export function WhyChooseUs() {
               </h3>
 
               <p className="text-gray-500 font-light text-sm leading-relaxed">
-                Entidades rigorosamente checadas com CNPJ ativo, estatuto social e histórico presencial aprovado.
+                Entidades auditadas em bases oficiais do governo (Receita Federal, CNDs e Bacen) com governança ativa aprovada.
               </p>
             </div>
 

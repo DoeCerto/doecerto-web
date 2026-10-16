@@ -12,11 +12,14 @@ import {
   ShieldCheck, 
   Sparkles, 
   CheckCircle2, 
-  ArrowRight,
-  Calculator,
-  Building2,
-  FileCheck2,
-  Clock
+  ArrowRight, 
+  Calculator, 
+  Building2, 
+  FileCheck2, 
+  Clock,
+  Database,
+  Landmark,
+  Activity
 } from "lucide-react";
 import { CATEGORY_IMPACT_CONFIG, calculateImpact } from "@/utils/impactCalculator";
 import { PublicImpactMetrics } from "@/services/metrics.service";
@@ -592,54 +595,78 @@ export default function MetodologiaClient({ initialMetrics }: MetodologiaClientP
                 5
               </div>
               <div>
-                <span className="text-xs font-bold text-purple-600 uppercase tracking-wider block">Critérios de Verificação</span>
+                <span className="text-xs font-bold text-purple-600 uppercase tracking-wider block">Auditoria em Bases Oficiais do Governo</span>
                 <h2 className="text-2xl font-bold text-slate-900">Como auditamos cada instituição</h2>
               </div>
             </div>
 
             <p className="text-slate-600 font-light text-base leading-relaxed mb-6">
-              Para conquistar o Selo de Verificação DoeCerto e estar habilitada a receber doações pela plataforma, a entidade passa por 4 etapas rigorosas:
+              Para receber o Selo de Verificação DoeCerto e estar habilitada a receber doações, cada organização é submetida a um motor tecnológico de auditoria contínua que cruza dados em tempo real com as principais bases públicas e oficiais do governo brasileiro:
             </p>
 
             <div className="anim-audit-grid grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="anim-audit-card p-5 rounded-2xl bg-slate-50 border border-slate-100">
-                <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm mb-3">
-                  <Building2 size={18} />
+              {/* Etapa 1: Receita Federal */}
+              <div className="anim-audit-card p-5 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex flex-col justify-between hover:border-purple-200 hover:bg-purple-50/20 transition-all">
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-purple-100/70 text-purple-700 flex items-center justify-center font-bold text-sm mb-3 border border-purple-200/60">
+                    <Database size={19} />
+                  </div>
+                  <h3 className="font-bold text-slate-900 text-sm mb-1.5">1. Varredura Cadastral na Receita Federal</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed font-light">
+                    Cruzamento automatizado com a base da Receita Federal do Brasil (RFB) para validar CNPJ Ativo, natureza jurídica sem fins lucrativos (código 399-9 Associação Privada ou Fundação) e ausência de impedimentos legais.
+                  </p>
                 </div>
-                <h3 className="font-bold text-slate-900 text-sm mb-1">1. Regularidade Fiscal & CNPJ</h3>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Checagem cadastral na Receita Federal, verificação de atividade econômica compatível e certidões negativas de débitos.
-                </p>
+                <div className="mt-4 pt-3 border-t border-slate-200/60 text-[11px] font-mono font-medium text-purple-700 flex items-center gap-1.5">
+                  <CheckCircle2 size={13} className="text-emerald-600" /> Base Oficial: RFB / CNPJ
+                </div>
               </div>
 
-              <div className="anim-audit-card p-5 rounded-2xl bg-slate-50 border border-slate-100">
-                <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm mb-3">
-                  <FileCheck2 size={18} />
+              {/* Etapa 2: Certidões e Regularidade Jurídica */}
+              <div className="anim-audit-card p-5 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex flex-col justify-between hover:border-purple-200 hover:bg-purple-50/20 transition-all">
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-purple-100/70 text-purple-700 flex items-center justify-center font-bold text-sm mb-3 border border-purple-200/60">
+                    <FileCheck2 size={19} />
+                  </div>
+                  <h3 className="font-bold text-slate-900 text-sm mb-1.5">2. Certidões Fiscais & Regularidade Jurídica</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed font-light">
+                    Checagem de Certidão Negativa de Débitos Federais (CND / PGFN) e regularidade perante o FGTS (CRF Caixa), além de validação digital do Estatuto Social e da ata de posse da diretoria vigente registrada em cartório (RCPJ).
+                  </p>
                 </div>
-                <h3 className="font-bold text-slate-900 text-sm mb-1">2. Estatuto & Diretoria Ativa</h3>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Análise do estatuto social registrado em cartório e validação da ata de posse da diretoria vigente.
-                </p>
+                <div className="mt-4 pt-3 border-t border-slate-200/60 text-[11px] font-mono font-medium text-purple-700 flex items-center gap-1.5">
+                  <CheckCircle2 size={13} className="text-emerald-600" /> Bases: PGFN • Caixa FGTS • RCPJ
+                </div>
               </div>
 
-              <div className="anim-audit-card p-5 rounded-2xl bg-slate-50 border border-slate-100">
-                <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm mb-3">
-                  <ShieldCheck size={18} />
+              {/* Etapa 3: Banco Central e PIX */}
+              <div className="anim-audit-card p-5 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex flex-col justify-between hover:border-purple-200 hover:bg-purple-50/20 transition-all">
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-purple-100/70 text-purple-700 flex items-center justify-center font-bold text-sm mb-3 border border-purple-200/60">
+                    <Landmark size={19} />
+                  </div>
+                  <h3 className="font-bold text-slate-900 text-sm mb-1.5">3. Homologação Bancária & Chave PIX (Bacen)</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed font-light">
+                    Auditoria do arranjo bancário de pagamento junto ao Banco Central. A chave PIX institucional obrigatoriamente deve pertencer ao CNPJ da própria ONG, com veto e bloqueio absoluto a repasses para contas de pessoas físicas.
+                  </p>
                 </div>
-                <h3 className="font-bold text-slate-900 text-sm mb-1">3. Checagem Bancária Institucional</h3>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  A chave PIX e conta corrente obrigatoriamente devem pertencer ao CNPJ da própria ONG, vetando repasses para contas de pessoas físicas.
-                </p>
+                <div className="mt-4 pt-3 border-t border-slate-200/60 text-[11px] font-mono font-medium text-purple-700 flex items-center gap-1.5">
+                  <CheckCircle2 size={13} className="text-emerald-600" /> Sistema Financeiro: Bacen / SPI
+                </div>
               </div>
 
-              <div className="anim-audit-card p-5 rounded-2xl bg-slate-50 border border-slate-100">
-                <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm mb-3">
-                  <Clock size={18} />
+              {/* Etapa 4: Monitoramento Contínuo e Curadoria Digital */}
+              <div className="anim-audit-card p-5 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex flex-col justify-between hover:border-purple-200 hover:bg-purple-50/20 transition-all">
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-purple-100/70 text-purple-700 flex items-center justify-center font-bold text-sm mb-3 border border-purple-200/60">
+                    <Activity size={19} />
+                  </div>
+                  <h3 className="font-bold text-slate-900 text-sm mb-1.5">4. Monitoramento Contínuo & Curadoria Digital</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed font-light">
+                    Rotinas automatizadas de revalidação periódica nas bases do governo para garantir conformidade continuada, somadas a curadoria digital de evidências públicas de atuação social (relatórios, projetos ativos e presença comunitária comprovada).
+                  </p>
                 </div>
-                <h3 className="font-bold text-slate-900 text-sm mb-1">4. Verificação Presencial & Histórico</h3>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Inspeção presencial da sede ou validação de registros de atuação, projetos realizados e impacto comunitário comprovado.
-                </p>
+                <div className="mt-4 pt-3 border-t border-slate-200/60 text-[11px] font-mono font-medium text-purple-700 flex items-center gap-1.5">
+                  <CheckCircle2 size={13} className="text-emerald-600" /> Compliance Automatizado & Curadoria
+                </div>
               </div>
             </div>
           </section>
