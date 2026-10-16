@@ -380,27 +380,15 @@ function PixPageContent() {
 
             <div className="bg-white rounded-2xl p-4 sm:p-7 shadow-xs border border-slate-200/90">
               <div className="mb-4 sm:mb-5">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <h3 className="font-bold text-lg sm:text-2xl text-slate-900 tracking-tight">
-                    Defina o valor da contribuição
-                  </h3>
-                  {primaryCategoryName && (
-                    <span className="text-xs font-mono font-bold px-3 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200/70 shadow-2xs">
-                      {primaryCategoryName}
-                    </span>
-                  )}
-                </div>
+                <h3 className="font-bold text-lg sm:text-2xl text-slate-900 tracking-tight">
+                  Defina o valor da contribuição
+                </h3>
                 {impact && impact.units > 0 ? (
-                  <div className="text-slate-700 text-sm sm:text-base font-normal mt-2.5 flex items-center gap-3 transition-all leading-relaxed">
-                    <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 shadow-2xs">
-                      <CategoryImpactIcon category={primaryCategoryName} size={18} className="text-[#6B39A7]" />
-                    </div>
-                    <p className="flex-1">
-                      Com <span className="font-mono text-purple-900 font-black text-base sm:text-lg">R$ {parseFloat(valor || "0").toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</span>, sua doação ajuda a viabilizar <strong className="text-purple-950 font-extrabold">{impact.units === 1 ? `1 ${impact.unitLabel}` : `${impact.units} ${impact.unitLabel}`}</strong>.
-                    </p>
-                  </div>
+                  <p className="text-slate-600 text-sm sm:text-base font-medium mt-1 transition-all">
+                    Sua doação ajuda a viabilizar <strong className="text-purple-700 font-bold">{impact.units === 1 ? `1 ${impact.unitLabel}` : `${impact.units} ${impact.unitLabel}`}</strong>.
+                  </p>
                 ) : (
-                  <p className="text-slate-600 text-sm sm:text-base font-medium mt-2">
+                  <p className="text-slate-600 text-sm sm:text-base font-medium mt-1">
                     100% do valor vai direto para a conta oficial da instituição.
                   </p>
                 )}
