@@ -127,6 +127,9 @@ export async function middleware(request: NextRequest) {
         // Se a sessão expirou completamente (ou seja, refresh falhou), limpa cookies residuais
         response.cookies.delete('access_token');
         response.cookies.delete('refresh_token');
+        response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        response.headers.set('Pragma', 'no-cache');
+        response.headers.set('Expires', '0');
         return response;
     } else if (token) {
         if (isOngPrivateRoute && userRole !== 'ong' && userRole !== 'admin') {

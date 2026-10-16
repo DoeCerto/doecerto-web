@@ -41,12 +41,34 @@ import { CategoryImpactIcon } from "@/components/ui/CategoryImpactIcon";
 
 export default function OngSetupProfile() {
   const router = useRouter();
-  const { refreshSession } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, userRole, refreshSession } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [ongName, setOngName] = useState("Minha ONG");
   const [availableCategories, setAvailableCategories] = useState<any[]>([]);
+
+  // Bloqueio rigoroso de autenticação: redireciona para login se deslogado ou sem role de ONG
+  useEffect(() => {
+    if (!authLoading && (!isAuthenticated || (userRole !== "ong" && userRole !== "admin"))) {
+      window.location.replace("/login");
+    }
+  }, [authLoading, isAuthenticated, userRole]);
+
+  // Previne restauração deslogada via BFCache (botão voltar do navegador)
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        refreshSession();
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+          window.location.replace("/login");
+        }
+      }
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, [refreshSession]);
 
   const handleLogout = async (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -132,48 +154,56 @@ export default function OngSetupProfile() {
         const categories = await OngSetupService.getCategories();
         setAvailableCategories(categories || []);
 
-        const profile = await OngsProfileService.getMyProfile();
-
-        if (profile) {
-          setOngId(profile.id);
-          setOngName(profile.name || "Minha ONG");
-          setDescription(profile.description || "");
-          setPhone(profile.contactNumber || "");
-          setWebsite(profile.website || "");
-
-          try {
-            const wishlistData = await WishlistService.getItems(profile.id);
-            setItems(wishlistData || []);
-          } catch (err) {
-            console.error("Erro ao carregar wishlist");
+        const profile = await OngsProfileService.getMyProfile().catch((err: any) => {
+          if (err?.status === 401 || err?.status === 403) {
+            window.location.replace("/login");
           }
+          return null;
+        });
 
-          if (profile.address && typeof profile.address === 'object') {
-            setStreet(profile.address.street || "");
-            setNumber(profile.address.number || "");
-            setComplement(profile.address.complement || "");
-            setNeighborhood(profile.address.neighborhood || "");
-            setCity(profile.address.city || "");
-            setState(profile.address.state || "");
-            setZipCode(profile.address.zipCode || "");
-            setCountry(profile.address.country || "Brasil");
-          }
-
-          if (profile.yearsOfOperation) setYears(profile.yearsOfOperation.toString());
-          if (profile.avatarUrl) setLogoPreview(profile.avatarUrl);
-          if (profile.categories) {
-            setSelectedCategoryIds(profile.categories.map((c: any) => c.id));
-          }
-          if (profile.primaryCategoryId) {
-            setPrimaryCategoryId(profile.primaryCategoryId);
-          } else if (profile.primaryCategory?.id) {
-            setPrimaryCategoryId(profile.primaryCategory.id);
-          } else if (profile.categories && profile.categories.length > 0) {
-            setPrimaryCategoryId(profile.categories[0].id);
-          }
+        if (!profile) {
+          window.location.replace("/login");
+          return;
         }
 
-        const bankData = await BankAccountService.getMyAccount();
+        setOngId(profile.id);
+        setOngName(profile.name || "Minha ONG");
+        setDescription(profile.description || "");
+        setPhone(profile.contactNumber || "");
+        setWebsite(profile.website || "");
+
+        try {
+          const wishlistData = await WishlistService.getItems(profile.id);
+          setItems(wishlistData || []);
+        } catch (err) {
+          console.error("Erro ao carregar wishlist");
+        }
+
+        if (profile.address && typeof profile.address === 'object') {
+          setStreet(profile.address.street || "");
+          setNumber(profile.address.number || "");
+          setComplement(profile.address.complement || "");
+          setNeighborhood(profile.address.neighborhood || "");
+          setCity(profile.address.city || "");
+          setState(profile.address.state || "");
+          setZipCode(profile.address.zipCode || "");
+          setCountry(profile.address.country || "Brasil");
+        }
+
+        if (profile.yearsOfOperation) setYears(profile.yearsOfOperation.toString());
+        if (profile.avatarUrl) setLogoPreview(profile.avatarUrl);
+        if (profile.categories) {
+          setSelectedCategoryIds(profile.categories.map((c: any) => c.id));
+        }
+        if (profile.primaryCategoryId) {
+          setPrimaryCategoryId(profile.primaryCategoryId);
+        } else if (profile.primaryCategory?.id) {
+          setPrimaryCategoryId(profile.primaryCategory.id);
+        } else if (profile.categories && profile.categories.length > 0) {
+          setPrimaryCategoryId(profile.categories[0].id);
+        }
+
+        const bankData = await BankAccountService.getMyAccount().catch(() => null);
         if (bankData) {
           const savedKey = bankData.pixKey || "";
 
@@ -198,7 +228,11 @@ export default function OngSetupProfile() {
           }
         }
 
-      } catch (error) {
+      } catch (error: any) {
+        if (error?.status === 401 || error?.status === 403) {
+          window.location.replace("/login");
+          return;
+        }
         toast.error("Erro ao sincronizar dados com o servidor.");
       } finally {
         setInitialLoading(false);
@@ -366,6 +400,17 @@ export default function OngSetupProfile() {
     }
     return clean;
   };
+
+  if (authLoading || initialLoading || !isAuthenticated || (userRole !== "ong" && userRole !== "admin")) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-3">
+        <Loader2 className="animate-spin text-[#6B39A7]" size={40} />
+        <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
+          Verificando credenciais...
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-32">
