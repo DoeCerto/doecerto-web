@@ -432,30 +432,6 @@ function PixPageContent() {
                   className="w-full bg-slate-50/60 border-2 border-slate-200 focus:bg-white focus:border-[#6B39A7] focus:ring-4 focus:ring-purple-100/70 rounded-xl py-3 sm:py-3.5 pl-12 pr-4 font-bold text-base sm:text-lg text-slate-900 transition-all outline-none placeholder:font-medium placeholder:text-slate-400" 
                 />
               </div>
-
-              {/* Box Dinâmica de Impacto Social Tangível (Padrão Tecnológico) */}
-              {impact && (
-                <div className="mt-4 p-3.5 sm:p-4 rounded-xl bg-purple-50/70 border border-purple-200/80 flex items-center gap-3 sm:gap-3.5 transition-all">
-                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white border border-purple-100 flex items-center justify-center text-purple-700 shadow-xs shrink-0 select-none">
-                    <CategoryImpactIcon category={primaryCategoryName} size={22} className="text-[#6B39A7]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-purple-700 bg-purple-100/70 px-2 py-0.5 rounded-md">
-                        Impacto Estimado
-                      </span>
-                      {primaryCategoryName && (
-                        <span className="text-[10px] sm:text-xs font-semibold text-slate-500 truncate">
-                          • {primaryCategoryName}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs sm:text-sm font-bold text-purple-950 leading-snug">
-                      {impact.impactText}
-                    </p>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -750,13 +726,16 @@ function PixPageContent() {
 
             {/* Destaque do Impacto Gerado */}
             {impact && impact.units > 0 && (
-              <div className="bg-purple-50 border border-purple-200/90 rounded-2xl p-4 text-left mb-6 flex items-start gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-white border border-purple-100 flex items-center justify-center text-purple-700 shrink-0 shadow-xs mt-0.5">
-                  <CategoryImpactIcon category={primaryCategoryName} size={20} className="text-[#6B39A7]" />
+              <div className="bg-slate-50/90 border border-slate-200/80 rounded-2xl p-4 text-left mb-6 flex items-start gap-3.5">
+                <div className="w-11 h-11 rounded-xl bg-purple-100/70 border border-purple-200/60 flex items-center justify-center text-purple-700 shrink-0 shadow-2xs mt-0.5">
+                  <CategoryImpactIcon category={primaryCategoryName} size={22} className="text-purple-700" />
                 </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-purple-700">Impacto Estimado da sua Doação</p>
-                  <p className="text-sm sm:text-base font-bold text-purple-950 mt-0.5 leading-snug">
+                <div className="flex-1 min-w-0">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 flex items-center gap-1.5 mb-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    Impacto Social Concretizado
+                  </span>
+                  <p className="text-sm font-semibold text-slate-800 leading-snug">
                     {impact.impactText}
                   </p>
                 </div>

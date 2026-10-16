@@ -539,25 +539,6 @@ export default function Donation({
                 </label>
               )}
 
-              {/* Box Dinâmica de Impacto Social Tangível (Doação Material) */}
-              {listaEnvio.length > 0 && materialImpact && (
-                <div className="mb-5 p-3.5 sm:p-4 rounded-xl bg-purple-50/70 border border-purple-200/80 flex items-center gap-3 sm:gap-3.5 transition-all">
-                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white border border-purple-100 flex items-center justify-center text-purple-700 shadow-xs shrink-0 select-none">
-                    <CategoryImpactIcon category={ongData?.primaryCategory?.name || listaEnvio[0]?.itemName} size={22} className="text-[#6B39A7]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-purple-700 bg-purple-100/70 px-2 py-0.5 rounded-md">
-                        Impacto Estimado
-                      </span>
-                    </div>
-                    <p className="text-xs sm:text-sm font-bold text-purple-950 leading-snug">
-                      {materialImpact.impactText}
-                    </p>
-                  </div>
-                </div>
-              )}
-
               {/* Resumo da Transparência DoeCerto */}
               <div className="bg-slate-50/90 rounded-xl p-3.5 sm:p-5 my-5 border border-slate-200">
                 <div className="flex flex-col min-[440px]:flex-row min-[440px]:justify-between min-[440px]:items-center text-sm sm:text-base font-medium text-slate-600 mb-2.5 gap-1">
