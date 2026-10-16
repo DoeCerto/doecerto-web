@@ -16,7 +16,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { DonorService } from "@/services/donor.service";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { useAuth } from "@/contexts/AuthContext";
-import { getPublicImpactMetrics, PublicImpactMetrics } from "@/services/metrics.service";
 
 type Ong = {
   id: number;
@@ -111,19 +110,6 @@ export default function HomeClient({
   const [isAboutMenuOpen, setIsAboutMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [impactMetrics, setImpactMetrics] = useState<PublicImpactMetrics | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-    getPublicImpactMetrics()
-      .then((data) => {
-        if (isMounted) setImpactMetrics(data);
-      })
-      .catch(() => {});
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   const [guestModal, setGuestModal] = useState<{ isOpen: boolean; type: 'donate' | 'location' }>({ isOpen: false, type: 'donate' });
 
@@ -690,37 +676,6 @@ export default function HomeClient({
       </AnimatePresence>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-        {/* BANNER DE IMPACTO COLETIVO AUDITADO */}
-        <div className="mb-6 bg-gradient-to-r from-purple-50 via-indigo-50/50 to-purple-50 border border-purple-100/90 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
-          <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-purple-300">
-              <Sparkles size={20} />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-purple-700 uppercase tracking-wider flex items-center gap-1.5">
-                Comunidade DoeCerto
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-              </div>
-              <p className="text-sm font-medium text-slate-800">
-                Juntos já amparamos mais de{" "}
-                <span className="font-extrabold text-purple-900">
-                  {impactMetrics ? (
-                    `+${impactMetrics.totalLivesImpacted.toLocaleString('pt-BR')} vidas`
-                  ) : (
-                    <span className="inline-block w-16 h-3.5 bg-purple-200/70 animate-pulse rounded align-middle mx-1" />
-                  )}
-                </span>{" "}
-                com doações 100% auditadas e repasse direto às ONGs.
-              </p>
-            </div>
-          </div>
-          <a
-            href="/metodologia"
-            className="text-xs sm:text-sm font-bold text-purple-700 hover:text-purple-900 bg-white hover:bg-purple-100/60 border border-purple-200/80 px-4 py-2 rounded-xl transition-all active:scale-95 shrink-0 flex items-center gap-1.5 shadow-xs"
-          >
-            Ver metodologia de impacto <ChevronRight size={16} />
-          </a>
-        </div>
 
         <div className="relative mb-6 w-full">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
