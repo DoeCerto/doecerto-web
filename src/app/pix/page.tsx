@@ -385,22 +385,22 @@ function PixPageContent() {
                     Defina o valor da contribuição
                   </h3>
                   {primaryCategoryName && (
-                    <span className="text-[10px] sm:text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200/60 shadow-2xs">
+                    <span className="text-xs font-mono font-bold px-3 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200/70 shadow-2xs">
                       {primaryCategoryName}
                     </span>
                   )}
                 </div>
                 {impact && impact.units > 0 ? (
-                  <p className="text-purple-900 text-xs sm:text-sm font-semibold mt-1.5 flex items-center gap-2 transition-all">
-                    <span className="w-6 h-6 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
-                      <CategoryImpactIcon category={primaryCategoryName} size={14} className="text-[#6B39A7]" />
-                    </span>
-                    <span>
-                      Com <strong className="font-mono text-purple-950 font-black">R$ {parseFloat(valor || "0").toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</strong>, sua doação ajuda a viabilizar <strong className="text-purple-950 font-bold">{impact.units === 1 ? `1 ${impact.unitLabel}` : `${impact.units} ${impact.unitLabel}`}</strong>.
-                    </span>
-                  </p>
+                  <div className="text-slate-700 text-sm sm:text-base font-normal mt-2.5 flex items-center gap-3 transition-all leading-relaxed">
+                    <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 shadow-2xs">
+                      <CategoryImpactIcon category={primaryCategoryName} size={18} className="text-[#6B39A7]" />
+                    </div>
+                    <p className="flex-1">
+                      Com <span className="font-mono text-purple-900 font-black text-base sm:text-lg">R$ {parseFloat(valor || "0").toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</span>, sua doação ajuda a viabilizar <strong className="text-purple-950 font-extrabold">{impact.units === 1 ? `1 ${impact.unitLabel}` : `${impact.units} ${impact.unitLabel}`}</strong>.
+                    </p>
+                  </div>
                 ) : (
-                  <p className="text-slate-600 text-xs sm:text-base font-medium mt-1">
+                  <p className="text-slate-600 text-sm sm:text-base font-medium mt-2">
                     100% do valor vai direto para a conta oficial da instituição.
                   </p>
                 )}
