@@ -259,7 +259,7 @@ export function WhyChooseUs() {
               </h3>
 
               <p className="text-gray-500 font-light text-sm leading-relaxed">
-                Entidades auditadas em bases oficiais do governo (Receita Federal, CNDs e Bacen) com governança ativa aprovada.
+                Entidades auditadas em tempo real nas bases da CGU (CEPIM, CEIS, CNEP e CEAF) com Score de Integridade 100/100.
               </p>
             </div>
 

@@ -19,7 +19,11 @@ import {
   Clock,
   Database,
   Landmark,
-  Activity
+  Activity,
+  FileWarning,
+  ShieldAlert,
+  Scale,
+  UserCheck
 } from "lucide-react";
 import { CATEGORY_IMPACT_CONFIG, calculateImpact } from "@/utils/impactCalculator";
 import { PublicImpactMetrics } from "@/services/metrics.service";
@@ -588,86 +592,143 @@ export default function MetodologiaClient({ initialMetrics }: MetodologiaClientP
             </div>
           </section>
 
-          {/* 6. PROCESSO DE AUDITORIA E SELO DOECERTO */}
+          {/* 6. PROCESSO DE AUDITORIA E SELO DOECERTO (DOSSIÊ CGU / CEPIM, CEIS, CNEP, CEAF) */}
           <section className="anim-sec-audit bg-white p-8 sm:p-10 rounded-[2rem] border border-slate-200/80 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 rounded-2xl bg-[#F3E8FF] text-[#6B39A7] flex items-center justify-center font-bold text-lg">
                 5
               </div>
               <div>
-                <span className="text-xs font-bold text-purple-600 uppercase tracking-wider block">Auditoria em Bases Oficiais do Governo</span>
+                <span className="text-xs font-bold text-purple-600 uppercase tracking-wider block">Auditoria em Bases Governamentais (CGU)</span>
                 <h2 className="text-2xl font-bold text-slate-900">Como auditamos cada instituição</h2>
               </div>
             </div>
 
             <p className="text-slate-600 font-light text-base leading-relaxed mb-6">
-              Para receber o Selo de Verificação DoeCerto e estar habilitada a receber doações, cada organização é submetida a um motor tecnológico de auditoria contínua que cruza dados em tempo real com as principais bases públicas e oficiais do governo brasileiro:
+              Diferente de inspeções presenciais pontuais que não escalam, o DoeCerto opera um <strong className="text-slate-800 font-medium">motor tecnológico de auditoria contínua</strong> integrado diretamente às bases oficiais da <strong className="text-slate-800 font-medium">Controladoria-Geral da União (CGU)</strong> e do <strong className="text-slate-800 font-medium">Portal da Transparência</strong> do Governo Federal:
             </p>
 
+            {/* CARD DE DESTAQUE: SCORE DE INTEGRIDADE & COMPLIANCE */}
+            <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-purple-50/70 via-white to-slate-50 border border-purple-100 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-200">
+                  <ShieldCheck size={24} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-slate-900 text-base">Score de Integridade DoeCerto</h3>
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold text-xs">
+                      100/100 REGULAR
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Somente ONGs com pontuação máxima de conformidade (zero sanções ativas) recebem o Selo Oficial e são homologadas para repasses.
+                  </p>
+                </div>
+              </div>
+              <div className="shrink-0 text-xs font-mono font-bold text-purple-700 bg-white px-3.5 py-2 rounded-xl border border-purple-200 shadow-2xs">
+                CGU • Portal da Transparência
+              </div>
+            </div>
+
+            {/* GRID DAS 4 BASES OFICIAIS DE SANÇÃO E COMPLIANCE */}
             <div className="anim-audit-grid grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Etapa 1: Receita Federal */}
+              
+              {/* 1. CEPIM */}
               <div className="anim-audit-card p-5 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex flex-col justify-between hover:border-purple-200 hover:bg-purple-50/20 transition-all">
                 <div>
                   <div className="w-10 h-10 rounded-xl bg-purple-100/70 text-purple-700 flex items-center justify-center font-bold text-sm mb-3 border border-purple-200/60">
-                    <Database size={19} />
+                    <FileWarning size={19} />
                   </div>
-                  <h3 className="font-bold text-slate-900 text-sm mb-1.5">1. Varredura Cadastral na Receita Federal</h3>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <h3 className="font-bold text-slate-900 text-sm">1. CEPIM — Entidades Impedidas</h3>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white text-purple-700 border border-slate-200 font-bold shrink-0">
+                      CGU / Portal
+                    </span>
+                  </div>
                   <p className="text-xs text-slate-500 leading-relaxed font-light">
-                    Cruzamento automatizado com a base da Receita Federal do Brasil (RFB) para validar CNPJ Ativo, natureza jurídica sem fins lucrativos (código 399-9 Associação Privada ou Fundação) e ausência de impedimentos legais.
+                    Consulta direta ao <strong>Cadastro de Entidades Privadas Sem Fins Lucrativos Impedidas</strong>. Rastreia e veta qualquer ONG proibida de firmar convênios ou parcerias por irregularidades em prestações de contas ou desvio de recursos públicos.
                   </p>
                 </div>
                 <div className="mt-4 pt-3 border-t border-slate-200/60 text-[11px] font-mono font-medium text-purple-700 flex items-center gap-1.5">
-                  <CheckCircle2 size={13} className="text-emerald-600" /> Base Oficial: RFB / CNPJ
+                  <CheckCircle2 size={13} className="text-emerald-600" /> Veto a Entidades com Inadimplência Pública
                 </div>
               </div>
 
-              {/* Etapa 2: Certidões e Regularidade Jurídica */}
+              {/* 2. CEIS */}
               <div className="anim-audit-card p-5 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex flex-col justify-between hover:border-purple-200 hover:bg-purple-50/20 transition-all">
                 <div>
                   <div className="w-10 h-10 rounded-xl bg-purple-100/70 text-purple-700 flex items-center justify-center font-bold text-sm mb-3 border border-purple-200/60">
-                    <FileCheck2 size={19} />
+                    <ShieldAlert size={19} />
                   </div>
-                  <h3 className="font-bold text-slate-900 text-sm mb-1.5">2. Certidões Fiscais & Regularidade Jurídica</h3>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <h3 className="font-bold text-slate-900 text-sm">2. CEIS — Entidades Inidôneas & Suspensas</h3>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white text-purple-700 border border-slate-200 font-bold shrink-0">
+                      CGU / Federal
+                    </span>
+                  </div>
                   <p className="text-xs text-slate-500 leading-relaxed font-light">
-                    Checagem de Certidão Negativa de Débitos Federais (CND / PGFN) e regularidade perante o FGTS (CRF Caixa), além de validação digital do Estatuto Social e da ata de posse da diretoria vigente registrada em cartório (RCPJ).
+                    Varredura no <strong>Cadastro Nacional de Empresas Inidôneas e Suspensas</strong>. Identifica sanções restritivas aplicadas por órgãos públicos contra organizações que praticaram infrações legais graves ou atos de inidoneidade.
                   </p>
                 </div>
                 <div className="mt-4 pt-3 border-t border-slate-200/60 text-[11px] font-mono font-medium text-purple-700 flex items-center gap-1.5">
-                  <CheckCircle2 size={13} className="text-emerald-600" /> Bases: PGFN • Caixa FGTS • RCPJ
+                  <CheckCircle2 size={13} className="text-emerald-600" /> Bloqueio de Sanções Restritivas Ativas
                 </div>
               </div>
 
-              {/* Etapa 3: Banco Central e PIX */}
+              {/* 3. CNEP */}
               <div className="anim-audit-card p-5 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex flex-col justify-between hover:border-purple-200 hover:bg-purple-50/20 transition-all">
                 <div>
                   <div className="w-10 h-10 rounded-xl bg-purple-100/70 text-purple-700 flex items-center justify-center font-bold text-sm mb-3 border border-purple-200/60">
-                    <Landmark size={19} />
+                    <Scale size={19} />
                   </div>
-                  <h3 className="font-bold text-slate-900 text-sm mb-1.5">3. Homologação Bancária & Chave PIX (Bacen)</h3>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <h3 className="font-bold text-slate-900 text-sm">3. CNEP — Lei Anticorrupção</h3>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white text-purple-700 border border-slate-200 font-bold shrink-0">
+                      Lei 12.846/13
+                    </span>
+                  </div>
                   <p className="text-xs text-slate-500 leading-relaxed font-light">
-                    Auditoria do arranjo bancário de pagamento junto ao Banco Central. A chave PIX institucional obrigatoriamente deve pertencer ao CNPJ da própria ONG, com veto e bloqueio absoluto a repasses para contas de pessoas físicas.
+                    Checagem no <strong>Cadastro Nacional de Empresas Punidas</strong> com base na Lei Anticorrupção. Veta entidades que tenham sofrido sanções ou multas por atos lesivos contra o patrimônio público ou a administração social.
                   </p>
                 </div>
                 <div className="mt-4 pt-3 border-t border-slate-200/60 text-[11px] font-mono font-medium text-purple-700 flex items-center gap-1.5">
-                  <CheckCircle2 size={13} className="text-emerald-600" /> Sistema Financeiro: Bacen / SPI
+                  <CheckCircle2 size={13} className="text-emerald-600" /> Conformidade Rígida com a Lei Anticorrupção
                 </div>
               </div>
 
-              {/* Etapa 4: Monitoramento Contínuo e Curadoria Digital */}
+              {/* 4. CEAF */}
               <div className="anim-audit-card p-5 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex flex-col justify-between hover:border-purple-200 hover:bg-purple-50/20 transition-all">
                 <div>
                   <div className="w-10 h-10 rounded-xl bg-purple-100/70 text-purple-700 flex items-center justify-center font-bold text-sm mb-3 border border-purple-200/60">
-                    <Activity size={19} />
+                    <UserCheck size={19} />
                   </div>
-                  <h3 className="font-bold text-slate-900 text-sm mb-1.5">4. Monitoramento Contínuo & Curadoria Digital</h3>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <h3 className="font-bold text-slate-900 text-sm">4. CEAF — Compliance de Representantes (CPF)</h3>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white text-purple-700 border border-slate-200 font-bold shrink-0">
+                      Auditoria de CPFs
+                    </span>
+                  </div>
                   <p className="text-xs text-slate-500 leading-relaxed font-light">
-                    Rotinas automatizadas de revalidação periódica nas bases do governo para garantir conformidade continuada, somadas a curadoria digital de evidências públicas de atuação social (relatórios, projetos ativos e presença comunitária comprovada).
+                    Auditoria no <strong>Cadastro de Expulsões da Administração Federal</strong> cruzando o CPF do presidente e administradores estatutários, garantindo que os líderes da ONG possuem ficha limpa e nunca foram expulsos por improbidade.
                   </p>
                 </div>
                 <div className="mt-4 pt-3 border-t border-slate-200/60 text-[11px] font-mono font-medium text-purple-700 flex items-center gap-1.5">
-                  <CheckCircle2 size={13} className="text-emerald-600" /> Compliance Automatizado & Curadoria
+                  <CheckCircle2 size={13} className="text-emerald-600" /> Ficha Limpa de Presidentes e Diretores
                 </div>
               </div>
+
+            </div>
+
+            {/* TRAVA FINAL: REPASSE BANCÁRIO & SUSPENSÃO AUTOMÁTICA */}
+            <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-500">
+              <span className="flex items-center gap-2 font-medium text-slate-700">
+                <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                Auditoria contínua: Qualquer nova sanção em base governamental acarreta suspensão imediata do Selo e veto de novos repasses.
+              </span>
+              <span className="text-[11px] font-mono text-purple-700 shrink-0">
+                PIX Institucional Direto ao CNPJ
+              </span>
             </div>
           </section>
 
