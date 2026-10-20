@@ -27,7 +27,7 @@ type AdminLayoutProps = {
 
 export default function AdminLayout({ children, activeMenu: initialActiveMenu = 'home', adminName = 'Administrador', onMenuChange }: AdminLayoutProps) {
   const router = useRouter();
-  const { refreshSession } = useAuth();
+  const { logout } = useAuth();
   const [activeMenu, setActiveMenu] = useState<'home' | 'dashboard'>(initialActiveMenu);
 
   const handleMenuChange = (menu: 'home' | 'dashboard' ) => {
@@ -36,29 +36,8 @@ export default function AdminLayout({ children, activeMenu: initialActiveMenu = 
   };
 
   const handleLogout = async () => {
-    try {
-      await Preferences.remove({ key: "access_token" });
-      await Preferences.remove({ key: "userRole" });
-    } catch (e) { }
-
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Erro no logout:', error);
-    }
-
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("CapacitorStorage.access_token");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userAvatar");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("registration_completed");
-    localStorage.removeItem("hideDonationTutorial");
-    sessionStorage.clear();
-
-    refreshSession();
     toast.success('Logout realizado com sucesso!');
-    window.location.replace('/login');
+    await logout('/login');
   };
 
   return (

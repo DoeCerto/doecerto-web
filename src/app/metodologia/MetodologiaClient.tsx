@@ -7,23 +7,17 @@ import { Poppins } from "next/font/google";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { 
-  ArrowLeft, 
-  ShieldCheck, 
-  Sparkles, 
-  CheckCircle2, 
-  ArrowRight, 
-  Calculator, 
-  Building2, 
-  FileCheck2, 
-  Clock,
-  Database,
-  Landmark,
-  Activity,
-  FileWarning,
-  ShieldAlert,
+import {
+  ArrowLeft,
+  ChevronDown,
+  FileText,
+  ShieldCheck,
   Scale,
-  UserCheck
+  Users,
+  Check,
+  Wallet,
+  Landmark,
+  Sparkles
 } from "lucide-react";
 import { CATEGORY_IMPACT_CONFIG, calculateImpact } from "@/utils/impactCalculator";
 import { PublicImpactMetrics } from "@/services/metrics.service";
@@ -55,14 +49,60 @@ export default function MetodologiaClient({ initialMetrics }: MetodologiaClientP
     }
   };
 
-  // Inicializado diretamente com os dados pré-renderizados no servidor (SSR)
   const [metrics] = useState<PublicImpactMetrics>(initialMetrics);
-  
-  // Estado do simulador interativo
-  const [simAmount, setSimAmount] = useState<number>(50);
-  const [simCategory, setSimCategory] = useState<string>("Alimentação");
 
-  // Referências para o GSAP
+  // Estados do Simulador de Repasse & Impacto DoeCerto
+  const [donationValue, setDonationValue] = useState<number>(50);
+  const [selectedCategory, setSelectedCategory] = useState<string>("Alimentação");
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState<boolean>(false);
+  const [isAmountDropdownOpen, setIsAmountDropdownOpen] = useState<boolean>(false);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
+  const amountDropdownRef = useRef<HTMLDivElement>(null);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+
+  // Regra de Repasse DoeCerto:
+  // Se for microdoação (< R$ 5): Pix direto na chave da ONG, taxa bancária é R$ 0,00 (0%).
+  // Se for >= R$ 5: Pix instantâneo, taxa da adquirente de R$ 0,99 deduzida na fonte.
+  // DoeCerto retém R$ 0,00 em qualquer cenário.
+  const isMicroDonation = donationValue < 5;
+  const bankingFee = isMicroDonation ? 0 : 0.99;
+  const netValueToOng = Math.max(0, donationValue - bankingFee);
+
+  // Cálculo de Impacto Social Tangível
+  const impactResult = calculateImpact({
+    amount: netValueToOng,
+    primaryCategoryName: selectedCategory,
+    donationType: "monetary"
+  });
+
+  const categoriesList = Object.entries(CATEGORY_IMPACT_CONFIG);
+
+  // Fecha os dropdowns ao clicar fora e retoma scroll suave do Lenis se necessário
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      let closed = false;
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
+        setIsCategoryDropdownOpen(false);
+        closed = true;
+      }
+      if (amountDropdownRef.current && !amountDropdownRef.current.contains(event.target as Node)) {
+        setIsAmountDropdownOpen(false);
+        closed = true;
+      }
+      if (closed && typeof window !== "undefined") {
+        (window as any).lenis?.start();
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      if (typeof window !== "undefined") {
+        (window as any).lenis?.start();
+      }
+    };
+  }, []);
+
+  // Referências GSAP
   const pageRef = useRef<HTMLDivElement>(null);
   const statsGridRef = useRef<HTMLDivElement>(null);
   const livesRef = useRef<HTMLSpanElement>(null);
@@ -71,19 +111,11 @@ export default function MetodologiaClient({ initialMetrics }: MetodologiaClientP
   const simUnitsRef = useRef<HTMLSpanElement>(null);
   const simObj = useRef({ val: 0 });
 
-  const simulatedResult = calculateImpact({
-    amount: simAmount,
-    primaryCategoryName: simCategory,
-    donationType: "monetary"
-  });
-
-  const categoriesList = Object.entries(CATEGORY_IMPACT_CONFIG);
-
-  // Animação de contagem suave nos números do simulador
+  // Animação numérica no contador de impacto
   useEffect(() => {
     gsap.to(simObj.current, {
-      val: simulatedResult.units,
-      duration: 0.5,
+      val: impactResult.units,
+      duration: 0.4,
       ease: "power2.out",
       onUpdate: () => {
         if (simUnitsRef.current) {
@@ -91,9 +123,9 @@ export default function MetodologiaClient({ initialMetrics }: MetodologiaClientP
         }
       }
     });
-  }, [simulatedResult.units]);
+  }, [impactResult.units]);
 
-  // Garante que a página de metodologia SEMPRE comece no topo (0, 0)
+  // Garante scroll no topo ao carregar
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
     if (typeof window !== "undefined" && (window as any).lenis) {
@@ -101,25 +133,27 @@ export default function MetodologiaClient({ initialMetrics }: MetodologiaClientP
     }
   }, []);
 
-  // ANIMAÇÕES GSAP & SCROLLTRIGGER
+  // Animações GSAP de entrada fluidas com clearProps
   useGSAP(() => {
-    // 1. Objeto de controle dos contadores numéricos
+    let isInitialLoad = true;
     const countersObj = { lives: 0, money: 0, ongs: 0 };
 
-    const animateCounters = () => {
+    const resetCounters = () => {
       gsap.killTweensOf(countersObj);
       countersObj.lives = 0;
       countersObj.money = 0;
       countersObj.ongs = 0;
-
       if (livesRef.current) livesRef.current.textContent = "+0";
       if (moneyRef.current) moneyRef.current.textContent = "R$ 0";
       if (ongsRef.current) ongsRef.current.textContent = "0";
+    };
 
-      // Vidas Amparadas (0 -> target)
+    const animateCounters = () => {
+      resetCounters();
+
       gsap.to(countersObj, {
         lives: metrics.totalLivesImpacted,
-        duration: 1.6,
+        duration: 1.5,
         ease: "power2.out",
         onUpdate: () => {
           if (livesRef.current) {
@@ -128,10 +162,9 @@ export default function MetodologiaClient({ initialMetrics }: MetodologiaClientP
         }
       });
 
-      // Repasse Direto (0 -> target)
       gsap.to(countersObj, {
         money: Math.round(metrics.totalMonetaryRaised),
-        duration: 1.8,
+        duration: 1.7,
         ease: "power2.out",
         onUpdate: () => {
           if (moneyRef.current) {
@@ -140,10 +173,9 @@ export default function MetodologiaClient({ initialMetrics }: MetodologiaClientP
         }
       });
 
-      // ONGs Auditadas (0 -> target)
       gsap.to(countersObj, {
         ongs: metrics.totalVerifiedOngs,
-        duration: 1.4,
+        duration: 1.3,
         ease: "power2.out",
         onUpdate: () => {
           if (ongsRef.current) {
@@ -153,144 +185,142 @@ export default function MetodologiaClient({ initialMetrics }: MetodologiaClientP
       });
     };
 
-    // 2. Trigger Bidirecional: Dispara tanto ao abrir quanto ao rolar para cima ou para baixo
+    // Reanima os números sempre que o usuário chegar nos cards (rolando para baixo ou voltando para cima)
     if (statsGridRef.current) {
       ScrollTrigger.create({
         trigger: statsGridRef.current,
-        start: "top 90%",
-        end: "bottom top",
-        onEnter: () => animateCounters(),
-        onEnterBack: () => animateCounters(),
+        start: "top 85%",
+        end: "bottom 15%",
+        onEnter: () => {
+          if (!isInitialLoad) {
+            animateCounters();
+          }
+        },
+        onEnterBack: () => {
+          if (!isInitialLoad) {
+            animateCounters();
+          }
+        },
+        onLeave: () => {
+          if (!isInitialLoad) {
+            resetCounters();
+          }
+        },
+        onLeaveBack: () => {
+          if (!isInitialLoad) {
+            resetCounters();
+          }
+        },
       });
     }
 
-    // 3. Animações de Entrada da Hero
+    // Entrada fluida da Hero sequenciada passo a passo
     const heroTl = gsap.timeline();
-    heroTl.from(".anim-hero-badge", { y: -20, opacity: 0, duration: 0.6, ease: "power3.out" }, 0.1);
-    heroTl.from(".anim-hero-title", { y: 30, opacity: 0, duration: 0.7, ease: "power3.out" }, 0.2);
-    heroTl.from(".anim-hero-sub", { y: 20, opacity: 0, duration: 0.7, ease: "power3.out" }, 0.35);
-    heroTl.from(".anim-stat-card", { y: 30, opacity: 0, duration: 0.6, stagger: 0.1, ease: "power3.out" }, 0.45);
-
-    // 4. Animação de Entrada dos Blocos de Conteúdo
-    gsap.from(".anim-sec-1", {
-      scrollTrigger: {
-        trigger: ".anim-sec-1",
-        start: "top 85%",
-        toggleActions: "play none none none",
+    heroTl.fromTo(".anim-hero-title",
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.7, ease: "power3.out", clearProps: "all" },
+      0.1
+    );
+    heroTl.fromTo(".anim-hero-sub",
+      { y: 20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.7, ease: "power3.out", clearProps: "all" },
+      0.25
+    );
+    heroTl.fromTo(".anim-card",
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, stagger: 0.12, ease: "power3.out", clearProps: "all" },
+      0.35
+    );
+    // Os 4 cardzinhos de impacto aparecem estritamente DEPOIS dos cards de cima
+    heroTl.fromTo(".anim-stat-card",
+      { y: 20, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.2,
+        stagger: 0.08,
+        ease: "power3.out",
+        clearProps: "all",
+        onStart: () => {
+          animateCounters();
+        },
+        onComplete: () => {
+          isInitialLoad = false;
+        }
       },
-      y: 40,
-      opacity: 0,
-      duration: 0.8,
-      ease: "power3.out",
-    });
+      ">-0.25"
+    );
 
-    gsap.from(".anim-sec-2", {
-      scrollTrigger: {
-        trigger: ".anim-sec-2",
-        start: "top 85%",
-        toggleActions: "play none none none",
-      },
-      y: 40,
-      opacity: 0,
-      duration: 0.8,
-      ease: "power3.out",
-    });
-
-    gsap.from(".anim-sim", {
-      scrollTrigger: {
-        trigger: ".anim-sim",
-        start: "top 85%",
-        toggleActions: "play none none none",
-      },
-      y: 40,
-      opacity: 0,
-      duration: 0.8,
-      ease: "power3.out",
-    });
-
-    // Seção 3 - Tabela de Benchmarks (Animação de bloco seguro)
-    gsap.from(".anim-sec-3", {
-      scrollTrigger: {
-        trigger: ".anim-sec-3",
-        start: "top 85%",
-        toggleActions: "play none none none",
-      },
-      y: 40,
-      opacity: 0,
-      duration: 0.8,
-      ease: "power3.out",
-    });
-
-    gsap.from(".anim-sec-5", {
-      scrollTrigger: {
-        trigger: ".anim-sec-5",
-        start: "top 85%",
-        toggleActions: "play none none none",
-      },
-      y: 40,
-      opacity: 0,
-      duration: 0.8,
-      ease: "power3.out",
-    });
-
-    // Seção 5 - Processo de Auditoria (Animação de bloco seguro)
-    gsap.from(".anim-sec-audit", {
-      scrollTrigger: {
-        trigger: ".anim-sec-audit",
-        start: "top 85%",
-        toggleActions: "play none none none",
-      },
-      y: 40,
-      opacity: 0,
-      duration: 0.8,
-      ease: "power3.out",
-    });
-
-    gsap.from(".anim-sec-7", {
-      scrollTrigger: {
-        trigger: ".anim-sec-7",
-        start: "top 90%",
-        toggleActions: "play none none none",
-      },
-      y: 30,
-      opacity: 0,
-      duration: 0.7,
-      ease: "power3.out",
-    });
-
-    gsap.from(".anim-cta", {
-      scrollTrigger: {
-        trigger: ".anim-cta",
-        start: "top 90%",
-        toggleActions: "play none none none",
-      },
-      y: 30,
-      opacity: 0,
-      duration: 0.7,
-      ease: "power3.out",
-    });
+    // Entrada das seções seguintes ao rolar a página
+    gsap.fromTo(".anim-sim-section",
+      { y: 35, opacity: 0 },
+      { scrollTrigger: { trigger: ".anim-sim-section", start: "top 85%" }, y: 0, opacity: 1, duration: 0.8, ease: "power3.out", clearProps: "all" }
+    );
+    gsap.fromTo(".anim-sec-bench",
+      { y: 35, opacity: 0 },
+      { scrollTrigger: { trigger: ".anim-sec-bench", start: "top 85%" }, y: 0, opacity: 1, duration: 0.8, ease: "power3.out", clearProps: "all" }
+    );
+    gsap.fromTo(".anim-sec-audit",
+      { y: 35, opacity: 0 },
+      { scrollTrigger: { trigger: ".anim-sec-audit", start: "top 85%" }, y: 0, opacity: 1, duration: 0.8, ease: "power3.out", clearProps: "all" }
+    );
+    gsap.fromTo(".anim-sec-faq",
+      { y: 35, opacity: 0 },
+      { scrollTrigger: { trigger: ".anim-sec-faq", start: "top 85%" }, y: 0, opacity: 1, duration: 0.8, ease: "power3.out", clearProps: "all" }
+    );
+    gsap.fromTo(".anim-cta",
+      { y: 30, opacity: 0 },
+      { scrollTrigger: { trigger: ".anim-cta", start: "top 90%" }, y: 0, opacity: 1, duration: 0.7, ease: "power3.out", clearProps: "all" }
+    );
 
   }, { scope: pageRef });
 
+  const faqs = [
+    {
+      question: "O DoeCerto cobra comissão ou retém porcentagem das doações?",
+      answer: "Não. A comissão retida pelo DoeCerto é de R$ 0,00 (0%). Todo o valor arrecadado é transferido diretamente para a instituição beneficiária. O DoeCerto atua exclusivamente como ponte tecnológica de validação, auditoria e prestação de contas."
+    },
+    {
+      question: "Como funciona a divisão entre microdoações e o Pix Instantâneo?",
+      answer: "Criamos uma política justa para não prejudicar pequenas contribuições: se alguém doar R$ 1, R$ 2 ou R$ 4, o Pix é feito direto para a chave da ONG sem nenhuma taxa (0%), com envio do comprovante. Para doações a partir de R$ 5 feitas por doadores cadastrados, geramos o Pix Dinâmico com confirmação em tempo real na tela, cuja tarifa bancária de processamento (~R$ 0,99) é descontada na fonte pela adquirente parceira."
+    },
+    {
+      question: "O dinheiro da doação passa pela conta do DoeCerto?",
+      answer: "Não. O DoeCerto não exerce custódia financeira. O dinheiro sai diretamente da conta do doador para a conta bancária vinculada ao CNPJ oficial da ONG cadastrada, evitando bitributação e garantindo máxima segurança jurídica."
+    },
+    {
+      question: "Como as organizações são auditadas antes de receberem o Selo DoeCerto?",
+      answer: "Cada entidade é verificada de forma contínua em quatro bases oficiais da Controladoria-Geral da União (CGU) e do Portal da Transparência: CEPIM (impedimentos de convênios), CEIS (empresas e entidades inidôneas), CNEP (Lei Anticorrupção) e CEAF (ficha limpa dos dirigentes estatutários). Se houver qualquer irregularidade superveniente, o selo é suspenso na hora."
+    },
+    {
+      question: "Como o impacto social é calculado?",
+      answer: "Nosso motor de cálculo utiliza tabelas paramétricas de custos operacionais médios apurados na causa âncora de cada instituição (como o custo médio de uma refeição nutritiva ou de um acolhimento veterinário). Assim, cada valor doado é traduzido em unidades concretas de benefício direto."
+    },
+    {
+      question: "Qualquer ONG sem fins lucrativos pode participar?",
+      answer: "Sim. O cadastro e a utilização do DoeCerto são 100% gratuitos para organizações sem fins lucrativos regularmente constituídas no Brasil com CNPJ ativo e aprovadas no nosso protocolo de auditoria e conformidade."
+    }
+  ];
+
   return (
     <SmoothScroller>
-      <div ref={pageRef} className={`min-h-screen bg-[#F8FAFC] text-slate-800 ${poppins.className}`}>
-        
-        {/* HEADER DE NAVEGAÇÃO */}
-        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 transition-all">
+      <div ref={pageRef} className={`min-h-screen bg-white text-slate-900 ${poppins.className}`}>
+
+        {/* NAVBAR COM IDENTIDADE DOECERTO */}
+        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 transition-all">
           <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <button 
+              <button
                 type="button"
                 onClick={handleBack}
-                className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center gap-2 text-sm font-semibold cursor-pointer"
+                className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors flex items-center gap-2 text-sm font-medium cursor-pointer"
               >
                 <ArrowLeft size={18} />
                 <span className="hidden sm:inline">Voltar ao início</span>
               </button>
               <div className="h-5 w-px bg-slate-200 hidden sm:block" />
-              <Link 
-                href="/" 
+              <Link
+                href="/"
                 onClick={() => {
                   if (typeof window !== "undefined") {
                     sessionStorage.removeItem("landingScrollPos");
@@ -306,7 +336,7 @@ export default function MetodologiaClient({ initialMetrics }: MetodologiaClientP
             <div className="flex items-center gap-3">
               <Link
                 href="/home"
-                className="px-5 py-2.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-sm shadow-sm transition-all active:scale-95"
+                className="px-5 py-2.5 rounded-full bg-[#6B39A7] hover:bg-[#582C8C] text-white font-semibold text-sm transition-all active:scale-95 shadow-xs"
               >
                 Fazer uma doação
               </Link>
@@ -314,445 +344,561 @@ export default function MetodologiaClient({ initialMetrics }: MetodologiaClientP
           </div>
         </header>
 
-        {/* HERO SECTION */}
-        <section className="bg-white border-b border-slate-200/80 py-16 sm:py-24">
-          <div className="max-w-4xl mx-auto px-6 text-center">
-            <div className="anim-hero-badge inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200/70 text-xs font-bold uppercase tracking-wider mb-6">
-              <Sparkles size={14} className="text-purple-600" />
-              Padrão de Transparência DoeCerto
-            </div>
+        {/* HERO SECTION DE METODOLOGIA COM ESPAÇAMENTO RESPIRÁVEL */}
+        <section className="pt-12 pb-16 sm:pt-16 sm:pb-24 border-b border-slate-100">
+          <div className="max-w-5xl mx-auto px-6 text-center">
 
-            <h1 className="anim-hero-title text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight mb-6">
-              Metodologia de Impacto Tangível
+            <h1 className="anim-hero-title text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.15] mb-5">
+              Metodologia transparente,<br className="hidden sm:inline" /> impacto direto na causa
             </h1>
 
-            <p className="anim-hero-sub text-lg sm:text-xl text-slate-600 font-light leading-relaxed max-w-2xl mx-auto">
-              Como o DoeCerto audita, calcula e converte cada doação financeira ou material em métricas mensuráveis de transformação social.
+            <p className="anim-hero-sub text-base sm:text-lg text-slate-600 font-normal leading-relaxed max-w-2xl mx-auto mb-14 sm:mb-20">
+              No DoeCerto, não existem comissões ocultas ou saldo retido em intermediários. Conheça nossa estrutura de taxas justas, auditoria governamental e mensuração de impacto social.
             </p>
 
-            {/* DADOS PÚBLICOS AUDITADOS COM ANIMAÇÃO BIDIRECIONAL DE CONTAGEM */}
-            <div 
-              ref={statsGridRef} 
-              className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-12 pt-8 border-t border-slate-100"
+            {/* 3 CARDS DE TRANSPARÊNCIA COM ESPAÇO RESPIRÁVEL E ANIMAÇÃO GSAP */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+
+              {/* Card 1 */}
+              <div className="anim-card p-7 sm:p-8 rounded-3xl bg-slate-50/70 border border-slate-200/60 hover:border-purple-200 hover:bg-purple-50/10 transition-all flex flex-col justify-between min-h-[240px]">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-700 mb-3">
+                    Taxa de adesão e mensalidade
+                  </h3>
+                  <div className="text-4xl sm:text-5xl font-black text-slate-900 font-mono tracking-tight mb-3">
+                    R$ 0,00
+                  </div>
+                  <p className="text-sm text-slate-500 font-normal leading-relaxed">
+                    100% gratuito para as ONGs cadastrarem e divulgarem seus projetos, necessidades e campanhas.
+                  </p>
+                </div>
+              </div>
+
+              {/* Card 2 */}
+              <div className="anim-card p-7 sm:p-8 rounded-3xl bg-slate-50/70 border border-slate-200/60 hover:border-purple-200 hover:bg-purple-50/10 transition-all flex flex-col justify-between min-h-[240px]">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-700 mb-3">
+                    Processamento bancário do Pix
+                  </h3>
+                  <div className="text-4xl sm:text-5xl font-black text-[#6B39A7] font-mono tracking-tight mb-3">
+                    0% a R$ 0,99
+                  </div>
+                  <p className="text-sm text-slate-500 font-normal leading-relaxed">
+                    Microdoações (&lt; R$ 5) têm taxa zero no Pix direto. A partir de R$ 5, incide apenas a taxa de rede do gateway com confirmação na tela.
+                  </p>
+                </div>
+              </div>
+
+              {/* Card 3 */}
+              <div className="anim-card p-7 sm:p-8 rounded-3xl bg-slate-50/70 border border-slate-200/60 hover:border-purple-200 hover:bg-purple-50/10 transition-all flex flex-col justify-between min-h-[240px]">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-700 mb-3">
+                    Comissão retida pelo DoeCerto
+                  </h3>
+                  <div className="text-4xl sm:text-5xl font-black text-slate-900 font-mono tracking-tight mb-3">
+                    R$ 0,00
+                  </div>
+                  <p className="text-sm text-slate-500 font-normal leading-relaxed">
+                    Zero porcentagem sobre doações. Todo o montante líquido é repassado integralmente para a conta bancária da ONG.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+
+            {/* DADOS PÚBLICOS AUDITADOS (APARECEM SEQUENCIADOS APÓS OS CARDS DE CIMA) */}
+            <div
+              ref={statsGridRef}
+              className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-16 pt-10 border-t border-slate-100"
             >
-              <div className="anim-stat-card p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-center min-h-[84px] shadow-xs">
-                <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Vidas Amparadas</span>
-                <span ref={livesRef} className="text-2xl font-black text-purple-700 font-mono">
-                  +{metrics.totalLivesImpacted.toLocaleString('pt-BR')}
+              <div className="anim-stat-card p-4 sm:p-5 rounded-2xl bg-white border border-slate-100 text-center shadow-2xs hover:border-purple-200 transition-all">
+                <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Vidas Amparadas</span>
+                <span ref={livesRef} className="text-2xl sm:text-3xl font-black text-[#6B39A7] font-mono">
+                  +0
                 </span>
               </div>
 
-              <div className="anim-stat-card p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-center min-h-[84px] shadow-xs">
-                <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Repasse Direto</span>
-                <span ref={moneyRef} className="text-2xl font-black text-slate-900 font-mono">
-                  R$ {Math.round(metrics.totalMonetaryRaised).toLocaleString('pt-BR')}
+              <div className="anim-stat-card p-4 sm:p-5 rounded-2xl bg-white border border-slate-100 text-center shadow-2xs hover:border-purple-200 transition-all">
+                <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Repasse Direto</span>
+                <span ref={moneyRef} className="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
+                  R$ 0
                 </span>
               </div>
 
-              <div className="anim-stat-card p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-center min-h-[84px] shadow-xs">
-                <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Taxa de Intermediação</span>
-                <span className="text-2xl font-black text-emerald-600 font-mono">0%</span>
+              <div className="anim-stat-card p-4 sm:p-5 rounded-2xl bg-white border border-slate-100 text-center shadow-2xs hover:border-purple-200 transition-all">
+                <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Comissão DoeCerto</span>
+                <span className="text-2xl sm:text-3xl font-black text-[#6B39A7] font-mono">0%</span>
               </div>
 
-              <div className="anim-stat-card p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-center min-h-[84px] shadow-xs">
-                <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">ONGs Auditadas</span>
-                <span ref={ongsRef} className="text-2xl font-black text-slate-900 font-mono">
-                  {metrics.totalVerifiedOngs}
+              <div className="anim-stat-card p-4 sm:p-5 rounded-2xl bg-white border border-slate-100 text-center shadow-2xs hover:border-purple-200 transition-all">
+                <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">ONGs Auditadas</span>
+                <span ref={ongsRef} className="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
+                  0
                 </span>
               </div>
             </div>
+
           </div>
         </section>
 
-        {/* CONTEÚDO PRINCIPAL */}
-        <main className="max-w-4xl mx-auto px-6 py-16 space-y-16">
+        {/* SIMULADOR DE TRANSPARÊNCIA E REPASSE NO ROXO SÓLIDO OFICIAL DO DOECERTO #6B39A7 (LAYOUT LIMPO, MODERNO E SEM AMADORISMO) */}
+        <section className="anim-sim-section bg-[#6B39A7] text-white py-20 sm:py-28 relative">
+          <div className="max-w-5xl mx-auto px-6">
 
-          {/* 1. PREMISSA FUNDAMENTAL */}
-          <section className="anim-sec-1 bg-white p-8 sm:p-10 rounded-[2rem] border border-slate-200/80 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-[#F3E8FF] text-[#6B39A7] flex items-center justify-center font-bold text-lg">
-                1
-              </div>
-              <div>
-                <span className="text-xs font-bold text-purple-600 uppercase tracking-wider block">Premissa Fundamental</span>
-                <h2 className="text-2xl font-bold text-slate-900">Por que o Impacto Tangível importa?</h2>
-              </div>
-            </div>
-
-            <div className="space-y-4 text-slate-600 font-light text-base leading-relaxed">
-              <p>
-                Nas plataformas convencionais de arrecadação, o doador frequentemente se depara apenas com valores financeiros abstratos (por exemplo, <em>"R$ 50,00 transferidos"</em>), sem conseguir visualizar concretamente o que aquele recurso produz na prática.
-              </p>
-              <p>
-                Criamos e desenvolvemos para o DoeCerto um <strong className="text-slate-800 font-medium">motor paramétrico de impacto social</strong>. Nosso objetivo é transformar cada ato de solidariedade em unidades reais e compreensíveis: refeições nutritivas servidas, animais resgatados e acolhidos, crianças com material escolar e famílias amparadas diretamente.
-              </p>
-            </div>
-          </section>
-
-          {/* 2. A REGRA DA CAUSA ÂNCORA */}
-          <section className="anim-sec-2 bg-white p-8 sm:p-10 rounded-[2rem] border border-slate-200/80 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-[#F3E8FF] text-[#6B39A7] flex items-center justify-center font-bold text-lg">
-                2
-              </div>
-              <div>
-                <span className="text-xs font-bold text-purple-600 uppercase tracking-wider block">Arquitetura de Dados</span>
-                <h2 className="text-2xl font-bold text-slate-900">A Regra da Causa Âncora (Missão Central)</h2>
-              </div>
-            </div>
-
-            <div className="space-y-4 text-slate-600 font-light text-base leading-relaxed">
-              <p>
-                Muitas ONGs desenvolvem projetos multidisciplinares. Por exemplo, uma instituição de acolhimento animal pode também distribuir alimentos e manter iniciativas educativas na comunidade.
-              </p>
-              <p>
-                Para assegurar precisão técnica e eliminar cálculos dúbios, o DoeCerto exige no cadastro institucional a definição de uma <strong className="text-slate-800 font-medium">Causa Principal (Missão Âncora)</strong>. É essa causa estatutária central que ancora a tabela de custos operacionais e alimenta o motor de impacto no momento da doação.
-              </p>
-              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 text-sm text-slate-700 flex items-start gap-3 mt-4">
-                <CheckCircle2 size={20} className="text-purple-600 shrink-0 mt-0.5" />
-                <span>
-                  As demais categorias secundárias permanecem ativas como filtros de busca e descoberta no catálogo, enquanto o cálculo de impacto é executado com fidelidade à missão declarada da instituição.
-                </span>
-              </div>
-            </div>
-          </section>
-
-          {/* 3. SIMULADOR INTERATIVO (SEM EMOJIS, TOTALMENTE TECNOLÓGICO) */}
-          <section className="anim-sim bg-gradient-to-br from-purple-900 to-[#4c1d95] text-white p-8 sm:p-10 rounded-[2rem] shadow-xl relative overflow-hidden">
-            <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-purple-200 text-xs font-bold uppercase tracking-wider mb-4">
-                <Calculator size={14} /> Simulador em Tempo Real
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold mb-3">
-                Experimente a fórmula na prática
-              </h2>
-              <p className="text-purple-200 text-sm font-light mb-8">
-                Veja como o motor do DoeCerto calcula a equivalência de impacto de acordo com a causa institucional e o montante doado.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-              {/* Controles */}
-              <div className="space-y-4 bg-white/10 p-6 rounded-2xl border border-white/15 backdrop-blur-sm">
-                <div>
-                  <label className="block text-xs font-bold text-purple-200 uppercase tracking-wider mb-2">
-                    Valor da Doação (R$)
-                  </label>
-                  <div className="flex gap-2 mb-3">
-                    {[20, 30, 50, 100].map((val) => (
-                      <button
-                        key={val}
-                        onClick={() => setSimAmount(val)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                          simAmount === val ? "bg-white text-purple-900 shadow-md" : "bg-white/10 text-white hover:bg-white/20"
-                        }`}
-                      >
-                        R$ {val}
-                      </button>
-                    ))}
-                  </div>
-                  <input
-                    type="number"
-                    min="5"
-                    max="10000"
-                    step="5"
-                    value={simAmount}
-                    onChange={(e) => setSimAmount(Math.max(1, Number(e.target.value)))}
-                    className="w-full bg-white/90 text-slate-900 px-4 py-3 rounded-xl font-bold text-lg focus:outline-none focus:ring-2 focus:ring-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-purple-200 uppercase tracking-wider mb-2">
-                    Causa da ONG
-                  </label>
-                  <select
-                    value={simCategory}
-                    onChange={(e) => setSimCategory(e.target.value)}
-                    className="w-full bg-white/90 text-slate-900 px-4 py-3 rounded-xl font-bold text-sm focus:outline-none focus:ring-2 focus:ring-white"
-                  >
-                    {categoriesList.map(([cat]) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Resultado do Cálculo com Animação Numérica Suave */}
-              <div className="bg-white text-slate-900 p-6 rounded-2xl shadow-lg border border-white flex flex-col justify-between">
-                <div>
-                  <span className="text-xs font-bold text-purple-700 uppercase tracking-wider block mb-3">
-                    Impacto Tangível Estimado
-                  </span>
-                  
-                  {/* Ícone Tecnológico SVG ao invés de emoji */}
-                  <div className="flex items-center gap-3.5 mb-3">
-                    <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 border border-purple-200">
-                      <CategoryImpactIcon category={simCategory} size={24} className="text-purple-700" />
-                    </div>
-                    <div className="text-4xl font-extrabold text-slate-900 tracking-tight font-mono">
-                      <span ref={simUnitsRef}>~{simulatedResult.units}</span>
-                    </div>
-                  </div>
-
-                  <p className="text-sm font-bold text-purple-900 mb-2">
-                    {simulatedResult.unitLabel}
-                  </p>
-                  <p className="text-xs text-slate-600 leading-relaxed font-normal">
-                    {simulatedResult.impactText}
-                  </p>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-slate-100 text-[11px] text-slate-400 font-mono">
-                  Fórmula: R$ {simAmount.toFixed(2)} ÷ R$ {CATEGORY_IMPACT_CONFIG[simCategory]?.costPerUnit.toFixed(2)} custo unitário
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* 4. TABELA DE BENCHMARKS DAS 12 CATEGORIAS (ÍCONES VETORIAIS TECNOLÓGICOS) */}
-          <section className="anim-sec-3 bg-white p-8 sm:p-10 rounded-[2rem] border border-slate-200/80 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-[#F3E8FF] text-[#6B39A7] flex items-center justify-center font-bold text-lg">
-                3
-              </div>
-              <div>
-                <span className="text-xs font-bold text-purple-600 uppercase tracking-wider block">Tabela Paramétrica Oficial</span>
-                <h2 className="text-2xl font-bold text-slate-900">Custos Médios por Causa no DoeCerto</h2>
-              </div>
-            </div>
-
-            <p className="text-slate-600 font-light text-base leading-relaxed mb-8">
-              Os valores abaixo refletem os custos operacionais médios apurados junto às instituições auditadas para viabilizar cada unidade de benefício direto:
-            </p>
-
-            <div className="anim-bench-grid grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {categoriesList.map(([cat, config]) => (
-                <div 
-                  key={cat}
-                  className="anim-bench-card p-5 rounded-2xl bg-slate-50/70 border border-slate-200/70 hover:border-purple-200 hover:bg-purple-50/20 transition-all flex flex-col justify-between"
-                >
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-purple-100/70 text-purple-700 flex items-center justify-center shrink-0 border border-purple-200/60">
-                        <CategoryImpactIcon category={cat} size={20} className="text-purple-700" />
-                      </div>
-                      <h3 className="font-bold text-slate-900 text-base">{cat}</h3>
-                    </div>
-                    <span className="px-3 py-1 rounded-full bg-white border border-slate-200 text-purple-700 font-bold text-xs shrink-0 shadow-2xs font-mono">
-                      R$ {config.costPerUnit.toFixed(2)}
-                    </span>
-                  </div>
-
-                  <div className="text-xs text-slate-600 space-y-1 pl-1">
-                    <div>
-                      <strong className="text-slate-700">Unidade:</strong> {config.unitSingular}
-                    </div>
-                    <div>
-                      <strong className="text-slate-700">Ação direta:</strong> {config.actionVerb} {config.timeScope}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* 5. REPASSE 100% DIRETO (TAXA ZERO) */}
-          <section className="anim-sec-5 bg-white p-8 sm:p-10 rounded-[2rem] border border-slate-200/80 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-[#F3E8FF] text-[#6B39A7] flex items-center justify-center font-bold text-lg">
-                4
-              </div>
-              <div>
-                <span className="text-xs font-bold text-purple-600 uppercase tracking-wider block">Integridade Financeira</span>
-                <h2 className="text-2xl font-bold text-slate-900">Repasse 100% Direto e Taxa Zero</h2>
-              </div>
-            </div>
-
-            <div className="space-y-4 text-slate-600 font-light text-base leading-relaxed">
-              <p>
-                Diferente de intermediadores comerciais que retêm percentuais sobre as doações, o <strong className="text-slate-800 font-medium">DoeCerto opera com Taxa Zero de intermediação</strong>.
-              </p>
-              <ul className="space-y-3 pt-2 text-sm text-slate-700">
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 size={18} className="text-emerald-600 shrink-0 mt-0.5" />
-                  <span><strong>Transferência Direta:</strong> O PIX é emitido utilizando a chave institucional e os dados bancários oficiais da própria ONG.</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 size={18} className="text-emerald-600 shrink-0 mt-0.5" />
-                  <span><strong>Sem Retenção:</strong> Todo centavo doado chega integralmente aos cofres da instituição selecionada.</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 size={18} className="text-emerald-600 shrink-0 mt-0.5" />
-                  <span><strong>Comprovante Rastreável:</strong> O doador tem acesso imediato ao código de autenticação e histórico da transação em sua área logada.</span>
-                </li>
-              </ul>
-            </div>
-          </section>
-
-          {/* 5. PROCESSO DE AUDITORIA E SELO DOECERTO (DOSSIÊ CGU / CEPIM, CEIS, CNEP, CEAF) */}
-          <section className="anim-sec-audit bg-white p-8 sm:p-10 rounded-[2rem] border border-slate-200/80 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-[#F3E8FF] text-[#6B39A7] flex items-center justify-center font-bold text-lg shrink-0">
-                  5
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-purple-600 uppercase tracking-wider block">Auditoria Governamental Contínua</span>
-                  <h2 className="text-2xl font-bold text-slate-900">Como auditamos cada instituição</h2>
-                </div>
-              </div>
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-xs text-emerald-800 self-start sm:self-center font-medium">
-                <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
-                <span>Score de Integridade <strong>100/100</strong></span>
-              </div>
-            </div>
-
-            <p className="text-slate-600 font-light text-base leading-relaxed mb-6">
-              Para assegurar idoneidade técnica sem depender de vistorias manuais lentas, o DoeCerto opera um motor de checagem automatizada conectado às bases oficiais da <strong className="text-slate-800 font-medium">Controladoria-Geral da União (CGU)</strong> e do <strong className="text-slate-800 font-medium">Portal da Transparência</strong>:
-            </p>
-
-            {/* GRID DAS 4 BASES OFICIAIS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              
-              {/* 1. CEPIM */}
-              <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/70 hover:border-purple-200 transition-colors">
-                <div className="flex items-center gap-3 mb-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
-                    <FileWarning size={18} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-sm">CEPIM</h3>
-                    <p className="text-[11px] text-purple-700 font-medium">Entidades Privadas Impedidas</p>
-                  </div>
-                </div>
-                <p className="text-xs text-slate-500 font-light leading-relaxed">
-                  Identifica e veta instituições proibidas de celebrar convênios ou parcerias públicas por irregularidades em prestações de contas.
-                </p>
-              </div>
-
-              {/* 2. CEIS */}
-              <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/70 hover:border-purple-200 transition-colors">
-                <div className="flex items-center gap-3 mb-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
-                    <ShieldAlert size={18} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-sm">CEIS</h3>
-                    <p className="text-[11px] text-purple-700 font-medium">Empresas e Entidades Inidôneas</p>
-                  </div>
-                </div>
-                <p className="text-xs text-slate-500 font-light leading-relaxed">
-                  Varredura de sanções restritivas aplicadas por órgãos públicos contra organizações que praticaram infrações legais graves.
-                </p>
-              </div>
-
-              {/* 3. CNEP */}
-              <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/70 hover:border-purple-200 transition-colors">
-                <div className="flex items-center gap-3 mb-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
-                    <Scale size={18} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-sm">CNEP</h3>
-                    <p className="text-[11px] text-purple-700 font-medium">Lei Anticorrupção (12.846/13)</p>
-                  </div>
-                </div>
-                <p className="text-xs text-slate-500 font-light leading-relaxed">
-                  Checagem rigorosa de multas ou condenações por atos lesivos contra o patrimônio ou a administração pública.
-                </p>
-              </div>
-
-              {/* 4. CEAF */}
-              <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/70 hover:border-purple-200 transition-colors">
-                <div className="flex items-center gap-3 mb-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
-                    <UserCheck size={18} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-sm">CEAF (CPF)</h3>
-                    <p className="text-[11px] text-purple-700 font-medium">Ficha Limpa dos Dirigentes</p>
-                  </div>
-                </div>
-                <p className="text-xs text-slate-500 font-light leading-relaxed">
-                  Auditoria no Cadastro de Expulsões cruzando o CPF dos administradores estatutários para atestar ausência de sanções funcionais.
-                </p>
-              </div>
-
-            </div>
-
-            {/* TRAVA FINAL: AUDITORIA CONTÍNUA E SUSPENSÃO AUTOMÁTICA */}
-            <div className="mt-5 pt-4 border-t border-slate-100 flex items-center gap-2.5 text-xs text-slate-500 font-light">
-              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-              <span>
-                <strong className="font-medium text-slate-700">Auditoria contínua:</strong> A homologação é dinâmica. Qualquer registro superveniente nas bases oficiais revoga o Selo DoeCerto e bloqueia novos repasses.
-              </span>
-            </div>
-          </section>
-
-          {/* 7. SALVAGUARDA JURÍDICA E COMPLIANCE */}
-          <section className="anim-sec-7 bg-slate-100/80 p-8 sm:p-10 rounded-[2rem] border border-slate-200 text-slate-700">
-            <h2 className="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
-              <ShieldCheck size={20} className="text-purple-700" />
-              Aviso de Conformidade Jurídica & Governança (Compliance)
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-center mb-16 sm:mb-20 text-white">
+              Transparência de cada centavo
             </h2>
-            <div className="space-y-3 text-xs leading-relaxed text-slate-600">
-              <p>
-                As unidades de impacto social (tais como vidas amparadas, refeições garantidas, mudas preservadas ou animais acolhidos) apresentadas em toda a plataforma DoeCerto constituem <strong className="text-slate-800">estimativas paramétricas de equivalência social</strong> calculadas a partir de benchmarks operacionais médios apurados no setor.
-              </p>
-              <p>
-                O objetivo dessas métricas é conferir transparência e tangibilidade pedagógica ao ato de doação. A alocação orçamentária detalhada e o cronograma de compras de insumos são de exclusiva responsabilidade da administração estatutária de cada organização sem fins lucrativos cadastrada e verificada.
-              </p>
-              <p>
-                O DoeCerto atua como viabilizador tecnológico e ambiente seguro de auditoria, não exercendo custódia ou gestão discricionária dos recursos financeiros transferidos pelo doador à entidade.
+
+            {/* GRID DE DUAS COLUNAS BOLD E DIRETO NO FUNDO ROXO DOECERTO */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 sm:gap-16 items-start relative">
+
+              {/* Divisor vertical */}
+              <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-white/20 -translate-x-1/2" />
+
+              {/* Lado Esquerdo: Frase com seletores customizados e elegantes */}
+              <div className="space-y-8 md:pr-12">
+
+                <div className="text-2xl sm:text-4xl lg:text-5xl font-bold leading-tight tracking-tight text-white">
+                  <span className="block text-white/80 font-medium text-xl sm:text-3xl mb-3">
+                    Para uma doação de
+                  </span>
+
+                  {/* Dropdown de Valor Customizado */}
+                  <div ref={amountDropdownRef} className="relative inline-block mr-3 mb-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAmountDropdownOpen(!isAmountDropdownOpen);
+                        setIsCategoryDropdownOpen(false);
+                      }}
+                      className="appearance-none bg-white text-[#6B39A7] font-black text-2xl sm:text-4xl px-5 py-2 sm:px-6 sm:py-3 rounded-2xl cursor-pointer shadow-lg inline-flex items-center gap-3 hover:bg-purple-50 transition-all font-mono"
+                    >
+                      <span>R$ {donationValue}</span>
+                      <ChevronDown
+                        size={22}
+                        className={`text-[#6B39A7] transition-transform duration-200 ${isAmountDropdownOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+
+                    {isAmountDropdownOpen && (
+                      <div
+                        data-lenis-prevent="true"
+                        onMouseEnter={() => typeof window !== "undefined" && (window as any).lenis?.stop()}
+                        onMouseLeave={() => typeof window !== "undefined" && (window as any).lenis?.start()}
+                        onWheel={(e) => e.stopPropagation()}
+                        className="absolute z-40 mt-2 w-48 bg-white text-slate-900 rounded-2xl shadow-2xl border border-purple-100 p-2 max-h-56 overflow-y-auto overscroll-contain"
+                      >
+                        {[10, 20, 50, 100, 250, 500, 1000].map((val) => (
+                          <button
+                            key={val}
+                            type="button"
+                            onClick={() => {
+                              setDonationValue(val);
+                              setIsAmountDropdownOpen(false);
+                              if (typeof window !== "undefined") {
+                                (window as any).lenis?.start();
+                              }
+                            }}
+                            className={`w-full px-4 py-2.5 rounded-xl text-left font-mono font-bold text-base transition-colors flex items-center justify-between cursor-pointer ${donationValue === val ? "bg-purple-100 text-[#6B39A7]" : "hover:bg-slate-50 text-slate-700"
+                              }`}
+                          >
+                            <span>R$ {val}</span>
+                            {donationValue === val && <Check size={16} className="text-[#6B39A7]" />}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <span className="text-white/80 font-medium text-xl sm:text-3xl block my-3">
+                    destinada à causa de
+                  </span>
+
+                  {/* Dropdown de Causa Customizado com suporte nativo a scroll */}
+                  <div ref={categoryDropdownRef} className="relative inline-block">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCategoryDropdownOpen(!isCategoryDropdownOpen);
+                        setIsAmountDropdownOpen(false);
+                      }}
+                      className="appearance-none bg-white text-[#6B39A7] font-bold text-xl sm:text-3xl px-5 py-2 sm:px-6 sm:py-3 rounded-2xl cursor-pointer shadow-lg inline-flex items-center gap-3 hover:bg-purple-50 transition-all"
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-purple-100 text-[#6B39A7] flex items-center justify-center shrink-0">
+                        <CategoryImpactIcon category={selectedCategory} size={16} className="text-[#6B39A7]" />
+                      </div>
+                      <span>{selectedCategory}</span>
+                      <ChevronDown
+                        size={22}
+                        className={`text-[#6B39A7] transition-transform duration-200 ${isCategoryDropdownOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+
+                    {isCategoryDropdownOpen && (
+                      <div
+                        data-lenis-prevent="true"
+                        onMouseEnter={() => typeof window !== "undefined" && (window as any).lenis?.stop()}
+                        onMouseLeave={() => typeof window !== "undefined" && (window as any).lenis?.start()}
+                        onWheel={(e) => e.stopPropagation()}
+                        className="absolute z-40 mt-2 w-72 bg-white text-slate-900 rounded-2xl shadow-2xl border border-purple-100 p-2 max-h-60 overflow-y-auto overscroll-contain"
+                      >
+                        {categoriesList.map(([cat]) => {
+                          const isSelected = selectedCategory === cat;
+                          return (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => {
+                                setSelectedCategory(cat);
+                                setIsCategoryDropdownOpen(false);
+                                if (typeof window !== "undefined") {
+                                  (window as any).lenis?.start();
+                                }
+                              }}
+                              className={`w-full px-3.5 py-2.5 rounded-xl text-left text-sm font-semibold transition-colors flex items-center justify-between cursor-pointer ${isSelected ? "bg-purple-100 text-[#6B39A7] font-bold" : "hover:bg-slate-50 text-slate-700"
+                                }`}
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${isSelected ? "bg-purple-200 text-[#6B39A7]" : "bg-slate-100 text-slate-500"}`}>
+                                  <CategoryImpactIcon category={cat} size={14} />
+                                </div>
+                                <span>{cat}</span>
+                              </div>
+                              {isSelected && <Check size={16} className="text-[#6B39A7]" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-2 text-xs sm:text-sm text-purple-200 space-y-1">
+                  <p>• Microdoações (&lt; R$ 5): repassadas diretamente na chave Pix da ONG sem taxa (0%).</p>
+                  <p>• Doações a partir de R$ 5: confirmação instantânea na tela com taxa bancária fixa de R$ 0,99.</p>
+                </div>
+              </div>
+
+              {/* Lado Direito: O Repasse Financeiro + O Impacto Tangível */}
+              <div className="space-y-6 md:pl-12 flex flex-col justify-between">
+                <div>
+                  <span className="block text-white/80 font-medium text-xl sm:text-3xl mb-2">
+                    A ONG receberá
+                  </span>
+
+                  <div className="text-4xl sm:text-6xl font-black text-white tracking-tight font-mono mb-2">
+                    R$ {netValueToOng.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
+
+                  <span className="block text-white/80 font-medium text-xl sm:text-3xl mb-8">
+                    direto em sua conta bancária.
+                  </span>
+
+                  {/* Impacto Tangível Estimado */}
+                  <div className="p-5 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-sm">
+                    <span className="text-xs font-bold text-purple-200 uppercase tracking-wider block mb-1">
+                      Impacto Social Estimado
+                    </span>
+                    <div className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">
+                      <span ref={simUnitsRef}>~{impactResult.units}</span> {impactResult.unitLabel}
+                    </div>
+                    <p className="text-xs text-purple-100 mt-1 font-normal leading-relaxed">
+                      {impactResult.impactText}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/15 text-xs sm:text-sm text-purple-200 space-y-1.5">
+                  <div className="flex justify-between items-center">
+                    <span>Tarifa bancária de liquidação:</span>
+                    <strong className="font-mono text-white">{bankingFee > 0 ? `R$ ${bankingFee.toFixed(2)}` : "R$ 0,00 (Isento)"}</strong>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Comissão retida pelo DoeCerto:</span>
+                    <strong className="font-mono text-emerald-300 font-bold">R$ 0,00 (0%)</strong>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </section>
+
+        {/* TABELA PARAMÉTRICA DE IMPACTO POR CAUSA SOCIAL (PADRÃO FINTECH COMPACTO) */}
+        <section className="anim-sec-bench py-20 sm:py-28 max-w-5xl mx-auto px-6 border-b border-slate-100">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div className="max-w-2xl">
+              <span className="text-xs font-bold text-[#6B39A7] uppercase tracking-wider block mb-2">
+                Índice de Conversão Social
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-[1.15] mb-3">
+                Custos médios por causa no DoeCerto
+              </h2>
+              <p className="text-slate-600 text-sm sm:text-base leading-relaxed font-normal">
+                Para assegurar transparência técnica e eliminar cálculos dúbios, nosso motor adota benchmarks operacionais médios apurados no terceiro setor:
               </p>
             </div>
-          </section>
 
-          {/* CTA FINAL */}
-          <section className="anim-cta text-center py-8">
-            <h3 className="text-2xl font-bold text-slate-900 mb-4">
-              Pronto para apoiar com transparência total?
+            {/* Selo Informativo Fintech */}
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs font-semibold text-slate-600 shrink-0 self-start md:self-end">
+              <ShieldCheck size={16} className="text-[#6B39A7]" />
+              <span>12 Causas Mapeadas</span>
+            </div>
+          </div>
+
+          {/* Grid de 2 Colunas Estilo Tabela Financeira Minimalista */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {categoriesList.map(([cat, config]) => (
+              <div
+                key={cat}
+                className="flex items-center justify-between p-4 rounded-2xl bg-slate-50/70 border border-slate-200/70 hover:bg-white hover:border-purple-300 hover:shadow-xs transition-all group"
+              >
+                <div className="flex items-center gap-3.5 min-w-0 pr-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#6B39A7] border border-purple-100/80 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <CategoryImpactIcon category={cat} size={18} className="text-[#6B39A7]" />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-sm font-bold text-slate-900 group-hover:text-[#6B39A7] transition-colors truncate">
+                      {cat}
+                    </h4>
+                    <p className="text-xs text-slate-500 font-normal truncate mt-0.5">
+                      {config.unitSingular} {config.timeScope ? `• ${config.timeScope}` : ""}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="shrink-0 text-right">
+                  <span className="inline-block px-3 py-1 rounded-full bg-white border border-slate-200/90 font-mono font-bold text-xs text-[#6B39A7] shadow-2xs">
+                    R$ {config.costPerUnit.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Nota de Governança e Compliance de Rodapé da Tabela */}
+          <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-400 gap-3">
+            <p>
+              * As métricas representam estimativas paramétricas de equivalência social auditadas periodicamente.
+            </p>
+            <span className="font-mono text-slate-400">Motor de Impacto v2.4</span>
+          </div>
+        </section>
+
+        {/* PROCESSO DE AUDITORIA E COMPLIANCE GOVERNAMENTAL (CGU) */}
+        <section className="anim-sec-audit py-20 sm:py-28 max-w-5xl mx-auto px-6 border-b border-slate-100">
+          <div className="mb-14 max-w-3xl">
+            <span className="text-xs font-bold text-[#6B39A7] uppercase tracking-wider block mb-2">
+              Auditoria Governamental Contínua
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-[1.15] mb-4">
+              Como auditamos cada instituição
+            </h2>
+            <p className="text-slate-600 text-base sm:text-lg leading-relaxed font-normal">
+              O DoeCerto opera um motor de checagem automatizada conectado diretamente às bases oficiais da Controladoria-Geral da União (CGU) e do Portal da Transparência:
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+
+            {/* Card CEPIM */}
+            <div className="p-8 sm:p-9 rounded-3xl bg-slate-50/70 border border-slate-200/70 hover:border-purple-300 hover:bg-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[250px]">
+              <div>
+                <div className="flex items-center justify-between mb-5">
+                  <div className="w-14 h-14 rounded-2xl bg-purple-50 text-[#6B39A7] border border-purple-100 flex items-center justify-center shrink-0">
+                    <FileText size={26} />
+                  </div>
+                  <span className="px-3.5 py-1 rounded-full text-xs font-semibold bg-purple-100/70 text-[#6B39A7] border border-purple-200/50">
+                    Base CGU
+                  </span>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight">
+                  CEPIM
+                </h3>
+                <span className="block text-sm font-bold text-[#6B39A7] mt-1">
+                  Entidades Privadas Impedidas
+                </span>
+                <p className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed mt-4">
+                  Identifica e bloqueia organizações proibidas de celebrar convênios públicos ou receber repasses governamentais devido a irregularidades em prestações de contas.
+                </p>
+              </div>
+              <div className="mt-8 pt-5 border-t border-slate-200/60 flex items-center gap-2 text-xs font-semibold text-emerald-700">
+                <Check size={16} className="text-emerald-600 shrink-0" />
+                <span>Varredura contínua oficial</span>
+              </div>
+            </div>
+
+            {/* Card CEIS */}
+            <div className="p-8 sm:p-9 rounded-3xl bg-slate-50/70 border border-slate-200/70 hover:border-purple-300 hover:bg-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[250px]">
+              <div>
+                <div className="flex items-center justify-between mb-5">
+                  <div className="w-14 h-14 rounded-2xl bg-purple-50 text-[#6B39A7] border border-purple-100 flex items-center justify-center shrink-0">
+                    <ShieldCheck size={26} />
+                  </div>
+                  <span className="px-3.5 py-1 rounded-full text-xs font-semibold bg-purple-100/70 text-[#6B39A7] border border-purple-200/50">
+                    Idoneidade
+                  </span>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight">
+                  CEIS
+                </h3>
+                <span className="block text-sm font-bold text-[#6B39A7] mt-1">
+                  Empresas e Entidades Inidôneas
+                </span>
+                <p className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed mt-4">
+                  Varredura contínua contra declarações de inidoneidade e sanções restritivas aplicadas por órgãos públicos de todo o país decorrentes de infrações legais.
+                </p>
+              </div>
+              <div className="mt-8 pt-5 border-t border-slate-200/60 flex items-center gap-2 text-xs font-semibold text-emerald-700">
+                <Check size={16} className="text-emerald-600 shrink-0" />
+                <span>Consulta contínua de idoneidade</span>
+              </div>
+            </div>
+
+            {/* Card CNEP */}
+            <div className="p-8 sm:p-9 rounded-3xl bg-slate-50/70 border border-slate-200/70 hover:border-purple-300 hover:bg-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[250px]">
+              <div>
+                <div className="flex items-center justify-between mb-5">
+                  <div className="w-14 h-14 rounded-2xl bg-purple-50 text-[#6B39A7] border border-purple-100 flex items-center justify-center shrink-0">
+                    <Scale size={26} />
+                  </div>
+                  <span className="px-3.5 py-1 rounded-full text-xs font-semibold bg-purple-100/70 text-[#6B39A7] border border-purple-200/50">
+                    Lei 12.846/13
+                  </span>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight">
+                  CNEP
+                </h3>
+                <span className="block text-sm font-bold text-[#6B39A7] mt-1">
+                  Cadastro de Empresas Punidas
+                </span>
+                <p className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed mt-4">
+                  Checagem contínua de condenações com base na Lei Anticorrupção por atos lesivos contra o patrimônio ou a administração pública nacional ou estrangeira.
+                </p>
+              </div>
+              <div className="mt-8 pt-5 border-t border-slate-200/60 flex items-center gap-2 text-xs font-semibold text-emerald-700">
+                <Check size={16} className="text-emerald-600 shrink-0" />
+                <span>Conformidade anticorrupção</span>
+              </div>
+            </div>
+
+            {/* Card CEAF */}
+            <div className="p-8 sm:p-9 rounded-3xl bg-slate-50/70 border border-slate-200/70 hover:border-purple-300 hover:bg-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[250px]">
+              <div>
+                <div className="flex items-center justify-between mb-5">
+                  <div className="w-14 h-14 rounded-2xl bg-purple-50 text-[#6B39A7] border border-purple-100 flex items-center justify-center shrink-0">
+                    <Users size={26} />
+                  </div>
+                  <span className="px-3.5 py-1 rounded-full text-xs font-semibold bg-purple-100/70 text-[#6B39A7] border border-purple-200/50">
+                    Ficha Limpa
+                  </span>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight">
+                  CEAF (CPF)
+                </h3>
+                <span className="block text-sm font-bold text-[#6B39A7] mt-1">
+                  Ficha Limpa dos Administradores
+                </span>
+                <p className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed mt-4">
+                  Cruzamento minucioso do CPF de todos os dirigentes estatutários e membros da diretoria para atestar ausência de sanções funcionais graves e inelegibilidade.
+                </p>
+              </div>
+              <div className="mt-8 pt-5 border-t border-slate-200/60 flex items-center gap-2 text-xs font-semibold text-emerald-700">
+                <Check size={16} className="text-emerald-600 shrink-0" />
+                <span>Auditoria de diretoria ativa</span>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* SEÇÃO FAQ (ESTILO ELEGANTE EM 2 COLUNAS) */}
+        <section className="anim-sec-faq py-20 sm:py-28 max-w-5xl mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 sm:gap-12 items-start">
+
+            {/* Coluna da Esquerda: Título Grande */}
+            <div className="md:col-span-4">
+              <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-[1.15]">
+                Perguntas<br />frequentes
+              </h2>
+            </div>
+
+            {/* Coluna da Direita: Lista de Perguntas Clean */}
+            <div className="md:col-span-8 divide-y divide-slate-200/80">
+              {faqs.map((faq, index) => {
+                const isOpen = openFaqIndex === index;
+                return (
+                  <div key={index} className="py-6 first:pt-0 last:pb-0">
+                    <button
+                      type="button"
+                      onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                      className="w-full flex items-center justify-between text-left gap-4 font-bold text-slate-900 hover:text-[#6B39A7] transition-colors cursor-pointer"
+                    >
+                      <span className="text-base sm:text-lg leading-snug">
+                        {faq.question}
+                      </span>
+                      <ChevronDown
+                        size={20}
+                        className={`text-slate-500 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180 text-[#6B39A7]" : ""}`}
+                      />
+                    </button>
+
+                    {isOpen && (
+                      <div className="mt-4 pr-6 text-sm sm:text-base text-slate-600 font-normal leading-relaxed animate-in fade-in duration-150">
+                        <p>{faq.answer}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+          </div>
+        </section>
+
+        {/* CTA FINAL MINIMALISTA COM IDENTIDADE DOECERTO */}
+        <section className="anim-cta py-16 text-center border-t border-slate-100 bg-slate-50/50">
+          <div className="max-w-xl mx-auto px-6">
+            <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mb-4 tracking-tight">
+              Pronto para arrecadar ou apoiar?
             </h3>
-            <p className="text-slate-500 max-w-xl mx-auto mb-8 font-light text-base">
-              Conheça as instituições rigorosamente verificadas e acompanhe o impacto real gerado pela sua doação.
+            <p className="text-slate-500 mb-8 font-normal text-sm sm:text-base">
+              Conheça as instituições rigorosamente verificadas e acompanhe a prestação de contas com transparência total.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/home"
-                className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-base shadow-md shadow-purple-200 transition-all active:scale-95"
+                className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-[#6B39A7] hover:bg-[#582C8C] text-white font-semibold text-sm transition-all shadow-xs active:scale-95"
               >
                 Explorar ONGs auditadas
               </Link>
               <Link
                 href="/register"
-                className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold text-base transition-all active:scale-95"
+                className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-white hover:bg-purple-50/30 text-slate-700 border border-slate-300 hover:border-purple-300 font-medium text-sm transition-all active:scale-95"
               >
                 Cadastrar minha ONG
               </Link>
             </div>
-          </section>
+          </div>
+        </section>
 
-        </main>
-
-        {/* FOOTER SIMPLES E ELEGANTE */}
-        <footer className="border-t border-slate-200 bg-white py-10 text-center text-xs text-slate-400">
-          <div className="max-w-4xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        {/* FOOTER CLEAN */}
+        <footer className="border-t border-slate-100 bg-white py-10 text-center text-xs text-slate-400">
+          <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p>© {new Date().getFullYear()} DoeCerto. Todos os direitos reservados.</p>
             <div className="flex gap-6">
-              <Link href="/terms" className="hover:text-purple-700 transition-colors">Termos de Uso</Link>
-              <Link href="/privacy" className="hover:text-purple-700 transition-colors">Privacidade</Link>
-              <Link 
-                href="/" 
+              <Link href="/terms" className="hover:text-[#6B39A7] transition-colors">Termos de Uso</Link>
+              <Link href="/privacy" className="hover:text-[#6B39A7] transition-colors">Privacidade</Link>
+              <Link
+                href="/"
                 onClick={() => {
                   if (typeof window !== "undefined") {
                     sessionStorage.removeItem("landingScrollPos");
                     sessionStorage.removeItem("restoreSection");
                   }
                 }}
-                className="hover:text-purple-700 transition-colors"
+                className="hover:text-[#6B39A7] transition-colors"
               >
                 Página Inicial
               </Link>

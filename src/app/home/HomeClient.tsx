@@ -74,7 +74,7 @@ export default function HomeClient({
   const menuRef = useRef<HTMLDivElement | null>(null);
   const carouselRef = useRef<HTMLDivElement | null>(null);
 
-  const { isAuthenticated: contextIsAuth, userName: contextName, userAvatar: contextAvatar, userRole: contextRole, refreshSession, isLoading } = useAuth();
+  const { isAuthenticated: contextIsAuth, userName: contextName, userAvatar: contextAvatar, userRole: contextRole, refreshSession, isLoading, logout } = useAuth();
   const [isAuth, setIsAuth] = useState(initialIsAuthenticated);
   const [role, setRole] = useState(initialUserRole || contextRole);
 
@@ -266,26 +266,7 @@ export default function HomeClient({
   async function handleLogout(e: React.MouseEvent) {
     e.stopPropagation();
     setIsMenuOpen(false);
-    try {
-      await Preferences.remove({ key: "access_token" });
-      await Preferences.remove({ key: "userRole" });
-    } catch (e) { }
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-      await fetch(`${apiUrl}/auth/logout`, { method: "POST", credentials: "include" });
-    } catch (e) { }
-
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("CapacitorStorage.access_token");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userAvatar");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("registration_completed");
-    localStorage.removeItem("hideDonationTutorial");
-    sessionStorage.removeItem("dismiss_ong_setup_prompt");
-
-    await refreshSession();
-    window.location.replace("/login");
+    await logout("/login");
   }
 
   const scrollCarousel = (direction: 'left' | 'right') => {

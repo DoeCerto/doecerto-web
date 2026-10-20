@@ -10,6 +10,7 @@ import { login } from "@/services/login.service";
 import { Eye, EyeClosed, Lock, Mail, Compass, AlertCircle } from "lucide-react";
 import { Preferences } from "@capacitor/preferences";
 import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 
 // 1. Mudamos o nome da função principal para LoginContent (sem o export default)
 function LoginContent() {
@@ -48,23 +49,19 @@ function LoginContent() {
     }
   }, [isLoading, isAuthenticated, userRole, isPending, router, searchParams]);
 
-  // Inicializa o GSAP
-  useEffect(() => {
-    let ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+  // Inicializa o GSAP com useGSAP no layout phase para eliminar qualquer FOUC / piscada
+  useGSAP(() => {
+    const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
-      tl.fromTo(".animate-item",
-        { y: 30, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.8, stagger: 0.1 }
-      ).fromTo(imageRef.current,
-        { x: 50, opacity: 0 },
-        { x: 0, opacity: 1, duration: 1.2, ease: "power2.out" },
-        "-=0.6"
-      );
-    }, mainWrapperRef);
-
-    return () => ctx.revert();
-  }, []);
+    tl.fromTo(".animate-item",
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.8, stagger: 0.1 }
+    ).fromTo(imageRef.current,
+      { x: 50, opacity: 0 },
+      { x: 0, opacity: 1, duration: 1.2, ease: "power2.out" },
+      "-=0.6"
+    );
+  }, { scope: mainWrapperRef });
 
   // Função auxiliar para salvar a sessão
   const saveSessionAndRedirect = async (data: any) => {
@@ -206,7 +203,7 @@ function LoginContent() {
       <div className="w-full lg:w-1/2 flex flex-col relative items-center justify-center px-6 sm:px-12 py-10 overflow-y-auto">
         <div className="w-full max-w-[460px] shrink-0">
 
-          <div className="animate-item mb-10 text-left">
+          <div className="animate-item opacity-0 mb-10 text-left">
             <h1 className="text-4xl sm:text-[3rem] font-bold text-gray-900 mb-2 tracking-tight leading-tight">
               Bem-vindo de volta!
             </h1>
@@ -215,7 +212,7 @@ function LoginContent() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="animate-item flex flex-col gap-6">
+          <form onSubmit={handleSubmit} className="animate-item opacity-0 flex flex-col gap-6">
             {loginError && (
               <div className="flex items-center gap-3 p-4 bg-red-50/90 border border-red-200/90 rounded-2xl text-red-700 text-sm font-semibold animate-in fade-in slide-in-from-top-1 duration-300">
                 <AlertCircle size={20} className="shrink-0 text-red-500" />
@@ -339,13 +336,13 @@ function LoginContent() {
             type="button"
             onClick={() => router.push('/home')}
             disabled={isPending}
-            className="animate-item w-full flex justify-center items-center gap-3 h-[60px] bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-lg rounded-xl transition-all shadow-sm active:scale-[0.98] disabled:opacity-70"
+            className="animate-item opacity-0 w-full flex justify-center items-center gap-3 h-[60px] bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-lg rounded-xl transition-all shadow-sm active:scale-[0.98] disabled:opacity-70"
           >
             <Compass className="w-6 h-6 text-[#6B39A7]" />
             Conhecer ONGs e causas
           </button>
 
-          <div className="animate-item text-center mt-6 text-sm text-gray-500 px-4">
+          <div className="animate-item opacity-0 text-center mt-6 text-sm text-gray-500 px-4">
             Ao continuar, você concorda com nossos{" "}
             <Link
               href="/privacy"
@@ -356,7 +353,7 @@ function LoginContent() {
             .
           </div>
 
-          <div className="animate-item text-center mt-6">
+          <div className="animate-item opacity-0 text-center mt-6">
             <span className="text-lg text-gray-500 font-medium">Não tem uma conta? </span>
             <Link
               href="/register"
@@ -372,7 +369,7 @@ function LoginContent() {
       <div className="hidden lg:block w-1/2 relative h-screen bg-transparent">
         <div
           ref={imageRef}
-          className="absolute inset-y-0 right-0 left-0 rounded-l-[2.5rem] overflow-hidden shadow-[-20px_0_40px_rgba(0,0,0,0.05)]"
+          className="absolute inset-y-0 right-0 left-0 rounded-l-[2.5rem] overflow-hidden shadow-[-20px_0_40px_rgba(0,0,0,0.05)] opacity-0"
         >
           <img
             src="/fotocrianca1.png"

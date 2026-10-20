@@ -107,7 +107,12 @@ export default function OngPublicProfileClient({
           </div>
         )}
 
-        <button onClick={() => router.back()} className="absolute top-4 sm:top-6 left-4 sm:left-6 bg-white/90 p-2.5 sm:p-3 rounded-full z-30 shadow-sm hover:bg-white transition-all active:scale-95 cursor-pointer">
+        <button 
+          onClick={() => router.push("/home")} 
+          aria-label="Voltar para a página inicial"
+          title="Voltar para a página inicial"
+          className="absolute top-4 sm:top-6 left-4 sm:left-6 bg-white/90 p-2.5 sm:p-3 rounded-full z-30 shadow-sm hover:bg-white transition-all active:scale-95 cursor-pointer"
+        >
           <ArrowLeft size={24} className="text-purple-600" />
         </button>
       </div>

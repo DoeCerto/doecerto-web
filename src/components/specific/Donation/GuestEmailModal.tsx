@@ -179,7 +179,7 @@ export function GuestEmailForm({
             </>
           ) : (
             <>
-              Informe seu e-mail para doar para{" "}
+              Informe seu e-mail para receber a confirmação da sua doação e ajudar{" "}
               <strong className="text-slate-900 font-bold">{ongName}</strong>.
             </>
           )
@@ -210,11 +210,10 @@ export function GuestEmailForm({
             disabled={isLoading}
             aria-invalid={!!error}
             aria-describedby={error ? "guest-email-error" : undefined}
-            className={`w-full px-5 py-4 rounded-xl border-2 bg-white text-base font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-medium outline-none transition-all ${
-              error
-                ? "border-red-400 focus:ring-4 focus:ring-red-100"
-                : "border-slate-200 focus:border-[#6B39A7] focus:ring-4 focus:ring-purple-100"
-            }`}
+            className={`w-full px-5 py-4 rounded-xl border-2 bg-white text-base font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-medium outline-none transition-all ${error
+              ? "border-red-400 focus:ring-4 focus:ring-red-100"
+              : "border-slate-200 focus:border-[#6B39A7] focus:ring-4 focus:ring-purple-100"
+              }`}
           />
         </div>
 
@@ -235,11 +234,10 @@ export function GuestEmailForm({
               }}
               placeholder="WhatsApp com DDD (ex: 81 99999-9999)"
               disabled={isLoading}
-              className={`w-full px-5 py-4 rounded-xl border-2 bg-white text-base font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-medium outline-none transition-all font-mono ${
-                error
-                  ? "border-red-400 focus:ring-4 focus:ring-red-100"
-                  : "border-slate-200 focus:border-[#6B39A7] focus:ring-4 focus:ring-purple-100"
-              }`}
+              className={`w-full px-5 py-4 rounded-xl border-2 bg-white text-base font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-medium outline-none transition-all font-mono ${error
+                ? "border-red-400 focus:ring-4 focus:ring-red-100"
+                : "border-slate-200 focus:border-[#6B39A7] focus:ring-4 focus:ring-purple-100"
+                }`}
             />
             <p className="text-sm text-slate-500 font-medium mt-1 pl-1">
               A instituição entrará em contato para alinhar os detalhes da entrega.

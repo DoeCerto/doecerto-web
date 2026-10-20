@@ -41,7 +41,7 @@ import { CategoryImpactIcon } from "@/components/ui/CategoryImpactIcon";
 
 export default function OngSetupProfile() {
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading, userRole, refreshSession } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, userRole, refreshSession, logout } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -72,27 +72,7 @@ export default function OngSetupProfile() {
 
   const handleLogout = async (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    try {
-      await Preferences.remove({ key: "access_token" });
-      await Preferences.remove({ key: "userRole" });
-    } catch (e) {}
-
-    try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-      await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" });
-    } catch (e) {}
-
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("CapacitorStorage.access_token");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userAvatar");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("registration_completed");
-    localStorage.removeItem("hideDonationTutorial");
-    sessionStorage.removeItem("dismiss_ong_setup_prompt");
-
-    await refreshSession();
-    window.location.replace("/login");
+    await logout("/login");
   };
 
   // Campos do Perfil

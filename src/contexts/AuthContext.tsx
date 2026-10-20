@@ -10,6 +10,7 @@ type AuthContextType = {
   userName: string | null;
   isLoading: boolean;
   refreshSession: () => Promise<void>;
+  logout: (redirectTo?: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -56,6 +57,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const logout = useCallback(async (redirectTo: string = "/login") => {
+    // 1. Limpeza síncrona imediata de tokens e dados de sessão
+    try {
+      const { Preferences } = await import("@capacitor/preferences");
+      await Preferences.remove({ key: "access_token" });
+      await Preferences.remove({ key: "userRole" });
+    } catch { }
+
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("CapacitorStorage.access_token");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userAvatar");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("registration_completed");
+    localStorage.removeItem("hideDonationTutorial");
+    sessionStorage.removeItem("dismiss_ong_setup_prompt");
+
+    if (typeof document !== "undefined") {
+      document.cookie = "user_avatar=; path=/; max-age=0";
+      document.cookie = "user_name=; path=/; max-age=0";
+    }
+
+    // 2. Notifica o backend para invalidar refresh token e limpar cookies httpOnly
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+      await fetch(`${apiUrl}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+        keepalive: true,
+      });
+    } catch { }
+
+    // 3. Padrão Ouro: Navegação imediata SEM esperar refreshSession()
+    // Isso elimina o piscar/re-render deslogado da página atual
+    if (typeof window !== "undefined") {
+      window.location.replace(redirectTo);
+    }
+  }, []);
+
   useEffect(() => {
     refreshSession();
 
@@ -79,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refreshSession]);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userRole, userAvatar, userName, isLoading, refreshSession }}>
+    <AuthContext.Provider value={{ isAuthenticated, userRole, userAvatar, userName, isLoading, refreshSession, logout }}>
       {children}
     </AuthContext.Provider>
   );

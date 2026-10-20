@@ -23,7 +23,7 @@ interface OngDashboardProps {
 
 export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
   const router = useRouter();
-  const { refreshSession } = useAuth();
+  const { refreshSession, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isReviewsOpen, setIsReviewsOpen] = useState(false);
@@ -67,28 +67,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
   const handleLogout = async (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setIsMenuOpen(false);
-
-    try {
-      await Preferences.remove({ key: "access_token" });
-      await Preferences.remove({ key: "userRole" });
-    } catch (e) {}
-
-    try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-      await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" });
-    } catch (e) {}
-
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("CapacitorStorage.access_token");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userAvatar");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("registration_completed");
-    localStorage.removeItem("hideDonationTutorial");
-    sessionStorage.removeItem("dismiss_ong_setup_prompt");
-
-    await refreshSession();
-    window.location.replace("/login");
+    await logout("/login");
   };
 
   const donorPhone = selectedDonation?.donor?.profile?.contactNumber ?? "";
