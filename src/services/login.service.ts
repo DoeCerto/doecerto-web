@@ -40,17 +40,35 @@ export interface Enable2FAResponse {
 }
 
 export async function login(data: LoginDTO) {
+  const accountToken = await SecureStorageService.getTrustedDeviceToken(data.email);
+  const customHeaders: Record<string, string> = {};
+  if (accountToken) {
+    customHeaders["x-trusted-device"] = accountToken;
+  }
+
   return await api<LoginResponse>("/auth/login", {
     method: "POST",
+    headers: customHeaders,
     body: JSON.stringify(data),
   });
 }
 
-export async function verify2FALogin(tempToken: string, code: string, rememberDevice: boolean = true) {
-  return await api<LoginResponse>("/auth/2fa/verify", {
+export async function verify2FALogin(
+  tempToken: string,
+  code: string,
+  rememberDevice: boolean = true,
+  email?: string,
+) {
+  const res = await api<LoginResponse>("/auth/2fa/verify", {
     method: "POST",
     body: JSON.stringify({ tempToken, code, rememberDevice }),
   });
+
+  if (email && res.data?.trustedDeviceToken) {
+    await SecureStorageService.setTrustedDeviceToken(res.data.trustedDeviceToken, email);
+  }
+
+  return res;
 }
 
 export async function generate2FA(tempToken: string) {
@@ -60,15 +78,27 @@ export async function generate2FA(tempToken: string) {
   });
 }
 
-export async function enable2FA(tempToken: string, secret: string, code: string, rememberDevice: boolean = true) {
-  return await api<Enable2FAResponse>("/auth/2fa/enable", {
+export async function enable2FA(
+  tempToken: string,
+  secret: string,
+  code: string,
+  rememberDevice: boolean = true,
+  email?: string,
+) {
+  const res = await api<Enable2FAResponse>("/auth/2fa/enable", {
     method: "POST",
     body: JSON.stringify({ tempToken, secret, code, rememberDevice }),
   });
+
+  if (email && res.data?.trustedDeviceToken) {
+    await SecureStorageService.setTrustedDeviceToken(res.data.trustedDeviceToken, email);
+  }
+
+  return res;
 }
 
-export async function revokeTrustedDevices() {
-  await SecureStorageService.removeTrustedDeviceToken();
+export async function revokeTrustedDevices(email?: string) {
+  await SecureStorageService.removeTrustedDeviceToken(email);
   return await api<{ message: string }>("/auth/2fa/trusted-devices/revoke", {
     method: "POST",
   });

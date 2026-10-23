@@ -104,7 +104,7 @@ function LoginContent() {
   }, { scope: mainWrapperRef, dependencies: [step] });
 
   // Função auxiliar para salvar a sessão e redirecionar
-  const saveSessionAndRedirect = async (data: any) => {
+  const saveSessionAndRedirect = async (data: any, accountEmail?: string) => {
     const token = data?.accessToken || data?.access_token || data?.token;
     if (token) {
       try {
@@ -112,9 +112,10 @@ function LoginContent() {
       } catch (capacitorError) { }
     }
 
+    const targetEmail = accountEmail || data?.user?.email || data?.email || email;
     if (data?.trustedDeviceToken) {
       try {
-        await SecureStorageService.setTrustedDeviceToken(data.trustedDeviceToken);
+        await SecureStorageService.setTrustedDeviceToken(data.trustedDeviceToken, targetEmail);
       } catch { }
     }
 
@@ -271,7 +272,7 @@ function LoginContent() {
       }
 
       // Caso 3: Login direto (Doador sem 2FA ou legacy)
-      await saveSessionAndRedirect(data);
+      await saveSessionAndRedirect(data, email);
     } catch (err: any) {
       const friendlyMsg = translateAuthError(err);
       if (friendlyMsg.toLowerCase().includes("pelo menos 8 caracteres")) {
@@ -296,9 +297,10 @@ function LoginContent() {
 
     setIsSubmitting2FA(true);
     try {
-      const res = await verify2FALogin(tempToken, cleanCode, rememberDevice);
+      const targetEmail = pendingUser?.email || email;
+      const res = await verify2FALogin(tempToken, cleanCode, rememberDevice, targetEmail);
       const data = (res?.data || res) as any;
-      await saveSessionAndRedirect(data);
+      await saveSessionAndRedirect(data, targetEmail);
     } catch (err: any) {
       const msg = err?.data?.message || err?.response?.data?.message || err?.message || "Código inválido ou expirado.";
       setError2FA(typeof msg === "string" ? msg : "Código incorreto. Tente novamente.");
@@ -324,7 +326,8 @@ function LoginContent() {
 
     setIsSubmitting2FA(true);
     try {
-      const res = await enable2FA(tempToken, setupData.secret, cleanCode, rememberDevice);
+      const targetEmail = pendingUser?.email || email;
+      const res = await enable2FA(tempToken, setupData.secret, cleanCode, rememberDevice, targetEmail);
       const data = (res?.data || res) as any;
       setBackupCodes(data.backupCodes || []);
       setSavedSessionData(data);
@@ -921,7 +924,7 @@ function LoginContent() {
               <button
                 type="button"
                 disabled={!confirmedSavedCodes}
-                onClick={() => saveSessionAndRedirect(savedSessionData)}
+                onClick={() => saveSessionAndRedirect(savedSessionData, pendingUser?.email || email)}
                 className="w-full flex justify-center items-center h-[56px] bg-purple-700 hover:bg-purple-800 text-white font-bold text-lg rounded-xl transition-all duration-300 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_8px_20px_-6px_rgba(74,38,117,0.5)] cursor-pointer"
               >
                 Concluir e Acessar Dashboard

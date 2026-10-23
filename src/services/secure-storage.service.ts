@@ -156,14 +156,26 @@ export class SecureStorageService {
   }
 
   /**
-   * Recupera o token de dispositivo confiável (Keystore no Mobile, localStorage no Web)
+   * Recupera o token de dispositivo confiável para uma conta específica ou padrão.
+   * Suporta padrão Big Tech (Account-Scoped Multi-Account).
    */
-  public static async getTrustedDeviceToken(): Promise<string | null> {
+  public static async getTrustedDeviceToken(email?: string): Promise<string | null> {
+    const accountKey = email ? `${this.TRUSTED_DEVICE_KEY}:${email.trim().toLowerCase()}` : null;
+
     if (this.isNativeMobile()) {
+      if (accountKey) {
+        const token = await this.get(accountKey);
+        if (token) return token;
+      }
       return await this.get(this.TRUSTED_DEVICE_KEY);
     }
+
     if (typeof window !== 'undefined') {
       try {
+        if (accountKey) {
+          const token = localStorage.getItem(accountKey);
+          if (token) return token;
+        }
         return localStorage.getItem(this.TRUSTED_DEVICE_KEY);
       } catch {
         return null;
@@ -173,14 +185,23 @@ export class SecureStorageService {
   }
 
   /**
-   * Salva o token de dispositivo confiável (Keystore no Mobile, localStorage no Web)
+   * Salva o token de dispositivo confiável associado à conta e como padrão mais recente.
    */
-  public static async setTrustedDeviceToken(token: string): Promise<boolean> {
+  public static async setTrustedDeviceToken(token: string, email?: string): Promise<boolean> {
+    const accountKey = email ? `${this.TRUSTED_DEVICE_KEY}:${email.trim().toLowerCase()}` : null;
+
     if (this.isNativeMobile()) {
+      if (accountKey) {
+        await this.set(accountKey, token);
+      }
       return await this.set(this.TRUSTED_DEVICE_KEY, token);
     }
+
     if (typeof window !== 'undefined') {
       try {
+        if (accountKey) {
+          localStorage.setItem(accountKey, token);
+        }
         localStorage.setItem(this.TRUSTED_DEVICE_KEY, token);
         return true;
       } catch {
@@ -191,15 +212,33 @@ export class SecureStorageService {
   }
 
   /**
-   * Remove o token de dispositivo confiável (Keystore no Mobile, localStorage no Web)
+   * Remove o token de dispositivo confiável (específico de uma conta ou todos se não informado).
    */
-  public static async removeTrustedDeviceToken(): Promise<boolean> {
+  public static async removeTrustedDeviceToken(email?: string): Promise<boolean> {
+    const accountKey = email ? `${this.TRUSTED_DEVICE_KEY}:${email.trim().toLowerCase()}` : null;
+
     if (this.isNativeMobile()) {
-      return await this.remove(this.TRUSTED_DEVICE_KEY);
+      if (accountKey) {
+        await this.remove(accountKey);
+      } else {
+        await this.remove(this.TRUSTED_DEVICE_KEY);
+      }
+      return true;
     }
+
     if (typeof window !== 'undefined') {
       try {
-        localStorage.removeItem(this.TRUSTED_DEVICE_KEY);
+        if (accountKey) {
+          localStorage.removeItem(accountKey);
+        } else {
+          localStorage.removeItem(this.TRUSTED_DEVICE_KEY);
+          for (let i = localStorage.length - 1; i >= 0; i--) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(`${this.TRUSTED_DEVICE_KEY}:`)) {
+              localStorage.removeItem(key);
+            }
+          }
+        }
         return true;
       } catch {
         return false;
