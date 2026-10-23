@@ -12,7 +12,6 @@ import { useRouter } from "next/navigation";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { DonationService } from "@/services/donations.service";
 import { api } from "@/services/api";
-import { Preferences } from "@capacitor/preferences";
 import { useAuth } from "@/contexts/AuthContext";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";

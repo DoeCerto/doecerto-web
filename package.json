@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "pix:confirm": "wsl -d Ubuntu-24.04 bash -c \"export NVM_DIR=/home/vini/.nvm && . /home/vini/.nvm/nvm.sh && cd /home/vini/doecerto-api && node scripts/confirm-pix.js\""
   },
   "dependencies": {
     "@capacitor/android": "^7.4.4",
@@ -16,6 +17,7 @@
     "@hookform/resolvers": "^5.6.0",
     "@lottiefiles/dotlottie-react": "^0.19.13",
     "@studio-freight/lenis": "^1.0.42",
+    "capacitor-secure-storage-plugin": "^0.12.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.43.0",
     "gsap": "^3.15.0",
@@ -43,11 +45,14 @@
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
-    "eslint-config-next": "16.0.1",
+    "eslint-config-next": "^16.4.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
   "overrides": {
-    "tar": "^7.5.4"
+    "tar": "^7.5.4",
+    "fast-glob": "^3.3.3",
+    "braces": "^3.0.3",
+    "micromatch": "^4.0.8"
   }
 }

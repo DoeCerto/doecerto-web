@@ -23,10 +23,6 @@ export default function OngDashboardPage() {
         const handlePageShow = (e: PageTransitionEvent) => {
             if (e.persisted) {
                 refreshSession();
-                const token = localStorage.getItem("access_token");
-                if (!token) {
-                    window.location.replace("/login");
-                }
             }
         };
         window.addEventListener("pageshow", handlePageShow);

@@ -26,6 +26,7 @@ export interface CheckAvailabilityResponse {
   available: boolean;
   field?: "email" | "cpf" | "cnpj" | "phone";
   message?: string;
+  rateLimited?: boolean;
 }
 
 export async function checkAvailability(query: CheckAvailabilityQuery): Promise<CheckAvailabilityResponse> {
@@ -39,6 +40,20 @@ export async function checkAvailability(query: CheckAvailabilityQuery): Promise<
     const res = await api<CheckAvailabilityResponse>(`/auth/check-availability?${params.toString()}`);
     return res.data;
   } catch (err: any) {
+    if (
+      err?.status === 429 ||
+      err?.statusCode === 429 ||
+      err?.message?.includes("ThrottlerException") ||
+      err?.message?.includes("Too Many Requests") ||
+      err?.message?.includes("Muitas tentativas") ||
+      err?.message?.includes("Muitas requisições")
+    ) {
+      return {
+        available: false,
+        rateLimited: true,
+        message: "Muitas tentativas em pouco tempo. Por favor, aguarde alguns segundos antes de tentar novamente.",
+      };
+    }
     return {
       available: false,
       message: err?.message || "Dado já cadastrado no sistema.",

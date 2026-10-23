@@ -60,9 +60,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async (redirectTo: string = "/login") => {
     // 1. Limpeza síncrona imediata de tokens e dados de sessão
     try {
-      const { Preferences } = await import("@capacitor/preferences");
-      await Preferences.remove({ key: "access_token" });
-      await Preferences.remove({ key: "userRole" });
+      const { SecureStorageService } = await import("@/services/secure-storage.service");
+      await SecureStorageService.removeAccessToken();
+      await SecureStorageService.removeUserRole();
     } catch { }
 
     localStorage.removeItem("access_token");
@@ -73,6 +73,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("registration_completed");
     localStorage.removeItem("hideDonationTutorial");
     sessionStorage.removeItem("dismiss_ong_setup_prompt");
+    if (typeof window !== "undefined") {
+      try {
+        Object.keys(sessionStorage).forEach((key) => {
+          if (key.startsWith("dc_dynpix_") || key.startsWith("dc_pix_exp_")) {
+            sessionStorage.removeItem(key);
+          }
+        });
+      } catch { }
+    }
 
     if (typeof document !== "undefined") {
       document.cookie = "user_avatar=; path=/; max-age=0";

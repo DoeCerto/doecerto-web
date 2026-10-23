@@ -1,7 +1,7 @@
 import OngPublicProfileClient from "@/components/specific/Ong-Public-Profile/OngPublicProfileClient";
 
 export default async function OngPublicProfilePage(props: {
-  searchParams: Promise<{ id?: string }> | { id?: string }
+  searchParams: Promise<{ id?: string }>;
 }) {
 
   const searchParams = await props.searchParams;
@@ -19,22 +19,22 @@ export default async function OngPublicProfilePage(props: {
   let initialData = null;
 
   try {
-    let apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:3001";
-    apiUrl = apiUrl.replace("localhost", "127.0.0.1");
+    const publicApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    const internalApiUrl = (process.env.INTERNAL_API_URL || publicApiUrl).replace("localhost", "127.0.0.1");
 
-    // Recriamos o formatador de URL de imagem do seu service para usar no servidor
+    // Formata a URL da imagem para o navegador (utilizando a URL pública)
     const formatImageUrl = (path: string | null) => {
       if (!path) return "";
       if (path.startsWith('http')) return path;
       const cleanPath = path.replace(/\\/g, "/");
-      return `${apiUrl}${cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`}`;
+      return `${publicApiUrl}${cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`}`;
     };
 
-    // A MÁGICA: O Servidor agora bate nas 3 rotas exatamente como o seu Service faz!
+    // O Servidor busca os dados usando o endereço de rede interna
     const [resBase, resProfile, resReviews] = await Promise.all([
-      fetch(`${apiUrl}/ongs/${ongId}`, { cache: "no-store" }).then(r => r.ok ? r.json() : {}).catch(() => ({})),
-      fetch(`${apiUrl}/ongs/${ongId}/profile`, { cache: "no-store" }).then(r => r.ok ? r.json() : {}).catch(() => ({})),
-      fetch(`${apiUrl}/ongs/${ongId}/ratings`, { cache: "no-store" }).then(r => r.ok ? r.json() : []).catch(() => [])
+      fetch(`${internalApiUrl}/ongs/${ongId}`, { cache: "no-store" }).then(r => r.ok ? r.json() : {}).catch(() => ({})),
+      fetch(`${internalApiUrl}/ongs/${ongId}/profile`, { cache: "no-store" }).then(r => r.ok ? r.json() : {}).catch(() => ({})),
+      fetch(`${internalApiUrl}/ongs/${ongId}/ratings`, { cache: "no-store" }).then(r => r.ok ? r.json() : []).catch(() => [])
     ]);
     const base: Record<string, any> = resBase || {};
     const profile: Record<string, any> = resProfile || {};

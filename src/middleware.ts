@@ -26,6 +26,30 @@ function isTokenExpired(token: string): boolean {
 }
 
 export async function middleware(request: NextRequest) {
+    // 🛡️ CSP: Geração de nonce criptográfico único por requisição (Padrão Ouro OWASP)
+    // Impede execução de qualquer script inline não-autorizado (defesa robusta contra XSS)
+    const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+    const isDev = process.env.NODE_ENV === 'development';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+    const cspHeader = `
+        default-src 'self';
+        script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ${isDev ? "'unsafe-eval'" : ""};
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        img-src 'self' blob: data: https: ${apiUrl};
+        font-src 'self' https://fonts.gstatic.com data:;
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self';
+        frame-ancestors 'none';
+        connect-src 'self' ${apiUrl} https:;
+        upgrade-insecure-requests;
+    `.replace(/\s{2,}/g, ' ').trim();
+
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('x-nonce', nonce);
+    requestHeaders.set('Content-Security-Policy', cspHeader);
+
     let token = request.cookies.get('access_token')?.value;
     const refreshToken = request.cookies.get('refresh_token')?.value;
     const { pathname } = request.nextUrl;
@@ -44,6 +68,7 @@ export async function middleware(request: NextRequest) {
                 headers: {
                     'Content-Type': 'application/json',
                     'Cookie': `refresh_token=${refreshToken}`,
+                    'x-client-type': 'server',
                 },
                 body: JSON.stringify({ refreshToken }),
             });
@@ -109,14 +134,13 @@ export async function middleware(request: NextRequest) {
         // Atualiza cookies no request para que Server Components tenham acesso imediato
         request.cookies.set('access_token', refreshedTokens.accessToken);
         request.cookies.set('refresh_token', refreshedTokens.refreshToken);
-        response = NextResponse.next({
-            request: {
-                headers: request.headers,
-            },
-        });
-    } else {
-        response = NextResponse.next();
     }
+
+    response = NextResponse.next({
+        request: {
+            headers: requestHeaders,
+        },
+    });
 
     if (isProtected && !token) {
         const loginUrl = new URL('/login', request.url);
@@ -130,6 +154,8 @@ export async function middleware(request: NextRequest) {
         response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         response.headers.set('Pragma', 'no-cache');
         response.headers.set('Expires', '0');
+        response.headers.set('Content-Security-Policy', cspHeader);
+        response.headers.set('x-nonce', nonce);
         return response;
     } else if (token) {
         if (isOngPrivateRoute && userRole !== 'ong' && userRole !== 'admin') {
@@ -179,6 +205,10 @@ export async function middleware(request: NextRequest) {
             maxAge: 7 * 24 * 60 * 60, // 7 dias
         });
     }
+
+    // Aplica cabeçalhos CSP e Nonce na resposta
+    response.headers.set('Content-Security-Policy', cspHeader);
+    response.headers.set('x-nonce', nonce);
 
     return response;
 }

@@ -4,10 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
-  ArrowLeft, ArrowRight, Loader2, Building2, IdCard, DollarSign,
-  Key, Copy, CheckCircle2, FileText, Image as ImageIcon,
-  Paperclip, X, UploadCloud, Lock, ShieldCheck, Heart, AlertCircle, AlertTriangle,
-  Zap, RefreshCw, Clock, Check, HelpCircle
+  ArrowLeft, ArrowRight, Loader2, Building2, IdCard,
+  Key, Copy, CheckCircle2,
+  X, Lock, ShieldCheck, Heart, AlertCircle, AlertTriangle,
+  RefreshCw, Clock, User, Mail
 } from "lucide-react";
 import { useState, Suspense, useEffect, useMemo, useRef } from "react";
 import { OngsProfileService } from "@/services/ongs-profile.service";
@@ -15,65 +15,10 @@ import { api } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { QRCodeSVG } from "qrcode.react";
 import DonationTutorialModal from "@/components/ui/DonationTutorial";
-import { GuestEmailModal, readGuestEmail, saveGuestEmail, clearGuestEmail } from "@/components/specific/Donation/GuestEmailModal";
 import { calculateImpact } from "@/utils/impactCalculator";
 import { CategoryImpactIcon } from "@/components/ui/CategoryImpactIcon";
-
-// ==========================================
-// ÍCONE OFICIAL PIX
-// ==========================================
-function PixIcon({ className = "w-6 h-6", size = 24 }: { className?: string; size?: number }) {
-  return (
-    <svg
-      viewBox="0 0 512 512"
-      width={size}
-      height={size}
-      fill="currentColor"
-      className={className}
-    >
-      <path
-        d="M414.6 288.5L343.4 217.3c-14.8-14.8-39-14.8-53.8 0L256 250.8l-33.6-33.5c-14.8-14.8-39-14.8-53.8 0L97.4 288.5c-14.8 14.8-14.8 39 0 53.8l71.2 71.2c14.8 14.8 39 14.8 53.8 0l33.6-33.5 33.6 33.5c14.8 14.8 39 14.8 53.8 0l71.2-71.2c14.9-14.8 14.9-39 0-53.8zM256 122.9l33.6 33.5c14.8 14.8 39 14.8 53.8 0l42.4-42.4c14.8-14.8 14.8-39 0-53.8L357 31.4c-14.8-14.8-39-14.8-53.8 0L256 78.6 208.8 31.4c-14.8-14.8-39-14.8-53.8 0L126.2 60.2c-14.8 14.8-14.8 39 0 53.8l42.4 42.4c14.8 14.8 39 14.8 53.8 0L256 122.9z"
-        fill="#00B495"
-      />
-    </svg>
-  );
-}
-
-// ==========================================
-// CÁLCULO DE CRC16 E TRATAMENTO DE CHAVE PIX
-// ==========================================
-
-function calculateCRC16(str: string): string {
-  let crc = 0xffff;
-  for (let i = 0; i < str.length; i++) {
-    let charCode = str.charCodeAt(i);
-    crc ^= charCode << 8;
-    for (let j = 0; j < 8; j++) {
-      if ((crc & 0x8000) !== 0) {
-        crc = (crc << 1) ^ 0x1021;
-      } else {
-        crc <<= 1;
-      }
-    }
-  }
-  return (crc & 0xffff).toString(16).toUpperCase().padStart(4, "0");
-}
-
-function getPixKeyType(key: string): "email" | "cpf" | "cnpj" | "phone" | "random" {
-  const cleanKey = key.trim();
-
-  if (cleanKey.includes("@")) return "email";
-
-  const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanKey);
-  if (isUuid) return "random";
-
-  const digits = cleanKey.replace(/\D/g, "");
-  if (digits.length === 14) return "cnpj";
-  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) return "phone";
-  if (digits.length === 11) return "cpf";
-
-  return "random";
-}
+import { formatCPF, validateCPF, removeFormatting } from "@/utils/documentValidation";
+import FintechSuccessModal from "@/components/specific/Donation/FintechSuccessModal";
 
 // ==========================================
 // TEXTO DE IMPACTO SOCIAL TYPEWRITER
@@ -154,10 +99,11 @@ function TypewriterImpactText({
 // ==========================================
 // TIPOS DO FLUXO
 // ==========================================
-type FlowStep = "amount" | "payment" | "proof";
+type FlowStep = "amount" | "identification" | "payment";
 
 interface DynamicPixData {
-  donationId: number;
+  donationId: number | string;
+  trackingId?: string;
   paymentId: string;
   amount: number;
   netValue: number;
@@ -180,30 +126,41 @@ function PixPageContent() {
   const urlStep = searchParams.get("step");
 
   const [step, setStep] = useState<FlowStep>(() => {
+    if (urlStep === "identificacao" || urlStep === "identification") return "identification";
     if (urlStep === "pagamento" || urlStep === "payment") return "payment";
-    if (urlStep === "comprovante" || urlStep === "proof") return "proof";
     return "amount";
   });
 
-  const { isAuthenticated, userRole, userName } = useAuth();
+  const { isAuthenticated, userRole } = useAuth();
   const isOngUser = isAuthenticated && userRole === "ong";
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isAnonymous, setIsAnonymous] = useState(false);
-  const [guestEmail, setGuestEmail] = useState("");
-  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
-  const [lastGuestEmail, setLastGuestEmail] = useState("");
 
-  useEffect(() => {
-    setGuestEmail(readGuestEmail());
-  }, []);
+  // Estados de identificação rápida do visitante (Guest Checkout - Padrão Fintech Enterprise)
+  const [guestName, setGuestName] = useState(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("dc_guest_name") || "";
+    }
+    return "";
+  });
+  const [guestEmailInput, setGuestEmailInput] = useState(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("dc_guest_email") || "";
+    }
+    return "";
+  });
+  const [guestCpf, setGuestCpf] = useState(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("dc_guest_cpf") || "";
+    }
+    return "";
+  });
+  const [guestFormError, setGuestFormError] = useState<string | null>(null);
 
   const [ongData, setOngData] = useState<any>(null);
-  const [bankData, setBankData] = useState<any>(null);
   const [initialLoading, setInitialLoading] = useState(true);
 
   const [copied, setCopied] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [valor, setValor] = useState(initialValor);
   const valoresRapidos = ["5", "10", "20", "50", "100"];
@@ -223,17 +180,16 @@ function PixPageContent() {
     }
     return null;
   });
+
   const [isGeneratingPix, setIsGeneratingPix] = useState(false);
   const [dynamicPixError, setDynamicPixError] = useState<string | null>(null);
   const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
   const lastRequestedAmountRef = useRef<number | null>(null);
 
-  // Calcula o tempo restante baseado em um timestamp fixo no relógio real (expiresAt do backend ou fallback)
+  // Calcula o tempo restante baseado em um timestamp fixo no relógio real (20 min)
   const calculateRemainingSeconds = (activeValor?: string, pixData?: DynamicPixData | null) => {
-    // 1. dynamicPix passado explicitamente ou do estado
     const currentPix = pixData !== undefined ? pixData : dynamicPix;
 
-    // Se temos createdAt oficial, a janela padrão do checkout é estritamente createdAt + 20 minutos
     if (currentPix?.createdAt) {
       const createdMs = new Date(currentPix.createdAt).getTime();
       if (!isNaN(createdMs)) {
@@ -246,51 +202,21 @@ function PixPageContent() {
       const expMs = new Date(currentPix.expiresAt).getTime();
       if (!isNaN(expMs)) {
         const diffSeconds = Math.floor((expMs - Date.now()) / 1000);
-        // Se a data for superior a 20 minutos (1200s), é a data bruta de vencimento do Asaas (ex: 1 ano no sandbox)
-        // Isso indica cobrança antiga/legado em cache -> tratamos como expirada (0s)
-        if (diffSeconds > 1200) {
-          return 0;
-        }
         return Math.max(0, diffSeconds);
       }
     }
 
-    // 2. Tenta ler do sessionStorage o objeto dynamicPix
     const targetValor = activeValor || valor;
     if (typeof window !== "undefined" && ongId && targetValor) {
       try {
-        const cached = sessionStorage.getItem(`dc_dynpix_${ongId}_${targetValor}`);
-        if (cached) {
-          const parsed = JSON.parse(cached) as DynamicPixData;
-          if (parsed?.createdAt) {
-            const createdMs = new Date(parsed.createdAt).getTime();
-            if (!isNaN(createdMs)) {
-              const windowEnd = createdMs + 20 * 60 * 1000;
-              return Math.max(0, Math.floor((windowEnd - Date.now()) / 1000));
-            }
-          }
-          if (parsed?.expiresAt) {
-            const expMs = new Date(parsed.expiresAt).getTime();
-            if (!isNaN(expMs)) {
-              const diffSeconds = Math.floor((expMs - Date.now()) / 1000);
-              if (diffSeconds > 1200) {
-                return 0;
-              }
-              return Math.max(0, diffSeconds);
-            }
-          }
-        }
-
-        // 3. Fallback para chave de expiração gravada no sessionStorage
         const stored = sessionStorage.getItem(`dc_pix_exp_${ongId}_${targetValor}`);
         if (stored) {
           const expTime = parseInt(stored, 10);
           if (!isNaN(expTime)) {
             const diffSeconds = Math.floor((expTime - Date.now()) / 1000);
-            if (diffSeconds > 1200) {
-              return 0;
+            if (diffSeconds > 0 && diffSeconds <= 1200) {
+              return diffSeconds;
             }
-            return Math.max(0, diffSeconds);
           }
         }
       } catch (e) {
@@ -300,23 +226,36 @@ function PixPageContent() {
     return 1199;
   };
 
-  // Timer de expiração ancorado no relógio real (não reinicia no F5)
   const [timeLeft, setTimeLeft] = useState<number>(() => calculateRemainingSeconds(initialValor));
   const isExpired = timeLeft <= 0;
 
-  const parsedAmount = parseFloat(valor);
-  const isAmountValid = !isNaN(parsedAmount) && parsedAmount >= 5;
-  // Doador logado + valor >= 5 = Pix Dinâmico Asaas (100% automático, ZERO comprovante)
-  const isDynamicActive = isAuthenticated && userRole === "donor" && isAmountValid;
-  const isDynamicReady = isDynamicActive && Boolean(dynamicPix?.copyPaste) && !dynamicPixError;
-
   const displayCode = useMemo(() => {
+    if (dynamicPix?.trackingId) return String(dynamicPix.trackingId);
     if (dynamicPix?.donationId) return String(dynamicPix.donationId);
     if (ongId) return `${ongId}${String(Date.now()).slice(-4)}`;
     return "1024";
-  }, [dynamicPix?.donationId, ongId]);
+  }, [dynamicPix?.trackingId, dynamicPix?.donationId, ongId]);
+
+  const clearPixSessionData = () => {
+    if (typeof window === "undefined") return;
+    try {
+      sessionStorage.removeItem("doecerto:guestDonorEmail");
+      sessionStorage.removeItem("doecerto:guestDonorPhone");
+      sessionStorage.removeItem("dc_guest_name");
+      sessionStorage.removeItem("dc_guest_email");
+      sessionStorage.removeItem("dc_guest_cpf");
+      Object.keys(sessionStorage).forEach((key) => {
+        if (key.startsWith("dc_dynpix_") || key.startsWith("dc_pix_exp_")) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    } catch (e) {
+      // noop
+    }
+  };
 
   const handleExitPix = () => {
+    clearPixSessionData();
     if (ongId) {
       router.replace(`/ong-public-profile?id=${ongId}`);
     } else {
@@ -327,6 +266,7 @@ function PixPageContent() {
   const navigateToStep = (newStep: FlowStep, valorOverride?: string) => {
     setStep(newStep);
     setErrorMessage(null);
+    setGuestFormError(null);
 
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -335,10 +275,10 @@ function PixPageContent() {
 
       if (newStep === "amount") {
         params.delete("step");
+      } else if (newStep === "identification") {
+        params.set("step", "identificacao");
       } else if (newStep === "payment") {
         params.set("step", "pagamento");
-      } else if (newStep === "proof") {
-        params.set("step", "comprovante");
       }
       const newUrl = `${window.location.pathname}?${params.toString()}`;
       window.history.replaceState(null, "", newUrl);
@@ -350,20 +290,16 @@ function PixPageContent() {
     navigateToStep("amount");
   };
 
-  const handleBackFromProof = () => {
-    navigateToStep("payment");
-  };
-
   useEffect(() => {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
       const s = params.get("step");
       const v = params.get("valor");
       if (v) setValor(v);
-      if (s === "pagamento" || s === "payment") {
+      if (s === "identificacao" || s === "identification") {
+        setStep("identification");
+      } else if (s === "pagamento" || s === "payment") {
         setStep("payment");
-      } else if (s === "comprovante" || s === "proof") {
-        setStep("proof");
       } else {
         setStep("amount");
       }
@@ -375,7 +311,6 @@ function PixPageContent() {
   useEffect(() => {
     if (step !== "payment") return;
 
-    // Sincroniza imediatamente com o tempo real restante
     const syncRemaining = () => {
       const remaining = calculateRemainingSeconds(valor, dynamicPix);
       setTimeLeft(remaining);
@@ -424,27 +359,18 @@ function PixPageContent() {
       if (typeof window !== "undefined") {
         try {
           sessionStorage.setItem(`dc_dynpix_${ongId}_${amount}`, JSON.stringify(data));
-          if (data.expiresAt) {
-            const expMs = new Date(data.expiresAt).getTime();
-            const diffSeconds = Math.floor((expMs - Date.now()) / 1000);
-            const validExpMs = diffSeconds <= 1200 && diffSeconds > 0 ? expMs : (Date.now() + 20 * 60 * 1000);
-            sessionStorage.setItem(`dc_pix_exp_${ongId}_${amount}`, String(validExpMs));
-            setTimeLeft(Math.max(0, Math.floor((validExpMs - Date.now()) / 1000)));
-          } else {
-            const fallbackExp = Date.now() + 20 * 60 * 1000;
-            sessionStorage.setItem(`dc_pix_exp_${ongId}_${amount}`, String(fallbackExp));
-            setTimeLeft(1199);
-          }
-        } catch (e) {
-          // noop
-        }
+          const validExpMs = Date.now() + 20 * 60 * 1000;
+          sessionStorage.setItem(`dc_pix_exp_${ongId}_${amount}`, String(validExpMs));
+        } catch (e) { }
       }
+
+      setTimeLeft(1199);
       return data;
     } catch (err: any) {
       console.error("Erro ao gerar Pix Dinâmico:", err);
-      const msg = err?.message || "Não foi possível gerar o Pix Dinâmico no momento.";
+      const msg = err?.message || "Não foi possível gerar seu Pix no momento. Tente novamente.";
       setDynamicPixError(msg);
-      throw new Error(msg);
+      throw err;
     } finally {
       setIsGeneratingPix(false);
     }
@@ -452,9 +378,8 @@ function PixPageContent() {
 
   const handleRegeneratePix = async () => {
     const numValor = parseFloat(valor);
-    if (isNaN(numValor) || numValor <= 0) return;
+    if (isNaN(numValor) || numValor < 5) return;
 
-    // Limpa cache de sessão para este valor
     if (typeof window !== "undefined") {
       try {
         sessionStorage.removeItem(`dc_dynpix_${ongId}_${valor}`);
@@ -464,30 +389,111 @@ function PixPageContent() {
       }
     }
     setCopied(false);
+    setDynamicPix(null);
 
-    if (isDynamicActive) {
+    if (isAuthenticated && userRole === "donor") {
       try {
         await generateDynamicPix(numValor, isAnonymous);
       } catch (err: any) {
         console.error("Erro ao renovar Pix Dinâmico:", err);
       }
+    } else if (!isAuthenticated && guestName && guestEmailInput && guestCpf) {
+      try {
+        await handleGuestSubmit();
+      } catch (err: any) {
+        console.error("Erro ao renovar Pix do Visitante:", err);
+      }
     } else {
-      const fallbackExp = Date.now() + 20 * 60 * 1000;
+      navigateToStep("identification", valor);
+    }
+  };
+
+  const handleGuestSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setGuestFormError(null);
+
+    const numValor = parseFloat(valor);
+    if (isNaN(numValor) || numValor < 5) {
+      setGuestFormError("O valor mínimo para doação via Pix Dinâmico é de R$ 5,00.");
+      return;
+    }
+
+    const trimmedName = guestName.trim();
+    if (trimmedName.length < 3) {
+      setGuestFormError("Informe seu nome completo (pelo menos 3 caracteres).");
+      return;
+    }
+
+    const trimmedEmail = (guestEmailInput || "").trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!trimmedEmail) {
+      setGuestFormError("Informe seu e-mail para envio do comprovante e recibo fiscal.");
+      return;
+    }
+    if (!emailRegex.test(trimmedEmail)) {
+      setGuestFormError("Informe um e-mail válido para receber o comprovante e recibo fiscal.");
+      return;
+    }
+
+    const cleanCpf = removeFormatting(guestCpf);
+    if (!validateCPF(cleanCpf)) {
+      setGuestFormError("CPF inválido. Por favor, confira os números digitados.");
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem("dc_guest_name", trimmedName);
+        sessionStorage.setItem("dc_guest_email", trimmedEmail);
+        sessionStorage.setItem("dc_guest_cpf", guestCpf);
+      } catch (err) { }
+    }
+
+    setIsGeneratingPix(true);
+    setDynamicPixError(null);
+
+    try {
+      const response = await api<DynamicPixData>("/donations/pix-dinamico/guest", {
+        method: "POST",
+        body: JSON.stringify({
+          ongId: Number(ongId),
+          amount: numValor,
+          name: trimmedName,
+          email: trimmedEmail || undefined,
+          cpf: cleanCpf,
+          isAnonymous: true,
+        }),
+      });
+
+      const data = response.data;
+      setDynamicPix(data);
+      lastRequestedAmountRef.current = numValor;
+      setIsPaymentConfirmed(false);
+      setCopied(false);
+
       if (typeof window !== "undefined") {
         try {
-          sessionStorage.setItem(`dc_pix_exp_${ongId}_${valor}`, String(fallbackExp));
-        } catch (e) {
-          // noop
-        }
+          sessionStorage.setItem(`dc_dynpix_${ongId}_${numValor}`, JSON.stringify(data));
+          const validExpMs = Date.now() + 20 * 60 * 1000;
+          sessionStorage.setItem(`dc_pix_exp_${ongId}_${numValor}`, String(validExpMs));
+        } catch (e) { }
       }
+
       setTimeLeft(1199);
+      navigateToStep("payment", valor);
+    } catch (err: any) {
+      console.error("Erro ao gerar Pix do Visitante:", err);
+      const msg = err?.message || "Não foi possível gerar seu Pix no momento. Tente novamente.";
+      setGuestFormError(msg);
+    } finally {
+      setIsGeneratingPix(false);
     }
   };
 
   const handleAvancarParaPagamento = async () => {
     const numValor = parseFloat(valor);
-    if (isNaN(numValor) || numValor <= 0) {
-      setErrorMessage("Por favor, selecione ou digite um valor válido para a doação.");
+    if (isNaN(numValor) || numValor < 5) {
+      setErrorMessage("O valor mínimo para doação via Pix é de R$ 5,00.");
       return;
     }
 
@@ -496,7 +502,8 @@ function PixPageContent() {
       return;
     }
 
-    if (isDynamicActive) {
+    // 1. Doador logado: Gera Pix Dinâmico Asaas direto (já temos os dados da conta)
+    if (isAuthenticated && userRole === "donor") {
       try {
         const pixData = await generateDynamicPix(numValor, isAnonymous);
         setTimeLeft(calculateRemainingSeconds(valor, pixData));
@@ -504,23 +511,16 @@ function PixPageContent() {
       } catch (err: any) {
         setErrorMessage(err?.message || "Falha ao gerar o QR Code no Asaas. Tente novamente.");
       }
-    } else {
-      if (typeof window !== "undefined") {
-        try {
-          const expTimestamp = Date.now() + 20 * 60 * 1000;
-          sessionStorage.setItem(`dc_pix_exp_${ongId}_${valor}`, String(expTimestamp));
-        } catch (e) {
-          // noop
-        }
-      }
-      setTimeLeft(calculateRemainingSeconds(valor));
-      navigateToStep("payment", valor);
+      return;
     }
+
+    // 2. Visitante (deslogado): Identificação Rápida em 1 card (Padrão Fintech Enterprise)
+    navigateToStep("identification", valor);
   };
 
   // Garante que se o usuário recarregar (F5) na etapa de pagamento, o QR Code é restaurado do cache ou gerado imediatamente
   useEffect(() => {
-    if (step !== "payment" || !isDynamicActive || initialLoading) return;
+    if (step !== "payment" || initialLoading) return;
 
     const numValor = parseFloat(valor);
     if (isNaN(numValor) || numValor < 5) return;
@@ -549,40 +549,68 @@ function PixPageContent() {
       }
     }
 
-    // 2. Se não estiver no cache e não estiver gerando, gera automaticamente
-    if (!isGeneratingPix) {
+    // 2. Se não estiver no cache e não estiver gerando, gera automaticamente se for doador logado
+    if (!isGeneratingPix && isAuthenticated && userRole === "donor") {
       generateDynamicPix(numValor, isAnonymous).catch((err) => {
         console.error("Erro ao gerar Pix ao atualizar a página:", err);
       });
     }
-  }, [step, isDynamicActive, dynamicPix, isGeneratingPix, initialLoading, valor, ongId, isAnonymous]);
+  }, [step, dynamicPix, isGeneratingPix, initialLoading, valor, ongId, isAnonymous, isAuthenticated, userRole]);
 
+  // Polling automático de compensação Pix (imediato + a cada 3 segundos)
   useEffect(() => {
-    if (!dynamicPix?.donationId || isPaymentConfirmed || step !== "payment" || !isDynamicActive || isExpired) return;
+    if (!dynamicPix?.donationId || isPaymentConfirmed || showPopup || step !== "payment" || isExpired) return;
 
-    const interval = setInterval(async () => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const checkStatus = async () => {
+      if (!isMounted || isPaymentConfirmed || showPopup) return;
       try {
-        const res = await api<{ donationStatus: string }>(`/donations/${dynamicPix.donationId}/status`);
-        if (res.data?.donationStatus === "completed") {
+        const trackingKey = dynamicPix.trackingId || dynamicPix.donationId;
+        const res = await api<{ donationStatus: string }>(`/donations/${trackingKey}/status`, {
+          signal: controller.signal,
+        });
+        if (isMounted && res.data?.donationStatus === "completed") {
           setIsPaymentConfirmed(true);
           setShowPopup(true);
+          clearPixSessionData();
+
+          // Limpa step=pagamento da URL para que se o usuário der F5, não fique preso na cobrança já paga
           if (typeof window !== "undefined") {
-            try {
-              sessionStorage.removeItem(`dc_dynpix_${ongId}_${valor}`);
-              sessionStorage.removeItem(`dc_pix_exp_${ongId}_${valor}`);
-            } catch (e) {
-              // noop
-            }
+            const cleanUrl = `${window.location.pathname}?id=${ongId}`;
+            window.history.replaceState(null, "", cleanUrl);
           }
-          clearInterval(interval);
         }
-      } catch (e) {
+      } catch (e: any) {
+        // Ignora silenciosamente se o componente foi desmontado ou requisição abortada durante navegação
+        if (!isMounted || controller.signal.aborted || e?.name === "AbortError") return;
+        if (e instanceof TypeError && e.message?.includes("fetch")) return;
         console.error("Erro ao verificar status do Pix:", e);
       }
-    }, 3000);
+    };
 
-    return () => clearInterval(interval);
-  }, [dynamicPix?.donationId, isPaymentConfirmed, step, isDynamicActive, ongId, valor, isExpired]);
+    // Executa verificação instantânea na entrada ou recarregamento
+    checkStatus();
+
+    const interval = setInterval(checkStatus, 3000);
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+      clearInterval(interval);
+    };
+  }, [dynamicPix?.donationId, dynamicPix?.trackingId, isPaymentConfirmed, showPopup, step, isExpired]);
+
+  // Sincroniza expiração de 20 min com o gateway
+  useEffect(() => {
+    if (isExpired && dynamicPix?.donationId && !isPaymentConfirmed) {
+      const trackingKey = dynamicPix.trackingId || dynamicPix.donationId;
+      api(`/donations/${trackingKey}/expire`, { method: "POST" }).catch((err: unknown) => {
+        console.warn("Aviso ao sincronizar expiração do Pix no backend:", err);
+      });
+    }
+  }, [isExpired, dynamicPix?.donationId, dynamicPix?.trackingId, isPaymentConfirmed]);
 
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
   useEffect(() => {
@@ -599,17 +627,8 @@ function PixPageContent() {
       try {
         setInitialLoading(true);
         const idNum = Number(ongId);
-
         const profile = await OngsProfileService.getPublicProfile(idNum).catch(() => null);
         if (profile) setOngData(profile);
-
-        try {
-          const response = await api(`/ongs/bank-account/${idNum}`);
-          const data = response.data;
-          setBankData(Array.isArray(data) ? data[0] : data);
-        } catch (e: any) {
-          console.error("Erro ao buscar dados bancários:", e);
-        }
       } finally {
         setInitialLoading(false);
       }
@@ -630,68 +649,7 @@ function PixPageContent() {
     });
   }, [valor, primaryCategoryName]);
 
-  const pixCopiaECola = useMemo(() => {
-    let baseKey = bankData?.pixKey?.trim();
-    if (!baseKey) return "";
-
-    let treatedKey = baseKey;
-    const digitsOnly = baseKey.replace(/\D/g, "");
-    const keyType = getPixKeyType(baseKey);
-
-    switch (keyType) {
-      case "cpf":
-      case "cnpj":
-        treatedKey = digitsOnly;
-        break;
-      case "phone":
-        let rawDigits = digitsOnly;
-        if (!rawDigits.startsWith("55")) rawDigits = `55${rawDigits}`;
-        treatedKey = `+${rawDigits}`;
-        break;
-      case "email":
-      case "random":
-      default:
-        treatedKey = baseKey;
-        break;
-    }
-
-    const nameRaw = ongData?.name || "ONG DOE CERTO";
-    const name = nameRaw.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9 ]/g, "").trim().substring(0, 25);
-
-    const rawCity = ongData?.address?.city || bankData?.city || "ITAPISSUMA";
-    const city = rawCity.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9 ]/g, "").trim().substring(0, 15).toUpperCase();
-
-    const parsedAmount = parseFloat(valor);
-    const amountStr = isNaN(parsedAmount) || parsedAmount <= 0 ? "" : parsedAmount.toFixed(2);
-
-    try {
-      const pfi = "000201";
-      const gui = "0014br.gov.bcb.pix";
-      const keyTag = `01${treatedKey.length.toString().padStart(2, "0")}${treatedKey}`;
-      const merchantAccountContent = gui + keyTag;
-      const merchantAccountInfo = `26${merchantAccountContent.length.toString().padStart(2, "0")}${merchantAccountContent}`;
-      const mcc = "52040000";
-      const currency = "5303986";
-      const amountField = amountStr ? `54${amountStr.length.toString().padStart(2, "0")}${amountStr}` : "";
-      const country = "5802BR";
-      const merchantNameField = `59${name.length.toString().padStart(2, "0")}${name}`;
-      const merchantCityField = `60${city.length.toString().padStart(2, "0")}${city}`;
-      const txIdContent = "0503***";
-      const additionalDataField = `62${txIdContent.length.toString().padStart(2, "0")}${txIdContent}`;
-      const crcIndicator = "6304";
-
-      const partialPayload = pfi + merchantAccountInfo + mcc + currency + amountField + country + merchantNameField + merchantCityField + additionalDataField + crcIndicator;
-      const crc16 = calculateCRC16(partialPayload);
-      return partialPayload + crc16;
-    } catch (error) {
-      console.error("Erro ao gerar string do Pix:", error);
-      return "";
-    }
-  }, [bankData?.pixKey, ongData?.name, ongData?.address?.city, bankData?.city, valor]);
-
-  const activePixCopiaECola = isDynamicActive
-    ? (dynamicPix?.copyPaste || "")
-    : (pixCopiaECola || bankData?.pixKey || "");
+  const activePixCopiaECola = dynamicPix?.copyPaste || "";
 
   const copyKey = () => {
     if (!activePixCopiaECola || isExpired) return;
@@ -699,67 +657,6 @@ function PixPageContent() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
-  };
-
-  const handleGuestEmailSubmit = async (email: string) => {
-    saveGuestEmail(email);
-    setGuestEmail(email);
-    setIsEmailModalOpen(false);
-    if (file) await handleConfirmarDoacao(email);
-  };
-
-  const handleConfirmarDoacao = async (emailOverride?: string) => {
-    if (!ongId) return;
-    const parsedAmount = parseFloat(valor);
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      setErrorMessage("Por favor, selecione ou informe um valor válido para a doação.");
-      return;
-    }
-    if (!file) {
-      setErrorMessage("Por favor, anexe o comprovante de pagamento Pix antes de confirmar.");
-      return;
-    }
-
-    const effectiveGuestEmail = emailOverride || guestEmail;
-    if (!isAuthenticated && !effectiveGuestEmail) {
-      setIsEmailModalOpen(true);
-      return;
-    }
-
-    if (isOngUser) {
-      setErrorMessage("Você está conectado como uma instituição. Contas de ONG não podem realizar doações.");
-      return;
-    }
-
-    setErrorMessage(null);
-    setLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append("ongId", ongId);
-      formData.append("donationType", "monetary");
-      formData.append("monetaryAmount", valor);
-      formData.append("monetaryCurrency", "BRL");
-      formData.append("proofFile", file);
-
-      if (isAuthenticated) {
-        if (isAnonymous) formData.append("isAnonymous", "true");
-      } else {
-        formData.append("isAnonymous", "true");
-        formData.append("guestEmail", effectiveGuestEmail);
-        formData.append("acceptedTerms", "true");
-        setLastGuestEmail(effectiveGuestEmail);
-      }
-
-      await api("/donations", { method: "POST", body: formData });
-      clearGuestEmail();
-      setGuestEmail("");
-      setShowPopup(true);
-    } catch (error: any) {
-      console.error("Erro ao doar:", error);
-      setErrorMessage(error?.message || "Não foi possível processar a doação. Tente novamente.");
-    } finally {
-      setLoading(false);
-    }
   };
 
   if (initialLoading) {
@@ -770,7 +667,6 @@ function PixPageContent() {
     );
   }
 
-  const pixKeyVisual = bankData?.pixKey || "Chave não configurada";
   const formattedValorDisplay = (parseFloat(valor) || 0).toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -836,7 +732,7 @@ function PixPageContent() {
                       <ShieldCheck size={16} className="text-emerald-600" /> Instituição Verificada
                     </span>
                     <span className="text-sm sm:text-base font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-md">
-                      Conta Oficial
+                      Checkout Oficial
                     </span>
                   </div>
                   <h2 className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight truncate tracking-tight">
@@ -845,29 +741,35 @@ function PixPageContent() {
                   <div className="flex items-center gap-1.5 sm:gap-2 text-slate-600 text-sm sm:text-base font-medium mt-1.5">
                     <IdCard size={18} className="shrink-0 text-slate-400" />
                     <span>
-                      CNPJ: <strong className="font-mono text-slate-800 font-bold text-sm sm:text-base">{ongData?.cnpj || bankData?.cnpj || "Não informado"}</strong>
+                      CNPJ: <strong className="font-mono text-slate-800 font-bold text-sm sm:text-base">{ongData?.cnpj || "Não informado"}</strong>
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* DADOS BANCÁRIOS EM GRID FINTECH */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 pt-3.5 sm:pt-4">
-                {[
-                  { label: "Banco", value: bankData?.bankName },
-                  { label: "Agência", value: bankData?.agencyNumber },
-                  { label: "Conta", value: bankData?.accountNumber },
-                  { label: "Tipo", value: bankData?.accountType }
-                ].map((item, idx) => (
-                  <div key={idx} className="bg-slate-50/90 border border-slate-200/80 p-2.5 sm:p-3.5 rounded-xl">
-                    <p className="text-slate-600 uppercase text-xs sm:text-sm font-bold tracking-wider mb-1 truncate">
-                      {item.label}
-                    </p>
-                    <p className="font-bold text-base sm:text-xl truncate text-slate-900 font-mono">
-                      {item.value || "—"}
-                    </p>
+              {/* DESTAQUES DE SEGURANÇA E AUDITORIA */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-3.5 sm:pt-4">
+                <div className="bg-slate-50/90 border border-slate-200/80 p-3 rounded-xl flex items-center gap-2.5">
+                  <ShieldCheck size={20} className="text-emerald-600 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Checkout Oficial</p>
+                    <p className="text-sm font-semibold text-slate-800 truncate">Pix Dinâmico Banco Central</p>
                   </div>
-                ))}
+                </div>
+                <div className="bg-slate-50/90 border border-slate-200/80 p-3 rounded-xl flex items-center gap-2.5">
+                  <Lock size={20} className="text-purple-600 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Conciliação 100%</p>
+                    <p className="text-sm font-semibold text-slate-800 truncate">Automação Asaas sem Recibo</p>
+                  </div>
+                </div>
+                <div className="bg-slate-50/90 border border-slate-200/80 p-3 rounded-xl flex items-center gap-2.5 sm:col-span-1">
+                  <CheckCircle2 size={20} className="text-blue-600 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Destino Seguro</p>
+                    <p className="text-sm font-semibold text-slate-800 truncate">Repasse Direto à Instituição</p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -922,9 +824,9 @@ function PixPageContent() {
                 </div>
                 <input
                   type="number"
-                  min="1"
+                  min="5"
                   step="any"
-                  placeholder="Ou digite outro valor (ex: 35)"
+                  placeholder="Ou digite outro valor (mínimo R$ 5,00)"
                   value={valor}
                   onChange={(e) => setValor(e.target.value)}
                   className="w-full bg-slate-50/60 border-2 border-slate-200 focus:bg-white focus:border-[#6B39A7] focus:ring-4 focus:ring-purple-100/70 rounded-xl py-3.5 sm:py-4 pl-12 pr-4 font-bold text-lg sm:text-xl text-slate-900 transition-all outline-none placeholder:font-medium placeholder:text-base sm:placeholder:text-lg placeholder:text-slate-400 font-mono"
@@ -946,32 +848,11 @@ function PixPageContent() {
                     </span>
                   </label>
                 ) : (
-                  <div className="w-full flex flex-col min-[440px]:flex-row min-[440px]:items-center justify-between p-3.5 sm:p-4 rounded-xl bg-slate-50/80 border border-slate-200 gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-lg bg-white border border-slate-200 text-slate-700 flex items-center justify-center shrink-0 shadow-xs">
-                        <Lock size={20} />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600">
-                            Identificação Protegida
-                          </span>
-                          <span className="text-xs sm:text-sm font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/60 px-2.5 py-0.5 rounded">
-                            Anônima
-                          </span>
-                        </div>
-                        <span className="block text-base sm:text-lg font-bold text-slate-900 truncate mt-0.5">
-                          {guestEmail || "Nenhum e-mail informado"}
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setIsEmailModalOpen(true)}
-                      className="text-sm sm:text-base font-bold text-purple-700 hover:text-purple-900 bg-white border border-slate-200 hover:border-slate-300 px-4 py-2.5 rounded-lg shadow-xs transition-colors shrink-0 cursor-pointer text-center"
-                    >
-                      {guestEmail ? "Alterar e-mail" : "Adicionar e-mail"}
-                    </button>
+                  <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-purple-50/60 border border-purple-100/80 text-slate-700">
+                    <ShieldCheck size={18} className="text-[#6B39A7] shrink-0" />
+                    <span className="text-xs sm:text-sm font-medium">
+                      Doação rápida e anônima via Pix Dinâmico sem necessidade de cadastro prévio.
+                    </span>
                   </div>
                 )}
               </div>
@@ -1004,7 +885,7 @@ function PixPageContent() {
                       <span>Gerando QR Code no Banco Central...</span>
                     </>
                   ) : (
-                    <span>Gerar QRCode e copia/cola de R$ {formattedValorDisplay}</span>
+                    <span>Continuar para Doação de R$ {formattedValorDisplay}</span>
                   )}
                 </button>
               </div>
@@ -1015,7 +896,167 @@ function PixPageContent() {
         )}
 
         {/* =========================================================================
-            TELA 2: PAGAMENTO PENDENTE (QR CODE FINTECH + ZERO COMPROVANTE ASAAS)
+            TELA DE IDENTIFICAÇÃO RÁPIDA (GUEST CHECKOUT - PADRÃO FINTECH ENTERPRISE)
+            ========================================================================= */}
+        {step === "identification" && (
+          <div className="max-w-xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200/90 space-y-6">
+
+              {/* BARRA SUPERIOR DO CARD */}
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => navigateToStep("amount")}
+                  className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 text-sm sm:text-base font-semibold transition-colors cursor-pointer"
+                >
+                  <ArrowLeft size={20} />
+                  <span>Voltar</span>
+                </button>
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-50/90 border border-purple-200/80 shadow-2xs">
+                  <span className="text-xs font-bold uppercase tracking-wider text-purple-700">Total</span>
+                  <span className="font-mono font-black text-sm sm:text-base text-[#6B39A7]">
+                    R$ {formattedValorDisplay}
+                  </span>
+                </div>
+              </div>
+
+              {/* TÍTULO E SUBTÍTULO COM ALTA LEGIBILIDADE E PEGADA TECH */}
+              <div className="text-center space-y-2 pt-1">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#6B39A7] text-white shadow-md shadow-purple-900/20 mb-1">
+                  <ShieldCheck size={28} />
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                  Identificação para o Pix
+                </h2>
+                <p className="text-slate-600 text-base sm:text-lg font-medium">
+                  Doação para <strong className="text-slate-900 font-bold">{ongData?.name || "a instituição"}</strong>
+                </p>
+              </div>
+
+              {/* FORMULÁRIO TECH */}
+              <form onSubmit={handleGuestSubmit} className="space-y-5 pt-2">
+                {/* 1. NOME COMPLETO */}
+                <div>
+                  <label className="block text-sm sm:text-base font-bold text-slate-800 mb-2">
+                    Nome Completo
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={22} />
+                    <input
+                      type="text"
+                      value={guestName}
+                      onChange={(e) => setGuestName(e.target.value)}
+                      placeholder="ex: Carlos Eduardo Silva"
+                      className="w-full pl-12 pr-4 py-4 bg-slate-50/80 border-2 border-slate-200 rounded-xl font-medium text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-[#6B39A7] focus:ring-4 focus:ring-purple-500/10 focus:outline-none transition-all text-base sm:text-lg"
+                    />
+                  </div>
+                </div>
+
+                {/* 2. E-MAIL (RECEBER COMPROVANTE) */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm sm:text-base font-bold text-slate-800">
+                      E-mail
+                    </label>
+                    <span className="text-xs sm:text-sm text-slate-600 font-medium">Para envio do recibo fiscal</span>
+                  </div>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={22} />
+                    <input
+                      type="email"
+                      value={guestEmailInput}
+                      onChange={(e) => setGuestEmailInput(e.target.value)}
+                      placeholder="seuemail@exemplo.com"
+                      className="w-full pl-12 pr-4 py-4 bg-slate-50/80 border-2 border-slate-200 rounded-xl font-medium text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-[#6B39A7] focus:ring-4 focus:ring-purple-500/10 focus:outline-none transition-all text-base sm:text-lg"
+                    />
+                  </div>
+                </div>
+
+                {/* 3. CPF */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm sm:text-base font-bold text-slate-800">
+                      CPF
+                    </label>
+                    <span className="text-xs sm:text-sm text-slate-600 font-medium flex items-center gap-1.5">
+                      <Lock size={14} className="text-slate-500" /> Exigência do Banco Central
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={22} />
+                    <input
+                      type="text"
+                      value={guestCpf}
+                      onChange={(e) => setGuestCpf(formatCPF(e.target.value))}
+                      maxLength={14}
+                      placeholder="000.000.000-00"
+                      className="w-full pl-12 pr-28 py-4 bg-slate-50/80 border-2 border-slate-200 rounded-xl font-mono text-base sm:text-lg font-bold text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-[#6B39A7] focus:ring-4 focus:ring-purple-500/10 focus:outline-none transition-all"
+                    />
+                    {guestCpf.length === 14 && (
+                      <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                        {validateCPF(removeFormatting(guestCpf)) ? (
+                          <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md">
+                            <CheckCircle2 size={16} /> Válido
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-md">
+                            <AlertCircle size={16} /> Inválido
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* BANNER TECH DE DOAÇÃO ANÔNIMA E SEGURA */}
+                <div className="flex items-start gap-3.5 p-4 sm:p-5 bg-slate-50/90 border border-slate-200/90 rounded-2xl">
+                  <div className="w-11 h-11 rounded-xl bg-purple-100 flex items-center justify-center shrink-0 text-[#6B39A7] shadow-xs mt-0.5">
+                    <ShieldCheck size={24} />
+                  </div>
+                  <div className="text-left">
+                    <h4 className="text-base font-bold text-slate-900 leading-snug">Você está doando de forma anônima e segura</h4>
+                    <p className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed mt-1">
+                      Seus dados são criptografados e exigidos pelo Banco Central para a transação Pix. Seu nome e CPF nunca serão divulgados publicamente no mural da instituição.
+                    </p>
+                  </div>
+                </div>
+
+                {/* ERRO DO FORMULÁRIO SE HOUVER */}
+                {guestFormError && (
+                  <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm sm:text-base font-medium flex items-center gap-2">
+                    <AlertCircle size={20} className="shrink-0 text-rose-600" />
+                    <span>{guestFormError}</span>
+                  </div>
+                )}
+
+                {/* BOTÃO PRINCIPAL (CTA) */}
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={isGeneratingPix}
+                    className="w-full py-4 sm:py-5 rounded-xl font-bold text-lg sm:text-xl transition-all shadow-lg shadow-purple-950/20 flex items-center justify-center gap-2 bg-gradient-to-r from-[#6B39A7] to-[#7f3fc9] hover:from-[#582d8c] hover:to-[#6B39A7] text-white active:scale-[0.98] cursor-pointer disabled:opacity-60"
+                  >
+                    {isGeneratingPix ? (
+                      <>
+                        <Loader2 size={22} className="animate-spin" />
+                        <span>Gerando Pix exclusivo no Asaas...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Gerar Pix de R$ {formattedValorDisplay}</span>
+                        <ArrowRight size={22} />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            TELA 2: PAGAMENTO PENDENTE (QR CODE FINTECH + CONCILIAÇÃO AUTOMÁTICA ASAAS)
             ========================================================================= */}
         {step === "payment" && (
           <div className="space-y-6 sm:space-y-8">
@@ -1056,8 +1097,8 @@ function PixPageContent() {
                   <Clock size={18} className={isExpired ? "text-slate-400 shrink-0" : "text-amber-600 shrink-0"} />
                   <span className="text-sm sm:text-base text-slate-700 font-medium">
                     {isExpired ? (
-                      <span className="text-slate-500 font-medium">
-                        Tempo limite de pagamento encerrado
+                      <span className="text-slate-500 font-medium flex items-center gap-2">
+                        <span>Tempo limite de pagamento encerrado</span>
                       </span>
                     ) : (
                       <>
@@ -1085,7 +1126,7 @@ function PixPageContent() {
               {/* QR CODE EM MOLDURA FINTECH NÍTIDA */}
               <div className="flex flex-col items-center justify-center">
                 <div className="relative bg-white p-3.5 sm:p-4 rounded-2xl border-2 border-slate-200 shadow-xs flex justify-center items-center w-[220px] sm:w-[240px] aspect-square overflow-hidden group">
-                  {/* OVERLAY DE EXPIRADO COM ESTILO TECNOLÓGICO MINIMALISTA */}
+                  {/* OVERLAY DE EXPIRADO */}
                   {isExpired && (
                     <div className="absolute inset-0 bg-slate-950/75 backdrop-blur-md flex flex-col items-center justify-center p-4 text-center z-20 transition-all duration-300">
                       <div className="relative flex items-center justify-center mb-2.5">
@@ -1120,42 +1161,33 @@ function PixPageContent() {
                     </div>
                   )}
 
-                  {isDynamicActive ? (
-                    dynamicPix?.qrCodeBase64 ? (
-                      <img
-                        src={`data:image/png;base64,${dynamicPix.qrCodeBase64}`}
-                        alt="QR Code Pix Asaas"
-                        className="w-full h-full object-contain"
-                      />
-                    ) : dynamicPix?.copyPaste ? (
-                      <QRCodeSVG value={dynamicPix.copyPaste} size={210} className="w-full h-full" level="M" />
-                    ) : dynamicPixError ? (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-xs text-red-500 gap-2 p-3 text-center">
-                        <AlertCircle size={26} className="text-red-500" />
-                        <span className="font-semibold text-xs leading-snug">{dynamicPixError}</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const num = parseFloat(valor);
-                            if (!isNaN(num) && num >= 5) generateDynamicPix(num, isAnonymous);
-                          }}
-                          className="mt-1 px-3 py-1 bg-purple-100 text-[#6B39A7] rounded-lg font-bold text-xs hover:bg-purple-200 cursor-pointer"
-                        >
-                          Tentar novamente
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-xs text-slate-400 gap-2">
-                        <Loader2 className="animate-spin text-purple-600" size={28} />
-                        <span className="font-medium">Carregando QR Code...</span>
-                      </div>
-                    )
-                  ) : pixCopiaECola ? (
-                    <QRCodeSVG value={pixCopiaECola} size={210} className="w-full h-full" level="M" />
+                  {dynamicPix?.qrCodeBase64 ? (
+                    <img
+                      src={`data:image/png;base64,${dynamicPix.qrCodeBase64}`}
+                      alt="QR Code Pix Asaas"
+                      className="w-full h-full object-contain"
+                    />
+                  ) : dynamicPix?.copyPaste ? (
+                    <QRCodeSVG value={dynamicPix.copyPaste} size={210} className="w-full h-full" level="M" />
+                  ) : dynamicPixError ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-xs text-red-500 gap-2 p-3 text-center">
+                      <AlertCircle size={26} className="text-red-500" />
+                      <span className="font-semibold text-xs leading-snug">{dynamicPixError}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const num = parseFloat(valor);
+                          if (!isNaN(num) && num >= 5) generateDynamicPix(num, isAnonymous);
+                        }}
+                        className="mt-1 px-3 py-1 bg-purple-100 text-[#6B39A7] rounded-lg font-bold text-xs hover:bg-purple-200 cursor-pointer"
+                      >
+                        Tentar novamente
+                      </button>
+                    </div>
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-xs text-slate-400 gap-2">
                       <Loader2 className="animate-spin text-purple-600" size={28} />
-                      <span className="font-medium">Carregando chave da ONG...</span>
+                      <span className="font-medium">Carregando QR Code...</span>
                     </div>
                   )}
                 </div>
@@ -1170,7 +1202,7 @@ function PixPageContent() {
               <div className="w-full space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-sm sm:text-base font-bold text-slate-800 uppercase tracking-wider">
-                    {isDynamicActive ? "Código Pix Copia e Cola Exclusivo (Asaas)" : "Código Pix Copia e Cola"}
+                    Código Pix Copia e Cola Oficial (Asaas)
                   </label>
                   <span className="text-xs sm:text-sm font-medium">
                     {isExpired ? (
@@ -1250,164 +1282,12 @@ function PixPageContent() {
                 </div>
               </div>
 
-              {/* SE FOR FLUXO ESTÁTICO (VISITANTE OU < R$ 5): BOTÃO PARA IR AO COMPROVANTE */}
-              {!isDynamicActive && (
-                <div className="pt-2 space-y-3">
-                  <div className="p-4 rounded-xl bg-purple-50/80 border border-purple-200 text-purple-950 text-sm sm:text-base">
-                    <strong>Próximo passo:</strong> Após realizar a transferência no seu banco, avance para anexar o comprovante da transação.
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => navigateToStep("proof")}
-                    className="w-full py-4 sm:py-5 rounded-xl bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold text-lg sm:text-xl shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
-                  >
-                    <span>Já realizei o pagamento → Anexar Comprovante</span>
-                    <ArrowRight size={22} />
-                  </button>
-                </div>
-              )}
-
               {/* AUDITORIA OFICIAL ASAAS / BANCO CENTRAL */}
               <div className="pt-4 border-t border-slate-100 flex items-start gap-3 text-left">
                 <ShieldCheck size={22} className="text-emerald-600 shrink-0 mt-0.5" />
                 <p className="text-sm sm:text-base text-slate-700 leading-relaxed font-medium">
-                  {isDynamicActive ? (
-                    <>
-                      <strong className="text-slate-900 font-bold">Cobrança Oficial Asaas:</strong> Esta cobrança Pix dinâmica foi emitida com liquidação rastreada. 100% do repasse líquido é transferido de forma auditada para a instituição.
-                    </>
-                  ) : (
-                    <>
-                      <strong className="text-slate-900 font-bold">Conta Oficial Auditada:</strong> Pagamento processado diretamente no ecossistema Pix do Banco Central do Brasil.
-                    </>
-                  )}
+                  <strong className="text-slate-900 font-bold">Cobrança Oficial Asaas:</strong> Esta cobrança Pix dinâmica foi emitida com liquidação rastreada e compensação automática no Banco Central. 100% do repasse líquido é transferido de forma auditada para a instituição.
                 </p>
-              </div>
-
-            </div>
-          </div>
-        )}
-
-        {/* =========================================================================
-            TELA 3: ANEXAR COMPROVANTE (APENAS PARA FLUXO ESTÁTICO / MANUAL)
-            ========================================================================= */}
-        {step === "proof" && !isDynamicActive && (
-          <div className="space-y-6 sm:space-y-8">
-
-            {/* CABEÇALHO */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleBackFromProof}
-                aria-label="Voltar para o pagamento"
-                title="Voltar para o QR Code"
-                className="bg-white p-2.5 rounded-full shadow-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all active:scale-95 border border-slate-200 cursor-pointer"
-              >
-                <ArrowLeft size={20} />
-              </button>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Comprovante Pix</h1>
-                <p className="text-slate-600 text-base sm:text-lg font-medium mt-1">
-                  Anexe o comprovante para auditoria e validação pela instituição.
-                </p>
-              </div>
-            </div>
-
-            {/* CARD DE UPLOAD DO COMPROVANTE */}
-            <div className="bg-white rounded-2xl p-5 sm:p-8 shadow-xs border border-slate-200/90 space-y-6">
-
-              <div className="flex items-start sm:items-center justify-between flex-wrap gap-2 pb-4 border-b border-slate-100">
-                <div>
-                  <h3 className="font-bold text-lg sm:text-2xl text-slate-900 tracking-tight flex items-center gap-2">
-                    <Paperclip size={22} className="text-[#6B39A7]" /> Anexe o comprovante
-                  </h3>
-                  <p className="text-slate-600 text-sm sm:text-base font-medium mt-1">
-                    Necessário para a ONG identificar e auditar a doação de R$ {formattedValorDisplay}.
-                  </p>
-                </div>
-                <span className="text-xs sm:text-sm font-bold text-slate-700 bg-slate-100 border border-slate-200 px-3 py-1 rounded-md uppercase tracking-wider shrink-0">
-                  Obrigatório
-                </span>
-              </div>
-
-              {/* DROPZONE */}
-              <div className={`relative border-2 border-dashed rounded-xl p-5 sm:p-6 transition-all text-center group cursor-pointer ${file ? 'border-emerald-500 bg-emerald-50/60' : 'border-slate-300 bg-slate-50/60 hover:bg-white hover:border-purple-400'
-                }`}>
-                <input
-                  type="file"
-                  accept="image/*,application/pdf"
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                />
-                {!file ? (
-                  <div className="flex flex-col items-center justify-center gap-2 pointer-events-none py-1 sm:py-2">
-                    <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 group-hover:text-[#6B39A7] group-hover:scale-105 transition-all shadow-xs">
-                      <UploadCloud size={24} />
-                    </div>
-                    <p className="text-base sm:text-xl font-bold text-slate-800">
-                      Clique para selecionar o comprovante ou arraste aqui
-                    </p>
-                    <p className="text-sm sm:text-base font-medium text-slate-500">
-                      Formatos aceitos: PDF, JPEG ou PNG (até 10MB)
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between text-emerald-900 font-medium text-base relative z-20 bg-white p-3 sm:p-3.5 rounded-xl border border-emerald-200 shadow-xs gap-2">
-                    <span className="truncate min-w-0 flex-1 flex items-center gap-2">
-                      {file.type === "application/pdf" ? (
-                        <FileText className="shrink-0 text-red-600" size={20} />
-                      ) : (
-                        <ImageIcon className="shrink-0 text-emerald-600" size={20} />
-                      )}
-                      <span className="truncate font-bold text-sm sm:text-base" title={file.name}>
-                        {file.name}
-                      </span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => { e.preventDefault(); setFile(null); }}
-                      className="text-slate-400 hover:text-red-600 p-1.5 transition-colors rounded-lg hover:bg-slate-100 cursor-pointer shrink-0"
-                      title="Remover"
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* MENSAGEM DE ERRO SE HOUVER */}
-              {errorMessage && (
-                <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-900 flex items-start gap-3">
-                  <AlertCircle size={20} className="text-red-600 shrink-0 mt-0.5" />
-                  <p className="text-sm sm:text-base font-medium flex-1">{errorMessage}</p>
-                  <button type="button" onClick={() => setErrorMessage(null)} className="text-red-400 hover:text-red-600">
-                    <X size={16} />
-                  </button>
-                </div>
-              )}
-
-              {/* BOTÃO DE CONFIRMAR DOAÇÃO */}
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => handleConfirmarDoacao()}
-                  disabled={!file || loading || isOngUser}
-                  className={`w-full py-4 sm:py-5 rounded-xl font-bold text-lg sm:text-xl transition-all cursor-pointer shadow-sm ${!file || loading || isOngUser
-                    ? "bg-slate-200 text-slate-500 border border-slate-300 cursor-not-allowed shadow-none"
-                    : "bg-[#6B39A7] hover:bg-[#582d8c] text-white shadow-purple-500/25 active:scale-[0.98]"
-                    }`}
-                >
-                  {loading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <Loader2 className="animate-spin" size={20} /> Processando doação...
-                    </span>
-                  ) : (
-                    `Confirmar Doação de R$ ${formattedValorDisplay}`
-                  )}
-                </button>
-                {!file && (
-                  <p className="text-base sm:text-lg text-center text-slate-600 font-medium mt-3">
-                    Por favor, anexe o comprovante acima para liberar a confirmação.
-                  </p>
-                )}
               </div>
 
             </div>
@@ -1417,88 +1297,41 @@ function PixPageContent() {
       </main>
 
       {/* =========================================================================
-          MODAL DE SUCESSO (COMEMORAÇÃO E IMPACTO CONCRETIZADO)
+          MODAL DE SUCESSO FINTECH (LOTTIE ANIMATION & RECIBO AUDITADO)
           ========================================================================= */}
-      {showPopup && (
-        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-slate-900/40 backdrop-blur-sm px-4 transition-opacity">
-          <div className="bg-white rounded-3xl p-8 sm:p-10 w-full max-w-md text-center shadow-2xl border border-gray-100">
-            <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-6 text-emerald-600">
-              <CheckCircle2 size={36} strokeWidth={2.5} />
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3 tracking-tight">
-              {isPaymentConfirmed ? "Doação Confirmada!" : "Doação Registrada!"}
-            </h2>
-            <p className="text-base sm:text-lg text-slate-600 mb-6 leading-relaxed font-medium">
-              {isPaymentConfirmed ? (
-                <>
-                  Seu Pix de <strong className="text-purple-700 font-bold">R$ {formattedValorDisplay}</strong> foi compensado instantaneamente no Banco Central e destinado à instituição <strong className="text-slate-800 font-bold">{ongData?.name || "beneficiária"}</strong>. Muito obrigado pelo seu apoio!
-                </>
-              ) : (
-                <>
-                  Sua doação para <strong className="text-slate-800 font-bold">{ongData?.name || "a instituição"}</strong> foi enviada para validação. Muito obrigado pelo seu apoio!
-                </>
-              )}
-            </p>
-
-            {/* Destaque do Impacto Gerado */}
-            {impact && impact.units > 0 && (
-              <div className="bg-slate-50/90 border border-slate-200/80 rounded-2xl p-4 text-left mb-6 flex items-start gap-3.5">
-                <div className="w-11 h-11 rounded-xl bg-purple-100/70 border border-purple-200/60 flex items-center justify-center text-purple-700 shrink-0 shadow-2xs mt-0.5">
-                  <CategoryImpactIcon category={primaryCategoryName} size={22} className="text-purple-700" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 flex items-center gap-1.5 mb-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    Impacto Social Concretizado
-                  </span>
-                  <p className="text-sm font-semibold text-slate-800 leading-snug">
-                    {impact.impactText}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {!isAuthenticated && lastGuestEmail && (
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 text-left mb-6 flex items-start gap-3">
-                <ShieldCheck size={20} className="text-[#6B39A7] shrink-0 mt-0.5" />
-                <p className="text-sm sm:text-base text-slate-700 leading-relaxed font-medium">
-                  Registramos sua doação no e-mail <strong className="break-all text-slate-900 font-bold">{lastGuestEmail}</strong>. Se você criar uma conta com esse mesmo e-mail, seu histórico será vinculado automaticamente.
-                </p>
-              </div>
-            )}
-
-            <div className="flex flex-col gap-3 w-full">
-              {!isAuthenticated && (
-                <button
-                  onClick={() => router.push("/register")}
-                  className="w-full bg-[#6B39A7] hover:bg-[#5b2f8e] text-white py-3.5 rounded-xl font-bold text-base shadow-sm active:scale-[0.98] transition-all cursor-pointer"
-                >
-                  Criar conta para acompanhar
-                </button>
-              )}
-              <button
-                onClick={() => router.push("/home")}
-                className={`w-full py-3.5 rounded-xl font-bold text-base transition-all cursor-pointer ${!isAuthenticated
-                  ? "bg-slate-100 hover:bg-slate-200 text-slate-700"
-                  : "bg-[#6B39A7] hover:bg-[#5b2f8e] text-white shadow-sm active:scale-[0.98]"
-                  }`}
-              >
-                Voltar ao Início
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL "DOE SEM CRIAR CONTA" */}
-      <GuestEmailModal
-        isOpen={isEmailModalOpen}
-        onClose={() => setIsEmailModalOpen(false)}
-        onSubmit={handleGuestEmailSubmit}
-        initialEmail={guestEmail}
-        ongName={ongData?.name}
-        isLoading={loading}
-        submitLabel={file ? "Continuar e confirmar doação" : "Continuar"}
+      <FintechSuccessModal
+        isOpen={showPopup}
+        onClose={() => {
+          setShowPopup(false);
+          clearPixSessionData();
+          if (ongId) {
+            router.push(`/ong-public-profile?id=${ongId}`);
+          } else {
+            router.push("/home");
+          }
+        }}
+        amount={valor}
+        formattedAmount={formattedValorDisplay}
+        ongData={ongData}
+        impact={impact}
+        primaryCategoryName={primaryCategoryName}
+        paymentId={dynamicPix?.paymentId}
+        trackingId={dynamicPix?.trackingId}
+        donationId={dynamicPix?.donationId}
+        guestEmail={guestEmailInput}
+        isAuthenticated={isAuthenticated}
+        onGoHome={() => {
+          clearPixSessionData();
+          if (ongId) {
+            router.push(`/ong-public-profile?id=${ongId}`);
+          } else {
+            router.push("/home");
+          }
+        }}
+        onGoRegister={() => {
+          clearPixSessionData();
+          router.push("/register");
+        }}
       />
 
       {/* MODAL DO TUTORIAL */}

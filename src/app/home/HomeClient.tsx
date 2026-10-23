@@ -10,7 +10,6 @@ import {
 import { FiGlobe, FiUser, FiHelpCircle, FiLogOut, FiX, FiHeart } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import DonateModal from "@/components/specific/DonateModal";
-import { Preferences } from "@capacitor/preferences";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { motion, AnimatePresence } from "framer-motion";
 import { DonorService } from "@/services/donor.service";
@@ -176,21 +175,9 @@ export default function HomeClient({
 
           if (!isMounted) return;
 
-          if (!profile) {
-            console.debug("Sessão expirada no servidor. Encerrando sessão local...");
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("CapacitorStorage.access_token");
-            localStorage.removeItem("userRole");
-            localStorage.removeItem("userAvatar");
-            localStorage.removeItem("userName");
-            localStorage.removeItem("registration_completed");
-            refreshSession();
-            return;
-          }
-
           if (profile?.avatarUrl) {
             localStorage.setItem("userAvatar", profile.avatarUrl);
-            refreshSession();
+            document.cookie = `user_avatar=${encodeURIComponent(profile.avatarUrl)}; path=/; max-age=604800; SameSite=Lax`;
           }
 
           const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";

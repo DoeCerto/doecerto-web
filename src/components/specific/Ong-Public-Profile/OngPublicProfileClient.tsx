@@ -102,8 +102,8 @@ export default function OngPublicProfileClient({
         {ong.banner && !errors.banner ? (
           <img src={ong.banner} className="w-full h-full object-cover" alt="Capa" onError={() => setErrors(prev => ({ ...prev, banner: true }))} />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-slate-300">
-            <ImageIcon size={48} className="text-slate-400" />
+          <div className="w-full h-full bg-gradient-to-br from-[#411b6f] via-[#6B39A7] to-[#8643c7] flex items-center justify-center relative overflow-hidden">
+            <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
           </div>
         )}
 

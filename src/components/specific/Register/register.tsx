@@ -295,6 +295,10 @@ function useRegisterForm() {
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [isCheckingDocumento, setIsCheckingDocumento] = useState(false);
 
+  // Cache em memória para evitar requisições repetidas ao mesmo CPF/CNPJ/Email
+  const lastCheckedEmailRef = useRef<{ value: string; available: boolean; message?: string } | null>(null);
+  const lastCheckedDocRef = useRef<{ value: string; available: boolean; message?: string } | null>(null);
+
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: { 
@@ -310,11 +314,6 @@ function useRegisterForm() {
   });
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      router.replace("/home");
-      return;
-    }
     const draft = sessionStorage.getItem("register_draft");
     if (draft) {
       const parsed = JSON.parse(draft);
@@ -340,6 +339,8 @@ function useRegisterForm() {
   const clearDraft = () => {
     setStep(1);
     setAccountType(null);
+    lastCheckedEmailRef.current = null;
+    lastCheckedDocRef.current = null;
     form.reset({
       accountType: null, nome: "", email: "", senha: "", confirmarSenha: "", documento: "", nomePresidente: "", cpfPresidente: ""
     });
@@ -359,9 +360,31 @@ function useRegisterForm() {
     const isSyntaxValid = await form.trigger("email");
     if (!isSyntaxValid) return;
 
+    // Se já verificou exatamente este mesmo e-mail, usa o resultado em memória
+    if (lastCheckedEmailRef.current?.value === clean) {
+      if (!lastCheckedEmailRef.current.available) {
+        form.setError("email", {
+          type: "manual",
+          message: lastCheckedEmailRef.current.message || "Este e-mail já está cadastrado no DoeCerto.",
+        });
+      } else {
+        form.clearErrors("email");
+      }
+      return;
+    }
+
     setIsCheckingEmail(true);
     try {
       const res = await checkAvailability({ email: clean });
+      if (res.rateLimited) {
+        form.setError("email", {
+          type: "manual",
+          message: res.message || "Muitas tentativas em pouco tempo. Aguarde alguns segundos.",
+        });
+        return;
+      }
+
+      lastCheckedEmailRef.current = { value: clean, available: res.available, message: res.message };
       if (!res.available) {
         form.setError("email", {
           type: "manual",
@@ -383,10 +406,32 @@ function useRegisterForm() {
     const isSyntaxValid = await form.trigger("documento");
     if (!isSyntaxValid) return;
 
+    // Se já verificou exatamente este mesmo documento, usa o resultado em memória sem nova requisição
+    if (lastCheckedDocRef.current?.value === clean) {
+      if (!lastCheckedDocRef.current.available) {
+        form.setError("documento", {
+          type: "manual",
+          message: lastCheckedDocRef.current.message || (accountType === "ong" ? "Este CNPJ já possui cadastro no DoeCerto." : "Este CPF já possui cadastro no DoeCerto."),
+        });
+      } else {
+        form.clearErrors("documento");
+      }
+      return;
+    }
+
     setIsCheckingDocumento(true);
     try {
       const query = accountType === "ong" ? { cnpj: clean } : { cpf: clean };
       const res = await checkAvailability(query);
+      if (res.rateLimited) {
+        form.setError("documento", {
+          type: "manual",
+          message: res.message || "Muitas tentativas em pouco tempo. Aguarde alguns segundos.",
+        });
+        return;
+      }
+
+      lastCheckedDocRef.current = { value: clean, available: res.available, message: res.message };
       if (!res.available) {
         form.setError("documento", {
           type: "manual",
@@ -420,6 +465,10 @@ function useRegisterForm() {
       };
       const res = await checkAvailability(query);
       if (!res.available) {
+        if (res.rateLimited) {
+          toast.error(res.message || "Muitas tentativas em pouco tempo. Aguarde alguns segundos.");
+          return;
+        }
         if (res.field === "email") {
           form.setError("email", {
             type: "manual",

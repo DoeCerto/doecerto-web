@@ -230,11 +230,11 @@ export function WhyChooseUs() {
               </div>
               
               <h3 className="text-lg font-bold text-gray-900 mb-3">
-                Transparência e taxa zero
+                Repasse direto e transparente
               </h3>
 
               <p className="text-gray-500 font-light text-sm leading-relaxed">
-                100% repassado via PIX diretamente para a conta da ONG selecionada, sem taxas de intermediação.
+                Doações integradas via Pix oficial do Banco Central, sem comissões ocultas da plataforma e com rastreabilidade total de cada centavo.
               </p>
             </div>
 
@@ -280,11 +280,11 @@ export function WhyChooseUs() {
               </div>
               
               <h3 className="text-lg font-bold text-gray-900 mb-3">
-                Rápido e rastreável
+                Instantâneo e rastreável
               </h3>
 
               <p className="text-gray-500 font-light text-sm leading-relaxed">
-                Doe em segundos com geração imediata de comprovante digital e auditoria transparente do repasse.
+                Doe em segundos com confirmação automática em tempo real, sem necessidade de envio manual de comprovante e com recibo digital autenticado.
               </p>
             </div>
 

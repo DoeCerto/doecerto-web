@@ -1,4 +1,4 @@
-import { Preferences } from '@capacitor/preferences';
+import { SecureStorageService } from '@/services/secure-storage.service';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -22,15 +22,10 @@ export async function api<T>(
 
   let token = null;
   if (typeof window !== "undefined") {
-    const { value } = await Preferences.get({ key: "access_token" });
-    token = value;
-
-    if (!token) {
-      token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("access_token="))
-        ?.split("=")[1];
-    }
+    // Apenas clientes mobile nativos (Capacitor) utilizam Secure Storage (Keystore/Keychain) e Bearer token manual.
+    // No navegador Web, a autenticação segue o padrão Zero Trust com cookies httpOnly transparentes (credentials: "include").
+    // Nenhum token é exposto ou lido do localStorage no Web, eliminando riscos de exfiltração por XSS.
+    token = await SecureStorageService.getAccessToken();
   }
 
   function isTokenExpired(t: string): boolean {
@@ -71,23 +66,22 @@ export async function api<T>(
     if (!res.ok) {
       if (res.status === 401 && !endpoint.includes('/auth/refresh') && !endpoint.includes('/auth/login')) {
         try {
-          // Tentativa de renovar o token (Silent Refresh)
+          // Tentativa de renovar o token (Silent Refresh) via cookie httpOnly refresh_token
           const refreshRes = await fetch(`${API_URL}/auth/refresh`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include' // Envia os cookies (refresh_token)
+            credentials: 'include' // Envia os cookies (refresh_token httpOnly)
           });
 
           if (refreshRes.ok) {
-            const refreshData = await refreshRes.json();
+            const refreshData = await refreshRes.json().catch(() => ({}));
             
-            if (typeof window !== "undefined" && refreshData.accessToken) {
-              await Preferences.set({ key: "access_token", value: refreshData.accessToken });
-              localStorage.setItem("access_token", refreshData.accessToken);
+            if (refreshData?.accessToken) {
+              await SecureStorageService.setAccessToken(refreshData.accessToken);
+              headers.set("Authorization", `Bearer ${refreshData.accessToken}`);
             }
 
-            // Refaz a request original com o novo token
-            headers.set("Authorization", `Bearer ${refreshData.accessToken}`);
+            // Refaz a request original com credentials: "include" (novo cookie httpOnly injetado pelo backend)
             const retryRes = await fetch(`${API_URL}${endpoint}`, {
               ...options,
               headers,
@@ -106,7 +100,7 @@ export async function api<T>(
 
         // Se chegou aqui, o refresh falhou (token de renovação expirou ou é inexistente)
         if (typeof window !== "undefined") {
-          await Preferences.remove({ key: "access_token" });
+          await SecureStorageService.removeAccessToken();
           localStorage.removeItem("access_token");
           localStorage.removeItem("CapacitorStorage.access_token");
           localStorage.removeItem("userRole");

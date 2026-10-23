@@ -19,12 +19,8 @@ export default function DonateModal({ onClose, onDonateMoney, onDonateItems, ong
   const [targetFlow, setTargetFlow] = useState<"money" | "material">("money");
 
   const handleMoneyClick = () => {
-    if (isAuthenticated) {
-      onDonateMoney();
-      return;
-    }
-    setTargetFlow("money");
-    setStep("guest");
+    // Redireciona direto para a tela de Pix (o e-mail e dados são coletados de forma unificada no checkout)
+    onDonateMoney();
   };
 
   const handleItemsClick = () => {

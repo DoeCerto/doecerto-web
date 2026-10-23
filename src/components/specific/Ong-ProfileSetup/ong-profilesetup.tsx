@@ -35,7 +35,6 @@ import { BankAccountService } from "@/services/bank-account.service";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { OngSetupService } from "@/services/ongSetup.service";
 import { WishlistService } from "@/services/wishlist.service";
-import { Preferences } from "@capacitor/preferences";
 import { useAuth } from "@/contexts/AuthContext";
 import { CategoryImpactIcon } from "@/components/ui/CategoryImpactIcon";
 
@@ -60,10 +59,6 @@ export default function OngSetupProfile() {
     const handlePageShow = (e: PageTransitionEvent) => {
       if (e.persisted) {
         refreshSession();
-        const token = localStorage.getItem("access_token");
-        if (!token) {
-          window.location.replace("/login");
-        }
       }
     };
     window.addEventListener("pageshow", handlePageShow);

@@ -21,7 +21,7 @@ const faqs = [
   },
   {
     question: "O DoeCerto cobra alguma taxa?",
-    answer: "Não. O DoeCerto é uma ponte gratuita. Quando você doa via Pix, o valor cai diretamente na conta bancária verificada da ONG."
+    answer: "O DoeCerto não cobra mensalidades nem comissões sobre as doações. O processamento é realizado via Pix oficial integrado ao Banco Central, garantindo confirmação instantânea na tela, emissão automática de recibo e repasse direto à conta jurídica auditada da ONG, com total transparência."
   },
   {
     question: "Quem pode realizar doações pelo DoeCerto?",
@@ -33,7 +33,7 @@ const faqs = [
   },
   {
     question: "Recebo algum comprovante após realizar a doação?",
-    answer: "Sim! Assim que a transação via Pix é confirmada, você recebe um recibo digital de doação que fica salvo no seu histórico dentro da plataforma. É a sua garantia e transparência de que a ajuda chegou exatamente onde deveria."
+    answer: "Sim! A confirmação é instantânea e 100% automática: assim que o Pix é pago, o comprovante autenticado é gerado na tela com código de liquidação do Banco Central e fica salvo no seu histórico da plataforma, sem necessidade de anexar nada manualmente."
   }
 ];
 

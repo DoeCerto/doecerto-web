@@ -12,7 +12,6 @@ import {
   LogOut
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Preferences } from '@capacitor/preferences';
 import { logout } from '@/services/login.service';
 import toast from 'react-hot-toast';
 import MetricsPanel from '../specific/Adm-Dashboard/dashboard-metrics/MetricsPanel';
