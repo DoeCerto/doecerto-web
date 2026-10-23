@@ -33,7 +33,7 @@ const faqs = [
   },
   {
     question: "Recebo algum comprovante após realizar a doação?",
-    answer: "Sim! A confirmação é instantânea e 100% automática: assim que o Pix é pago, o comprovante autenticado é gerado na tela com código de liquidação do Banco Central e fica salvo no seu histórico da plataforma, sem necessidade de anexar nada manualmente."
+    answer: "Sim! A confirmação é instantânea na tela: assim que o Pix é pago, o comprovante autenticado é gerado com código de liquidação do Banco Central e fica salvo no seu histórico da plataforma."
   }
 ];
 

@@ -284,7 +284,7 @@ export function WhyChooseUs() {
               </h3>
 
               <p className="text-gray-500 font-light text-sm leading-relaxed">
-                Doe em segundos com confirmação automática em tempo real, sem necessidade de envio manual de comprovante e com recibo digital autenticado.
+                Doe em segundos com confirmação instantânea na tela e recibo digital autenticado.
               </p>
             </div>
 

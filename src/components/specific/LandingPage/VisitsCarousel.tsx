@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import {ArrowDown, Heart, HeartPulse } from "lucide-react";
+import { ArrowDown, Heart, HeartPulse } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -16,25 +16,25 @@ if (typeof window !== "undefined") {
 // DADOS DAS VISITAS
 // ==========================================
 const visits = [
-  { 
+  {
     id: "ong-cpfm",
-    name: "ONG CPFM", 
+    name: "ONG CPFM",
     src: "/visita-1.jpg",
     description: "Uma visita transformadora onde conhecemos de perto a realidade e as necessidades diárias da instituição, focada em acolher e transformar o futuro de dezenas de famílias locais.",
     category: "Desenvolvimento social",
     impact: "20+ Famílias Atendidas"
   },
-  { 
+  {
     id: "Associação Ponto Cidadão",
-    name: "Associação Ponto Cidadão", 
+    name: "Associação Ponto Cidadão",
     src: "/visita-6.jpg",
     description: "Entendemos as dores estruturais e as vitórias diárias dos professores voluntários que dedicam seu tempo para garantir reforço escolar e alimentação de qualidade.",
     category: "Educação infantil",
     impact: "Reforço Diário"
   },
-  { 
+  {
     id: "engrenagem",
-    name: "Associação Clube Sport Bonfim", 
+    name: "Associação Clube Sport Bonfim",
     src: "/visita-5.jpg",
     description: "Mapeamos os processos de uma das instituições mais ativas da região, compreendendo como cada centavo doado se transforma em ações reais e impacto imediato.",
     category: "Esportes e lazer",
@@ -48,13 +48,13 @@ const visits = [
 function FlowButton({ text = "Quero apoiar" }: { text?: string }) {
   return (
     <button className="group/btn relative flex items-center justify-center gap-1 overflow-hidden rounded-[12px] border-[1.5px] border-transparent bg-transparent px-8 py-3 text-sm font-semibold text-white cursor-pointer transition-all duration-[600ms] ease-[cubic-bezier(0.23,1,0.32,1)] hover:border-[#6B39A7]/40 hover:text-[#6B39A7] hover:rounded-[100px] active:scale-[0.95] w-full sm:w-max">
-      
+
       {/* Círculo expansivo do fundo (Inicia grande e encolhe no hover) */}
       <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-[#6B39A7] rounded-[50%] opacity-100 group-hover/btn:w-4 group-hover/btn:h-4 group-hover/btn:opacity-0 transition-all duration-[800ms] ease-[cubic-bezier(0.19,1,0.22,1)]"></span>
 
       {/* Coração: HeartPulse (Inicia visível na esquerda e sai no hover) */}
-      <HeartPulse 
-        className="absolute w-5 h-5 left-4 stroke-white fill-none z-[9] group-hover/btn:left-[-25%] group-hover/btn:stroke-[#6B39A7] transition-all duration-[800ms] ease-[cubic-bezier(0.34,1.56,0.64,1)]" 
+      <HeartPulse
+        className="absolute w-5 h-5 left-4 stroke-white fill-none z-[9] group-hover/btn:left-[-25%] group-hover/btn:stroke-[#6B39A7] transition-all duration-[800ms] ease-[cubic-bezier(0.34,1.56,0.64,1)]"
       />
 
       {/* Texto - Inicia na direita para acomodar o HeartPulse e centraliza no hover */}
@@ -63,8 +63,8 @@ function FlowButton({ text = "Quero apoiar" }: { text?: string }) {
       </span>
 
       {/* Coração: Heart (Inicia fora na direita e entra no hover) */}
-      <Heart 
-        className="absolute w-5 h-5 right-[-25%] stroke-white fill-none z-[9] group-hover/btn:right-4 group-hover/btn:stroke-[#6B39A7] transition-all duration-[800ms] ease-[cubic-bezier(0.34,1.56,0.64,1)]" 
+      <Heart
+        className="absolute w-5 h-5 right-[-25%] stroke-white fill-none z-[9] group-hover/btn:right-4 group-hover/btn:stroke-[#6B39A7] transition-all duration-[800ms] ease-[cubic-bezier(0.34,1.56,0.64,1)]"
       />
     </button>
   );
@@ -124,9 +124,8 @@ function MinimalVisitCard({ visit }: { visit: typeof visits[0] }) {
         <div
           className="absolute inset-0 w-full h-full transition-all duration-1000 ease-out"
           style={{
-            clipPath: `circle(${
-              active ? "150%" : "0%"
-            } at var(--reveal-x, 50%) var(--reveal-y, 50%))`,
+            clipPath: `circle(${active ? "150%" : "0%"
+              } at var(--reveal-x, 50%) var(--reveal-y, 50%))`,
             transition: "clip-path 2.8s cubic-bezier(0.15, 0.85, 0.35, 1)",
           }}
         >
@@ -142,11 +141,10 @@ function MinimalVisitCard({ visit }: { visit: typeof visits[0] }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
 
         <div
-          className={`absolute bottom-6 left-1/2 -translate-x-1/2 transition-all duration-700 cubic-bezier(0.4, 0, 0.2, 1) z-30 w-fit ${
-            active
+          className={`absolute bottom-6 left-1/2 -translate-x-1/2 transition-all duration-700 cubic-bezier(0.4, 0, 0.2, 1) z-30 w-fit ${active
               ? "translate-y-0 opacity-100"
               : "translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100"
-          }`}
+            }`}
         >
           <Link
             href="/login"
@@ -244,16 +242,16 @@ function VisitHero({ visit, reversed = false }: { visit: typeof visits[0]; rever
     <div ref={sectionRef} className="relative h-auto md:h-[200vh] w-full group">
       <div className="relative md:sticky md:top-0 md:left-0 w-full h-auto md:h-screen overflow-hidden bg-white">
         <div className="w-full h-auto md:h-full grid grid-cols-1 md:grid-cols-2">
-          
+
           <div className={`relative w-full md:h-full flex items-center justify-center py-10 px-6 md:p-0 mx-auto ${reversed ? "md:order-2" : ""}`}>
             <div className="relative w-full max-w-[350px] sm:max-w-[420px] md:max-w-[500px] lg:max-w-[650px] xl:max-w-[750px] aspect-[4/5] md:aspect-auto md:h-full overflow-hidden rounded-2xl md:rounded-none shadow-2xl md:shadow-none">
-              
+
               <div className="absolute inset-0 w-full h-full flex justify-center bg-zinc-900">
                 <Image
                   src={visit.src}
                   alt={visit.name}
                   fill
-                  className="object-cover grayscale opacity-90 brightness-110" 
+                  className="object-cover grayscale opacity-90 brightness-110"
                   priority
                 />
               </div>
@@ -275,7 +273,7 @@ function VisitHero({ visit, reversed = false }: { visit: typeof visits[0]; rever
 
           <div className={`flex items-center justify-center py-10 px-8 md:p-16 relative z-20 ${reversed ? "md:order-1" : ""}`}>
             <div className="max-w-md w-full flex flex-col gap-6 md:gap-10">
-              
+
               <div
                 className="reveal-step transition-all duration-1000 ease-out opacity-0 translate-y-12 [&.active]:opacity-100 [&.active]:translate-y-0"
                 data-progress="0.2"
@@ -309,7 +307,7 @@ function VisitHero({ visit, reversed = false }: { visit: typeof visits[0]; rever
 
             </div>
           </div>
-          
+
         </div>
       </div>
     </div>
@@ -342,18 +340,18 @@ export function VisitsCarousel() {
       { filter: "blur(24px)", opacity: 0, y: 50 },
       { filter: "blur(0px)", opacity: 1, y: 0, stagger: 0.15, duration: 1.2, ease: "power3.out" }
     )
-    .fromTo(
-      ".intro-text",
-      { opacity: 0, y: 30 },
-      { opacity: 1, y: 0, duration: 1, ease: "power3.out" },
-      "-=0.7" 
-    )
-    .fromTo(
-      ".intro-btn",
-      { opacity: 0, y: 20 },
-      { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" },
-      "-=0.7"
-    );
+      .fromTo(
+        ".intro-text",
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 1, ease: "power3.out" },
+        "-=0.7"
+      )
+      .fromTo(
+        ".intro-btn",
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" },
+        "-=0.7"
+      );
 
     gsap.fromTo(
       ".anime-card",
@@ -407,14 +405,14 @@ export function VisitsCarousel() {
 
   return (
     <div ref={container} className="w-full bg-white selection:bg-[#6B39A7] selection:text-white font-['Poppins']">
-      
+
       {/* INTRODUÇÃO */}
-      <section 
-        id="visitscarousel" 
+      <section
+        id="visitscarousel"
         className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden px-6 py-20"
       >
         <div ref={introRef} className="flex flex-col items-center text-center w-full max-w-4xl z-10">
-          
+
           <h2 className="font-extrabold text-4xl sm:text-5xl lg:text-6xl xl:text-[72px] text-zinc-900 leading-[1.1] mb-6 tracking-tight">
             <span className="blur-word opacity-0 inline-block mr-2 md:mr-4">Conhecendo</span>
             <span className="blur-word opacity-0 inline-block mr-2 md:mr-4">a</span>
@@ -431,17 +429,17 @@ export function VisitsCarousel() {
           <div className="intro-btn opacity-0">
             <GlowButton />
           </div>
-          
+
         </div>
       </section>
 
       {/* LISTA DE VISITAS */}
       <div className="w-full flex flex-col relative z-20">
         {visits.map((visit, index) => (
-          <VisitHero 
-            key={visit.id} 
-            visit={visit} 
-            reversed={index % 2 !== 0} 
+          <VisitHero
+            key={visit.id}
+            visit={visit}
+            reversed={index % 2 !== 0}
           />
         ))}
       </div>
@@ -452,7 +450,7 @@ export function VisitsCarousel() {
         className="bg-white w-full pt-16 pb-12 md:pt-24 md:pb-16 border-t border-zinc-100"
       >
         <div className="w-full max-w-7xl mx-auto px-6">
-          
+
           <div className="flex items-end justify-between border-b border-zinc-200 pb-4 mb-8">
             <span className="text-xs font-bold text-[#6B39A7] block uppercase tracking-wider">
               Visão geral
@@ -487,7 +485,7 @@ export function VisitsCarousel() {
               style={{ left: "0%" }}
             />
           </div>
-          
+
         </div>
       </div>
 
@@ -519,7 +517,7 @@ function GlowButton() {
         className="relative inline-flex p-[1.5px] rounded-xl overflow-hidden cursor-pointer group shadow-xl"
       >
         <div className="absolute inset-0 bg-zinc-200 rounded-xl transition-opacity duration-500 group-hover:opacity-0" />
-        
+
         <div
           className="absolute inset-0 transition-opacity duration-300 ease-out"
           style={{
@@ -527,15 +525,15 @@ function GlowButton() {
             background: `radial-gradient(100px circle at ${position.x}px ${position.y}px, rgba(107, 57, 167, 0.9), rgba(98, 63, 254, 0.4) 50%, transparent 100%)`,
           }}
         />
-        
+
         <Link
-          href="/login"
+          href="/home"
           className="relative flex items-center justify-center gap-3 bg-[#6B39A7] text-white font-bold text-sm py-4 px-8 rounded-xl z-10 transition-transform duration-300 active:scale-[0.98] shadow-[0_4px_20px_rgba(107,57,167,0.2)] w-full sm:w-max group-hover:bg-[#572B8B]"
         >
           <span>Quero transformar vidas</span>
           <HeartPulse size={18} className="transition-transform duration-300 group-hover:scale-110" />
         </Link>
-        
+
         <div
           className="absolute inset-0 z-20 pointer-events-none rounded-xl transition-opacity duration-300"
           style={{
