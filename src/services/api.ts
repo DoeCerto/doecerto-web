@@ -1,4 +1,5 @@
 import { SecureStorageService } from '@/services/secure-storage.service';
+import { getClientDeviceFingerprint } from '@/utils/device-fingerprint';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -21,11 +22,16 @@ export async function api<T>(
   const headers = new Headers(options.headers);
 
   let token = null;
+  let trustedDeviceToken = null;
+  let deviceFingerprint = null;
+
   if (typeof window !== "undefined") {
-    // Apenas clientes mobile nativos (Capacitor) utilizam Secure Storage (Keystore/Keychain) e Bearer token manual.
-    // No navegador Web, a autenticação segue o padrão Zero Trust com cookies httpOnly transparentes (credentials: "include").
-    // Nenhum token é exposto ou lido do localStorage no Web, eliminando riscos de exfiltração por XSS.
+    // 1. Bearer Token manual apenas em app mobile nativo (Capacitor)
     token = await SecureStorageService.getAccessToken();
+    // 2. Token de Dispositivo Confiável (Keystore no Mobile, localStorage no Web)
+    trustedDeviceToken = await SecureStorageService.getTrustedDeviceToken();
+    // 3. Fingerprint determinístico de hardware e GPU
+    deviceFingerprint = await getClientDeviceFingerprint();
   }
 
   function isTokenExpired(t: string): boolean {
@@ -42,6 +48,14 @@ export async function api<T>(
 
   if (token && !isTokenExpired(token)) {
     headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  if (trustedDeviceToken && !headers.has("x-trusted-device")) {
+    headers.set("x-trusted-device", trustedDeviceToken);
+  }
+
+  if (deviceFingerprint && !headers.has("x-device-fingerprint")) {
+    headers.set("x-device-fingerprint", deviceFingerprint);
   }
 
   if (options.body instanceof FormData) {
@@ -90,7 +104,16 @@ export async function api<T>(
 
             const retryText = await retryRes.text();
             if (retryRes.ok) {
-              return { data: retryText ? JSON.parse(retryText) : (null as any) };
+              let retryData: any = null;
+              try {
+                retryData = retryText ? JSON.parse(retryText) : null;
+              } catch {
+                retryData = retryText;
+              }
+              if (retryData?.trustedDeviceToken && typeof window !== "undefined") {
+                SecureStorageService.setTrustedDeviceToken(retryData.trustedDeviceToken).catch(() => {});
+              }
+              return { data: retryData as any };
             }
             throw new ApiError(retryText || `Erro ${retryRes.status}`, retryRes.status);
           }
@@ -129,7 +152,18 @@ export async function api<T>(
       throw new ApiError(parsedMessage || `Erro ${res.status}`, res.status, jsonPayload);
     }
 
-    return { data: text ? JSON.parse(text) : (null as any) };
+    let parsedData: any = null;
+    try {
+      parsedData = text ? JSON.parse(text) : null;
+    } catch {
+      parsedData = text;
+    }
+
+    if (parsedData?.trustedDeviceToken && typeof window !== "undefined") {
+      SecureStorageService.setTrustedDeviceToken(parsedData.trustedDeviceToken).catch(() => {});
+    }
+
+    return { data: parsedData as any };
   } catch (error: any) {
     // Evita o popup vermelho chato do Next.js no Dev mode para erros 401 (normais quando usuário é visitante)
     const isUnauthorized =

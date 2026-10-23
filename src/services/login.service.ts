@@ -1,4 +1,5 @@
 import { api } from "@/services/api";
+import { SecureStorageService } from "@/services/secure-storage.service";
 
 interface LoginDTO {
   email: string;
@@ -9,6 +10,7 @@ export interface LoginResponse {
   accessToken?: string;
   access_token?: string;
   token?: string;
+  trustedDeviceToken?: string;
   user?: {
     id?: number;
     email?: string;
@@ -33,6 +35,7 @@ export interface Enable2FAResponse {
   backupCodes: string[];
   accessToken?: string;
   refreshToken?: string;
+  trustedDeviceToken?: string;
   user?: any;
 }
 
@@ -65,6 +68,7 @@ export async function enable2FA(tempToken: string, secret: string, code: string,
 }
 
 export async function revokeTrustedDevices() {
+  await SecureStorageService.removeTrustedDeviceToken();
   return await api<{ message: string }>("/auth/2fa/trusted-devices/revoke", {
     method: "POST",
   });

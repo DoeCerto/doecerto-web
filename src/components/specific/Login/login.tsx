@@ -112,6 +112,12 @@ function LoginContent() {
       } catch (capacitorError) { }
     }
 
+    if (data?.trustedDeviceToken) {
+      try {
+        await SecureStorageService.setTrustedDeviceToken(data.trustedDeviceToken);
+      } catch { }
+    }
+
     localStorage.setItem("registration_completed", "true");
     
     const apiUserRole = data?.user?.role || data?.role;

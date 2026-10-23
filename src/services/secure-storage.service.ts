@@ -14,6 +14,7 @@ import { SecureStoragePlugin } from 'capacitor-secure-storage-plugin';
 export class SecureStorageService {
   private static readonly TOKEN_KEY = 'access_token';
   private static readonly USER_ROLE_KEY = 'userRole';
+  private static readonly TRUSTED_DEVICE_KEY = 'trusted_device';
 
   /**
    * Verifica se o ambiente de execução é um app mobile nativo (Android ou iOS).
@@ -111,6 +112,11 @@ export class SecureStorageService {
    * Limpa todas as credenciais do armazenamento seguro.
    */
   public static async clear(): Promise<boolean> {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(this.TRUSTED_DEVICE_KEY);
+      } catch {}
+    }
     if (!this.isNativeMobile()) return true;
 
     try {
@@ -147,5 +153,58 @@ export class SecureStorageService {
 
   public static async removeUserRole(): Promise<boolean> {
     return await this.remove(this.USER_ROLE_KEY);
+  }
+
+  /**
+   * Recupera o token de dispositivo confiável (Keystore no Mobile, localStorage no Web)
+   */
+  public static async getTrustedDeviceToken(): Promise<string | null> {
+    if (this.isNativeMobile()) {
+      return await this.get(this.TRUSTED_DEVICE_KEY);
+    }
+    if (typeof window !== 'undefined') {
+      try {
+        return localStorage.getItem(this.TRUSTED_DEVICE_KEY);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Salva o token de dispositivo confiável (Keystore no Mobile, localStorage no Web)
+   */
+  public static async setTrustedDeviceToken(token: string): Promise<boolean> {
+    if (this.isNativeMobile()) {
+      return await this.set(this.TRUSTED_DEVICE_KEY, token);
+    }
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(this.TRUSTED_DEVICE_KEY, token);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Remove o token de dispositivo confiável (Keystore no Mobile, localStorage no Web)
+   */
+  public static async removeTrustedDeviceToken(): Promise<boolean> {
+    if (this.isNativeMobile()) {
+      return await this.remove(this.TRUSTED_DEVICE_KEY);
+    }
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(this.TRUSTED_DEVICE_KEY);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+    return false;
   }
 }
