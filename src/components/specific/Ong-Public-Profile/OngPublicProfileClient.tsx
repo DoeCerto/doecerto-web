@@ -96,6 +96,12 @@ export default function OngPublicProfileClient({
     }
   };
 
+  // Garante que o último termo do nome e o selo fiquem sempre juntos (sem quebra órfã nem flutuação lateral)
+  const nameTrimmed = (ong.name || "").trim();
+  const lastSpaceIndex = nameTrimmed.lastIndexOf(" ");
+  const firstPart = lastSpaceIndex !== -1 ? nameTrimmed.substring(0, lastSpaceIndex) : "";
+  const lastWord = lastSpaceIndex !== -1 ? nameTrimmed.substring(lastSpaceIndex + 1) : nameTrimmed;
+
   return (
     <div className="min-h-screen bg-slate-50 pb-20 sm:pb-36 font-sans text-slate-900">
       <div className="relative w-full h-[200px] sm:h-[250px] md:h-[300px] bg-slate-200">
@@ -129,21 +135,21 @@ export default function OngPublicProfileClient({
             )}
           </div>
 
-          <div className="flex items-center justify-center gap-1">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 leading-none">
-              {ong.name}
-            </h1>
-
-            <motion.img
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 200, delay: 0.3 }}
-              src="/iconeselo.svg"
-              alt="Selo DoeCerto"
-              title="ONG Verificada Oficialmente"
-              className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 lg:translate-y-[5px] xl:translate-y-[5px] shrink-0 drop-shadow-sm cursor-help sm:translate-y-[4px] translate-x-[-4px] translate-y-[3px] sm:translate-x-[-3px] md:translate-x-[-4px]"
-            />
-          </div>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 leading-snug text-center max-w-2xl mx-auto">
+            {firstPart && <span>{firstPart} </span>}
+            <span className="inline-block whitespace-nowrap">
+              {lastWord}
+              <motion.img
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 200, delay: 0.3 }}
+                src="/iconeselo.svg"
+                alt="Selo DoeCerto"
+                title="ONG Verificada Oficialmente"
+                className="inline-block w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 ml-1.5 align-middle -mt-1 shrink-0 drop-shadow-sm cursor-help"
+              />
+            </span>
+          </h1>
 
           <div className="text-slate-500 mt-4 sm:mt-6 flex flex-wrap justify-center gap-x-4 sm:gap-x-6 gap-y-2 text-xs sm:text-sm lg:text-base font-semibold items-center">
             <span className="flex items-center gap-1.5 sm:gap-2"><MapPin size={16} className="text-purple-600 sm:w-[18px]" /> {ong.address || "Localização não informada"}</span>
