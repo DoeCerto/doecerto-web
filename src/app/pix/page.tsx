@@ -7,7 +7,7 @@ import {
   ArrowLeft, ArrowRight, Loader2, Building2, IdCard,
   Key, Copy, CheckCircle2,
   X, Lock, ShieldCheck, Heart, AlertCircle, AlertTriangle,
-  RefreshCw, Clock, User, Mail
+  RefreshCw, Clock, User, Mail, HeartHandshake
 } from "lucide-react";
 import { useState, Suspense, useEffect, useMemo, useRef } from "react";
 import { OngsProfileService } from "@/services/ongs-profile.service";
@@ -16,9 +16,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { QRCodeSVG } from "qrcode.react";
 import DonationTutorialModal from "@/components/ui/DonationTutorial";
 import { calculateImpact } from "@/utils/impactCalculator";
-import { CategoryImpactIcon } from "@/components/ui/CategoryImpactIcon";
 import { formatCPF, validateCPF, removeFormatting } from "@/utils/documentValidation";
-import FintechSuccessModal from "@/components/specific/Donation/FintechSuccessModal";
+import DonationSuccessModal from "@/components/specific/Donation/DonationSuccessModal";
 
 // ==========================================
 // TEXTO DE IMPACTO SOCIAL TYPEWRITER
@@ -165,6 +164,77 @@ function PixPageContent() {
   const [valor, setValor] = useState(initialValor);
   const valoresRapidos = ["5", "10", "20", "50", "100"];
 
+  // Estados do Tip Model (Apoio voluntário à plataforma DoeCerto)
+  const [tipOption, setTipOption] = useState<"0" | "5" | "10" | "15" | "custom">(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("dc_tip_option");
+      if (saved === "0" || saved === "5" || saved === "10" || saved === "15" || saved === "custom") {
+        return saved;
+      }
+    }
+    return "10";
+  });
+  const [customTip, setCustomTip] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("dc_custom_tip") || "";
+    }
+    return "";
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem("dc_tip_option", tipOption);
+        if (customTip) sessionStorage.setItem("dc_custom_tip", customTip);
+        else sessionStorage.removeItem("dc_custom_tip");
+      } catch (e) { }
+    }
+  }, [tipOption, customTip]);
+
+  // Cálculos do valor base para a ONG, gorjeta voluntária e valor total
+  const baseAmount = useMemo(() => {
+    const num = parseFloat(valor);
+    return isNaN(num) || num < 0 ? 0 : num;
+  }, [valor]);
+
+  const tipAmount = useMemo(() => {
+    if (tipOption === "0" || baseAmount <= 0) return 0;
+    if (tipOption === "custom") {
+      const parsed = parseFloat(customTip.replace(",", "."));
+      return isNaN(parsed) || parsed < 0 ? 0 : parsed;
+    }
+    const pct = parseInt(tipOption, 10);
+    if (isNaN(pct) || pct <= 0) return 0;
+    return Math.round(baseAmount * pct) / 100;
+  }, [baseAmount, tipOption, customTip]);
+
+  const totalAmount = useMemo(() => {
+    return Math.round((baseAmount + tipAmount) * 100) / 100;
+  }, [baseAmount, tipAmount]);
+
+  const formattedBaseDisplay = useMemo(() => {
+    return baseAmount.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }, [baseAmount]);
+
+  const formattedTipDisplay = useMemo(() => {
+    return tipAmount.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }, [tipAmount]);
+
+  const formattedTotalDisplay = useMemo(() => {
+    return totalAmount.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }, [totalAmount]);
+
+  const formattedValorDisplay = formattedTotalDisplay;
+
   // Estados Asaas (Pix Dinâmico)
   const [dynamicPix, setDynamicPix] = useState<DynamicPixData | null>(() => {
     if (typeof window !== "undefined" && ongId && initialValor) {
@@ -244,6 +314,8 @@ function PixPageContent() {
       sessionStorage.removeItem("dc_guest_name");
       sessionStorage.removeItem("dc_guest_email");
       sessionStorage.removeItem("dc_guest_cpf");
+      sessionStorage.removeItem("dc_tip_option");
+      sessionStorage.removeItem("dc_custom_tip");
       Object.keys(sessionStorage).forEach((key) => {
         if (key.startsWith("dc_dynpix_") || key.startsWith("dc_pix_exp_")) {
           sessionStorage.removeItem(key);
@@ -377,13 +449,12 @@ function PixPageContent() {
   };
 
   const handleRegeneratePix = async () => {
-    const numValor = parseFloat(valor);
-    if (isNaN(numValor) || numValor < 5) return;
+    if (baseAmount < 5) return;
 
     if (typeof window !== "undefined") {
       try {
-        sessionStorage.removeItem(`dc_dynpix_${ongId}_${valor}`);
-        sessionStorage.removeItem(`dc_pix_exp_${ongId}_${valor}`);
+        sessionStorage.removeItem(`dc_dynpix_${ongId}_${totalAmount}`);
+        sessionStorage.removeItem(`dc_pix_exp_${ongId}_${totalAmount}`);
       } catch (e) {
         // noop
       }
@@ -393,7 +464,7 @@ function PixPageContent() {
 
     if (isAuthenticated && userRole === "donor") {
       try {
-        await generateDynamicPix(numValor, isAnonymous);
+        await generateDynamicPix(totalAmount, isAnonymous);
       } catch (err: any) {
         console.error("Erro ao renovar Pix Dinâmico:", err);
       }
@@ -404,7 +475,7 @@ function PixPageContent() {
         console.error("Erro ao renovar Pix do Visitante:", err);
       }
     } else {
-      navigateToStep("identification", valor);
+      navigateToStep("identification", String(totalAmount));
     }
   };
 
@@ -412,8 +483,7 @@ function PixPageContent() {
     if (e) e.preventDefault();
     setGuestFormError(null);
 
-    const numValor = parseFloat(valor);
-    if (isNaN(numValor) || numValor < 5) {
+    if (baseAmount < 5) {
       setGuestFormError("O valor mínimo para doação via Pix Dinâmico é de R$ 5,00.");
       return;
     }
@@ -457,7 +527,7 @@ function PixPageContent() {
         method: "POST",
         body: JSON.stringify({
           ongId: Number(ongId),
-          amount: numValor,
+          amount: totalAmount,
           name: trimmedName,
           email: trimmedEmail || undefined,
           cpf: cleanCpf,
@@ -467,20 +537,20 @@ function PixPageContent() {
 
       const data = response.data;
       setDynamicPix(data);
-      lastRequestedAmountRef.current = numValor;
+      lastRequestedAmountRef.current = totalAmount;
       setIsPaymentConfirmed(false);
       setCopied(false);
 
       if (typeof window !== "undefined") {
         try {
-          sessionStorage.setItem(`dc_dynpix_${ongId}_${numValor}`, JSON.stringify(data));
+          sessionStorage.setItem(`dc_dynpix_${ongId}_${totalAmount}`, JSON.stringify(data));
           const validExpMs = Date.now() + 20 * 60 * 1000;
-          sessionStorage.setItem(`dc_pix_exp_${ongId}_${numValor}`, String(validExpMs));
+          sessionStorage.setItem(`dc_pix_exp_${ongId}_${totalAmount}`, String(validExpMs));
         } catch (e) { }
       }
 
       setTimeLeft(1199);
-      navigateToStep("payment", valor);
+      navigateToStep("payment", String(totalAmount));
     } catch (err: any) {
       console.error("Erro ao gerar Pix do Visitante:", err);
       const msg = err?.message || "Não foi possível gerar seu Pix no momento. Tente novamente.";
@@ -491,8 +561,7 @@ function PixPageContent() {
   };
 
   const handleAvancarParaPagamento = async () => {
-    const numValor = parseFloat(valor);
-    if (isNaN(numValor) || numValor < 5) {
+    if (baseAmount < 5) {
       setErrorMessage("O valor mínimo para doação via Pix é de R$ 5,00.");
       return;
     }
@@ -505,9 +574,9 @@ function PixPageContent() {
     // 1. Doador logado: Gera Pix Dinâmico Asaas direto (já temos os dados da conta)
     if (isAuthenticated && userRole === "donor") {
       try {
-        const pixData = await generateDynamicPix(numValor, isAnonymous);
-        setTimeLeft(calculateRemainingSeconds(valor, pixData));
-        navigateToStep("payment", valor);
+        const pixData = await generateDynamicPix(totalAmount, isAnonymous);
+        setTimeLeft(calculateRemainingSeconds(String(totalAmount), pixData));
+        navigateToStep("payment", String(totalAmount));
       } catch (err: any) {
         setErrorMessage(err?.message || "Falha ao gerar o QR Code no Asaas. Tente novamente.");
       }
@@ -515,32 +584,31 @@ function PixPageContent() {
     }
 
     // 2. Visitante (deslogado): Identificação Rápida em 1 card (Padrão Fintech Enterprise)
-    navigateToStep("identification", valor);
+    navigateToStep("identification", String(totalAmount));
   };
 
   // Garante que se o usuário recarregar (F5) na etapa de pagamento, o QR Code é restaurado do cache ou gerado imediatamente
   useEffect(() => {
     if (step !== "payment" || initialLoading) return;
 
-    const numValor = parseFloat(valor);
-    if (isNaN(numValor) || numValor < 5) return;
+    if (totalAmount < 5) return;
 
     // Se já estiver com o dynamicPix carregado para o valor atual, apenas sincroniza
-    if (dynamicPix && dynamicPix.amount === numValor && dynamicPix.copyPaste) {
-      setTimeLeft(calculateRemainingSeconds(valor, dynamicPix));
+    if (dynamicPix && dynamicPix.amount === totalAmount && dynamicPix.copyPaste) {
+      setTimeLeft(calculateRemainingSeconds(String(totalAmount), dynamicPix));
       return;
     }
 
     // 1. Tenta restaurar do cache de sessão
     if (typeof window !== "undefined") {
       try {
-        const cached = sessionStorage.getItem(`dc_dynpix_${ongId}_${numValor}`);
+        const cached = sessionStorage.getItem(`dc_dynpix_${ongId}_${totalAmount}`);
         if (cached) {
           const parsed = JSON.parse(cached) as DynamicPixData;
-          if (parsed && parsed.copyPaste && parsed.amount === numValor) {
+          if (parsed && parsed.copyPaste && parsed.amount === totalAmount) {
             setDynamicPix(parsed);
-            lastRequestedAmountRef.current = numValor;
-            setTimeLeft(calculateRemainingSeconds(valor, parsed));
+            lastRequestedAmountRef.current = totalAmount;
+            setTimeLeft(calculateRemainingSeconds(String(totalAmount), parsed));
             return;
           }
         }
@@ -551,11 +619,11 @@ function PixPageContent() {
 
     // 2. Se não estiver no cache e não estiver gerando, gera automaticamente se for doador logado
     if (!isGeneratingPix && isAuthenticated && userRole === "donor") {
-      generateDynamicPix(numValor, isAnonymous).catch((err) => {
+      generateDynamicPix(totalAmount, isAnonymous).catch((err) => {
         console.error("Erro ao gerar Pix ao atualizar a página:", err);
       });
     }
-  }, [step, dynamicPix, isGeneratingPix, initialLoading, valor, ongId, isAnonymous, isAuthenticated, userRole]);
+  }, [step, dynamicPix, isGeneratingPix, initialLoading, totalAmount, ongId, isAnonymous, isAuthenticated, userRole]);
 
   // Polling automático de compensação Pix (imediato + a cada 3 segundos)
   useEffect(() => {
@@ -641,13 +709,12 @@ function PixPageContent() {
   }, [ongData]);
 
   const impact = useMemo(() => {
-    const numValor = parseFloat(valor);
     return calculateImpact({
-      amount: isNaN(numValor) ? 0 : numValor,
+      amount: baseAmount,
       primaryCategoryName,
       donationType: "monetary",
     });
-  }, [valor, primaryCategoryName]);
+  }, [baseAmount, primaryCategoryName]);
 
   const activePixCopiaECola = dynamicPix?.copyPaste || "";
 
@@ -666,11 +733,6 @@ function PixPageContent() {
       </div>
     );
   }
-
-  const formattedValorDisplay = (parseFloat(valor) || 0).toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 pb-16 font-sans overflow-x-hidden antialiased">
@@ -857,6 +919,136 @@ function PixPageContent() {
                 )}
               </div>
 
+              {/* ==========================================
+                  TIP MODEL: APOIO VOLUNTÁRIO AO DOECERTO (FINTECH)
+                  ========================================== */}
+              <div className="bg-gradient-to-br from-slate-50 via-purple-50/40 to-slate-50 border-2 border-purple-200/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
+                
+                {/* CABEÇALHO DO APOIO */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-purple-100 text-[#6B39A7] flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
+                      <HeartHandshake size={22} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
+                          Apoio voluntário ao DoeCerto
+                        </h3>
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200/80 text-slate-700">
+                          Opcional
+                        </span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-slate-600 font-normal leading-relaxed mt-1">
+                        O DoeCerto não retém porcentagem das doações para as ONGs (0% de comissão). Sua gorjeta voluntária viabiliza servidores seguros, auditorias ativas e tecnologia gratuita para centenas de causas.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* BOTÕES DE PORCENTAGEM / PILLS FINTECH */}
+                <div className="grid grid-cols-5 gap-1.5 sm:gap-2 pt-1">
+                  {[
+                    { id: "0", label: "0%", sub: "Sem apoio" },
+                    { id: "5", label: "5%", sub: `+ R$ ${(baseAmount * 0.05).toFixed(2).replace(".", ",")}` },
+                    { id: "10", label: "10%", sub: `+ R$ ${(baseAmount * 0.10).toFixed(2).replace(".", ",")}`, badge: "Sugerido" },
+                    { id: "15", label: "15%", sub: `+ R$ ${(baseAmount * 0.15).toFixed(2).replace(".", ",")}` },
+                    { id: "custom", label: "Outro", sub: "Definir valor" },
+                  ].map((option) => {
+                    const isSelected = tipOption === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => setTipOption(option.id as any)}
+                        className={`relative flex flex-col items-center justify-center py-2.5 sm:py-3 px-1 rounded-xl text-center transition-all cursor-pointer ${
+                          isSelected
+                            ? "bg-purple-100/90 border-2 border-[#6B39A7] text-[#6B39A7] shadow-xs font-bold ring-2 ring-purple-200"
+                            : "bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50 font-semibold"
+                        }`}
+                      >
+                        {option.badge && (
+                          <span className={`text-[10px] uppercase font-bold tracking-wider px-1.5 rounded absolute -top-2 ${
+                            isSelected ? "bg-[#6B39A7] text-white" : "bg-purple-100 text-purple-800"
+                          }`}>
+                            {option.badge}
+                          </span>
+                        )}
+                        <span className="font-mono text-sm sm:text-base font-bold">{option.label}</span>
+                        <span className="text-[10px] sm:text-xs text-slate-500 font-medium truncate max-w-full">
+                          {option.sub}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* CAMPO PARA VALOR CUSTOMIZADO SE "OUTRO" ESTIVER ATIVO */}
+                {tipOption === "custom" && (
+                  <div className="pt-1">
+                    <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
+                      Digite o valor da gorjeta voluntária:
+                    </label>
+                    <div className="relative group">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm sm:text-base">
+                        R$
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        placeholder="Ex: 2,00"
+                        value={customTip}
+                        onChange={(e) => setCustomTip(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-white border-2 border-purple-200 focus:border-[#6B39A7] focus:ring-2 focus:ring-purple-200 rounded-xl font-mono font-bold text-slate-900 outline-none text-sm sm:text-base transition-all"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* EXTRATO DE TRANSPARÊNCIA FINTECH */}
+                <div className="rounded-xl bg-white border border-slate-200/90 p-3 sm:p-4 space-y-2 text-sm sm:text-base">
+                  <div className="flex items-center justify-between text-slate-600">
+                    <span className="flex items-center gap-1.5 truncate pr-2">
+                      <span className="truncate">Doação para {ongData?.name || "a instituição"}</span>
+                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded shrink-0">
+                        100% repassado
+                      </span>
+                    </span>
+                    <span className="font-mono font-bold text-slate-900 shrink-0">
+                      R$ {formattedBaseDisplay}
+                    </span>
+                  </div>
+
+                  {tipAmount > 0 ? (
+                    <div className="flex items-center justify-between text-slate-600">
+                      <span className="flex items-center gap-1.5">
+                        <span>Apoio voluntário ao DoeCerto</span>
+                        <span className="text-[11px] font-bold text-purple-700 bg-purple-50 border border-purple-200/60 px-1.5 py-0.5 rounded">
+                          {tipOption === "custom" ? "Livre" : `${tipOption}%`}
+                        </span>
+                      </span>
+                      <span className="font-mono font-bold text-[#6B39A7]">
+                        + R$ {formattedTipDisplay}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between text-slate-400 text-xs sm:text-sm">
+                      <span>Apoio voluntário ao DoeCerto</span>
+                      <span className="font-mono">R$ 0,00 (Sem gorjeta)</span>
+                    </div>
+                  )}
+
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between font-bold text-slate-900">
+                    <span className="text-base sm:text-lg">Total do Pix</span>
+                    <span className="text-lg sm:text-xl font-mono text-[#6B39A7] font-black">
+                      R$ {formattedTotalDisplay}
+                    </span>
+                  </div>
+                </div>
+
+              </div>
+
               {/* MENSAGEM DE ERRO SE HOUVER */}
               {errorMessage && (
                 <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-900 flex items-start gap-3">
@@ -930,6 +1122,11 @@ function PixPageContent() {
                 </h2>
                 <p className="text-slate-600 text-base sm:text-lg font-medium">
                   Doação para <strong className="text-slate-900 font-bold">{ongData?.name || "a instituição"}</strong>
+                  {tipAmount > 0 && (
+                    <span className="block text-xs sm:text-sm text-slate-500 mt-1">
+                      (Doação: R$ {formattedBaseDisplay} · Apoio DoeCerto: R$ {formattedTipDisplay})
+                    </span>
+                  )}
                 </p>
               </div>
 
@@ -1083,8 +1280,13 @@ function PixPageContent() {
               <div className="text-right shrink-0">
                 <span className="text-xs sm:text-sm text-slate-500 font-bold uppercase tracking-wider block">Valor</span>
                 <span className="text-3xl sm:text-4xl font-black text-[#6B39A7] font-mono">
-                  R$ {formattedValorDisplay}
+                  R$ {formattedTotalDisplay}
                 </span>
+                {tipAmount > 0 && (
+                  <span className="text-xs text-slate-500 font-medium block mt-0.5">
+                    (Doação: R$ {formattedBaseDisplay} · Apoio: R$ {formattedTipDisplay})
+                  </span>
+                )}
               </div>
             </div>
 
@@ -1286,7 +1488,7 @@ function PixPageContent() {
               <div className="pt-4 border-t border-slate-100 flex items-start gap-3 text-left">
                 <ShieldCheck size={22} className="text-emerald-600 shrink-0 mt-0.5" />
                 <p className="text-sm sm:text-base text-slate-700 leading-relaxed font-medium">
-                  <strong className="text-slate-900 font-bold">Cobrança Oficial Asaas:</strong> Esta cobrança Pix dinâmica foi emitida com liquidação rastreada e compensação automática no Banco Central. 100% do repasse líquido é transferido de forma auditada para a instituição.
+                  <strong className="text-slate-900 font-bold">Cobrança Oficial Asaas:</strong> Esta cobrança Pix dinâmica de R$ {formattedTotalDisplay} foi emitida com liquidação rastreada e compensação automática no Banco Central. 100% da sua doação base de R$ {formattedBaseDisplay} é transferida de forma auditada para a instituição.
                 </p>
               </div>
 
@@ -1297,9 +1499,9 @@ function PixPageContent() {
       </main>
 
       {/* =========================================================================
-          MODAL DE SUCESSO FINTECH (LOTTIE ANIMATION & RECIBO AUDITADO)
+          MODAL DE SUCESSO DA DOAÇÃO (LOTTIE ANIMATION & RECIBO AUDITADO)
           ========================================================================= */}
-      <FintechSuccessModal
+      <DonationSuccessModal
         isOpen={showPopup}
         onClose={() => {
           setShowPopup(false);
@@ -1310,8 +1512,12 @@ function PixPageContent() {
             router.push("/home");
           }
         }}
-        amount={valor}
-        formattedAmount={formattedValorDisplay}
+        amount={totalAmount}
+        formattedAmount={formattedTotalDisplay}
+        baseAmount={baseAmount}
+        formattedBaseAmount={formattedBaseDisplay}
+        tipAmount={tipAmount}
+        formattedTipAmount={formattedTipDisplay}
         ongData={ongData}
         impact={impact}
         primaryCategoryName={primaryCategoryName}
