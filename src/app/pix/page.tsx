@@ -235,6 +235,15 @@ function PixPageContent() {
 
   const formattedValorDisplay = formattedTotalDisplay;
 
+  const handleTipOptionClick = (optionId: "0" | "5" | "10" | "15" | "custom") => {
+    if (tipOption === optionId) {
+      setTipOption("0");
+      setCustomTip("");
+    } else {
+      setTipOption(optionId);
+    }
+  };
+
   // Estados Asaas (Pix Dinâmico)
   const [dynamicPix, setDynamicPix] = useState<DynamicPixData | null>(() => {
     if (typeof window !== "undefined" && ongId && initialValor) {
@@ -861,7 +870,13 @@ function PixPageContent() {
                     <button
                       key={v}
                       type="button"
-                      onClick={() => setValor(v)}
+                      onClick={() => {
+                        if (valor === v) {
+                          setValor("");
+                        } else {
+                          setValor(v);
+                        }
+                      }}
                       className={`relative flex-1 min-w-[62px] sm:min-w-0 flex flex-col items-center justify-center py-2.5 sm:py-3.5 px-1 rounded-xl text-base sm:text-lg font-bold transition-all cursor-pointer ${isSelected
                         ? "bg-purple-50/80 border-2 border-[#6B39A7] text-[#6B39A7] shadow-xs ring-2 ring-purple-100"
                         : "bg-white border border-slate-200 text-slate-800 hover:border-slate-300 hover:bg-slate-50 shadow-xs"
@@ -950,18 +965,18 @@ function PixPageContent() {
                 {/* BOTÕES DE PORCENTAGEM / PILLS COM TIPOGRAFIA GRANDE E NÍTIDA */}
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-2.5 pt-1">
                   {[
-                    { id: "0", label: "0%", sub: "Sem gorjeta" },
+                    { id: "0", label: "0%", sub: "Nenhum" },
                     { id: "5", label: "5%", sub: `+ R$ ${(baseAmount * 0.05).toFixed(2).replace(".", ",")}` },
                     { id: "10", label: "10%", sub: `+ R$ ${(baseAmount * 0.10).toFixed(2).replace(".", ",")}`, badge: "Sugerido" },
                     { id: "15", label: "15%", sub: `+ R$ ${(baseAmount * 0.15).toFixed(2).replace(".", ",")}` },
-                    { id: "custom", label: "Outro", sub: "Definir valor" },
+                    { id: "custom", label: "Outro", sub: "Livre" },
                   ].map((option) => {
                     const isSelected = tipOption === option.id;
                     return (
                       <button
                         key={option.id}
                         type="button"
-                        onClick={() => setTipOption(option.id as any)}
+                        onClick={() => handleTipOptionClick(option.id as any)}
                         className={`relative flex flex-col items-center justify-center py-3 sm:py-3.5 px-2 rounded-xl text-center transition-all cursor-pointer ${
                           isSelected
                             ? "bg-[#6B39A7] text-white border-2 border-[#6B39A7] shadow-md shadow-purple-900/25 ring-2 ring-purple-300"
@@ -978,7 +993,7 @@ function PixPageContent() {
                         <span className="font-mono text-xl sm:text-2xl font-black leading-tight">
                           {option.label}
                         </span>
-                        <span className={`text-sm sm:text-base font-bold mt-1 truncate max-w-full leading-tight ${
+                        <span className={`text-xs sm:text-sm font-bold mt-0.5 leading-tight ${
                           isSelected ? "text-purple-100" : "text-slate-600"
                         }`}>
                           {option.sub}
@@ -991,9 +1006,23 @@ function PixPageContent() {
                 {/* CAMPO PARA VALOR CUSTOMIZADO SE "OUTRO" ESTIVER ATIVO */}
                 {tipOption === "custom" && (
                   <div className="p-4 bg-white rounded-xl border-2 border-purple-300 shadow-2xs space-y-2">
-                    <label className="block text-base sm:text-lg font-bold text-slate-800">
-                      Digite o valor da gorjeta voluntária:
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-base sm:text-lg font-bold text-slate-800">
+                        Digite o valor da gorjeta voluntária:
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTipOption("0");
+                          setCustomTip("");
+                        }}
+                        className="text-xs sm:text-sm font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 px-2.5 py-1 rounded-lg hover:bg-slate-100 cursor-pointer transition-colors"
+                        title="Fechar e remover gorjeta personalizada"
+                      >
+                        <X size={15} />
+                        <span>Cancelar</span>
+                      </button>
+                    </div>
                     <div className="relative group">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-lg sm:text-xl text-slate-400">
                         R$
@@ -1004,6 +1033,7 @@ function PixPageContent() {
                         step="any"
                         placeholder="Ex: 5,00"
                         value={customTip}
+                        autoFocus
                         onChange={(e) => setCustomTip(e.target.value)}
                         className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-200 focus:bg-white focus:border-[#6B39A7] focus:ring-4 focus:ring-purple-100 rounded-xl font-mono font-bold text-lg sm:text-xl text-slate-900 outline-none transition-all"
                       />
