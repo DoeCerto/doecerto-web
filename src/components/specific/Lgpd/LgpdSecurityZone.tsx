@@ -18,10 +18,10 @@ export function LgpdSecurityZone({ userRole = "donor", className }: LgpdSecurity
       <div className={className ?? "pt-6 mt-6 border-t border-gray-100"}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="max-w-xl">
-            <h4 className="text-base sm:text-lg font-bold text-gray-900">
+            <h4 className="text-lg sm:text-xl font-bold text-gray-900">
               Encerrar conta
             </h4>
-            <p className="text-base text-gray-600 mt-1 leading-relaxed font-normal">
+            <p className="text-base sm:text-lg text-gray-700 mt-1 leading-relaxed font-normal">
               Exclua permanentemente sua conta e todos os seus dados pessoais do DoeCerto conforme a LGPD. Esta ação não poderá ser desfeita.
             </p>
           </div>
