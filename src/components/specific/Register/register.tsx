@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState, useRef, useEffect, forwardRef, InputHTMLAttributes } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
-import { Eye, EyeClosed, Lock, Mail, User, Building2, ArrowLeft, FileText, IdCard, UploadCloud, CheckCircle, X, LucideIcon, Loader2 } from "lucide-react";
+import { Eye, EyeClosed, Lock, Mail, User, Building2, ArrowLeft, ArrowRight, FileText, IdCard, UploadCloud, CheckCircle, CheckCircle2, X, LucideIcon, Loader2 } from "lucide-react";
 import gsap from "gsap";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -607,7 +607,7 @@ export default function Register() {
       <Toaster position="top-center" />
       <TermosModal isOpen={modalAberto} onConfirm={submitToApi} onCancel={() => setModalAberto(false)} isLoading={isPending} />
 
-      {/* MODAL DE SUCESSO ONG */}
+      {/* MODAL DE SUCESSO FINTECH */}
       <AnimatePresence>
         {successModalAberto && (
           <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
@@ -615,42 +615,43 @@ export default function Register() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm"
               onClick={() => {}}
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              className="relative w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center overflow-hidden"
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="relative w-full max-w-[420px] bg-white rounded-2xl p-7 sm:p-8 shadow-2xl border border-gray-100 flex flex-col items-center text-center"
             >
-              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#9F7AEA] to-[#6B39A7]"></div>
-              
-              <div className="w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-6 shadow-inner ring-4 ring-emerald-50">
-                <CheckCircle size={40} strokeWidth={2.5} />
+              {/* Ícone Fintech */}
+              <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-5 border border-emerald-100">
+                <CheckCircle2 size={30} strokeWidth={2.2} />
               </div>
               
-              <h2 className="text-3xl font-black text-slate-800 mb-4 tracking-tight">
-                {accountType === "ong" ? "Cadastro Enviado!" : "Conta Criada com Sucesso!"}
+              <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
+                {accountType === "ong" ? "Cadastro enviado!" : "Conta criada com sucesso!"}
               </h2>
-              <p className="text-slate-600 text-[17px] leading-relaxed mb-8 px-2">
+              
+              <p className="text-base text-gray-600 leading-relaxed mt-2.5 mb-6 px-1 font-normal">
                 {accountType === "ong" ? (
                   <>
-                    Recebemos seus dados e a documentação. Sua conta já foi criada e o nosso time de <strong className="text-[#6B39A7]">Compliance e Auditoria</strong> está analisando seu perfil. Você já pode fazer login para acompanhar o status da aprovação!
+                    Recebemos seus dados e documentos. Nossa equipe de <span className="font-semibold text-gray-900">Compliance</span> já iniciou a análise. Acesse sua conta para acompanhar o status em tempo real.
                   </>
                 ) : (
                   <>
-                    Sua conta no DoeCerto foi criada com sucesso! Agora você já pode fazer login para explorar campanhas e transformar vidas.
+                    Sua conta no DoeCerto está pronta. Acesse agora para acompanhar campanhas e iniciar suas doações.
                   </>
                 )}
               </p>
               
               <button
                 onClick={() => window.location.replace("/login")}
-                className="w-full py-4 bg-[#6B39A7] hover:bg-[#5b2f8e] text-white rounded-xl font-bold text-lg shadow-lg shadow-purple-500/20 active:scale-[0.98] transition-all cursor-pointer"
+                className="w-full py-3.5 px-6 bg-[#6B39A7] hover:bg-[#5b2f8e] text-white rounded-xl font-bold text-base transition-all active:scale-[0.98] shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
               >
-                Fazer Login Agora
+                <span>Fazer login</span>
+                <ArrowRight size={18} />
               </button>
             </motion.div>
           </div>
