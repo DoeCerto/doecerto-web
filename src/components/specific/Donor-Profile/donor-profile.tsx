@@ -329,42 +329,42 @@ export default function DonorProfile() {
 
       {/* RESUMO */}
       <div className="mt-20 px-6 text-center">
-        <h1 className="text-3xl font-bold text-gray-900">{donorData.name || "Doador"}</h1>
-        <p className="text-gray-500 font-medium">{donorData.email}</p>
+        <h1 className="text-3xl sm:text-4xl font-black text-gray-900">{donorData.name || "Doador"}</h1>
+        <p className="text-base sm:text-lg text-gray-500 font-medium mt-1">{donorData.email}</p>
 
-        <div className="grid grid-cols-2 gap-4 mt-6 max-w-md mx-auto">
-          <motion.div whileHover={{ scale: 1.02 }} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col items-center">
-            <div className="flex items-center justify-center gap-2 text-rose-500 mb-1">
-              <Heart size={20} />
+        <div className="grid grid-cols-2 gap-4 sm:gap-6 mt-8 max-w-xl sm:max-w-2xl mx-auto">
+          <motion.div whileHover={{ scale: 1.02 }} className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+            <div className="flex items-center justify-center gap-2 text-rose-500 mb-1.5">
+              <Heart size={24} />
             </div>
-            <p className="text-2xl font-bold text-gray-900">{totalDonations}</p>
-            <p className="text-xs text-gray-500 uppercase font-bold tracking-tight">Doações</p>
+            <p className="text-3xl sm:text-4xl font-black text-gray-900">{totalDonations}</p>
+            <p className="text-sm sm:text-base text-gray-500 uppercase font-bold tracking-wider mt-1">Doações</p>
           </motion.div>
 
-          <motion.div whileHover={{ scale: 1.02 }} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col items-center">
-            <div className="flex items-center justify-center gap-2 text-emerald-500 mb-1">
-              <DollarSign size={20} />
+          <motion.div whileHover={{ scale: 1.02 }} className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+            <div className="flex items-center justify-center gap-2 text-emerald-500 mb-1.5">
+              <DollarSign size={24} />
             </div>
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-3xl sm:text-4xl font-black text-gray-900">
               R$ {totalAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
-            <p className="text-xs text-gray-500 uppercase font-bold tracking-tight">Doado</p>
+            <p className="text-sm sm:text-base text-gray-500 uppercase font-bold tracking-wider mt-1">Total Doado</p>
           </motion.div>
         </div>
       </div>
 
       {/* TABS */}
       <div className="mt-8 px-6">
-        <div className="flex gap-2 bg-white rounded-2xl p-1 shadow-sm max-w-md mx-auto">
+        <div className="flex gap-2 sm:gap-3 bg-white rounded-2xl p-1.5 shadow-sm max-w-xl sm:max-w-2xl mx-auto border border-gray-100">
           <button
             onClick={() => setActiveTab("info")}
-            className={`flex-1 py-3 rounded-xl font-semibold transition-all ${activeTab === "info" ? "bg-purple-600 text-white shadow-md" : "text-gray-600 hover:bg-gray-50"}`}
+            className={`flex-1 py-3.5 rounded-xl text-base sm:text-lg font-bold transition-all cursor-pointer ${activeTab === "info" ? "bg-[#6B39A7] text-white shadow-md" : "text-gray-600 hover:bg-gray-50"}`}
           >
             Informações
           </button>
           <button
             onClick={() => setActiveTab("history")}
-            className={`flex-1 py-3 rounded-xl font-semibold transition-all ${activeTab === "history" ? "bg-purple-600 text-white shadow-md" : "text-gray-600 hover:bg-gray-50"}`}
+            className={`flex-1 py-3.5 rounded-xl text-base sm:text-lg font-bold transition-all cursor-pointer ${activeTab === "history" ? "bg-[#6B39A7] text-white shadow-md" : "text-gray-600 hover:bg-gray-50"}`}
           >
             Histórico
           </button>
@@ -378,86 +378,87 @@ export default function DonorProfile() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="mt-6 px-6 space-y-4 max-w-2xl mx-auto"
+            className="mt-8 px-4 sm:px-6 space-y-6 max-w-3xl sm:max-w-4xl mx-auto"
           >
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-bold text-gray-900">Sobre você</h2>
+            <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
+                <h2 className="text-2xl sm:text-3xl font-black text-gray-900">Sobre você</h2>
 
                 {isEditingProfile ? (
                   <div className="flex gap-2">
-                    <button onClick={() => setIsEditingProfile(false)} className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"><X size={20} /></button>
-                    <button onClick={handleUpdateInfo} disabled={isLoading} className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors">
-                      {isLoading ? <Loader2 className="animate-spin" size={20} /> : <Check size={20} />}
+                    <button onClick={() => setIsEditingProfile(false)} className="p-2.5 text-red-500 hover:bg-red-50 rounded-full transition-colors cursor-pointer" title="Cancelar"><X size={22} /></button>
+                    <button onClick={handleUpdateInfo} disabled={isLoading} className="p-2.5 text-green-600 hover:bg-green-50 rounded-full transition-colors cursor-pointer" title="Salvar">
+                      {isLoading ? <Loader2 className="animate-spin" size={22} /> : <Check size={22} />}
                     </button>
                   </div>
                 ) : (
-                  <button onClick={() => setIsEditingProfile(true)} className="flex items-center gap-2 text-sm font-medium text-purple-600 hover:bg-purple-50 px-3 py-1.5 rounded-lg transition-colors">
-                    <Edit2 size={16} /> Editar Perfil
+                  <button onClick={() => setIsEditingProfile(true)} className="flex items-center gap-2 text-sm sm:text-base font-bold text-[#6B39A7] bg-purple-50 hover:bg-purple-100 px-4 py-2 rounded-xl transition-all active:scale-95 cursor-pointer">
+                    <Edit2 size={18} /> Editar Perfil
                   </button>
                 )}
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-7">
                 {/* Biografia */}
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-gray-50 rounded-lg"><FileText size={20} className="text-gray-400" /></div>
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-purple-50 rounded-2xl text-[#6B39A7] shrink-0"><FileText size={24} /></div>
                   <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Biografia</p>
+                    <p className="text-sm sm:text-base text-gray-500 uppercase font-bold tracking-wide mb-1.5">Biografia</p>
                     {isEditingProfile ? (
                       <textarea
-                        className="w-full mt-1 px-3 py-2 border rounded-xl outline-none min-h-[100px] resize-none focus:ring-2 focus:ring-purple-500 border-gray-100"
+                        className="w-full mt-1.5 px-4 py-3 text-base sm:text-lg border rounded-xl outline-none min-h-[120px] resize-none focus:ring-2 focus:ring-purple-500 border-gray-200"
                         placeholder="Conte um pouco sobre você..."
                         value={donorData.description}
                         onChange={(e) => setDonorData({ ...donorData, description: e.target.value })}
                       />
                     ) : (
-                      <p className="text-gray-700 italic leading-relaxed">
+                      <p className="text-base sm:text-lg text-gray-800 italic leading-relaxed font-medium">
                         {donorData.description || "Nenhuma biografia informada."}
                       </p>
                     )}
                   </div>
                 </div>
 
-                <hr className="border-gray-50" />
+                <hr className="border-gray-100" />
 
-                {/* Nome e Telefone */}
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-gray-50 rounded-lg"><User size={20} className="text-gray-400" /></div>
+                {/* Nome Completo */}
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-purple-50 rounded-2xl text-[#6B39A7] shrink-0"><User size={24} /></div>
                   <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Nome Completo</p>
+                    <p className="text-sm sm:text-base text-gray-500 uppercase font-bold tracking-wide mb-1.5">Nome Completo</p>
                     {isEditingProfile ? (
-                      <input className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100" value={donorData.name} onChange={(e) => setDonorData({ ...donorData, name: e.target.value })} />
+                      <input className="w-full mt-1.5 px-4 py-3 text-base sm:text-lg border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200 font-semibold text-gray-900" value={donorData.name} onChange={(e) => setDonorData({ ...donorData, name: e.target.value })} />
                     ) : (
-                      <p className="font-medium text-gray-900">
+                      <p className="text-lg sm:text-xl font-bold text-gray-900">
                         {(donorData.name || "").replace("undefined", "").trim()}
                       </p>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-gray-50 rounded-lg">
-                    <MapPin size={20} className="text-gray-400" />
+                {/* Endereço */}
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-purple-50 rounded-2xl text-[#6B39A7] shrink-0">
+                    <MapPin size={24} />
                   </div>
 
                   <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2">
+                    <p className="text-sm sm:text-base text-gray-500 uppercase font-bold tracking-wide mb-2">
                       Endereço
                     </p>
 
                     {isEditingProfile ? (
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-3.5">
                         <input
                           placeholder="CEP"
-                          className="col-span-2 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
+                          className="col-span-2 px-4 py-3 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
                           value={address.zipCode}
                           onChange={handleCepChange}
                         />
 
                         <input
                           placeholder="Rua"
-                          className="col-span-2 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
+                          className="col-span-2 px-4 py-3 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
                           value={address.street}
                           onChange={(e) =>
                             setAddress({ ...address, street: e.target.value })
@@ -466,7 +467,7 @@ export default function DonorProfile() {
 
                         <input
                           placeholder="Número"
-                          className="px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
+                          className="px-4 py-3 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
                           value={address.number}
                           onChange={(e) =>
                             setAddress({ ...address, number: e.target.value })
@@ -475,7 +476,7 @@ export default function DonorProfile() {
 
                         <input
                           placeholder="Complemento"
-                          className="px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
+                          className="px-4 py-3 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
                           value={address.complement}
                           onChange={(e) =>
                             setAddress({ ...address, complement: e.target.value })
@@ -484,7 +485,7 @@ export default function DonorProfile() {
 
                         <input
                           placeholder="Bairro"
-                          className="col-span-2 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
+                          className="col-span-2 px-4 py-3 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
                           value={address.neighborhood}
                           onChange={(e) =>
                             setAddress({ ...address, neighborhood: e.target.value })
@@ -493,7 +494,7 @@ export default function DonorProfile() {
 
                         <input
                           placeholder="Cidade"
-                          className="px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
+                          className="px-4 py-3 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
                           value={address.city}
                           onChange={(e) =>
                             setAddress({ ...address, city: e.target.value })
@@ -502,7 +503,7 @@ export default function DonorProfile() {
 
                         <input
                           placeholder="Estado"
-                          className="px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
+                          className="px-4 py-3 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
                           value={address.state}
                           onChange={(e) =>
                             setAddress({ ...address, state: e.target.value })
@@ -510,32 +511,33 @@ export default function DonorProfile() {
                         />
                       </div>
                     ) : address.street ? (
-                      <p className="text-gray-900 leading-relaxed">
+                      <p className="text-base sm:text-lg text-gray-900 leading-relaxed font-medium">
                         {address.street}, {address.number || "S/N"} <br />
                         {address.neighborhood} - {address.city}/{address.state}
                       </p>
                     ) : (
-                      <p className="text-gray-400">Não informado</p>
+                      <p className="text-base text-gray-400 font-medium">Não informado</p>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-gray-50 rounded-lg">
-                    <Phone size={20} className="text-gray-400" />
+                {/* Telefone / WhatsApp */}
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-purple-50 rounded-2xl text-[#6B39A7] shrink-0">
+                    <Phone size={24} />
                   </div>
                   <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">
+                    <p className="text-sm sm:text-base text-gray-500 uppercase font-bold tracking-wide mb-1.5">
                       Telefone / WhatsApp
                     </p>
                     {isEditingProfile ? (
                       <div className="flex mt-1 rounded-xl border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-purple-500 transition-all bg-white">
-                        <span className="flex items-center justify-center bg-gray-100 text-gray-500 px-3 border-r border-gray-200 text-sm font-semibold select-none">
+                        <span className="flex items-center justify-center bg-gray-100 text-gray-600 px-4 border-r border-gray-200 text-base font-semibold select-none">
                           +55
                         </span>
                         <input
                           type="text"
-                          className="w-full px-3 py-2 outline-none border-none text-sm bg-transparent"
+                          className="w-full px-4 py-3 outline-none border-none text-base text-gray-900 bg-transparent font-medium"
                           value={getDisplayPhone(donorData.phone)}
                           placeholder="(DDD) 99999-9999"
                           onChange={(e) => {
@@ -545,26 +547,28 @@ export default function DonorProfile() {
                         />
                       </div>
                     ) : (
-                      <p className="font-medium text-gray-900">
+                      <p className="text-lg sm:text-xl font-bold text-gray-900">
                         {donorData.phone ? `+${donorData.phone}` : "Não informado"}
                       </p>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 opacity-60">
-                  <div className="p-2 bg-gray-50 rounded-lg"><Mail size={20} className="text-gray-400" /></div>
+                {/* Email da Conta */}
+                <div className="flex items-start gap-4 opacity-75">
+                  <div className="p-3 bg-purple-50 rounded-2xl text-[#6B39A7] shrink-0"><Mail size={24} /></div>
                   <div>
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Email da Conta</p>
-                    <p className="font-medium text-gray-900">{donorData.email}</p>
+                    <p className="text-sm sm:text-base text-gray-500 uppercase font-bold tracking-wide mb-1">Email da Conta</p>
+                    <p className="text-base sm:text-lg font-bold text-gray-900">{donorData.email}</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 opacity-60">
-                  <div className="p-2 bg-gray-50 rounded-lg"><AlertCircle size={20} className="text-gray-400" /></div>
+                {/* CPF */}
+                <div className="flex items-start gap-4 opacity-75">
+                  <div className="p-3 bg-purple-50 rounded-2xl text-[#6B39A7] shrink-0"><AlertCircle size={24} /></div>
                   <div>
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">CPF</p>
-                    <p className="font-medium text-gray-900">{donorData.cpf}</p>
+                    <p className="text-sm sm:text-base text-gray-500 uppercase font-bold tracking-wide mb-1">CPF</p>
+                    <p className="text-base sm:text-lg font-bold text-gray-900">{donorData.cpf}</p>
                   </div>
                 </div>
 
@@ -581,7 +585,7 @@ export default function DonorProfile() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="mt-6 px-6 space-y-4 max-w-2xl mx-auto pb-10"
+            className="mt-8 px-4 sm:px-6 space-y-6 max-w-3xl sm:max-w-4xl mx-auto pb-12"
           >
             {isHistoryLoading ? (
               <div className="flex flex-col items-center justify-center py-20 text-gray-400">

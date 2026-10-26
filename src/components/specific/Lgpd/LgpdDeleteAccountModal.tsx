@@ -137,25 +137,25 @@ export function LgpdDeleteAccountModal({
                 </button>
               </div>
 
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
                 Excluir conta definitivamente?
               </h2>
 
-              <p className="text-sm sm:text-base text-gray-600 mt-2 leading-relaxed">
+              <p className="text-base sm:text-lg text-gray-600 mt-2.5 leading-relaxed">
                 Esta ação é <strong>irreversível</strong>. Todos os seus dados pessoais cadastrados serão permanentemente apagados e você perderá o acesso à conta.
               </p>
 
               {userRole === "ong" && (
-                <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3 mt-3">
+                <p className="text-sm sm:text-base text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3.5 mt-3 font-medium">
                   Organizações com repasses financeiros pendentes precisam aguardar a conclusão das transferências antes de solicitar a exclusão.
                 </p>
               )}
 
               {/* Form */}
-              <form onSubmit={handleDeleteAccount} className="space-y-4 mt-6">
+              <form onSubmit={handleDeleteAccount} className="space-y-5 mt-6">
                 {/* Senha */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-1.5">
+                  <label className="block text-base font-bold text-gray-800 mb-2">
                     Sua senha atual
                   </label>
                   <div className="relative">
@@ -166,14 +166,14 @@ export function LgpdDeleteAccountModal({
                       placeholder="Digite sua senha"
                       required
                       disabled={isDeleting}
-                      className="w-full px-4 py-3 pr-11 text-base text-gray-900 bg-white border border-gray-200 rounded-xl outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all placeholder:text-gray-400"
+                      className="w-full px-4 py-3.5 pr-12 text-base sm:text-lg text-gray-900 bg-white border border-gray-200 rounded-xl outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all placeholder:text-gray-400 font-medium"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600"
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer"
                     >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
                   </div>
                 </div>
@@ -181,7 +181,7 @@ export function LgpdDeleteAccountModal({
                 {/* 2FA se ativo */}
                 {showTwoFactor ? (
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">
+                    <label className="block text-base font-bold text-gray-800 mb-2">
                       Código de 2 fatores (2FA)
                     </label>
                     <input
@@ -191,29 +191,29 @@ export function LgpdDeleteAccountModal({
                       onChange={(e) => setTwoFactorCode(e.target.value.replace(/\s/g, ""))}
                       placeholder="Código de 6 dígitos"
                       disabled={isDeleting}
-                      className="w-full px-4 py-3 text-base text-gray-900 bg-white border border-gray-200 rounded-xl outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all font-mono tracking-widest placeholder:text-gray-400"
+                      className="w-full px-4 py-3.5 text-base sm:text-lg text-gray-900 bg-white border border-gray-200 rounded-xl outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all font-mono tracking-widest placeholder:text-gray-400"
                     />
                   </div>
                 ) : (
                   <button
                     type="button"
                     onClick={() => setShowTwoFactor(true)}
-                    className="text-xs text-gray-500 hover:text-gray-900 underline flex items-center gap-1.5 font-medium"
+                    className="text-sm text-gray-600 hover:text-gray-900 underline flex items-center gap-1.5 font-medium cursor-pointer"
                   >
-                    <KeyRound size={13} /> Tenho autenticação de 2 fatores ativada
+                    <KeyRound size={15} /> Tenho autenticação de 2 fatores ativada
                   </button>
                 )}
 
                 {/* Frase de confirmação */}
                 <div className="pt-1">
-                  <label className="block text-sm font-semibold text-gray-800 mb-1.5">
+                  <label className="block text-base font-bold text-gray-800 mb-2">
                     Digite exatamente a frase abaixo:
                   </label>
 
                   <div
                     onClick={() => setConfirmationPhrase(REQUIRED_PHRASE)}
                     title="Clique para preencher automaticamente"
-                    className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm font-mono font-bold text-gray-800 text-center select-all cursor-pointer hover:bg-gray-100 transition-colors mb-2"
+                    className="p-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm sm:text-base font-mono font-bold text-gray-800 text-center select-all cursor-pointer hover:bg-gray-100 transition-colors mb-2.5"
                   >
                     {REQUIRED_PHRASE}
                   </div>
@@ -226,15 +226,15 @@ export function LgpdDeleteAccountModal({
                       placeholder="Digite a frase para confirmar"
                       required
                       disabled={isDeleting}
-                      className={`w-full px-4 py-3 text-sm sm:text-base rounded-xl outline-none transition-all ${
+                      className={`w-full px-4 py-3.5 text-base sm:text-lg rounded-xl outline-none transition-all font-medium ${
                         isPhraseValid
-                          ? "border-2 border-emerald-500 bg-emerald-50/30 text-emerald-950"
+                          ? "border-2 border-emerald-500 bg-emerald-50/30 text-emerald-950 font-bold"
                           : "border border-gray-200 bg-white text-gray-900 focus:border-red-500 focus:ring-2 focus:ring-red-100"
                       }`}
                     />
                     {isPhraseValid && (
-                      <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-emerald-600">
-                        <Check size={18} />
+                      <div className="absolute inset-y-0 right-0 pr-4 flex items-center text-emerald-600">
+                        <Check size={20} />
                       </div>
                     )}
                   </div>
@@ -246,7 +246,7 @@ export function LgpdDeleteAccountModal({
                     type="button"
                     onClick={handleClose}
                     disabled={isDeleting}
-                    className="w-full sm:w-1/2 py-3 px-4 rounded-xl text-sm sm:text-base font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-50 cursor-pointer"
+                    className="w-full sm:w-1/2 py-3.5 px-5 rounded-xl text-base font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-50 cursor-pointer"
                   >
                     Cancelar
                   </button>
@@ -254,11 +254,11 @@ export function LgpdDeleteAccountModal({
                   <button
                     type="submit"
                     disabled={!canSubmit}
-                    className="w-full sm:w-1/2 py-3 px-4 rounded-xl text-sm sm:text-base font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm cursor-pointer"
+                    className="w-full sm:w-1/2 py-3.5 px-5 rounded-xl text-base font-bold text-white bg-red-600 hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm cursor-pointer"
                   >
                     {isDeleting ? (
                       <>
-                        <Loader2 size={18} className="animate-spin" />
+                        <Loader2 size={20} className="animate-spin" />
                         Excluindo...
                       </>
                     ) : (
