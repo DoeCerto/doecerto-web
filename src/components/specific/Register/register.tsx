@@ -534,12 +534,9 @@ function useRegisterForm() {
           password: data.senha, 
           cpf: removeFormatting(data.documento)
         });
-        toast.success("Conta criada com sucesso! Faça login para continuar.");
         setModalAberto(false);
         sessionStorage.removeItem("register_draft");
-        setTimeout(() => {
-          window.location.replace("/login");
-        }, 1500);
+        setSuccessModalAberto(true);
       }
     } catch (err: any) {
       setModalAberto(false);
@@ -634,14 +631,24 @@ export default function Register() {
                 <CheckCircle size={40} strokeWidth={2.5} />
               </div>
               
-              <h2 className="text-3xl font-black text-slate-800 mb-4 tracking-tight">Cadastro Enviado!</h2>
+              <h2 className="text-3xl font-black text-slate-800 mb-4 tracking-tight">
+                {accountType === "ong" ? "Cadastro Enviado!" : "Conta Criada com Sucesso!"}
+              </h2>
               <p className="text-slate-600 text-[17px] leading-relaxed mb-8 px-2">
-                Recebemos seus dados e a documentação. Sua conta já foi criada e o nosso time de <strong className="text-[#6B39A7]">Compliance e Auditoria</strong> está analisando seu perfil. Você já pode fazer login para acompanhar o status da aprovação!
+                {accountType === "ong" ? (
+                  <>
+                    Recebemos seus dados e a documentação. Sua conta já foi criada e o nosso time de <strong className="text-[#6B39A7]">Compliance e Auditoria</strong> está analisando seu perfil. Você já pode fazer login para acompanhar o status da aprovação!
+                  </>
+                ) : (
+                  <>
+                    Sua conta no DoeCerto foi criada com sucesso! Agora você já pode fazer login para explorar campanhas e transformar vidas.
+                  </>
+                )}
               </p>
               
               <button
                 onClick={() => window.location.replace("/login")}
-                className="w-full py-4 bg-[#6B39A7] hover:bg-[#5b2f8e] text-white rounded-xl font-bold text-lg shadow-lg shadow-purple-500/20 active:scale-[0.98] transition-all"
+                className="w-full py-4 bg-[#6B39A7] hover:bg-[#5b2f8e] text-white rounded-xl font-bold text-lg shadow-lg shadow-purple-500/20 active:scale-[0.98] transition-all cursor-pointer"
               >
                 Fazer Login Agora
               </button>
