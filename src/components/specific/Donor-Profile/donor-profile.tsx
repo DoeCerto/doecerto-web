@@ -20,7 +20,8 @@ import {
   Loader2,
   AlertCircle,
   FileText,
-  MapPin
+  MapPin,
+  ShieldCheck
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { MonetaryDonationDetails } from "@/components/ui/MonetaryDonationDetails";
@@ -328,43 +329,43 @@ export default function DonorProfile() {
       </div>
 
       {/* RESUMO */}
-      <div className="mt-20 px-6 text-center">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">{donorData.name || "Doador"}</h1>
-        <p className="text-sm sm:text-base text-gray-500 font-medium mt-1">{donorData.email}</p>
+      <div className="mt-20 px-6 text-center max-w-4xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">{donorData.name || "Doador"}</h1>
+        <p className="text-base sm:text-lg text-gray-500 font-medium mt-1">{donorData.email}</p>
 
-        <div className="grid grid-cols-2 gap-3.5 mt-6 max-w-md mx-auto">
-          <motion.div whileHover={{ scale: 1.02 }} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+        <div className="grid grid-cols-2 gap-4 mt-6 max-w-lg mx-auto">
+          <motion.div whileHover={{ scale: 1.02 }} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col items-center justify-center">
             <div className="flex items-center justify-center gap-1.5 text-rose-500 mb-1">
-              <Heart size={20} />
+              <Heart size={22} />
             </div>
-            <p className="text-2xl sm:text-3xl font-extrabold text-gray-900">{totalDonations}</p>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-0.5">Doações</p>
+            <p className="text-3xl font-extrabold text-gray-900">{totalDonations}</p>
+            <p className="text-xs sm:text-sm font-bold text-gray-400 uppercase tracking-wider mt-1">Doações</p>
           </motion.div>
 
-          <motion.div whileHover={{ scale: 1.02 }} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+          <motion.div whileHover={{ scale: 1.02 }} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col items-center justify-center">
             <div className="flex items-center justify-center gap-1.5 text-emerald-500 mb-1">
-              <DollarSign size={20} />
+              <DollarSign size={22} />
             </div>
-            <p className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+            <p className="text-3xl font-extrabold text-gray-900">
               R$ {totalAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-0.5">Total Doado</p>
+            <p className="text-xs sm:text-sm font-bold text-gray-400 uppercase tracking-wider mt-1">Total Doado</p>
           </motion.div>
         </div>
       </div>
 
       {/* TABS */}
-      <div className="mt-6 px-6">
-        <div className="flex gap-2 bg-white rounded-2xl p-1 shadow-sm max-w-md mx-auto border border-gray-100">
+      <div className="mt-8 px-6">
+        <div className="flex gap-2 bg-white rounded-2xl p-1.5 shadow-sm max-w-lg mx-auto border border-gray-100">
           <button
             onClick={() => setActiveTab("info")}
-            className={`flex-1 py-2.5 rounded-xl text-sm sm:text-base font-bold transition-all cursor-pointer ${activeTab === "info" ? "bg-[#6B39A7] text-white shadow-sm" : "text-gray-600 hover:bg-gray-50"}`}
+            className={`flex-1 py-3 rounded-xl text-base font-bold transition-all cursor-pointer ${activeTab === "info" ? "bg-[#6B39A7] text-white shadow-sm" : "text-gray-600 hover:bg-gray-50"}`}
           >
             Informações
           </button>
           <button
             onClick={() => setActiveTab("history")}
-            className={`flex-1 py-2.5 rounded-xl text-sm sm:text-base font-bold transition-all cursor-pointer ${activeTab === "history" ? "bg-[#6B39A7] text-white shadow-sm" : "text-gray-600 hover:bg-gray-50"}`}
+            className={`flex-1 py-3 rounded-xl text-base font-bold transition-all cursor-pointer ${activeTab === "history" ? "bg-[#6B39A7] text-white shadow-sm" : "text-gray-600 hover:bg-gray-50"}`}
           >
             Histórico
           </button>
@@ -378,202 +379,237 @@ export default function DonorProfile() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="mt-6 px-4 sm:px-6 max-w-2xl mx-auto"
+            className="mt-8 px-4 sm:px-6 max-w-3xl sm:max-w-4xl mx-auto space-y-8"
           >
-            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
-                <h2 className="text-xl font-bold text-gray-900">Sobre você</h2>
+            {/* SEÇÃO 1: DETALHES DA CONTA */}
+            <div>
+              <div className="flex items-center justify-between mb-4 px-1">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Detalhes da conta</h2>
+                  <p className="text-base text-gray-500 font-normal mt-0.5">Suas informações cadastrais e de contato</p>
+                </div>
 
                 {isEditingProfile ? (
                   <div className="flex gap-2">
-                    <button onClick={() => setIsEditingProfile(false)} className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors cursor-pointer" title="Cancelar"><X size={20} /></button>
-                    <button onClick={handleUpdateInfo} disabled={isLoading} className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors cursor-pointer" title="Salvar">
+                    <button onClick={() => setIsEditingProfile(false)} className="p-2.5 text-red-500 hover:bg-red-50 rounded-full transition-colors cursor-pointer" title="Cancelar"><X size={20} /></button>
+                    <button onClick={handleUpdateInfo} disabled={isLoading} className="p-2.5 text-green-600 hover:bg-green-50 rounded-full transition-colors cursor-pointer" title="Salvar">
                       {isLoading ? <Loader2 className="animate-spin" size={20} /> : <Check size={20} />}
                     </button>
                   </div>
                 ) : (
-                  <button onClick={() => setIsEditingProfile(true)} className="flex items-center gap-2 text-sm font-semibold text-[#6B39A7] bg-purple-50 hover:bg-purple-100 px-3.5 py-1.5 rounded-xl transition-all active:scale-95 cursor-pointer">
-                    <Edit2 size={16} /> Editar Perfil
+                  <button onClick={() => setIsEditingProfile(true)} className="flex items-center gap-2 text-base font-semibold text-[#6B39A7] bg-purple-50 hover:bg-purple-100 px-4 py-2 rounded-xl transition-all active:scale-95 cursor-pointer">
+                    <Edit2 size={18} /> Editar Perfil
                   </button>
                 )}
               </div>
 
-              <div className="space-y-5">
-                {/* Biografia */}
-                <div className="flex items-start gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0"><FileText size={20} /></div>
-                  <div className="flex-1">
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Biografia</p>
-                    {isEditingProfile ? (
-                      <textarea
-                        className="w-full mt-1 px-3.5 py-2.5 text-base border rounded-xl outline-none min-h-[100px] resize-none focus:ring-2 focus:ring-purple-500 border-gray-200"
-                        placeholder="Conte um pouco sobre você..."
-                        value={donorData.description}
-                        onChange={(e) => setDonorData({ ...donorData, description: e.target.value })}
-                      />
-                    ) : (
-                      <p className="text-base text-gray-700 italic leading-relaxed">
-                        {donorData.description || "Nenhuma biografia informada."}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <hr className="border-gray-100" />
-
+              <div className="bg-white rounded-2xl border border-gray-200/90 shadow-sm overflow-hidden divide-y divide-gray-100">
                 {/* Nome Completo */}
-                <div className="flex items-start gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0"><User size={20} /></div>
-                  <div className="flex-1">
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Nome Completo</p>
-                    {isEditingProfile ? (
-                      <input className="w-full mt-1 px-3.5 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200 text-gray-900" value={donorData.name} onChange={(e) => setDonorData({ ...donorData, name: e.target.value })} />
-                    ) : (
-                      <p className="text-base font-medium text-gray-900">
-                        {(donorData.name || "").replace("undefined", "").trim()}
-                      </p>
-                    )}
+                <div className="flex items-start sm:items-center justify-between gap-4 p-5 sm:p-6">
+                  <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0">
+                      <User size={24} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-base sm:text-lg font-bold text-gray-900">Nome completo</h4>
+                      {isEditingProfile ? (
+                        <input
+                          className="w-full mt-2 px-4 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200 text-gray-900"
+                          value={donorData.name}
+                          onChange={(e) => setDonorData({ ...donorData, name: e.target.value })}
+                          placeholder="Seu nome completo"
+                        />
+                      ) : (
+                        <p className="text-base text-gray-600 font-normal mt-0.5">
+                          {(donorData.name || "").replace("undefined", "").trim() || "Não informado"}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Endereço */}
-                <div className="flex items-start gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0">
-                    <MapPin size={20} />
-                  </div>
-
-                  <div className="flex-1">
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">
-                      Endereço
-                    </p>
-
-                    {isEditingProfile ? (
-                      <div className="grid grid-cols-2 gap-3">
-                        <input
-                          placeholder="CEP"
-                          className="col-span-2 px-3.5 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
-                          value={address.zipCode}
-                          onChange={handleCepChange}
-                        />
-
-                        <input
-                          placeholder="Rua"
-                          className="col-span-2 px-3.5 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
-                          value={address.street}
-                          onChange={(e) =>
-                            setAddress({ ...address, street: e.target.value })
-                          }
-                        />
-
-                        <input
-                          placeholder="Número"
-                          className="px-3.5 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
-                          value={address.number}
-                          onChange={(e) =>
-                            setAddress({ ...address, number: e.target.value })
-                          }
-                        />
-
-                        <input
-                          placeholder="Complemento"
-                          className="px-3.5 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
-                          value={address.complement}
-                          onChange={(e) =>
-                            setAddress({ ...address, complement: e.target.value })
-                          }
-                        />
-
-                        <input
-                          placeholder="Bairro"
-                          className="col-span-2 px-3.5 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
-                          value={address.neighborhood}
-                          onChange={(e) =>
-                            setAddress({ ...address, neighborhood: e.target.value })
-                          }
-                        />
-
-                        <input
-                          placeholder="Cidade"
-                          className="px-3.5 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
-                          value={address.city}
-                          onChange={(e) =>
-                            setAddress({ ...address, city: e.target.value })
-                          }
-                        />
-
-                        <input
-                          placeholder="Estado"
-                          className="px-3.5 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
-                          value={address.state}
-                          onChange={(e) =>
-                            setAddress({ ...address, state: e.target.value })
-                          }
-                        />
-                      </div>
-                    ) : address.street ? (
-                      <p className="text-base text-gray-900 leading-relaxed font-normal">
-                        {address.street}, {address.number || "S/N"} <br />
-                        {address.neighborhood} - {address.city}/{address.state}
-                      </p>
-                    ) : (
-                      <p className="text-base text-gray-400 font-normal">Não informado</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Telefone / WhatsApp */}
-                <div className="flex items-start gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0">
-                    <Phone size={20} />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">
-                      Telefone / WhatsApp
-                    </p>
-                    {isEditingProfile ? (
-                      <div className="flex mt-1 rounded-xl border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-purple-500 transition-all bg-white">
-                        <span className="flex items-center justify-center bg-gray-100 text-gray-600 px-3.5 border-r border-gray-200 text-sm font-semibold select-none">
-                          +55
+                {/* E-mail */}
+                <div className="flex items-start sm:items-center justify-between gap-4 p-5 sm:p-6">
+                  <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0">
+                      <Mail size={24} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-base sm:text-lg font-bold text-gray-900">E-mail</h4>
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                          ✓ Verificado
                         </span>
-                        <input
-                          type="text"
-                          className="w-full px-3.5 py-2.5 outline-none border-none text-base text-gray-900 bg-transparent font-normal"
-                          value={getDisplayPhone(donorData.phone)}
-                          placeholder="(DDD) 99999-9999"
-                          onChange={(e) => {
-                            const digits = e.target.value.replace(/\D/g, "");
-                            setDonorData({ ...donorData, phone: `55${digits}` });
-                          }}
-                        />
                       </div>
-                    ) : (
-                      <p className="text-base font-medium text-gray-900">
-                        {donorData.phone ? `+${donorData.phone}` : "Não informado"}
-                      </p>
-                    )}
+                      <p className="text-base text-gray-600 font-normal mt-0.5">{donorData.email}</p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Email da Conta */}
-                <div className="flex items-start gap-3.5 opacity-80">
-                  <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0"><Mail size={20} /></div>
-                  <div>
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Email da Conta</p>
-                    <p className="text-base font-medium text-gray-900">{donorData.email}</p>
+                {/* Celular / WhatsApp */}
+                <div className="flex items-start sm:items-center justify-between gap-4 p-5 sm:p-6">
+                  <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0">
+                      <Phone size={24} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-base sm:text-lg font-bold text-gray-900">Celular / WhatsApp</h4>
+                      {isEditingProfile ? (
+                        <div className="flex mt-2 rounded-xl border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-purple-500 transition-all bg-white max-w-md">
+                          <span className="flex items-center justify-center bg-gray-100 text-gray-600 px-3.5 border-r border-gray-200 text-base font-semibold select-none">
+                            +55
+                          </span>
+                          <input
+                            type="text"
+                            className="w-full px-4 py-2.5 outline-none border-none text-base text-gray-900 bg-transparent font-normal"
+                            value={getDisplayPhone(donorData.phone)}
+                            placeholder="(DDD) 99999-9999"
+                            onChange={(e) => {
+                              const digits = e.target.value.replace(/\D/g, "");
+                              setDonorData({ ...donorData, phone: `55${digits}` });
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <p className="text-base text-gray-600 font-normal mt-0.5">
+                          {donorData.phone ? `+${donorData.phone}` : "Não informado"}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
 
                 {/* CPF */}
-                <div className="flex items-start gap-3.5 opacity-80">
-                  <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0"><AlertCircle size={20} /></div>
-                  <div>
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">CPF</p>
-                    <p className="text-base font-medium text-gray-900">{donorData.cpf}</p>
+                <div className="flex items-start sm:items-center justify-between gap-4 p-5 sm:p-6">
+                  <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0">
+                      <ShieldCheck size={24} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-base sm:text-lg font-bold text-gray-900">CPF</h4>
+                      <p className="text-base text-gray-600 font-normal mt-0.5">{donorData.cpf || "Não informado"}</p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Zona de Privacidade & Exclusão LGPD */}
-                <LgpdSecurityZone userRole="donor" userName={donorData.name} />
+                {/* Endereço */}
+                <div className="flex items-start justify-between gap-4 p-5 sm:p-6">
+                  <div className="flex items-start gap-4 flex-1 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0 mt-0.5">
+                      <MapPin size={24} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-base sm:text-lg font-bold text-gray-900">Endereço</h4>
+                      {isEditingProfile ? (
+                        <div className="grid grid-cols-2 gap-3 mt-3">
+                          <input
+                            placeholder="CEP"
+                            className="col-span-2 px-4 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                            value={address.zipCode}
+                            onChange={handleCepChange}
+                          />
+
+                          <input
+                            placeholder="Rua"
+                            className="col-span-2 px-4 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                            value={address.street}
+                            onChange={(e) =>
+                              setAddress({ ...address, street: e.target.value })
+                            }
+                          />
+
+                          <input
+                            placeholder="Número"
+                            className="px-4 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                            value={address.number}
+                            onChange={(e) =>
+                              setAddress({ ...address, number: e.target.value })
+                            }
+                          />
+
+                          <input
+                            placeholder="Complemento"
+                            className="px-4 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                            value={address.complement}
+                            onChange={(e) =>
+                              setAddress({ ...address, complement: e.target.value })
+                            }
+                          />
+
+                          <input
+                            placeholder="Bairro"
+                            className="col-span-2 px-4 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                            value={address.neighborhood}
+                            onChange={(e) =>
+                              setAddress({ ...address, neighborhood: e.target.value })
+                            }
+                          />
+
+                          <input
+                            placeholder="Cidade"
+                            className="px-4 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                            value={address.city}
+                            onChange={(e) =>
+                              setAddress({ ...address, city: e.target.value })
+                            }
+                          />
+
+                          <input
+                            placeholder="Estado"
+                            className="px-4 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                            value={address.state}
+                            onChange={(e) =>
+                              setAddress({ ...address, state: e.target.value })
+                            }
+                          />
+                        </div>
+                      ) : address.street ? (
+                        <p className="text-base text-gray-600 font-normal mt-0.5 leading-relaxed">
+                          {address.street}, {address.number || "S/N"} {address.complement ? `(${address.complement})` : ""} <br />
+                          {address.neighborhood} - {address.city}/{address.state} • CEP {address.zipCode}
+                        </p>
+                      ) : (
+                        <p className="text-base text-gray-400 font-normal mt-0.5">Não informado</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Biografia */}
+                <div className="flex items-start justify-between gap-4 p-5 sm:p-6">
+                  <div className="flex items-start gap-4 flex-1 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0 mt-0.5">
+                      <FileText size={24} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-base sm:text-lg font-bold text-gray-900">Biografia</h4>
+                      {isEditingProfile ? (
+                        <textarea
+                          className="w-full mt-2 px-4 py-2.5 text-base border rounded-xl outline-none min-h-[100px] resize-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                          placeholder="Conte um pouco sobre você..."
+                          value={donorData.description}
+                          onChange={(e) => setDonorData({ ...donorData, description: e.target.value })}
+                        />
+                      ) : (
+                        <p className="text-base text-gray-600 italic font-normal mt-0.5 leading-relaxed">
+                          {donorData.description || "Nenhuma biografia informada."}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SEÇÃO 2: ACESSO E PRIVACIDADE (ESTILO NETFLIX) */}
+            <div>
+              <div className="mb-4 px-1">
+                <h3 className="text-2xl font-bold text-gray-900">Acesso e privacidade</h3>
+                <p className="text-base text-gray-500 font-normal mt-0.5">Gerencie a segurança e a privacidade da sua conta conforme a LGPD</p>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-gray-200/90 shadow-sm overflow-hidden p-5 sm:p-6">
+                <LgpdSecurityZone userRole="donor" userName={donorData.name} className="" />
               </div>
             </div>
           </motion.div>
