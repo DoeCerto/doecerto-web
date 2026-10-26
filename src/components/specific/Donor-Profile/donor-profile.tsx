@@ -403,16 +403,16 @@ export default function DonorProfile() {
                 <div className="flex items-start gap-3.5">
                   <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0"><FileText size={20} /></div>
                   <div className="flex-1">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Biografia</p>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Biografia</p>
                     {isEditingProfile ? (
                       <textarea
-                        className="w-full mt-1 px-3.5 py-2.5 text-sm sm:text-base border rounded-xl outline-none min-h-[100px] resize-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                        className="w-full mt-1 px-3.5 py-2.5 text-base border rounded-xl outline-none min-h-[100px] resize-none focus:ring-2 focus:ring-purple-500 border-gray-200"
                         placeholder="Conte um pouco sobre você..."
                         value={donorData.description}
                         onChange={(e) => setDonorData({ ...donorData, description: e.target.value })}
                       />
                     ) : (
-                      <p className="text-sm sm:text-base text-gray-700 italic leading-relaxed">
+                      <p className="text-base text-gray-700 italic leading-relaxed">
                         {donorData.description || "Nenhuma biografia informada."}
                       </p>
                     )}
@@ -425,11 +425,11 @@ export default function DonorProfile() {
                 <div className="flex items-start gap-3.5">
                   <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0"><User size={20} /></div>
                   <div className="flex-1">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Nome Completo</p>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Nome Completo</p>
                     {isEditingProfile ? (
-                      <input className="w-full mt-1 px-3.5 py-2.5 text-sm sm:text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200 font-semibold text-gray-900" value={donorData.name} onChange={(e) => setDonorData({ ...donorData, name: e.target.value })} />
+                      <input className="w-full mt-1 px-3.5 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200 text-gray-900" value={donorData.name} onChange={(e) => setDonorData({ ...donorData, name: e.target.value })} />
                     ) : (
-                      <p className="text-base sm:text-lg font-bold text-gray-900">
+                      <p className="text-base font-medium text-gray-900">
                         {(donorData.name || "").replace("undefined", "").trim()}
                       </p>
                     )}
@@ -443,7 +443,7 @@ export default function DonorProfile() {
                   </div>
 
                   <div className="flex-1">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">
                       Endereço
                     </p>
 
@@ -451,14 +451,14 @@ export default function DonorProfile() {
                       <div className="grid grid-cols-2 gap-3">
                         <input
                           placeholder="CEP"
-                          className="col-span-2 px-3.5 py-2.5 text-sm border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                          className="col-span-2 px-3.5 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
                           value={address.zipCode}
                           onChange={handleCepChange}
                         />
 
                         <input
                           placeholder="Rua"
-                          className="col-span-2 px-3.5 py-2.5 text-sm border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                          className="col-span-2 px-3.5 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
                           value={address.street}
                           onChange={(e) =>
                             setAddress({ ...address, street: e.target.value })
@@ -467,7 +467,7 @@ export default function DonorProfile() {
 
                         <input
                           placeholder="Número"
-                          className="px-3.5 py-2.5 text-sm border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                          className="px-3.5 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
                           value={address.number}
                           onChange={(e) =>
                             setAddress({ ...address, number: e.target.value })
@@ -476,7 +476,7 @@ export default function DonorProfile() {
 
                         <input
                           placeholder="Complemento"
-                          className="px-3.5 py-2.5 text-sm border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                          className="px-3.5 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
                           value={address.complement}
                           onChange={(e) =>
                             setAddress({ ...address, complement: e.target.value })
@@ -485,7 +485,7 @@ export default function DonorProfile() {
 
                         <input
                           placeholder="Bairro"
-                          className="col-span-2 px-3.5 py-2.5 text-sm border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                          className="col-span-2 px-3.5 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
                           value={address.neighborhood}
                           onChange={(e) =>
                             setAddress({ ...address, neighborhood: e.target.value })
@@ -494,7 +494,7 @@ export default function DonorProfile() {
 
                         <input
                           placeholder="Cidade"
-                          className="px-3.5 py-2.5 text-sm border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                          className="px-3.5 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
                           value={address.city}
                           onChange={(e) =>
                             setAddress({ ...address, city: e.target.value })
@@ -503,7 +503,7 @@ export default function DonorProfile() {
 
                         <input
                           placeholder="Estado"
-                          className="px-3.5 py-2.5 text-sm border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                          className="px-3.5 py-2.5 text-base border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
                           value={address.state}
                           onChange={(e) =>
                             setAddress({ ...address, state: e.target.value })
@@ -511,12 +511,12 @@ export default function DonorProfile() {
                         />
                       </div>
                     ) : address.street ? (
-                      <p className="text-sm sm:text-base text-gray-900 leading-relaxed font-medium">
+                      <p className="text-base text-gray-900 leading-relaxed font-normal">
                         {address.street}, {address.number || "S/N"} <br />
                         {address.neighborhood} - {address.city}/{address.state}
                       </p>
                     ) : (
-                      <p className="text-sm text-gray-400 font-medium">Não informado</p>
+                      <p className="text-base text-gray-400 font-normal">Não informado</p>
                     )}
                   </div>
                 </div>
@@ -527,7 +527,7 @@ export default function DonorProfile() {
                     <Phone size={20} />
                   </div>
                   <div className="flex-1">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">
                       Telefone / WhatsApp
                     </p>
                     {isEditingProfile ? (
@@ -537,7 +537,7 @@ export default function DonorProfile() {
                         </span>
                         <input
                           type="text"
-                          className="w-full px-3.5 py-2.5 outline-none border-none text-sm text-gray-900 bg-transparent font-medium"
+                          className="w-full px-3.5 py-2.5 outline-none border-none text-base text-gray-900 bg-transparent font-normal"
                           value={getDisplayPhone(donorData.phone)}
                           placeholder="(DDD) 99999-9999"
                           onChange={(e) => {
@@ -547,7 +547,7 @@ export default function DonorProfile() {
                         />
                       </div>
                     ) : (
-                      <p className="text-base sm:text-lg font-bold text-gray-900">
+                      <p className="text-base font-medium text-gray-900">
                         {donorData.phone ? `+${donorData.phone}` : "Não informado"}
                       </p>
                     )}
@@ -558,8 +558,8 @@ export default function DonorProfile() {
                 <div className="flex items-start gap-3.5 opacity-80">
                   <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0"><Mail size={20} /></div>
                   <div>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Email da Conta</p>
-                    <p className="text-sm sm:text-base font-semibold text-gray-900">{donorData.email}</p>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Email da Conta</p>
+                    <p className="text-base font-medium text-gray-900">{donorData.email}</p>
                   </div>
                 </div>
 
@@ -567,8 +567,8 @@ export default function DonorProfile() {
                 <div className="flex items-start gap-3.5 opacity-80">
                   <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0"><AlertCircle size={20} /></div>
                   <div>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">CPF</p>
-                    <p className="text-sm sm:text-base font-semibold text-gray-900">{donorData.cpf}</p>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">CPF</p>
+                    <p className="text-base font-medium text-gray-900">{donorData.cpf}</p>
                   </div>
                 </div>
 
