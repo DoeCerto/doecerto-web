@@ -848,9 +848,9 @@ function PixPageContent() {
                     </span>
                   </label>
                 ) : (
-                  <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-purple-50/60 border border-purple-100/80 text-slate-700">
-                    <ShieldCheck size={18} className="text-[#6B39A7] shrink-0" />
-                    <span className="text-xs sm:text-sm font-medium">
+                  <div className="flex items-center gap-3 px-4 sm:px-5 py-3.5 rounded-xl bg-purple-50 border border-purple-200/80 text-slate-800 shadow-xs">
+                    <ShieldCheck size={22} className="text-[#6B39A7] shrink-0" />
+                    <span className="text-base sm:text-lg font-medium text-slate-800 leading-snug">
                       Doação rápida e anônima via Pix Dinâmico sem necessidade de cadastro prévio.
                     </span>
                   </div>
