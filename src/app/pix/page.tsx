@@ -418,8 +418,12 @@ function PixPageContent() {
     return `${minutes} minutos e ${seconds < 10 ? "0" : ""}${seconds} segundos`;
   }, [timeLeft]);
 
-  const generateDynamicPix = async (amount: number, anonymous = isAnonymous) => {
-    if (!ongId || isNaN(amount) || amount < 5) return null;
+  const generateDynamicPix = async (
+    donationBase = baseAmount,
+    donationTip = tipAmount,
+    anonymous = isAnonymous
+  ) => {
+    if (!ongId || isNaN(donationBase) || donationBase < 5) return null;
     setIsGeneratingPix(true);
     setDynamicPixError(null);
     try {
@@ -427,21 +431,22 @@ function PixPageContent() {
         method: "POST",
         body: JSON.stringify({
           ongId: Number(ongId),
-          amount,
+          amount: donationBase,
+          tipAmount: donationTip > 0 ? donationTip : 0,
           isAnonymous: anonymous,
         }),
       });
       const data = response.data;
       setDynamicPix(data);
-      lastRequestedAmountRef.current = amount;
+      lastRequestedAmountRef.current = totalAmount;
       setIsPaymentConfirmed(false);
       setCopied(false);
 
       if (typeof window !== "undefined") {
         try {
-          sessionStorage.setItem(`dc_dynpix_${ongId}_${amount}`, JSON.stringify(data));
+          sessionStorage.setItem(`dc_dynpix_${ongId}_${totalAmount}`, JSON.stringify(data));
           const validExpMs = Date.now() + 20 * 60 * 1000;
-          sessionStorage.setItem(`dc_pix_exp_${ongId}_${amount}`, String(validExpMs));
+          sessionStorage.setItem(`dc_pix_exp_${ongId}_${totalAmount}`, String(validExpMs));
         } catch (e) { }
       }
 
@@ -473,7 +478,7 @@ function PixPageContent() {
 
     if (isAuthenticated && userRole === "donor") {
       try {
-        await generateDynamicPix(totalAmount, isAnonymous);
+        await generateDynamicPix(baseAmount, tipAmount, isAnonymous);
       } catch (err: any) {
         console.error("Erro ao renovar Pix Dinâmico:", err);
       }
@@ -536,7 +541,8 @@ function PixPageContent() {
         method: "POST",
         body: JSON.stringify({
           ongId: Number(ongId),
-          amount: totalAmount,
+          amount: baseAmount,
+          tipAmount: tipAmount > 0 ? tipAmount : 0,
           name: trimmedName,
           email: trimmedEmail || undefined,
           cpf: cleanCpf,
@@ -583,7 +589,7 @@ function PixPageContent() {
     // 1. Doador logado: Gera Pix Dinâmico Asaas direto (já temos os dados da conta)
     if (isAuthenticated && userRole === "donor") {
       try {
-        const pixData = await generateDynamicPix(totalAmount, isAnonymous);
+        const pixData = await generateDynamicPix(baseAmount, tipAmount, isAnonymous);
         setTimeLeft(calculateRemainingSeconds(String(totalAmount), pixData));
         navigateToStep("payment", String(totalAmount));
       } catch (err: any) {
@@ -628,11 +634,11 @@ function PixPageContent() {
 
     // 2. Se não estiver no cache e não estiver gerando, gera automaticamente se for doador logado
     if (!isGeneratingPix && isAuthenticated && userRole === "donor") {
-      generateDynamicPix(totalAmount, isAnonymous).catch((err) => {
+      generateDynamicPix(baseAmount, tipAmount, isAnonymous).catch((err) => {
         console.error("Erro ao gerar Pix ao atualizar a página:", err);
       });
     }
-  }, [step, dynamicPix, isGeneratingPix, initialLoading, totalAmount, ongId, isAnonymous, isAuthenticated, userRole]);
+  }, [step, dynamicPix, isGeneratingPix, initialLoading, totalAmount, baseAmount, tipAmount, ongId, isAnonymous, isAuthenticated, userRole]);
 
   // Polling automático de compensação Pix (imediato + a cada 3 segundos)
   useEffect(() => {
@@ -1419,8 +1425,7 @@ function PixPageContent() {
                       <button
                         type="button"
                         onClick={() => {
-                          const num = parseFloat(valor);
-                          if (!isNaN(num) && num >= 5) generateDynamicPix(num, isAnonymous);
+                          if (baseAmount >= 5) generateDynamicPix(baseAmount, tipAmount, isAnonymous);
                         }}
                         className="mt-1 px-3 py-1 bg-purple-100 text-[#6B39A7] rounded-lg font-bold text-xs hover:bg-purple-200 cursor-pointer"
                       >
