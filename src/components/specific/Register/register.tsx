@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 // Importações dos serviços
 import { registerOng } from "@/services/register-ong.service";
-import { registerDonor, checkAvailability } from "@/services/register.service"; 
+import { registerDonor, checkAvailability } from "@/services/register.service";
 import { formatCNPJ, removeFormatting, validateCNPJ, formatCPF, validateCPF } from "@/utils/documentValidation";
 import TermosModal from "@/components/shared/TermosModal";
 
@@ -33,7 +33,7 @@ const registerSchema = z.object({
   nomePresidente: z.string().optional(),
   cpfPresidente: z.string().optional(),
 }).superRefine((data, ctx) => {
-  
+
   // Validação de Senha
   if (data.senha !== data.confirmarSenha) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "As senhas não coincidem", path: ["confirmarSenha"] });
@@ -171,7 +171,7 @@ function FileDropzone({ title, subtitle, file, setFile }: { title: string, subti
 
     let currentProgress = 0;
     intervalRef.current = setInterval(() => {
-      let increment = Math.random() * 8 + 2; 
+      let increment = Math.random() * 8 + 2;
       if (currentProgress > 60) increment = Math.random() * 4 + 1;
       if (currentProgress > 85) increment = Math.random() * 1.5;
 
@@ -181,7 +181,7 @@ function FileDropzone({ title, subtitle, file, setFile }: { title: string, subti
         currentProgress = 100;
         setUploadProgress(100);
         if (intervalRef.current) clearInterval(intervalRef.current);
-        
+
         setTimeout(() => {
           setUploadState('success');
           toast.success(`${title} processado!`);
@@ -206,15 +206,14 @@ function FileDropzone({ title, subtitle, file, setFile }: { title: string, subti
       <div
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
-        onDrop={(e) => { e.preventDefault(); setIsDragging(false); const f = e.dataTransfer.files[0]; if(f) processFile(f); }}
-        className={`relative w-full h-[200px] rounded-2xl flex flex-col items-center justify-center text-center transition-all duration-300 overflow-hidden ${
-          uploadState === 'idle'
-            ? isDragging ? "border-2 border-dashed border-[#6B39A7] bg-purple-100/60 scale-[1.02] shadow-lg shadow-purple-500/10" : "border-2 border-dashed border-gray-300 hover:border-[#6B39A7] bg-gray-50/70 hover:bg-purple-50/30"
-            : "border border-gray-200 bg-white shadow-sm"
-        }`}
+        onDrop={(e) => { e.preventDefault(); setIsDragging(false); const f = e.dataTransfer.files[0]; if (f) processFile(f); }}
+        className={`relative w-full h-[200px] rounded-2xl flex flex-col items-center justify-center text-center transition-all duration-300 overflow-hidden ${uploadState === 'idle'
+          ? isDragging ? "border-2 border-dashed border-[#6B39A7] bg-purple-100/60 scale-[1.02] shadow-lg shadow-purple-500/10" : "border-2 border-dashed border-gray-300 hover:border-[#6B39A7] bg-gray-50/70 hover:bg-purple-50/30"
+          : "border border-gray-200 bg-white shadow-sm"
+          }`}
       >
         {uploadState === 'idle' && (
-          <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onChange={(e) => { const f = e.target.files?.[0]; if(f) processFile(f); }} accept=".pdf,.png,.jpg,.jpeg" />
+          <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onChange={(e) => { const f = e.target.files?.[0]; if (f) processFile(f); }} accept=".pdf,.png,.jpg,.jpeg" />
         )}
 
         {uploadState === 'idle' && (
@@ -301,15 +300,15 @@ function useRegisterForm() {
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { 
-      accountType: null, 
-      nome: "", 
-      email: "", 
-      senha: "", 
-      confirmarSenha: "", 
-      documento: "", 
-      nomePresidente: "", 
-      cpfPresidente: "" 
+    defaultValues: {
+      accountType: null,
+      nome: "",
+      email: "",
+      senha: "",
+      confirmarSenha: "",
+      documento: "",
+      nomePresidente: "",
+      cpfPresidente: ""
     }
   });
 
@@ -517,21 +516,21 @@ function useRegisterForm() {
         formData.append('cnpj', removeFormatting(data.documento));
         formData.append('presidentName', data.nomePresidente || '');
         formData.append('presidentCpf', removeFormatting(data.cpfPresidente || ''));
-        
+
         if (fileEstatuto) formData.append('estatuto', fileEstatuto);
         if (fileAta) formData.append('ata', fileAta);
         if (fileCartaoCnpj) formData.append('cartaoCnpj', fileCartaoCnpj);
 
         await registerOng(formData);
-        
+
         setModalAberto(false);
         sessionStorage.removeItem("register_draft");
         setSuccessModalAberto(true);
       } else {
-        await registerDonor({ 
-          name: data.nome, 
-          email: data.email, 
-          password: data.senha, 
+        await registerDonor({
+          name: data.nome,
+          email: data.email,
+          password: data.senha,
           cpf: removeFormatting(data.documento)
         });
         setModalAberto(false);
@@ -585,17 +584,17 @@ function useRegisterForm() {
 export default function Register() {
   const { form, step, setStep, accountType, isChecking, modalAberto, setModalAberto, isPending, successModalAberto, setSuccessModalAberto, clearDraft, handleSelectType, handleNextStep, handleFinalSubmit, submitToApi, isCheckingEmail, isCheckingDocumento, handleEmailBlur, handleDocumentoBlur, files } = useRegisterForm();
   const { register, formState: { errors }, setValue, clearErrors, trigger } = form;
-  
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
     if (!contentRef.current || isChecking) return;
-    
+
     gsap.killTweensOf(contentRef.current);
-    gsap.fromTo(contentRef.current, 
-      { opacity: 0, y: 15 }, 
+    gsap.fromTo(contentRef.current,
+      { opacity: 0, y: 15 },
       { opacity: 1, y: 0, duration: 0.4, ease: "power2.out", clearProps: "all" }
     );
   }, [step, isChecking]);
@@ -616,7 +615,7 @@ export default function Register() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm"
-              onClick={() => {}}
+              onClick={() => { }}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.96, y: 12 }}
@@ -629,11 +628,11 @@ export default function Register() {
               <div className="w-20 h-20 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-6 border border-emerald-100 shadow-sm">
                 <CheckCircle2 size={44} strokeWidth={2.4} />
               </div>
-              
+
               <h2 className="text-3xl sm:text-[32px] font-extrabold text-gray-900 tracking-tight mb-3">
                 {accountType === "ong" ? "Cadastro enviado!" : "Conta criada com sucesso!"}
               </h2>
-              
+
               <p className="text-lg sm:text-xl text-gray-700 leading-relaxed mb-8 px-2 font-medium">
                 {accountType === "ong" ? (
                   <>
@@ -645,12 +644,12 @@ export default function Register() {
                   </>
                 )}
               </p>
-              
+
               <button
                 onClick={() => window.location.replace("/login")}
                 className="w-full py-4 px-6 bg-[#6B39A7] hover:bg-[#5b2f8e] text-white rounded-xl font-bold text-lg sm:text-xl transition-all active:scale-[0.98] shadow-md shadow-purple-600/20 cursor-pointer"
               >
-                Fazer Login Agora
+                Fazer Login agora
               </button>
             </motion.div>
           </div>
@@ -660,7 +659,7 @@ export default function Register() {
       {/* COLUNA ESQUERDA */}
       <div ref={scrollRef} className="w-full lg:w-1/2 h-full overflow-y-auto flex flex-col items-center px-6 sm:px-12 py-10 sm:py-12 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div ref={contentRef} className={`w-full max-w-[460px] shrink-0 ${step === 1 ? 'my-auto' : 'pb-12'}`}>
-          
+
           {/* STEP 1 */}
           {step === 1 && (
             <AccountTypeSelection onSelect={handleSelectType} />
@@ -680,60 +679,60 @@ export default function Register() {
               </div>
 
               <form onSubmit={(e) => { e.preventDefault(); handleNextStep(); }} className="flex flex-col gap-5">
-                
-                <InputField 
-                  label={accountType === 'ong' ? 'Razão Social / Nome' : 'Nome Completo'} 
-                  icon={User} placeholder="Digite aqui" 
+
+                <InputField
+                  label={accountType === 'ong' ? 'Razão Social / Nome' : 'Nome Completo'}
+                  icon={User} placeholder="Digite aqui"
                   {...register("nome")}
                   onChange={(e: any) => { register("nome").onChange(e); clearErrors("nome"); }}
-                  onBlur={(e: any) => { register("nome").onBlur(e); if(e.target.value.trim() !== "") trigger("nome"); }}
-                  error={errors.nome?.message} 
+                  onBlur={(e: any) => { register("nome").onBlur(e); if (e.target.value.trim() !== "") trigger("nome"); }}
+                  error={errors.nome?.message}
                 />
-                
-                <InputField 
-                  label={accountType === 'ong' ? 'CNPJ' : 'CPF'} icon={IdCard} 
-                  placeholder={accountType === 'ong' ? "00.000.000/0000-00" : "000.000.000-00"} 
+
+                <InputField
+                  label={accountType === 'ong' ? 'CNPJ' : 'CPF'} icon={IdCard}
+                  placeholder={accountType === 'ong' ? "00.000.000/0000-00" : "000.000.000-00"}
                   maxLength={accountType === 'ong' ? 18 : 14}
                   isLoading={isCheckingDocumento}
-                  {...register("documento")} 
+                  {...register("documento")}
                   onChange={(e: any) => {
                     const val = accountType === 'ong' ? formatCNPJ(e.target.value) : formatCPF(e.target.value);
                     setValue("documento", val);
                     clearErrors("documento");
                   }}
-                  onBlur={(e: any) => { 
-                    register("documento").onBlur(e); 
+                  onBlur={(e: any) => {
+                    register("documento").onBlur(e);
                     handleDocumentoBlur(e.target.value);
                   }}
-                  error={errors.documento?.message} 
+                  error={errors.documento?.message}
                 />
 
-                <InputField 
-                  label="Endereço de Email" icon={Mail} type="email" placeholder="exemplo@email.com" 
+                <InputField
+                  label="Endereço de Email" icon={Mail} type="email" placeholder="exemplo@email.com"
                   isLoading={isCheckingEmail}
-                  {...register("email")} 
+                  {...register("email")}
                   onChange={(e: any) => { register("email").onChange(e); clearErrors("email"); }}
-                  onBlur={(e: any) => { 
-                    register("email").onBlur(e); 
+                  onBlur={(e: any) => {
+                    register("email").onBlur(e);
                     handleEmailBlur(e.target.value);
                   }}
-                  error={errors.email?.message} 
+                  error={errors.email?.message}
                 />
-                
-                <InputField 
-                  label="Senha" icon={Lock} type="password" placeholder="Mínimo de 8 caracteres" 
-                  {...register("senha")} 
+
+                <InputField
+                  label="Senha" icon={Lock} type="password" placeholder="Mínimo de 8 caracteres"
+                  {...register("senha")}
                   onChange={(e: any) => { register("senha").onChange(e); clearErrors("senha"); }}
-                  onBlur={(e: any) => { register("senha").onBlur(e); if(e.target.value.trim() !== "") trigger("senha"); }}
-                  error={errors.senha?.message} 
+                  onBlur={(e: any) => { register("senha").onBlur(e); if (e.target.value.trim() !== "") trigger("senha"); }}
+                  error={errors.senha?.message}
                 />
-                
-                <InputField 
-                  label="Confirmar Senha" icon={Lock} type="password" placeholder="Repita sua senha" 
-                  {...register("confirmarSenha")} 
+
+                <InputField
+                  label="Confirmar Senha" icon={Lock} type="password" placeholder="Repita sua senha"
+                  {...register("confirmarSenha")}
                   onChange={(e: any) => { register("confirmarSenha").onChange(e); clearErrors("confirmarSenha"); }}
-                  onBlur={(e: any) => { register("confirmarSenha").onBlur(e); if(e.target.value.trim() !== "") trigger("confirmarSenha"); }}
-                  error={errors.confirmarSenha?.message} 
+                  onBlur={(e: any) => { register("confirmarSenha").onBlur(e); if (e.target.value.trim() !== "") trigger("confirmarSenha"); }}
+                  error={errors.confirmarSenha?.message}
                 />
 
                 <button type="submit" className="w-full flex justify-center items-center h-[60px] mt-4 bg-purple-700 hover:bg-purple-800 text-white font-bold text-lg rounded-xl shadow-md active:scale-[0.98] transition-all">
@@ -758,24 +757,24 @@ export default function Register() {
               <form onSubmit={(e) => { e.preventDefault(); handleFinalSubmit(); }} className="flex flex-col gap-8">
                 <div className="p-6 bg-gray-50 border border-gray-200 rounded-2xl flex flex-col gap-5">
                   <h3 className="text-base font-bold text-gray-800 uppercase tracking-wider">Representante</h3>
-                  
-                  <InputField 
-                    label="" icon={User} placeholder="Nome do Presidente" 
-                    {...register("nomePresidente")} 
+
+                  <InputField
+                    label="" icon={User} placeholder="Nome do Presidente"
+                    {...register("nomePresidente")}
                     onChange={(e: any) => { register("nomePresidente").onChange(e); clearErrors("nomePresidente"); }}
-                    onBlur={(e: any) => { register("nomePresidente").onBlur(e); if(e.target.value.trim() !== "") trigger("nomePresidente"); }}
-                    error={errors.nomePresidente?.message} 
+                    onBlur={(e: any) => { register("nomePresidente").onBlur(e); if (e.target.value.trim() !== "") trigger("nomePresidente"); }}
+                    error={errors.nomePresidente?.message}
                   />
-                  
-                  <InputField 
-                    label="" icon={IdCard} maxLength={14} placeholder="CPF do Presidente" 
-                    {...register("cpfPresidente")} 
+
+                  <InputField
+                    label="" icon={IdCard} maxLength={14} placeholder="CPF do Presidente"
+                    {...register("cpfPresidente")}
                     onChange={(e: any) => {
                       setValue("cpfPresidente", formatCPF(e.target.value));
                       clearErrors("cpfPresidente");
                     }}
-                    onBlur={(e: any) => { register("cpfPresidente").onBlur(e); if(e.target.value.trim() !== "") trigger("cpfPresidente"); }}
-                    error={errors.cpfPresidente?.message} 
+                    onBlur={(e: any) => { register("cpfPresidente").onBlur(e); if (e.target.value.trim() !== "") trigger("cpfPresidente"); }}
+                    error={errors.cpfPresidente?.message}
                   />
                 </div>
 

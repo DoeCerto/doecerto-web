@@ -71,9 +71,9 @@ export function LgpdDeleteAccountModal({
       toast.success(response.message || "Conta excluída com sucesso.");
 
       setTimeout(async () => {
-        await logout("/");
+        await logout("/login");
         if (typeof window !== "undefined") {
-          window.location.replace("/");
+          window.location.replace("/login");
         }
       }, 1200);
     } catch (error: any) {
