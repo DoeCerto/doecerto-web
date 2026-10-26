@@ -37,6 +37,7 @@ import { OngSetupService } from "@/services/ongSetup.service";
 import { WishlistService } from "@/services/wishlist.service";
 import { useAuth } from "@/contexts/AuthContext";
 import { CategoryImpactIcon } from "@/components/ui/CategoryImpactIcon";
+import { LgpdSecurityZone } from "@/components/specific/Lgpd/LgpdSecurityZone";
 
 export default function OngSetupProfile() {
   const router = useRouter();
@@ -876,6 +877,10 @@ export default function OngSetupProfile() {
                 </span>
               ))}
             </div>
+          </FormSection>
+
+          <FormSection>
+            <LgpdSecurityZone userRole="ong" userName={ongName} />
           </FormSection>
         </div>
       </div>

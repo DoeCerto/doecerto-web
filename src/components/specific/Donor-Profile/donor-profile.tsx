@@ -27,6 +27,7 @@ import { MonetaryDonationDetails } from "@/components/ui/MonetaryDonationDetails
 import { MaterialDonationDetails } from "@/components/ui/MaterialDonationDetails";
 import { DonorService, type UpdateProfileDTO, type DonationHistory, Address } from "@/services/donor.service";
 import { useAuth } from "@/contexts/AuthContext";
+import { LgpdSecurityZone } from "@/components/specific/Lgpd/LgpdSecurityZone";
 
 export default function DonorProfile() {
   const router = useRouter();
@@ -566,6 +567,9 @@ export default function DonorProfile() {
                     <p className="font-medium text-gray-900">{donorData.cpf}</p>
                   </div>
                 </div>
+
+                {/* Zona de Privacidade & Exclusão LGPD */}
+                <LgpdSecurityZone userRole="donor" userName={donorData.name} />
               </div>
             </div>
           </motion.div>

@@ -6,13 +6,14 @@ import {
   MapPin, Heart, Award, X, Phone, Home, Star, Pencil,
   History, Package, CheckCircle2, Clock, FileText, ArrowRight,
   Camera, AlertCircle, Tag, MessageSquare, AlertTriangle, ExternalLink,
-  LogOut, Download
+  LogOut, Download, Trash2
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { DonationService } from "@/services/donations.service";
 import { api } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { LgpdDeleteAccountModal } from "@/components/specific/Lgpd/LgpdDeleteAccountModal";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -48,6 +49,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [showRestrictedModal, setShowRestrictedModal] = useState(false);
+  const [isLgpdModalOpen, setIsLgpdModalOpen] = useState(false);
   const [dismissSetupPrompt, setDismissSetupPrompt] = useState(() => {
     if (typeof window !== "undefined") {
       return sessionStorage.getItem("dismiss_ong_setup_prompt") === "true";
@@ -302,9 +304,14 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                     <span className="font-bold text-slate-700">Editar Perfil</span>
                   </button>
                   <div className="border-t border-slate-100 my-1"></div>
+                  <button onClick={() => { setIsMenuOpen(false); setIsLgpdModalOpen(true); }} className="w-full flex items-center gap-3 px-5 py-3 hover:bg-red-50 text-left transition cursor-pointer group">
+                    <Trash2 size={18} className="text-red-500 group-hover:text-red-600 transition-colors" />
+                    <span className="font-bold text-red-600">Excluir Conta</span>
+                  </button>
+                  <div className="border-t border-slate-100 my-1"></div>
                   <button onClick={handleLogout} className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition text-left cursor-pointer">
-                    <LogOut size={18} className="text-red-500" />
-                    <span className="font-bold text-red-500">Sair</span>
+                    <LogOut size={18} className="text-slate-500" />
+                    <span className="font-bold text-slate-600">Sair</span>
                   </button>
                 </motion.div>
               )}
@@ -819,6 +826,13 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Modal de Exclusão de Conta LGPD */}
+      <LgpdDeleteAccountModal
+        isOpen={isLgpdModalOpen}
+        onClose={() => setIsLgpdModalOpen(false)}
+        userRole="ong"
+      />
     </div>
   );
 }
