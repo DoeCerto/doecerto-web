@@ -922,34 +922,35 @@ function PixPageContent() {
               {/* ==========================================
                   TIP MODEL: APOIO VOLUNTÁRIO AO DOECERTO (FINTECH)
                   ========================================== */}
-              <div className="bg-gradient-to-br from-slate-50 via-purple-50/40 to-slate-50 border-2 border-purple-200/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
+              {/* ==========================================
+                  TIP MODEL: APOIO VOLUNTÁRIO AO DOECERTO (FINTECH HIGH-CONTRAST)
+                  ========================================== */}
+              <div className="bg-slate-50/80 border-2 border-slate-200/90 rounded-2xl p-5 sm:p-7 space-y-5">
                 
                 {/* CABEÇALHO DO APOIO */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-purple-100 text-[#6B39A7] flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
-                      <HeartHandshake size={22} />
+                <div className="flex items-start gap-3.5">
+                  <div className="w-12 h-12 rounded-xl bg-purple-100 text-[#6B39A7] flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                    <HeartHandshake size={26} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">
+                        Apoio voluntário ao DoeCerto
+                      </h3>
+                      <span className="text-xs sm:text-sm font-bold px-2.5 py-0.5 rounded-full bg-slate-200/80 text-slate-700">
+                        Opcional
+                      </span>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
-                          Apoio voluntário ao DoeCerto
-                        </h3>
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200/80 text-slate-700">
-                          Opcional
-                        </span>
-                      </div>
-                      <p className="text-xs sm:text-sm text-slate-600 font-normal leading-relaxed mt-1">
-                        O DoeCerto não retém porcentagem das doações para as ONGs (0% de comissão). Sua gorjeta voluntária viabiliza servidores seguros, auditorias ativas e tecnologia gratuita para centenas de causas.
-                      </p>
-                    </div>
+                    <p className="text-base sm:text-lg text-slate-700 font-medium leading-relaxed mt-1.5">
+                      O DoeCerto não retém porcentagem das doações para as ONGs (0% de comissão). Adicione uma gorjeta voluntária para manter nossos servidores e auditoria funcionando com tecnologia gratuita para centenas de causas.
+                    </p>
                   </div>
                 </div>
 
-                {/* BOTÕES DE PORCENTAGEM / PILLS FINTECH */}
-                <div className="grid grid-cols-5 gap-1.5 sm:gap-2 pt-1">
+                {/* BOTÕES DE PORCENTAGEM / PILLS COM TIPOGRAFIA GRANDE E NÍTIDA */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-2.5 pt-1">
                   {[
-                    { id: "0", label: "0%", sub: "Sem apoio" },
+                    { id: "0", label: "0%", sub: "Sem gorjeta" },
                     { id: "5", label: "5%", sub: `+ R$ ${(baseAmount * 0.05).toFixed(2).replace(".", ",")}` },
                     { id: "10", label: "10%", sub: `+ R$ ${(baseAmount * 0.10).toFixed(2).replace(".", ",")}`, badge: "Sugerido" },
                     { id: "15", label: "15%", sub: `+ R$ ${(baseAmount * 0.15).toFixed(2).replace(".", ",")}` },
@@ -961,21 +962,25 @@ function PixPageContent() {
                         key={option.id}
                         type="button"
                         onClick={() => setTipOption(option.id as any)}
-                        className={`relative flex flex-col items-center justify-center py-2.5 sm:py-3 px-1 rounded-xl text-center transition-all cursor-pointer ${
+                        className={`relative flex flex-col items-center justify-center py-3 sm:py-3.5 px-2 rounded-xl text-center transition-all cursor-pointer ${
                           isSelected
-                            ? "bg-purple-100/90 border-2 border-[#6B39A7] text-[#6B39A7] shadow-xs font-bold ring-2 ring-purple-200"
-                            : "bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50 font-semibold"
-                        }`}
+                            ? "bg-[#6B39A7] text-white border-2 border-[#6B39A7] shadow-md shadow-purple-900/25 ring-2 ring-purple-300"
+                            : "bg-white border-2 border-slate-200 text-slate-900 hover:border-slate-300 hover:bg-slate-100/70 shadow-2xs"
+                        } ${option.id === "custom" ? "col-span-2 sm:col-span-1" : ""}`}
                       >
                         {option.badge && (
-                          <span className={`text-[10px] uppercase font-bold tracking-wider px-1.5 rounded absolute -top-2 ${
-                            isSelected ? "bg-[#6B39A7] text-white" : "bg-purple-100 text-purple-800"
+                          <span className={`text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded-md mb-1 ${
+                            isSelected ? "bg-white/20 text-white" : "bg-purple-100 text-purple-900"
                           }`}>
                             {option.badge}
                           </span>
                         )}
-                        <span className="font-mono text-sm sm:text-base font-bold">{option.label}</span>
-                        <span className="text-[10px] sm:text-xs text-slate-500 font-medium truncate max-w-full">
+                        <span className="font-mono text-xl sm:text-2xl font-black leading-tight">
+                          {option.label}
+                        </span>
+                        <span className={`text-sm sm:text-base font-bold mt-1 truncate max-w-full leading-tight ${
+                          isSelected ? "text-purple-100" : "text-slate-600"
+                        }`}>
                           {option.sub}
                         </span>
                       </button>
@@ -985,63 +990,69 @@ function PixPageContent() {
 
                 {/* CAMPO PARA VALOR CUSTOMIZADO SE "OUTRO" ESTIVER ATIVO */}
                 {tipOption === "custom" && (
-                  <div className="pt-1">
-                    <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
+                  <div className="p-4 bg-white rounded-xl border-2 border-purple-300 shadow-2xs space-y-2">
+                    <label className="block text-base sm:text-lg font-bold text-slate-800">
                       Digite o valor da gorjeta voluntária:
                     </label>
                     <div className="relative group">
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm sm:text-base">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-lg sm:text-xl text-slate-400">
                         R$
                       </span>
                       <input
                         type="number"
                         min="0"
                         step="any"
-                        placeholder="Ex: 2,00"
+                        placeholder="Ex: 5,00"
                         value={customTip}
                         onChange={(e) => setCustomTip(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-white border-2 border-purple-200 focus:border-[#6B39A7] focus:ring-2 focus:ring-purple-200 rounded-xl font-mono font-bold text-slate-900 outline-none text-sm sm:text-base transition-all"
+                        className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-200 focus:bg-white focus:border-[#6B39A7] focus:ring-4 focus:ring-purple-100 rounded-xl font-mono font-bold text-lg sm:text-xl text-slate-900 outline-none transition-all"
                       />
                     </div>
                   </div>
                 )}
 
-                {/* EXTRATO DE TRANSPARÊNCIA FINTECH */}
-                <div className="rounded-xl bg-white border border-slate-200/90 p-3 sm:p-4 space-y-2 text-sm sm:text-base">
-                  <div className="flex items-center justify-between text-slate-600">
-                    <span className="flex items-center gap-1.5 truncate pr-2">
-                      <span className="truncate">Doação para {ongData?.name || "a instituição"}</span>
-                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded shrink-0">
+                {/* EXTRATO DE TRANSPARÊNCIA FINTECH ABERTO (SEM CAIXA DENTRO DE CAIXA) */}
+                <div className="border-t-2 border-slate-200/90 pt-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3 text-base sm:text-lg">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="font-semibold text-slate-800 truncate">
+                        Doação para {ongData?.name || "a instituição"}
+                      </span>
+                      <span className="shrink-0 text-xs sm:text-sm font-bold text-emerald-800 bg-emerald-100/90 border border-emerald-300 px-2 py-0.5 rounded-md">
                         100% repassado
                       </span>
-                    </span>
-                    <span className="font-mono font-bold text-slate-900 shrink-0">
+                    </div>
+                    <span className="font-mono font-bold text-slate-900 text-lg sm:text-xl shrink-0">
                       R$ {formattedBaseDisplay}
                     </span>
                   </div>
 
-                  {tipAmount > 0 ? (
-                    <div className="flex items-center justify-between text-slate-600">
-                      <span className="flex items-center gap-1.5">
-                        <span>Apoio voluntário ao DoeCerto</span>
-                        <span className="text-[11px] font-bold text-purple-700 bg-purple-50 border border-purple-200/60 px-1.5 py-0.5 rounded">
-                          {tipOption === "custom" ? "Livre" : `${tipOption}%`}
-                        </span>
+                  <div className="flex items-center justify-between gap-3 text-base sm:text-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-slate-800">
+                        Apoio voluntário ao DoeCerto
                       </span>
-                      <span className="font-mono font-bold text-[#6B39A7]">
-                        + R$ {formattedTipDisplay}
+                      <span className="text-xs sm:text-sm font-bold text-purple-800 bg-purple-100 border border-purple-200 px-2 py-0.5 rounded-md">
+                        {tipOption === "0" ? "0%" : tipOption === "custom" ? "Livre" : `${tipOption}%`}
                       </span>
                     </div>
-                  ) : (
-                    <div className="flex items-center justify-between text-slate-400 text-xs sm:text-sm">
-                      <span>Apoio voluntário ao DoeCerto</span>
-                      <span className="font-mono">R$ 0,00 (Sem gorjeta)</span>
-                    </div>
-                  )}
+                    <span className={`font-mono font-bold text-lg sm:text-xl shrink-0 ${
+                      tipAmount > 0 ? "text-[#6B39A7]" : "text-slate-500"
+                    }`}>
+                      {tipAmount > 0 ? `+ R$ ${formattedTipDisplay}` : "R$ 0,00"}
+                    </span>
+                  </div>
 
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between font-bold text-slate-900">
-                    <span className="text-base sm:text-lg">Total do Pix</span>
-                    <span className="text-lg sm:text-xl font-mono text-[#6B39A7] font-black">
+                  <div className="pt-3 border-t-2 border-slate-200 flex items-center justify-between">
+                    <div>
+                      <span className="text-lg sm:text-xl font-black text-slate-900 block leading-tight">
+                        Total do Pix
+                      </span>
+                      <span className="text-xs sm:text-sm text-slate-600 font-medium">
+                        Cobrança única e segura
+                      </span>
+                    </div>
+                    <span className="font-mono font-black text-2xl sm:text-3xl text-[#6B39A7]">
                       R$ {formattedTotalDisplay}
                     </span>
                   </div>
