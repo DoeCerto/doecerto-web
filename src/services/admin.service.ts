@@ -23,6 +23,8 @@ export interface OngAdminData {
   isRestricted?: boolean;
   lastAuditAt?: string;
   auditResults?: any[];
+  asaasWalletId?: string;
+  asaasAccountStatus?: string;
 }
 
 interface ApiResponse {
@@ -55,6 +57,8 @@ function normalizeOng(raw: any, status: OngStatus): OngAdminData {
     isRestricted: data.isRestricted,
     lastAuditAt: data.lastAuditAt,
     auditResults: data.auditResults,
+    asaasWalletId: data.asaasWalletId,
+    asaasAccountStatus: data.asaasAccountStatus,
   };
 }
 
@@ -115,5 +119,12 @@ export async function rejectOng(ongId: number, reason: string) {
 export async function getMyProfile() {
   const { data } = await api<any>('/admins/me');
   console.log('API response for /admins/me:', data);
+  return data;
+}
+
+export async function syncOngAsaas(ongId: number) {
+  const { data } = await api<any>(`/ongs/${ongId}/sync-asaas`, {
+    method: "POST",
+  });
   return data;
 }

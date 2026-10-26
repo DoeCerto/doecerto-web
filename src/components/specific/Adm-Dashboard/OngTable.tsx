@@ -15,12 +15,17 @@ import {
   CheckCircle,
   XCircle,
   ExternalLink,
-  IdCard
+  IdCard,
+  CreditCard,
+  RefreshCw,
+  Clock,
+  Copy
 } from 'lucide-react';
 import {
   getOngsByStatus,
   approveOng,
   rejectOng,
+  syncOngAsaas,
   type OngAdminData
 } from '@/services/admin.service';
 import toast from 'react-hot-toast';
@@ -41,6 +46,40 @@ const StatusBadge = ({ status }: { status: string }) => {
   return (
     <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border ${styles[status as keyof typeof styles] || styles.pending}`}>
       {label}
+    </span>
+  );
+};
+
+// --- SUB-COMPONENTE: BADGE DE STATUS ASAAS ---
+const AsaasBadge = ({ status, walletId }: { status?: string; walletId?: string }) => {
+  if (!walletId || status === 'not_created') {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
+        <span className="w-2 h-2 rounded-full bg-slate-400" />
+        Subconta Não Criada
+      </span>
+    );
+  }
+  if (status === 'approved') {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        Asaas: Aprovado
+      </span>
+    );
+  }
+  if (status === 'rejected') {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-red-50 text-red-700 border border-red-200">
+        <span className="w-2 h-2 rounded-full bg-red-500" />
+        Asaas: Recusado
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+      Asaas: Em Análise
     </span>
   );
 };
@@ -109,6 +148,25 @@ const ApproveModal = ({ isOpen, onClose, onConfirm, ong, status }: any) => {
           </div>
         )}
 
+        {/* Informação sobre o Gateway Asaas */}
+        {ong?.asaasAccountStatus === 'approved' ? (
+          <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-2xl text-xs sm:text-sm font-bold mb-6 text-left leading-relaxed flex items-start gap-3">
+            <CheckCircle size={20} className="text-emerald-600 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-black block text-emerald-900">Subconta Asaas Aprovada</span>
+              A homologação bancária já foi concluída com sucesso. Ao aprovar, a ONG ficará imediatamente apta a receber doações Pix na plataforma.
+            </div>
+          </div>
+        ) : (
+          <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-2xl text-xs sm:text-sm font-bold mb-6 text-left leading-relaxed flex items-start gap-3">
+            <Clock size={20} className="text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-black block text-amber-900">Aviso: Subconta Asaas em Homologação</span>
+              A subconta Asaas desta ONG ainda está em análise pelo gateway (prazo de 1 a 2 dias úteis). Você pode aprovar o compliance agora; a ONG só aparecerá no catálogo público quando o Asaas homologar a subconta.
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col gap-3">
           {isRestrictedTab || isHighRisk ? (
             <button onClick={() => setIsConfirming(true)} className="w-full text-white py-4 rounded-2xl font-black text-base shadow-lg transition-all bg-red-600 hover:bg-red-700 shadow-red-600/20 active:scale-[0.98]">
@@ -155,9 +213,27 @@ const RejectModal = ({ isOpen, onClose, onConfirm, reason, setReason }: any) => 
 };
 
 // --- SUB-COMPONENTE: MODAL DE DETALHES ---
-const DetailsModal = ({ ong, onClose, status, onApproveClick, onRejectClick }: any) => {
+const DetailsModal = ({ ong, onClose, status, onApproveClick, onRejectClick, onOngUpdated }: any) => {
+  const [isSyncingAsaas, setIsSyncingAsaas] = useState(false);
   if (!ong) return null;
   console.log('[DEBUG] ONG no Modal de Detalhes:', ong);
+
+  const handleSyncAsaas = async () => {
+    setIsSyncingAsaas(true);
+    try {
+      const res = await syncOngAsaas(ong.id || ong.userId);
+      toast.success('Status do Asaas sincronizado!');
+      if (res) {
+        ong.asaasWalletId = res.asaasWalletId;
+        ong.asaasAccountStatus = res.asaasAccountStatus;
+      }
+      if (onOngUpdated) onOngUpdated();
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao consultar status no Asaas');
+    } finally {
+      setIsSyncingAsaas(false);
+    }
+  };
 
   const getSanctionDetails = (item: any, source: string) => {
     switch (source) {
@@ -259,10 +335,81 @@ const DetailsModal = ({ ong, onClose, status, onApproveClick, onRejectClick }: a
         {/* Corpo rolável com barra de rolagem integrada e recuada */}
         <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10 mr-1.5 custom-scrollbar">
           {/* Header Básico */}
-          <div className="flex items-center justify-between p-6 bg-gray-50 rounded-3xl border border-gray-100">
-            <StatusBadge status={ong.verificationStatus || status} />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 bg-gray-50 rounded-3xl border border-gray-100 gap-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <StatusBadge status={ong.verificationStatus || status} />
+              <AsaasBadge status={ong.asaasAccountStatus} walletId={ong.asaasWalletId} />
+            </div>
             <div className="flex items-center gap-2 text-gray-500 text-base font-bold">
               {ong.lastAuditAt ? `Última auditoria: ${new Date(ong.lastAuditAt).toLocaleDateString('pt-BR')}` : `Cadastro: ${new Date(ong.createdAt || ong.verifiedAt || Date.now()).toLocaleDateString('pt-BR')}`}
+            </div>
+          </div>
+
+          {/* Card do Gateway de Pagamento Asaas */}
+          <div className="p-6 sm:p-7 rounded-3xl border border-slate-200/80 bg-slate-50/70 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                  <CreditCard size={24} />
+                </div>
+                <div>
+                  <h4 className="text-xl font-black text-slate-900 tracking-tight">Gateway de Pagamento Asaas</h4>
+                  <p className="text-xs text-slate-500 font-bold">Marketplace Split Nativo • 100% da doação para a subconta da ONG</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  disabled={isSyncingAsaas}
+                  onClick={handleSyncAsaas}
+                  className="px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-700 rounded-xl font-bold text-xs border border-slate-200 transition-all shadow-sm flex items-center gap-2 disabled:opacity-50 active:scale-95 cursor-pointer"
+                  title="Consultar status no gateway Asaas em tempo real"
+                >
+                  <RefreshCw size={14} className={isSyncingAsaas ? "animate-spin" : ""} />
+                  {isSyncingAsaas ? "Sincronizando..." : "Sincronizar Status Asaas"}
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-2xl bg-white border border-slate-100 space-y-1">
+                <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">Homologação Bancária</span>
+                {ong.asaasAccountStatus === 'approved' ? (
+                  <p className="text-sm font-bold text-emerald-700 flex items-center gap-1.5">
+                    <CheckCircle size={16} className="shrink-0 text-emerald-600" /> Subconta Aprovada e Ativa (Apta a receber doações Pix)
+                  </p>
+                ) : ong.asaasWalletId ? (
+                  <p className="text-sm font-bold text-amber-700 flex items-center gap-1.5">
+                    <Clock size={16} className="shrink-0 text-amber-600 animate-pulse" /> Em Análise pelo Asaas (Prazo: 1 a 2 dias úteis)
+                  </p>
+                ) : (
+                  <p className="text-sm font-bold text-slate-600 flex items-center gap-1.5">
+                    <AlertTriangle size={16} className="shrink-0 text-slate-500" /> Subconta não provisionada (Clique em Sincronizar)
+                  </p>
+                )}
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white border border-slate-100 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Subconta Wallet ID</span>
+                  <p className="text-xs sm:text-sm font-mono font-bold text-slate-800 break-all">
+                    {ong.asaasWalletId || 'Não gerado'}
+                  </p>
+                </div>
+                {ong.asaasWalletId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(ong.asaasWalletId);
+                      toast.success('Wallet ID copiado!');
+                    }}
+                    className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors shrink-0 ml-2"
+                    title="Copiar Wallet ID"
+                  >
+                    <Copy size={16} />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -474,6 +621,7 @@ export default function OngTableWithAPI({ status, onClose, onUpdate }: any) {
                 <th className="px-8 py-5 text-left text-xs font-black text-gray-400 uppercase tracking-wide">Nome</th>
                 <th className="px-8 py-5 text-left text-xs font-black text-gray-400 uppercase tracking-wide">E-mail</th>
                 <th className="px-8 py-5 text-left text-xs font-black text-gray-400 uppercase tracking-wide">CNPJ</th>
+                <th className="px-8 py-5 text-left text-xs font-black text-gray-400 uppercase tracking-wide">Gateway Asaas</th>
                 <th className="px-8 py-5 text-right text-xs font-black text-gray-400 uppercase tracking-wide">Ações</th>
               </tr>
             </thead>
@@ -490,6 +638,9 @@ export default function OngTableWithAPI({ status, onClose, onUpdate }: any) {
                   </td>
                   <td className="px-8 py-5 text-sm text-gray-600 font-bold">{ong.email}</td>
                   <td className="px-8 py-5 text-sm text-gray-600 font-bold">{ong.cnpj}</td>
+                  <td className="px-8 py-5">
+                    <AsaasBadge status={ong.asaasAccountStatus} walletId={ong.asaasWalletId} />
+                  </td>
                   <td className="px-8 py-5">
                     <div className="flex items-center justify-end gap-3">
                       <button onClick={() => setSelectedOng(ong)} title="Ver Detalhes" className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"><Eye size={18} /></button>
@@ -516,7 +667,7 @@ export default function OngTableWithAPI({ status, onClose, onUpdate }: any) {
       )}
 
       {/* Modais */}
-      <DetailsModal ong={selectedOng} status={status} onClose={() => setSelectedOng(null)} onApproveClick={(ong: any) => setOngToApprove(ong)} onRejectClick={(id: number) => setOngToRejectId(id)} />
+      <DetailsModal ong={selectedOng} status={status} onClose={() => setSelectedOng(null)} onApproveClick={(ong: any) => setOngToApprove(ong)} onRejectClick={(id: number) => setOngToRejectId(id)} onOngUpdated={loadOngs} />
       <ApproveModal isOpen={!!ongToApprove} ong={ongToApprove} status={status} onClose={() => setOngToApprove(null)} onConfirm={handleConfirmApprove} />
       <RejectModal isOpen={!!ongToRejectId} reason={rejectReason} setReason={setRejectReason} onClose={() => { setOngToRejectId(null); setRejectReason(''); }} onConfirm={handleConfirmReject} />
     </div>
