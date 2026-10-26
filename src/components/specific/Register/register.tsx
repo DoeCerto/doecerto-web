@@ -623,21 +623,21 @@ export default function Register() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 12 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="relative w-full max-w-[420px] bg-white rounded-2xl p-7 sm:p-8 shadow-2xl border border-gray-100 flex flex-col items-center text-center"
+              className="relative w-full max-w-lg bg-white rounded-3xl p-8 sm:p-10 shadow-2xl border border-gray-100 flex flex-col items-center text-center"
             >
-              {/* Ícone Fintech */}
-              <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-5 border border-emerald-100">
-                <CheckCircle2 size={30} strokeWidth={2.2} />
+              {/* Ícone Fintech Amplo */}
+              <div className="w-20 h-20 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-6 border border-emerald-100 shadow-sm">
+                <CheckCircle2 size={44} strokeWidth={2.4} />
               </div>
               
-              <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
+              <h2 className="text-3xl sm:text-[32px] font-extrabold text-gray-900 tracking-tight mb-3">
                 {accountType === "ong" ? "Cadastro enviado!" : "Conta criada com sucesso!"}
               </h2>
               
-              <p className="text-base text-gray-600 leading-relaxed mt-2.5 mb-6 px-1 font-normal">
+              <p className="text-lg sm:text-xl text-gray-700 leading-relaxed mb-8 px-2 font-medium">
                 {accountType === "ong" ? (
                   <>
-                    Recebemos seus dados e documentos. Nossa equipe de <span className="font-semibold text-gray-900">Compliance</span> já iniciou a análise. Acesse sua conta para acompanhar o status em tempo real.
+                    Recebemos seus dados e documentos. Nossa equipe de <strong className="text-gray-900 font-bold">Compliance</strong> já iniciou a análise. Acesse sua conta para acompanhar o status em tempo real.
                   </>
                 ) : (
                   <>
@@ -648,10 +648,9 @@ export default function Register() {
               
               <button
                 onClick={() => window.location.replace("/login")}
-                className="w-full py-3.5 px-6 bg-[#6B39A7] hover:bg-[#5b2f8e] text-white rounded-xl font-bold text-base transition-all active:scale-[0.98] shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-4 px-6 bg-[#6B39A7] hover:bg-[#5b2f8e] text-white rounded-xl font-bold text-lg sm:text-xl transition-all active:scale-[0.98] shadow-md shadow-purple-600/20 cursor-pointer"
               >
-                <span>Fazer login</span>
-                <ArrowRight size={18} />
+                Fazer Login Agora
               </button>
             </motion.div>
           </div>
