@@ -343,16 +343,20 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
               <AlertTriangle size={14} strokeWidth={2.5} className="sm:w-4 sm:h-4 text-red-600" />
               Restringida
             </button>
-          ) : ong.verificationStatus !== 'verified' ? (
+          ) : (ong.verificationStatus !== 'verified' || ong.asaasAccountStatus !== 'approved') ? (
             <button 
               onClick={() => setShowPendingModal(true)} 
               className="inline-flex items-center justify-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-amber-100 text-amber-700 text-xs sm:text-sm font-bold shadow-sm hover:bg-amber-200 hover:scale-[1.02] transition-all active:scale-95 shrink-0 cursor-pointer translate-y-0.5 sm:translate-y-1"
-              title="Sua conta está em análise"
+              title={
+                ong.verificationStatus === 'verified'
+                  ? "Aguardando aprovação do serviço de pagamentos (Asaas)"
+                  : "Sua conta está em análise de auditoria e conformidade"
+              }
             >
               <Clock size={14} strokeWidth={3} className="sm:w-4 sm:h-4" />
-              Em Análise
+              {ong.verificationStatus === 'verified' ? "Aprovação Bancária" : "Em Análise"}
             </button>
-          ) : ong.verificationStatus === 'verified' ? (
+          ) : (ong.verificationStatus === 'verified' && ong.asaasAccountStatus === 'approved') ? (
             <motion.img
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -751,9 +755,21 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                 <Clock size={40} strokeWidth={2.5} />
               </div>
               
-              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 tracking-tight">Em Análise</h2>
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 tracking-tight">
+                {ong.verificationStatus === 'verified' && ong.asaasAccountStatus !== 'approved'
+                  ? "Homologação de Pagamento"
+                  : "Conta em Análise"}
+              </h2>
               <p className="text-base sm:text-lg text-slate-600 font-medium leading-relaxed mb-8 px-2">
-                O seu perfil já está criado! Neste momento, nosso time de <strong className="text-amber-600 font-bold">Compliance e Auditoria</strong> está avaliando a sua documentação para garantir a segurança da plataforma. Aguarde a liberação oficial para começar a receber doações.
+                {ong.verificationStatus === 'verified' && ong.asaasAccountStatus !== 'approved' ? (
+                  <>
+                    Sua instituição já foi <strong className="text-emerald-700 font-bold">aprovada pela auditoria do DoeCerto</strong>! No momento, sua subconta exclusiva está em fase de homologação cadastral pelo <strong className="text-purple-700 font-bold">serviço de pagamentos da plataforma (Asaas)</strong>. Assim que a aprovação bancária for concluída (prazo médio de 1 a 2 dias úteis), sua ONG será publicada na vitrine oficial e liberada para receber doações via Pix diretamente.
+                  </>
+                ) : (
+                  <>
+                    O seu perfil já está criado! Neste momento, nosso time de <strong className="text-amber-600 font-bold">Compliance e Auditoria</strong> e o <strong className="text-purple-700 font-bold">serviço de pagamentos da plataforma (Asaas)</strong> estão avaliando as informações e a documentação cadastral da sua instituição. Aguarde a homologação oficial para sua ONG ser exibida na vitrine e começar a receber doações.
+                  </>
+                )}
               </p>
               
               <button
