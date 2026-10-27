@@ -18,6 +18,7 @@ import DonationTutorialModal from "@/components/ui/DonationTutorial";
 import { calculateImpact } from "@/utils/impactCalculator";
 import { formatCPF, validateCPF, removeFormatting } from "@/utils/documentValidation";
 import DonationSuccessModal from "@/components/specific/Donation/DonationSuccessModal";
+import SlideCommit from "@/components/ui/SlideCommit";
 
 // ==========================================
 // TEXTO DE IMPACTO SOCIAL TYPEWRITER
@@ -578,12 +579,12 @@ function PixPageContent() {
   const handleAvancarParaPagamento = async () => {
     if (baseAmount < 5) {
       setErrorMessage("O valor mínimo para doação via Pix é de R$ 5,00.");
-      return;
+      throw new Error("O valor mínimo para doação via Pix é de R$ 5,00.");
     }
 
     if (isOngUser) {
       setErrorMessage("Contas institucionais não podem realizar doações. Para doar, entre com uma conta de doador.");
-      return;
+      throw new Error("Contas institucionais não podem realizar doações.");
     }
 
     // 1. Doador logado: Gera Pix Dinâmico Asaas direto (já temos os dados da conta)
@@ -594,6 +595,7 @@ function PixPageContent() {
         navigateToStep("payment", String(totalAmount));
       } catch (err: any) {
         setErrorMessage(err?.message || "Falha ao gerar o QR Code no Asaas. Tente novamente.");
+        throw err;
       }
       return;
     }
@@ -1107,26 +1109,22 @@ function PixPageContent() {
                 </div>
               )}
 
-              {/* BOTÃO PRINCIPAL DE AVANÇAR */}
+              {/* BOTÃO PRINCIPAL DE AVANÇAR (SLIDE TO COMMIT FINTECH) */}
               <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={handleAvancarParaPagamento}
+                <SlideCommit
+                  label={`Deslize para doar R$ ${formattedValorDisplay}`}
+                  doneLabel="Gerando Pix..."
+                  errorLabel="Não foi possível avançar"
+                  onConfirm={handleAvancarParaPagamento}
                   disabled={isGeneratingPix || isOngUser}
-                  className={`w-full py-4 sm:py-5 rounded-xl font-bold text-lg sm:text-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer ${isGeneratingPix || isOngUser
-                    ? "bg-slate-200 text-slate-500 border border-slate-300 cursor-not-allowed shadow-none"
-                    : "bg-[#6B39A7] hover:bg-[#582d8c] text-white active:scale-[0.98] shadow-purple-500/25"
-                    }`}
-                >
-                  {isGeneratingPix ? (
-                    <>
-                      <Loader2 size={20} className="animate-spin" />
-                      <span>Gerando QR Code no Banco Central...</span>
-                    </>
-                  ) : (
-                    <span>Continuar para Doação de R$ {formattedValorDisplay}</span>
-                  )}
-                </button>
+                  trackColor="#6B39A7"
+                  trackTextColor="#ffffff"
+                  handleColor="#ffffff"
+                  handleIconColor="#6B39A7"
+                  successColor="#16a34a"
+                  height={58}
+                  radius={20}
+                />
               </div>
 
             </div>
