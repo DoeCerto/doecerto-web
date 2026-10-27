@@ -1109,22 +1109,54 @@ function PixPageContent() {
                 </div>
               )}
 
-              {/* BOTÃO PRINCIPAL DE AVANÇAR (SLIDE TO COMMIT FINTECH) */}
+              {/* BOTÃO PRINCIPAL DE AVANÇAR */}
               <div className="pt-2">
-                <SlideCommit
-                  label={`Deslize para doar R$ ${formattedValorDisplay}`}
-                  doneLabel="Gerando Pix..."
-                  errorLabel="Não foi possível avançar"
-                  onConfirm={handleAvancarParaPagamento}
-                  disabled={isGeneratingPix || isOngUser}
-                  trackColor="#6B39A7"
-                  trackTextColor="#ffffff"
-                  handleColor="#ffffff"
-                  handleIconColor="#6B39A7"
-                  successColor="#16a34a"
-                  height={58}
-                  radius={20}
-                />
+                {/* Mobile e Tablets (< 1024px): Slider Interativo "Deslize para doar" */}
+                <div className="block lg:hidden">
+                  <SlideCommit
+                    label={`Deslize para doar R$ ${formattedValorDisplay}`}
+                    doneLabel="Gerando Pix..."
+                    errorLabel="Não foi possível avançar"
+                    onConfirm={handleAvancarParaPagamento}
+                    disabled={isGeneratingPix || isOngUser}
+                    trackColor="#6B39A7"
+                    trackTextColor="#ffffff"
+                    handleColor="#ffffff"
+                    handleIconColor="#6B39A7"
+                    successColor="#16a34a"
+                    height={58}
+                    radius={20}
+                  />
+                </div>
+
+                {/* PC e Notebooks (>= 1024px): Botão Tradicional Fintech */}
+                <div className="hidden lg:block">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await handleAvancarParaPagamento();
+                      } catch {
+                        // Mensagem de erro já gerenciada pelo estado errorMessage
+                      }
+                    }}
+                    disabled={isGeneratingPix || isOngUser}
+                    className={`w-full py-4 sm:py-5 rounded-xl font-bold text-lg sm:text-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer ${
+                      isGeneratingPix || isOngUser
+                        ? "bg-slate-200 text-slate-500 border border-slate-300 cursor-not-allowed shadow-none"
+                        : "bg-[#6B39A7] hover:bg-[#582d8c] text-white active:scale-[0.98] shadow-purple-500/25"
+                    }`}
+                  >
+                    {isGeneratingPix ? (
+                      <>
+                        <Loader2 size={20} className="animate-spin" />
+                        <span>Gerando QR Code no Banco Central...</span>
+                      </>
+                    ) : (
+                      <span>Continuar para Doação de R$ {formattedValorDisplay}</span>
+                    )}
+                  </button>
+                </div>
               </div>
 
             </div>
