@@ -397,7 +397,7 @@ function LoginContent() {
       <Toaster position="top-center" />
 
       {/* LADO ESQUERDO: CONTEÚDO PRINCIPAL / STEPS */}
-      <div className="w-full lg:w-1/2 flex flex-col relative items-center justify-center px-6 sm:px-10 lg:px-12 py-10 overflow-y-auto min-h-screen">
+      <div className="w-full lg:w-1/2 flex flex-col relative items-center justify-start px-6 sm:px-10 lg:px-12 py-8 sm:py-12 overflow-y-auto min-h-screen">
         <div
           className={`w-full shrink-0 my-auto transition-all duration-300 ${
             step === "2fa_setup" || step === "2fa_backup_codes"
@@ -735,7 +735,7 @@ function LoginContent() {
                 {/* Passo 1: QR Code */}
                 <div className="flex flex-col gap-3.5">
                   <div className="flex items-start gap-3">
-                    <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-[#6B39A7] text-white text-sm font-black shadow-xs shrink-0 mt-0.5">
+                    <span className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#6B39A7] text-white text-xs sm:text-sm font-black shadow-xs shrink-0 mt-0.5">
                       1
                     </span>
                     <div>
@@ -743,66 +743,63 @@ function LoginContent() {
                         Escaneie o QR Code com seu aplicativo
                       </h2>
                       <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
-                        Use o Google Authenticator, Microsoft Authenticator, 1Password ou a câmera do seu celular.
+                        Abra o Google Authenticator, Microsoft Authenticator ou 1Password.
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-center justify-center py-6 px-4 bg-slate-50/70 rounded-2xl border border-slate-100 mt-1">
+                  <div className="flex flex-col sm:flex-row items-center gap-5 p-4 sm:p-5 bg-slate-50/70 rounded-2xl border border-slate-100 mt-1">
                     {isLoadingSetup || !setupData ? (
-                      <div className="w-52 h-52 flex flex-col items-center justify-center gap-3">
-                        <div className="w-9 h-9 border-3 border-purple-200 border-t-[#6B39A7] rounded-full animate-spin"></div>
-                        <span className="text-sm text-slate-400 font-medium">Gerando QR Code seguro...</span>
+                      <div className="w-36 h-36 sm:w-40 sm:h-40 flex flex-col items-center justify-center gap-2 shrink-0">
+                        <div className="w-8 h-8 border-3 border-purple-200 border-t-[#6B39A7] rounded-full animate-spin"></div>
+                        <span className="text-xs text-slate-400 font-medium">Carregando QR...</span>
                       </div>
                     ) : (
-                      <div className="relative p-4 bg-white rounded-2xl shadow-xs border border-slate-200">
+                      <div className="relative p-2.5 bg-white rounded-xl shadow-xs border border-slate-200 shrink-0">
                         <img
                           src={setupData.qrCodeDataUrl}
                           alt="QR Code de Configuração 2FA"
-                          className="w-48 h-48 sm:w-56 sm:h-56 object-contain"
+                          className="w-36 h-36 sm:w-40 sm:h-40 object-contain"
                         />
                       </div>
                     )}
 
-                    {/* Toggle chave manual */}
-                    {setupData?.secret && (
-                      <div className="mt-4 w-full text-center">
-                        <button
-                          type="button"
-                          onClick={() => setShowManualKey(!showManualKey)}
-                          className="text-xs sm:text-sm font-bold text-[#6B39A7] hover:text-[#582d8c] transition-colors cursor-pointer inline-flex items-center gap-1.5"
-                        >
-                          {showManualKey ? "Ocultar chave manual" : "Não consegue escanear? Inserir chave manualmente"}
-                        </button>
+                    <div className="flex flex-col gap-2.5 text-center sm:text-left flex-1 min-w-0">
+                      <span className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
+                        Aponte a câmera do seu aplicativo autenticador para o código ao lado.
+                      </span>
 
-                        {showManualKey && (
-                          <div className="mt-3 p-3.5 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-3 text-left animate-in fade-in shadow-xs">
-                            <div className="flex flex-col overflow-hidden">
-                              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Chave de Configuração</span>
-                              <span className="font-mono text-xs sm:text-sm font-bold text-slate-800 truncate select-all">{setupData.secret}</span>
+                      {/* Toggle chave manual */}
+                      {setupData?.secret && (
+                        <div className="w-full">
+                          <button
+                            type="button"
+                            onClick={() => setShowManualKey(!showManualKey)}
+                            className="text-xs sm:text-sm font-bold text-[#6B39A7] hover:text-[#582d8c] transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                          >
+                            {showManualKey ? "Ocultar chave manual" : "Não consegue escanear? Inserir chave"}
+                          </button>
+
+                          {showManualKey && (
+                            <div className="mt-2.5 p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-2 text-left animate-in fade-in shadow-xs">
+                              <div className="flex flex-col overflow-hidden">
+                                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Chave Manual</span>
+                                <span className="font-mono text-xs font-bold text-slate-800 truncate select-all">{setupData.secret}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={handleCopySecret}
+                                className="shrink-0 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-700 hover:text-slate-900 transition-colors font-bold text-xs flex items-center gap-1 cursor-pointer"
+                                title="Copiar chave"
+                              >
+                                {copiedSecret ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+                                <span>{copiedSecret ? "Copiado" : "Copiar"}</span>
+                              </button>
                             </div>
-                            <button
-                              type="button"
-                              onClick={handleCopySecret}
-                              className="shrink-0 px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-700 hover:text-slate-900 transition-colors font-bold text-xs flex items-center gap-1.5 cursor-pointer"
-                              title="Copiar chave"
-                            >
-                              {copiedSecret ? (
-                                <>
-                                  <Check size={16} className="text-green-600" />
-                                  <span className="text-green-600">Copiado</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy size={16} />
-                                  <span>Copiar</span>
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
