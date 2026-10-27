@@ -924,14 +924,14 @@ export default function HomeClient({
               exit={{ opacity: 0, y: 30, scale: 0.98 }}
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white w-full sm:max-w-2xl rounded-t-[2.5rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-100 flex flex-col max-h-[90vh]"
+              className="bg-white w-full sm:max-w-2xl rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl border border-slate-100 flex flex-col max-h-[90vh]"
             >
               {/* Header do Modal com Respiro Amplo */}
               <div className="flex items-center justify-between px-7 sm:px-9 py-6 sm:py-7 border-b border-slate-100 bg-white">
                 <div className="flex items-center gap-3">
                   <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Filtros</h2>
                   {(activeCategories.length > 0 || sortBy !== 'default') && (
-                    <span className="px-3 py-1 rounded-full text-xs sm:text-sm font-bold bg-purple-50 text-[#6B39A7] border border-purple-200/80">
+                    <span className="px-3 py-1 rounded-lg text-xs sm:text-sm font-bold bg-purple-50 text-[#6B39A7] border border-purple-200/80">
                       {activeCategories.length + (sortBy !== 'default' ? 1 : 0)} {(activeCategories.length + (sortBy !== 'default' ? 1 : 0)) === 1 ? 'ativo' : 'ativos'}
                     </span>
                   )}
@@ -945,7 +945,7 @@ export default function HomeClient({
                         setActiveCategories([]);
                         setSortBy('default');
                       }}
-                      className="text-sm font-bold text-slate-400 hover:text-[#6B39A7] transition-colors px-3 py-1.5 rounded-xl hover:bg-purple-50/50 cursor-pointer"
+                      className="text-sm font-bold text-slate-400 hover:text-[#6B39A7] transition-colors px-3 py-1.5 rounded-lg hover:bg-purple-50/50 cursor-pointer"
                     >
                       Limpar filtros
                     </button>
@@ -954,7 +954,7 @@ export default function HomeClient({
                     type="button"
                     onClick={() => setIsFilterModalOpen(false)}
                     aria-label="Fechar filtros"
-                    className="w-10 h-10 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                    className="w-10 h-10 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
                   >
                     <FiX size={22} />
                   </button>
@@ -973,7 +973,7 @@ export default function HomeClient({
                     <button
                       type="button"
                       onClick={() => setSortBy('default')}
-                      className={`px-5 py-3.5 rounded-2xl text-sm sm:text-base font-bold transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 ${
+                      className={`px-5 py-3.5 rounded-xl text-sm sm:text-base font-bold transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 ${
                         sortBy === 'default'
                           ? 'bg-[#6B39A7] text-white shadow-md shadow-purple-900/20 border border-[#6B39A7]'
                           : 'bg-slate-50 border border-slate-200/80 text-slate-700 hover:bg-white hover:border-slate-300'
@@ -986,20 +986,20 @@ export default function HomeClient({
                     <button
                       type="button"
                       onClick={() => setSortBy('rating')}
-                      className={`px-5 py-3.5 rounded-2xl text-sm sm:text-base font-bold transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 ${
+                      className={`px-5 py-3.5 rounded-xl text-sm sm:text-base font-bold transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 ${
                         sortBy === 'rating'
                           ? 'bg-[#6B39A7] text-white shadow-md shadow-purple-900/20 border border-[#6B39A7]'
                           : 'bg-slate-50 border border-slate-200/80 text-slate-700 hover:bg-white hover:border-slate-300'
                       }`}
                     >
-                      <Star size={18} className={sortBy === 'rating' ? 'text-amber-300 fill-amber-300' : 'text-slate-400'} />
+                      <Star size={18} className={sortBy === 'rating' ? 'text-purple-200' : 'text-slate-400'} />
                       <span>Melhor Avaliação</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={handleDistanceFilterClick}
-                      className={`px-5 py-3.5 rounded-2xl text-sm sm:text-base font-bold transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 ${
+                      className={`px-5 py-3.5 rounded-xl text-sm sm:text-base font-bold transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 ${
                         sortBy === 'distance'
                           ? 'bg-[#6B39A7] text-white shadow-md shadow-purple-900/20 border border-[#6B39A7]'
                           : 'bg-slate-50 border border-slate-200/80 text-slate-700 hover:bg-white hover:border-slate-300'
@@ -1032,7 +1032,7 @@ export default function HomeClient({
                             key={i}
                             type="button"
                             onClick={() => toggleCategory(cat)}
-                            className={`px-5 py-3 rounded-2xl text-sm sm:text-base font-bold transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 ${
+                            className={`px-5 py-3 rounded-xl text-sm sm:text-base font-bold transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 ${
                               isSelected
                                 ? 'bg-purple-50 border-2 border-[#6B39A7] text-[#6B39A7] shadow-sm'
                                 : 'bg-white border border-slate-200 text-slate-700 hover:border-purple-300 hover:bg-purple-50/30'
@@ -1053,7 +1053,7 @@ export default function HomeClient({
                 <button
                   type="button"
                   onClick={() => setIsFilterModalOpen(false)}
-                  className="w-full bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold py-4.5 sm:py-5 rounded-2xl shadow-lg shadow-purple-900/15 active:scale-[0.98] transition-all cursor-pointer text-base sm:text-lg flex items-center justify-center gap-2"
+                  className="w-full bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold py-4.5 sm:py-5 rounded-xl shadow-lg shadow-purple-900/15 active:scale-[0.98] transition-all cursor-pointer text-base sm:text-lg flex items-center justify-center gap-2"
                 >
                   <span>
                     Ver {filteredCatalog.length} {filteredCatalog.length === 1 ? 'resultado' : 'resultados'}
