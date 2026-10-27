@@ -6,6 +6,7 @@ export interface BankAccountData {
   accountNumber: string;
   accountType: string;
   pixKey: string;
+  currentPassword?: string;
 }
 
 export const BankAccountService = {

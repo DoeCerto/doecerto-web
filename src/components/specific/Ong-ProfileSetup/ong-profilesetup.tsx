@@ -23,7 +23,11 @@ import {
   ExternalLink,
   LogOut,
   ChevronDown,
-  Check
+  Check,
+  Lock,
+  Eye,
+  EyeOff,
+  ShieldCheck
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
@@ -119,6 +123,12 @@ export default function OngSetupProfile() {
   const [accountType, setAccountType] = useState("Corrente");
   const [pixKeyType, setPixKeyType] = useState("CPF");
 
+  // Senha atual e rastreamento de alteração de Pix
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [initialPixKey, setInitialPixKey] = useState("");
+  const [hasExistingAccount, setHasExistingAccount] = useState(false);
+
   const accountTypeOptions = ["Corrente", "Poupança", "Aplicação"];
 
   const primaryCategoryObj = availableCategories.find((c) => c.id === primaryCategoryId);
@@ -181,7 +191,9 @@ export default function OngSetupProfile() {
 
         const bankData = await BankAccountService.getMyAccount().catch(() => null);
         if (bankData) {
+          setHasExistingAccount(true);
           const savedKey = bankData.pixKey || "";
+          setInitialPixKey(savedKey);
 
           setBankName(bankData.bankName || "");
           setAgencyNumber(bankData.agencyNumber || "");
@@ -316,6 +328,16 @@ export default function OngSetupProfile() {
       return false;
     }
 
+    const isPixKeyModified = pixKey.trim() !== initialPixKey.trim();
+    if (isPixKeyModified && !currentPassword.trim()) {
+      toast.error(
+        initialPixKey
+          ? "Por segurança, informe sua senha atual para alterar a chave Pix de repasses."
+          : "Por segurança, informe sua senha atual para cadastrar a chave Pix de repasses."
+      );
+      return false;
+    }
+
     return true;
   };
 
@@ -352,6 +374,7 @@ export default function OngSetupProfile() {
         accountNumber,
         accountType,
         pixKey,
+        currentPassword: currentPassword.trim() || undefined,
       });
 
       toast.success("Perfil atualizado com sucesso!");
@@ -359,10 +382,11 @@ export default function OngSetupProfile() {
         router.push("/ong-dashboard");
       }, 1500);
     } catch (error: any) {
+      const backendMsg = error?.data?.message || error?.response?.data?.message || error?.message;
       const msg = error.message?.includes("avatar")
         ? "A imagem da logo é muito grande ou inválida."
-        : (error?.response?.data?.message || error?.message || "Não foi possível salvar os dados do perfil. Verifique as informações e tente novamente.");
-      toast.error(msg);
+        : (backendMsg || "Não foi possível salvar os dados do perfil. Verifique as informações e tente novamente.");
+      toast.error(Array.isArray(msg) ? msg[0] : msg);
     } finally {
       setLoading(false);
     }
@@ -847,6 +871,64 @@ export default function OngSetupProfile() {
                   placeholder="12345-6"
                   className="w-full bg-white p-4 rounded-xl border border-gray-100 outline-none text-sm focus:border-purple-300 transition-colors shadow-sm"
                 />
+              </div>
+
+              {/* CONFIRMAÇÃO DE SENHA PARA CHAVE PIX */}
+              <div className="md:col-span-2 pt-2 border-t border-purple-100/60 mt-2">
+                <div className={`p-4 sm:p-5 rounded-2xl border transition-all ${
+                  pixKey.trim() !== initialPixKey.trim()
+                    ? "bg-purple-50/80 border-purple-300 shadow-sm"
+                    : "bg-slate-50/70 border-slate-200/80"
+                }`}>
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="w-9 h-9 rounded-xl bg-purple-100 flex items-center justify-center shrink-0 text-[#6B39A7] mt-0.5">
+                      <ShieldCheck size={20} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-bold text-slate-900">
+                          Confirmação de Segurança
+                        </h4>
+                        {pixKey.trim() !== initialPixKey.trim() && (
+                          <span className="px-2 py-0.5 text-[10px] font-black uppercase rounded-full bg-purple-200/70 text-[#6B39A7]">
+                            Obrigatório
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        {initialPixKey
+                          ? "Para proteger sua instituição contra desvios de repasse, confirme sua senha atual apenas se você estiver alterando a chave Pix."
+                          : "Por normas de segurança bancária, confirme sua senha atual para cadastrar a chave Pix onde a ONG receberá as doações."}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col mt-2">
+                    <label className="text-[10px] font-black uppercase text-purple-700 mb-1.5 ml-1">
+                      Sua Senha Atual {pixKey.trim() !== initialPixKey.trim() && <span className="text-red-500">*</span>}
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <Lock size={16} />
+                      </div>
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder="Digite sua senha atual para confirmar o Pix"
+                        className="w-full bg-white pl-10 pr-12 py-3.5 rounded-xl border border-slate-200 outline-none text-sm text-slate-800 focus:border-[#6B39A7] focus:ring-2 focus:ring-[#6B39A7]/15 transition-all shadow-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? "Ocultar senha" : "Exibir senha"}
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-[#6B39A7] cursor-pointer transition-colors"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
 
             </div>
