@@ -250,6 +250,25 @@ export default function HomeClient({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsFilterModalOpen(false);
+      }
+    }
+
+    if (isFilterModalOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown);
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isFilterModalOpen]);
+
   async function handleLogout(e: React.MouseEvent) {
     e.stopPropagation();
     setIsMenuOpen(false);
