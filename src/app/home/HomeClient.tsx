@@ -916,7 +916,7 @@ export default function HomeClient({
         {isFilterModalOpen && (
           <div
             onClick={() => setIsFilterModalOpen(false)}
-            className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center sm:p-6 bg-slate-950/45 backdrop-blur-md"
+            className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-6 bg-slate-950/45 backdrop-blur-md"
           >
             <motion.div
               initial={{ opacity: 0, y: 30, scale: 0.98 }}
@@ -924,20 +924,20 @@ export default function HomeClient({
               exit={{ opacity: 0, y: 30, scale: 0.98 }}
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white w-full sm:max-w-lg rounded-t-[2.25rem] sm:rounded-[2.25rem] overflow-hidden shadow-2xl border border-slate-100 flex flex-col max-h-[88vh]"
+              className="bg-white w-full sm:max-w-2xl rounded-t-[2.5rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-100 flex flex-col max-h-[90vh]"
             >
-              {/* Header do Modal */}
-              <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-white">
-                <div className="flex items-center gap-2.5">
-                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Filtros</h2>
+              {/* Header do Modal com Respiro Amplo */}
+              <div className="flex items-center justify-between px-7 sm:px-9 py-6 sm:py-7 border-b border-slate-100 bg-white">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Filtros</h2>
                   {(activeCategories.length > 0 || sortBy !== 'default') && (
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-[#6B39A7] border border-purple-200/80">
+                    <span className="px-3 py-1 rounded-full text-xs sm:text-sm font-bold bg-purple-50 text-[#6B39A7] border border-purple-200/80">
                       {activeCategories.length + (sortBy !== 'default' ? 1 : 0)} {(activeCategories.length + (sortBy !== 'default' ? 1 : 0)) === 1 ? 'ativo' : 'ativos'}
                     </span>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   {(activeCategories.length > 0 || sortBy !== 'default') && (
                     <button
                       type="button"
@@ -945,67 +945,67 @@ export default function HomeClient({
                         setActiveCategories([]);
                         setSortBy('default');
                       }}
-                      className="text-xs sm:text-sm font-bold text-slate-400 hover:text-[#6B39A7] transition-colors px-2 py-1 rounded-lg hover:bg-purple-50/50 cursor-pointer"
+                      className="text-sm font-bold text-slate-400 hover:text-[#6B39A7] transition-colors px-3 py-1.5 rounded-xl hover:bg-purple-50/50 cursor-pointer"
                     >
-                      Limpar
+                      Limpar filtros
                     </button>
                   )}
                   <button
                     type="button"
                     onClick={() => setIsFilterModalOpen(false)}
                     aria-label="Fechar filtros"
-                    className="w-9 h-9 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                    className="w-10 h-10 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
                   >
-                    <FiX size={20} />
+                    <FiX size={22} />
                   </button>
                 </div>
               </div>
 
-              {/* Corpo com Scroll Suave */}
-              <div className="p-6 sm:p-7 overflow-y-auto flex-1 space-y-7 custom-scrollbar">
+              {/* Corpo com Espaçamento Amplo e Scroll Suave */}
+              <div className="px-7 sm:px-9 py-8 sm:py-9 overflow-y-auto flex-1 space-y-10 custom-scrollbar">
                 {/* Seção 1: Ordenação */}
                 <div>
-                  <div className="flex items-center justify-between mb-3.5">
-                    <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">Ordenar por</h3>
-                    <span className="text-xs font-semibold text-slate-400">Escolha uma opção</span>
+                  <div className="flex items-center justify-between mb-4 sm:mb-5">
+                    <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Ordenar por</h3>
+                    <span className="text-xs sm:text-sm font-semibold text-slate-400">Escolha uma opção</span>
                   </div>
-                  <div className="flex flex-wrap gap-2.5">
+                  <div className="flex flex-wrap gap-3 sm:gap-3.5">
                     <button
                       type="button"
                       onClick={() => setSortBy('default')}
-                      className={`px-4 py-3 rounded-2xl text-sm sm:text-base font-bold transition-all flex items-center gap-2 cursor-pointer active:scale-95 ${
+                      className={`px-5 py-3.5 rounded-2xl text-sm sm:text-base font-bold transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 ${
                         sortBy === 'default'
                           ? 'bg-[#6B39A7] text-white shadow-md shadow-purple-900/20 border border-[#6B39A7]'
                           : 'bg-slate-50 border border-slate-200/80 text-slate-700 hover:bg-white hover:border-slate-300'
                       }`}
                     >
-                      <Sparkles size={16} className={sortBy === 'default' ? 'text-purple-200' : 'text-slate-400'} />
+                      <Sparkles size={18} className={sortBy === 'default' ? 'text-purple-200' : 'text-slate-400'} />
                       <span>Padrão</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setSortBy('rating')}
-                      className={`px-4 py-3 rounded-2xl text-sm sm:text-base font-bold transition-all flex items-center gap-2 cursor-pointer active:scale-95 ${
+                      className={`px-5 py-3.5 rounded-2xl text-sm sm:text-base font-bold transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 ${
                         sortBy === 'rating'
                           ? 'bg-[#6B39A7] text-white shadow-md shadow-purple-900/20 border border-[#6B39A7]'
                           : 'bg-slate-50 border border-slate-200/80 text-slate-700 hover:bg-white hover:border-slate-300'
                       }`}
                     >
-                      <Star size={16} className={sortBy === 'rating' ? 'text-amber-300 fill-amber-300' : 'text-slate-400'} />
+                      <Star size={18} className={sortBy === 'rating' ? 'text-amber-300 fill-amber-300' : 'text-slate-400'} />
                       <span>Melhor Avaliação</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={handleDistanceFilterClick}
-                      className={`px-4 py-3 rounded-2xl text-sm sm:text-base font-bold transition-all flex items-center gap-2 cursor-pointer active:scale-95 ${
+                      className={`px-5 py-3.5 rounded-2xl text-sm sm:text-base font-bold transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 ${
                         sortBy === 'distance'
                           ? 'bg-[#6B39A7] text-white shadow-md shadow-purple-900/20 border border-[#6B39A7]'
                           : 'bg-slate-50 border border-slate-200/80 text-slate-700 hover:bg-white hover:border-slate-300'
                       }`}
                     >
-                      <MapPin size={16} className={sortBy === 'distance' ? 'text-purple-200' : 'text-slate-400'} />
+                      <MapPin size={18} className={sortBy === 'distance' ? 'text-purple-200' : 'text-slate-400'} />
                       <span>Menor Distância</span>
                     </button>
                   </div>
@@ -1013,17 +1013,17 @@ export default function HomeClient({
 
                 {/* Seção 2: Categorias */}
                 <div>
-                  <div className="flex items-center justify-between mb-3.5">
-                    <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">Categorias</h3>
-                    <span className="text-xs font-semibold text-slate-400">
+                  <div className="flex items-center justify-between mb-4 sm:mb-5">
+                    <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Categorias</h3>
+                    <span className="text-xs sm:text-sm font-semibold text-slate-400">
                       {activeCategories.length > 0
                         ? `${activeCategories.length} selecionada(s)`
                         : 'Todas as causas'}
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-2.5">
+                  <div className="flex flex-wrap gap-3 sm:gap-3.5">
                     {availableCategories.length === 0 ? (
-                      <p className="text-sm text-slate-500 font-medium">Nenhuma categoria disponível no momento.</p>
+                      <p className="text-base text-slate-500 font-medium">Nenhuma categoria disponível no momento.</p>
                     ) : (
                       availableCategories.map((cat, i) => {
                         const isSelected = activeCategories.includes(cat);
@@ -1032,13 +1032,13 @@ export default function HomeClient({
                             key={i}
                             type="button"
                             onClick={() => toggleCategory(cat)}
-                            className={`px-4 py-2.5 rounded-2xl text-sm sm:text-base font-bold transition-all flex items-center gap-2 cursor-pointer active:scale-95 ${
+                            className={`px-5 py-3 rounded-2xl text-sm sm:text-base font-bold transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 ${
                               isSelected
                                 ? 'bg-purple-50 border-2 border-[#6B39A7] text-[#6B39A7] shadow-sm'
                                 : 'bg-white border border-slate-200 text-slate-700 hover:border-purple-300 hover:bg-purple-50/30'
                             }`}
                           >
-                            {isSelected && <Check size={16} className="text-[#6B39A7] stroke-[3]" />}
+                            {isSelected && <Check size={18} className="text-[#6B39A7] stroke-[3]" />}
                             <span>{cat}</span>
                           </button>
                         );
@@ -1048,12 +1048,12 @@ export default function HomeClient({
                 </div>
               </div>
 
-              {/* Footer com Botão de Confirmação */}
-              <div className="p-5 sm:p-6 border-t border-slate-100 bg-white">
+              {/* Footer com Botão de Confirmação e Respiro */}
+              <div className="px-7 sm:px-9 py-6 sm:py-7 border-t border-slate-100 bg-white">
                 <button
                   type="button"
                   onClick={() => setIsFilterModalOpen(false)}
-                  className="w-full bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold py-4 rounded-2xl shadow-lg shadow-purple-900/15 active:scale-[0.98] transition-all cursor-pointer text-base sm:text-lg flex items-center justify-center gap-2"
+                  className="w-full bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold py-4.5 sm:py-5 rounded-2xl shadow-lg shadow-purple-900/15 active:scale-[0.98] transition-all cursor-pointer text-base sm:text-lg flex items-center justify-center gap-2"
                 >
                   <span>
                     Ver {filteredCatalog.length} {filteredCatalog.length === 1 ? 'resultado' : 'resultados'}
