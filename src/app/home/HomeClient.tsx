@@ -254,6 +254,9 @@ export default function HomeClient({
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setIsFilterModalOpen(false);
+        if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
       }
     }
 
@@ -725,7 +728,7 @@ export default function HomeClient({
         <div className="flex items-center gap-3 mb-10 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <button
             onClick={() => setIsFilterModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-extrabold bg-[#6B39A7] hover:bg-[#582d8c] text-white shadow-md shadow-purple-900/15 active:scale-95 transition-all shrink-0 cursor-pointer"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-extrabold bg-[#6B39A7] hover:bg-[#582d8c] text-white shadow-md shadow-purple-900/15 active:scale-95 transition-all shrink-0 cursor-pointer outline-none focus:outline-none focus-visible:outline-none"
           >
             <SlidersHorizontal size={16} /> Filtros
             {(activeCategories.length > 0 || sortBy !== 'default') && (
@@ -739,7 +742,7 @@ export default function HomeClient({
 
           <button
             onClick={handleDistanceFilterClick}
-            className={`px-4.5 py-2.5 rounded-full text-sm font-bold transition-all active:scale-95 shrink-0 cursor-pointer ${
+            className={`px-4.5 py-2.5 rounded-full text-sm font-bold transition-all active:scale-95 shrink-0 cursor-pointer outline-none focus:outline-none focus-visible:outline-none ${
               sortBy === 'distance'
                 ? "bg-[#6B39A7] text-white shadow-md shadow-purple-900/15 border border-transparent"
                 : "bg-white text-slate-700 border border-slate-200 hover:bg-purple-50 hover:text-[#6B39A7] hover:border-purple-200"
@@ -750,7 +753,7 @@ export default function HomeClient({
 
           <button
             onClick={() => setSortBy(sortBy === 'rating' ? 'default' : 'rating')}
-            className={`px-4.5 py-2.5 rounded-full text-sm font-bold transition-all active:scale-95 shrink-0 cursor-pointer ${
+            className={`px-4.5 py-2.5 rounded-full text-sm font-bold transition-all active:scale-95 shrink-0 cursor-pointer outline-none focus:outline-none focus-visible:outline-none ${
               sortBy === 'rating'
                 ? "bg-[#6B39A7] text-white shadow-md shadow-purple-900/15 border border-transparent"
                 : "bg-white text-slate-700 border border-slate-200 hover:bg-purple-50 hover:text-[#6B39A7] hover:border-purple-200"
@@ -762,7 +765,7 @@ export default function HomeClient({
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
-              className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold text-slate-500 bg-transparent hover:text-[#6B39A7] hover:underline cursor-pointer transition-all active:scale-95 shrink-0"
+              className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold text-slate-500 bg-transparent hover:text-[#6B39A7] hover:underline cursor-pointer transition-all active:scale-95 shrink-0 outline-none focus:outline-none focus-visible:outline-none"
             >
               Limpar Filtros
             </button>
@@ -964,7 +967,7 @@ export default function HomeClient({
                         setActiveCategories([]);
                         setSortBy('default');
                       }}
-                      className="text-sm font-bold text-slate-400 hover:text-[#6B39A7] transition-colors px-3 py-1.5 rounded-lg hover:bg-purple-50/50 cursor-pointer"
+                      className="text-sm font-bold text-slate-400 hover:text-[#6B39A7] transition-colors px-3 py-1.5 rounded-lg hover:bg-purple-50/50 cursor-pointer outline-none focus:outline-none focus-visible:outline-none"
                     >
                       Limpar filtros
                     </button>
@@ -973,7 +976,7 @@ export default function HomeClient({
                     type="button"
                     onClick={() => setIsFilterModalOpen(false)}
                     aria-label="Fechar filtros"
-                    className="w-10 h-10 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                    className="w-10 h-10 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer outline-none focus:outline-none focus-visible:outline-none"
                   >
                     <FiX size={22} />
                   </button>
@@ -992,7 +995,7 @@ export default function HomeClient({
                     <button
                       type="button"
                       onClick={() => setSortBy('default')}
-                      className={`px-5 py-3.5 rounded-xl text-sm sm:text-base font-bold transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 ${
+                      className={`px-5 py-3.5 rounded-xl text-sm sm:text-base font-bold transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 outline-none focus:outline-none focus-visible:outline-none ${
                         sortBy === 'default'
                           ? 'bg-[#6B39A7] text-white shadow-md shadow-purple-900/20 border border-[#6B39A7]'
                           : 'bg-slate-50 border border-slate-200/80 text-slate-700 hover:bg-white hover:border-slate-300'
@@ -1005,7 +1008,7 @@ export default function HomeClient({
                     <button
                       type="button"
                       onClick={() => setSortBy('rating')}
-                      className={`px-5 py-3.5 rounded-xl text-sm sm:text-base font-bold transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 ${
+                      className={`px-5 py-3.5 rounded-xl text-sm sm:text-base font-bold transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 outline-none focus:outline-none focus-visible:outline-none ${
                         sortBy === 'rating'
                           ? 'bg-[#6B39A7] text-white shadow-md shadow-purple-900/20 border border-[#6B39A7]'
                           : 'bg-slate-50 border border-slate-200/80 text-slate-700 hover:bg-white hover:border-slate-300'
@@ -1018,7 +1021,7 @@ export default function HomeClient({
                     <button
                       type="button"
                       onClick={handleDistanceFilterClick}
-                      className={`px-5 py-3.5 rounded-xl text-sm sm:text-base font-bold transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 ${
+                      className={`px-5 py-3.5 rounded-xl text-sm sm:text-base font-bold transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 outline-none focus:outline-none focus-visible:outline-none ${
                         sortBy === 'distance'
                           ? 'bg-[#6B39A7] text-white shadow-md shadow-purple-900/20 border border-[#6B39A7]'
                           : 'bg-slate-50 border border-slate-200/80 text-slate-700 hover:bg-white hover:border-slate-300'
@@ -1051,7 +1054,7 @@ export default function HomeClient({
                             key={i}
                             type="button"
                             onClick={() => toggleCategory(cat)}
-                            className={`px-5 py-3 rounded-xl text-sm sm:text-base font-bold transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 ${
+                            className={`px-5 py-3 rounded-xl text-sm sm:text-base font-bold transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 outline-none focus:outline-none focus-visible:outline-none ${
                               isSelected
                                 ? 'bg-purple-50 border-2 border-[#6B39A7] text-[#6B39A7] shadow-sm'
                                 : 'bg-white border border-slate-200 text-slate-700 hover:border-purple-300 hover:bg-purple-50/30'
@@ -1072,7 +1075,7 @@ export default function HomeClient({
                 <button
                   type="button"
                   onClick={() => setIsFilterModalOpen(false)}
-                  className="w-full bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold py-4.5 sm:py-5 rounded-xl shadow-lg shadow-purple-900/15 active:scale-[0.98] transition-all cursor-pointer text-base sm:text-lg flex items-center justify-center gap-2"
+                  className="w-full bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold py-4.5 sm:py-5 rounded-xl shadow-lg shadow-purple-900/15 active:scale-[0.98] transition-all cursor-pointer text-base sm:text-lg flex items-center justify-center gap-2 outline-none focus:outline-none focus-visible:outline-none"
                 >
                   <span>
                     Ver {filteredCatalog.length} {filteredCatalog.length === 1 ? 'resultado' : 'resultados'}
