@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import {
   Search, MapPin, Star, SlidersHorizontal, ChevronDown, ChevronLeft, ChevronRight, FileText, Menu,
-  Info, Layers, Heart, ShieldCheck, Handshake, MessageCircle, Sparkles
+  Info, Layers, Heart, ShieldCheck, Handshake, MessageCircle, Sparkles, Check
 } from "lucide-react";
 import { FiGlobe, FiUser, FiHelpCircle, FiLogOut, FiX, FiHeart } from "react-icons/fi";
 import { useRouter } from "next/navigation";
@@ -706,11 +706,11 @@ export default function HomeClient({
         <div className="flex items-center gap-3 mb-10 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <button
             onClick={() => setIsFilterModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-extrabold bg-purple-700 text-white shadow-md shadow-purple-200 active:scale-95 transition-all shrink-0 cursor-pointer"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-extrabold bg-[#6B39A7] hover:bg-[#582d8c] text-white shadow-md shadow-purple-900/15 active:scale-95 transition-all shrink-0 cursor-pointer"
           >
             <SlidersHorizontal size={16} /> Filtros
             {(activeCategories.length > 0 || sortBy !== 'default') && (
-              <span className="bg-white text-purple-700 text-[10px] w-5 h-5 flex items-center justify-center rounded-full ml-1 font-black">
+              <span className="bg-white text-[#6B39A7] text-[11px] w-5 h-5 flex items-center justify-center rounded-full ml-1 font-black">
                 {activeCategories.length + (sortBy !== 'default' ? 1 : 0)}
               </span>
             )}
@@ -720,14 +720,22 @@ export default function HomeClient({
 
           <button
             onClick={handleDistanceFilterClick}
-            className={`px-4 py-2.5 rounded-full text-sm font-bold transition-all active:scale-95 shrink-0 cursor-pointer ${sortBy === 'distance' ? "bg-purple-600 text-white shadow-md shadow-purple-200 border border-transparent" : "bg-white text-slate-600 border border-slate-200 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200"}`}
+            className={`px-4.5 py-2.5 rounded-full text-sm font-bold transition-all active:scale-95 shrink-0 cursor-pointer ${
+              sortBy === 'distance'
+                ? "bg-[#6B39A7] text-white shadow-md shadow-purple-900/15 border border-transparent"
+                : "bg-white text-slate-700 border border-slate-200 hover:bg-purple-50 hover:text-[#6B39A7] hover:border-purple-200"
+            }`}
           >
             Mais próximas
           </button>
 
           <button
             onClick={() => setSortBy(sortBy === 'rating' ? 'default' : 'rating')}
-            className={`px-4 py-2.5 rounded-full text-sm font-bold transition-all active:scale-95 shrink-0 cursor-pointer ${sortBy === 'rating' ? "bg-purple-600 text-white shadow-md shadow-purple-200 border border-transparent" : "bg-white text-slate-600 border border-slate-200 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200"}`}
+            className={`px-4.5 py-2.5 rounded-full text-sm font-bold transition-all active:scale-95 shrink-0 cursor-pointer ${
+              sortBy === 'rating'
+                ? "bg-[#6B39A7] text-white shadow-md shadow-purple-900/15 border border-transparent"
+                : "bg-white text-slate-700 border border-slate-200 hover:bg-purple-50 hover:text-[#6B39A7] hover:border-purple-200"
+            }`}
           >
             Melhores avaliações
           </button>
@@ -735,7 +743,7 @@ export default function HomeClient({
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
-              className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-slate-500 bg-transparent hover:text-purple-600 hover:underline cursor-pointer transition-all active:scale-95 shrink-0"
+              className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold text-slate-500 bg-transparent hover:text-[#6B39A7] hover:underline cursor-pointer transition-all active:scale-95 shrink-0"
             >
               Limpar Filtros
             </button>
@@ -906,51 +914,132 @@ export default function HomeClient({
 
       <AnimatePresence>
         {isFilterModalOpen && (
-          <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center sm:p-6 bg-slate-900/40 backdrop-blur-sm">
+          <div
+            onClick={() => setIsFilterModalOpen(false)}
+            className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center sm:p-6 bg-slate-950/45 backdrop-blur-md"
+          >
             <motion.div
-              initial={{ opacity: 0, y: 100 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 100 }}
-              className="bg-white w-full sm:max-w-lg rounded-t-[2rem] sm:rounded-[2rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+              initial={{ opacity: 0, y: 30, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 30, scale: 0.98 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white w-full sm:max-w-lg rounded-t-[2.25rem] sm:rounded-[2.25rem] overflow-hidden shadow-2xl border border-slate-100 flex flex-col max-h-[88vh]"
             >
-              <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Filtros</h2>
-                <button onClick={() => setIsFilterModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-100 cursor-pointer">
-                  <FiX size={24} />
-                </button>
+              {/* Header do Modal */}
+              <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-white">
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Filtros</h2>
+                  {(activeCategories.length > 0 || sortBy !== 'default') && (
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-[#6B39A7] border border-purple-200/80">
+                      {activeCategories.length + (sortBy !== 'default' ? 1 : 0)} {(activeCategories.length + (sortBy !== 'default' ? 1 : 0)) === 1 ? 'ativo' : 'ativos'}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {(activeCategories.length > 0 || sortBy !== 'default') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveCategories([]);
+                        setSortBy('default');
+                      }}
+                      className="text-xs sm:text-sm font-bold text-slate-400 hover:text-[#6B39A7] transition-colors px-2 py-1 rounded-lg hover:bg-purple-50/50 cursor-pointer"
+                    >
+                      Limpar
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setIsFilterModalOpen(false)}
+                    aria-label="Fechar filtros"
+                    className="w-9 h-9 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    <FiX size={20} />
+                  </button>
+                </div>
               </div>
 
-              <div className="p-6 sm:p-7 overflow-y-auto flex-1 space-y-8 custom-scrollbar">
+              {/* Corpo com Scroll Suave */}
+              <div className="p-6 sm:p-7 overflow-y-auto flex-1 space-y-7 custom-scrollbar">
+                {/* Seção 1: Ordenação */}
                 <div>
-                  <h3 className="text-lg font-black text-slate-900 mb-4 tracking-tight">Ordenar por</h3>
-                  <div className="flex flex-wrap gap-3">
-                    <button onClick={() => setSortBy('default')} className={`px-4.5 py-3 rounded-2xl text-base font-bold transition-all cursor-pointer ${sortBy === 'default' ? 'bg-purple-700 text-white shadow-md shadow-purple-200' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
-                      Padrão
+                  <div className="flex items-center justify-between mb-3.5">
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">Ordenar por</h3>
+                    <span className="text-xs font-semibold text-slate-400">Escolha uma opção</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setSortBy('default')}
+                      className={`px-4 py-3 rounded-2xl text-sm sm:text-base font-bold transition-all flex items-center gap-2 cursor-pointer active:scale-95 ${
+                        sortBy === 'default'
+                          ? 'bg-[#6B39A7] text-white shadow-md shadow-purple-900/20 border border-[#6B39A7]'
+                          : 'bg-slate-50 border border-slate-200/80 text-slate-700 hover:bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <Sparkles size={16} className={sortBy === 'default' ? 'text-purple-200' : 'text-slate-400'} />
+                      <span>Padrão</span>
                     </button>
-                    <button onClick={() => setSortBy('rating')} className={`px-4.5 py-3 rounded-2xl text-base font-bold transition-all cursor-pointer ${sortBy === 'rating' ? 'bg-purple-700 text-white shadow-md shadow-purple-200' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
-                      Melhor Avaliação
+
+                    <button
+                      type="button"
+                      onClick={() => setSortBy('rating')}
+                      className={`px-4 py-3 rounded-2xl text-sm sm:text-base font-bold transition-all flex items-center gap-2 cursor-pointer active:scale-95 ${
+                        sortBy === 'rating'
+                          ? 'bg-[#6B39A7] text-white shadow-md shadow-purple-900/20 border border-[#6B39A7]'
+                          : 'bg-slate-50 border border-slate-200/80 text-slate-700 hover:bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <Star size={16} className={sortBy === 'rating' ? 'text-amber-300 fill-amber-300' : 'text-slate-400'} />
+                      <span>Melhor Avaliação</span>
                     </button>
-                    <button onClick={handleDistanceFilterClick} className={`px-4.5 py-3 rounded-2xl text-base font-bold transition-all cursor-pointer ${sortBy === 'distance' ? 'bg-purple-700 text-white shadow-md shadow-purple-200' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
-                      Menor Distância
+
+                    <button
+                      type="button"
+                      onClick={handleDistanceFilterClick}
+                      className={`px-4 py-3 rounded-2xl text-sm sm:text-base font-bold transition-all flex items-center gap-2 cursor-pointer active:scale-95 ${
+                        sortBy === 'distance'
+                          ? 'bg-[#6B39A7] text-white shadow-md shadow-purple-900/20 border border-[#6B39A7]'
+                          : 'bg-slate-50 border border-slate-200/80 text-slate-700 hover:bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <MapPin size={16} className={sortBy === 'distance' ? 'text-purple-200' : 'text-slate-400'} />
+                      <span>Menor Distância</span>
                     </button>
                   </div>
                 </div>
 
+                {/* Seção 2: Categorias */}
                 <div>
-                  <h3 className="text-lg font-black text-slate-900 mb-4 tracking-tight">Categorias</h3>
+                  <div className="flex items-center justify-between mb-3.5">
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">Categorias</h3>
+                    <span className="text-xs font-semibold text-slate-400">
+                      {activeCategories.length > 0
+                        ? `${activeCategories.length} selecionada(s)`
+                        : 'Todas as causas'}
+                    </span>
+                  </div>
                   <div className="flex flex-wrap gap-2.5">
                     {availableCategories.length === 0 ? (
-                      <p className="text-base text-slate-500 font-medium">Nenhuma categoria disponível no momento.</p>
+                      <p className="text-sm text-slate-500 font-medium">Nenhuma categoria disponível no momento.</p>
                     ) : (
                       availableCategories.map((cat, i) => {
                         const isSelected = activeCategories.includes(cat);
                         return (
                           <button
                             key={i}
+                            type="button"
                             onClick={() => toggleCategory(cat)}
-                            className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all border cursor-pointer ${isSelected ? 'bg-purple-50 border-purple-200 text-purple-700 shadow-sm' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50'}`}
+                            className={`px-4 py-2.5 rounded-2xl text-sm sm:text-base font-bold transition-all flex items-center gap-2 cursor-pointer active:scale-95 ${
+                              isSelected
+                                ? 'bg-purple-50 border-2 border-[#6B39A7] text-[#6B39A7] shadow-sm'
+                                : 'bg-white border border-slate-200 text-slate-700 hover:border-purple-300 hover:bg-purple-50/30'
+                            }`}
                           >
-                            {cat}
+                            {isSelected && <Check size={16} className="text-[#6B39A7] stroke-[3]" />}
+                            <span>{cat}</span>
                           </button>
                         );
                       })
@@ -959,12 +1048,16 @@ export default function HomeClient({
                 </div>
               </div>
 
-              <div className="p-6 border-t border-slate-100 bg-slate-50">
+              {/* Footer com Botão de Confirmação */}
+              <div className="p-5 sm:p-6 border-t border-slate-100 bg-white">
                 <button
+                  type="button"
                   onClick={() => setIsFilterModalOpen(false)}
-                  className="w-full bg-purple-700 hover:bg-purple-800 text-white font-black py-4 rounded-2xl shadow-lg shadow-purple-200 active:scale-[0.98] transition-all cursor-pointer text-base"
+                  className="w-full bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold py-4 rounded-2xl shadow-lg shadow-purple-900/15 active:scale-[0.98] transition-all cursor-pointer text-base sm:text-lg flex items-center justify-center gap-2"
                 >
-                  Ver {filteredCatalog.length} resultados
+                  <span>
+                    Ver {filteredCatalog.length} {filteredCatalog.length === 1 ? 'resultado' : 'resultados'}
+                  </span>
                 </button>
               </div>
             </motion.div>
