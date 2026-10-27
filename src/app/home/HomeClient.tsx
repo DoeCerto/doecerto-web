@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import {
   Search, MapPin, Star, SlidersHorizontal, ChevronDown, ChevronLeft, ChevronRight, FileText, Menu,
   Info, Layers, Heart, ShieldCheck, Handshake, MessageCircle, Sparkles
@@ -256,10 +256,50 @@ export default function HomeClient({
     await logout("/login");
   }
 
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkCarouselScroll = useCallback(() => {
+    if (carouselRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+      const hasOverflow = scrollWidth > clientWidth + 4;
+      setCanScrollLeft(hasOverflow && scrollLeft > 4);
+      setCanScrollRight(hasOverflow && scrollLeft + clientWidth < scrollWidth - 4);
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+
+    checkCarouselScroll();
+
+    el.addEventListener('scroll', checkCarouselScroll, { passive: true });
+    window.addEventListener('resize', checkCarouselScroll);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        checkCarouselScroll();
+      });
+      resizeObserver.observe(el);
+    }
+
+    const timer = setTimeout(checkCarouselScroll, 150);
+
+    return () => {
+      el.removeEventListener('scroll', checkCarouselScroll);
+      window.removeEventListener('resize', checkCarouselScroll);
+      if (resizeObserver) resizeObserver.disconnect();
+      clearTimeout(timer);
+    };
+  }, [checkCarouselScroll, premiumOngs, query, activeCategories, sortBy]);
+
   const scrollCarousel = (direction: 'left' | 'right') => {
     if (carouselRef.current) {
       const scrollAmount = 300;
       carouselRef.current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+      setTimeout(checkCarouselScroll, 350);
     }
   };
 
@@ -706,56 +746,88 @@ export default function HomeClient({
           <section className="mb-14 relative group/carousel">
             <h2 className="text-2xl font-black text-slate-900 mb-6 tracking-tight">Destaques</h2>
 
-            <button onClick={() => scrollCarousel('left')} className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-white shadow-md border border-slate-100 rounded-full p-2 text-slate-500 hover:text-purple-700 transition-colors hidden sm:block cursor-pointer">
-              <ChevronLeft size={24} />
-            </button>
+            <div className="relative">
+              <AnimatePresence>
+                {canScrollLeft && (
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.15 }}
+                    type="button"
+                    aria-label="Ver anteriores"
+                    onClick={() => scrollCarousel('left')}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-white shadow-md border border-slate-100 rounded-full p-2.5 text-slate-600 hover:text-purple-700 hover:bg-purple-50 transition-colors hidden sm:flex items-center justify-center cursor-pointer active:scale-95"
+                  >
+                    <ChevronLeft size={22} />
+                  </motion.button>
+                )}
+              </AnimatePresence>
 
-            <div ref={carouselRef} className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {premiumOngs.map((ong) => (
-                <div
-                  key={`premium-${ong.id}`}
-                  onClick={() => router.push(`/ong-public-profile?id=${ong.id}`)}
-                  className="snap-start shrink-0 w-[220px] sm:w-[240px] flex flex-col bg-white border border-slate-200 rounded-[20px] overflow-hidden shadow-sm hover:shadow-lg hover:border-purple-200 transition-all duration-300 cursor-pointer group/card"
-                >
-                  <div className="w-full aspect-[16/10] bg-slate-100 relative overflow-hidden">
-                    <OngLogo src={ong.img} alt={ong.name} className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105" />
-                  </div>
-
-                  <div className="p-4 flex flex-col flex-grow">
-                    {ong.categories.length > 0 && (
-                      <div className="flex items-center gap-1 mb-2">
-                        <span className="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wide">
-                          {ong.categories[0]} {ong.categories.length > 1 && `+${ong.categories.length - 1}`}
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-1.5 mb-1 min-w-0">
-                      <h3 className="text-base font-extrabold text-slate-900 leading-snug truncate">
-                        {ong.name}
-                      </h3>
-                      <VerifiedBadge variant="shimmer" size={16} />
+              <div
+                ref={carouselRef}
+                onScroll={checkCarouselScroll}
+                className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+              >
+                {premiumOngs.map((ong) => (
+                  <div
+                    key={`premium-${ong.id}`}
+                    onClick={() => router.push(`/ong-public-profile?id=${ong.id}`)}
+                    className="snap-start shrink-0 w-[220px] sm:w-[240px] flex flex-col bg-white border border-slate-200 rounded-[20px] overflow-hidden shadow-sm hover:shadow-lg hover:border-purple-200 transition-all duration-300 cursor-pointer group/card"
+                  >
+                    <div className="w-full aspect-[16/10] bg-slate-100 relative overflow-hidden">
+                      <OngLogo src={ong.img} alt={ong.name} className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105" />
                     </div>
 
-                    <div className="flex-grow"></div>
+                    <div className="p-4 flex flex-col flex-grow">
+                      {ong.categories.length > 0 && (
+                        <div className="flex items-center gap-1 mb-2">
+                          <span className="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wide">
+                            {ong.categories[0]} {ong.categories.length > 1 && `+${ong.categories.length - 1}`}
+                          </span>
+                        </div>
+                      )}
 
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDonateClick(ong.id);
-                      }}
-                      className="mt-3 w-full bg-purple-700 hover:bg-purple-800 text-white rounded-lg py-2.5 text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
-                    >
-                      Apoiar causa
-                    </button>
+                      <div className="flex items-center gap-1.5 mb-1 min-w-0">
+                        <h3 className="text-base font-extrabold text-slate-900 leading-snug truncate">
+                          {ong.name}
+                        </h3>
+                        <VerifiedBadge variant="shimmer" size={16} />
+                      </div>
+
+                      <div className="flex-grow"></div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDonateClick(ong.id);
+                        }}
+                        className="mt-3 w-full bg-purple-700 hover:bg-purple-800 text-white rounded-lg py-2.5 text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
+                      >
+                        Apoiar causa
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            <button onClick={() => scrollCarousel('right')} className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-white shadow-md border border-slate-100 rounded-full p-2 text-slate-500 hover:text-purple-700 transition-colors hidden sm:block cursor-pointer">
-              <ChevronRight size={24} />
-            </button>
+              <AnimatePresence>
+                {canScrollRight && (
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.15 }}
+                    type="button"
+                    aria-label="Ver próximos"
+                    onClick={() => scrollCarousel('right')}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-white shadow-md border border-slate-100 rounded-full p-2.5 text-slate-600 hover:text-purple-700 hover:bg-purple-50 transition-colors hidden sm:flex items-center justify-center cursor-pointer active:scale-95"
+                  >
+                    <ChevronRight size={22} />
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </div>
           </section>
         )}
 
