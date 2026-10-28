@@ -397,12 +397,12 @@ function LoginContent() {
       <Toaster position="top-center" />
 
       {/* LADO ESQUERDO: CONTEÚDO PRINCIPAL / STEPS */}
-      <div className="w-full lg:w-1/2 h-full overflow-y-auto flex flex-col relative items-center justify-start px-6 sm:px-10 lg:px-12 py-6 sm:py-8">
+      <div className="w-full lg:w-1/2 h-full overflow-y-auto flex flex-col relative items-center justify-start px-6 sm:px-10 lg:px-12 py-4 sm:py-6 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <div
           className={`w-full shrink-0 transition-all duration-300 ${
             step === "credentials"
               ? "max-w-[480px] my-auto"
-              : "max-w-[540px] pt-1 pb-8"
+              : "max-w-[560px] py-1"
           }`}
         >
 
@@ -731,9 +731,9 @@ function LoginContent() {
               )}
 
               {/* Card de Configuração Fintech */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 shadow-sm flex flex-col gap-6">
+              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col gap-4 sm:gap-5">
                 {/* Passo 1: QR Code */}
-                <div className="flex flex-col gap-3.5">
+                <div className="flex flex-col gap-3">
                   <div className="flex items-start gap-3">
                     <span className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#6B39A7] text-white text-xs sm:text-sm font-black shadow-xs shrink-0 mt-0.5">
                       1
@@ -807,7 +807,7 @@ function LoginContent() {
                 <div className="border-t border-slate-100"></div>
 
                 {/* Passo 2: Digitar código de confirmação */}
-                <form onSubmit={handleEnable2FA} className="flex flex-col gap-4 sm:gap-5">
+                <form onSubmit={handleEnable2FA} className="flex flex-col gap-3.5 sm:gap-4">
                   <div className="flex items-start gap-3">
                     <span className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#6B39A7] text-white text-xs sm:text-sm font-black shadow-xs shrink-0 mt-0.5">
                       2
@@ -835,12 +835,12 @@ function LoginContent() {
                         setTotpCode(val);
                         if (error2FA) setError2FA(null);
                       }}
-                      className="w-full bg-slate-50/60 border-2 border-slate-200 text-slate-900 rounded-xl h-15 sm:h-16 px-4 focus:outline-none focus:ring-4 focus:ring-[#6B39A7]/10 focus:border-[#6B39A7] focus:bg-white transition-all text-2xl sm:text-3xl font-mono font-bold tracking-[0.45em] text-center shadow-xs"
+                      className="w-full bg-slate-50/60 border-2 border-slate-200 text-slate-900 rounded-xl h-14 sm:h-15 px-4 focus:outline-none focus:ring-4 focus:ring-[#6B39A7]/10 focus:border-[#6B39A7] focus:bg-white transition-all text-2xl sm:text-3xl font-mono font-bold tracking-[0.45em] text-center shadow-xs"
                     />
                   </div>
 
                   {/* Checkbox Dispositivo Confiável */}
-                  <label className="flex items-start gap-3.5 p-3.5 sm:p-4 rounded-xl bg-slate-50/80 hover:bg-purple-50/40 border border-slate-200 hover:border-purple-200/80 cursor-pointer transition-all select-none text-left">
+                  <label className="flex items-start gap-3.5 p-3 sm:p-3.5 rounded-xl bg-slate-50/80 hover:bg-purple-50/40 border border-slate-200 hover:border-purple-200/80 cursor-pointer transition-all select-none text-left">
                     <input
                       type="checkbox"
                       checked={rememberDevice}
@@ -861,7 +861,7 @@ function LoginContent() {
                   <button
                     type="submit"
                     disabled={isSubmitting2FA || totpCode.length !== 6}
-                    className="w-full flex justify-center items-center h-[54px] sm:h-[58px] bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold text-base sm:text-lg rounded-xl transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-purple-900/15 cursor-pointer outline-none focus:outline-none"
+                    className="w-full flex justify-center items-center h-[52px] sm:h-[56px] bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold text-base sm:text-lg rounded-xl transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-purple-900/15 cursor-pointer outline-none focus:outline-none"
                   >
                     {isSubmitting2FA ? (
                       <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
