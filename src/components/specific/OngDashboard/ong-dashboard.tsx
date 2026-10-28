@@ -763,7 +763,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
               <p className="text-base sm:text-lg text-slate-600 font-medium leading-relaxed mb-8 px-2">
                 {ong.verificationStatus === 'verified' && ong.asaasAccountStatus !== 'approved' ? (
                   <>
-                    Sua instituição já foi <strong className="text-emerald-700 font-bold">aprovada pela auditoria do DoeCerto</strong>! No momento, sua subconta exclusiva está em fase de homologação cadastral pelo <strong className="text-purple-700 font-bold">serviço de pagamentos da plataforma (Asaas)</strong>. Assim que a aprovação bancária for concluída (prazo médio de 1 a 2 dias úteis), sua ONG será publicada na vitrine oficial e liberada para receber doações via Pix diretamente.
+                    Sua instituição já foi <strong className="text-emerald-700 font-bold">aprovada pela auditoria do DoeCerto</strong>! No momento, sua subconta exclusiva está em fase de homologação cadastral pelo <strong className="text-amber-600 font-bold">serviço de pagamentos da plataforma (Asaas)</strong>. Assim que a aprovação bancária for concluída (prazo médio de 1 a 2 dias úteis), sua ONG será publicada na vitrine oficial e liberada para receber doações via Pix diretamente.
                   </>
                 ) : (
                   <>
