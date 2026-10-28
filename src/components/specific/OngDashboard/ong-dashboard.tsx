@@ -103,15 +103,15 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
   const exportSingleDonationPDF = (donation: any) => {
     const doc = new jsPDF();
     const primaryColor = "#6B39A7";
-    
+
     doc.setFillColor(74, 29, 122);
     doc.rect(0, 0, 210, 40, "F");
-    
+
     doc.setTextColor("#FFFFFF");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
     doc.text(ong?.name || "Comprovante de Doação", 15, 25);
-    
+
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-BR')}`, 155, 25);
@@ -214,8 +214,8 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
             Sua ONG ainda não possui as informações configuradas. Complete seu perfil para começar a receber doações.
           </p>
           <div className="space-y-3">
-            <button 
-              onClick={() => router.push('/ong-profilesetup')} 
+            <button
+              onClick={() => router.push('/ong-profilesetup')}
               className="w-full bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold py-3.5 sm:py-4 rounded-2xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
             >
               Configurar agora <ArrowRight size={20} />
@@ -286,7 +286,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                 {ong.name || "ONG"}
               </span>
               <motion.div className="shrink-0 text-[#6B39A7] mr-1" animate={{ rotate: isMenuOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
               </motion.div>
             </button>
 
@@ -335,8 +335,8 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
         <h1 className="text-2xl sm:text-4xl font-black text-gray-900 flex items-center flex-wrap gap-2 sm:gap-3">
           <span>{ong.name || "Minha ONG"}</span>
           {ong.isRestricted ? (
-            <button 
-              onClick={() => setShowRestrictedModal(true)} 
+            <button
+              onClick={() => setShowRestrictedModal(true)}
               className="inline-flex items-center justify-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-red-100 text-red-700 text-xs sm:text-sm font-bold shadow-sm hover:bg-red-200 hover:scale-[1.02] transition-all active:scale-95 shrink-0 cursor-pointer translate-y-0.5 sm:translate-y-1"
               title="Sua conta foi restringida por medidas de segurança"
             >
@@ -344,8 +344,8 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
               Restringida
             </button>
           ) : (ong.verificationStatus !== 'verified' || ong.asaasAccountStatus !== 'approved') ? (
-            <button 
-              onClick={() => setShowPendingModal(true)} 
+            <button
+              onClick={() => setShowPendingModal(true)}
               className="inline-flex items-center justify-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-amber-100 text-amber-700 text-xs sm:text-sm font-bold shadow-sm hover:bg-amber-200 hover:scale-[1.02] transition-all active:scale-95 shrink-0 cursor-pointer translate-y-0.5 sm:translate-y-1"
               title={
                 ong.verificationStatus === 'verified'
@@ -536,7 +536,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                       const fullUrl = selectedDonation.proofUrl.startsWith('http')
                         ? selectedDonation.proofUrl
                         : `${API_URL?.replace(/\/+$/, '')}/${sanitizedPath}`;
-                      
+
                       const ext = getFileExtension(fullUrl);
 
                       if (ext === "pdf") {
@@ -556,10 +556,10 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                               src={fullUrl}
                               alt="Comprovante de Doação"
                               className="w-full h-48 object-cover rounded-[18px] shadow-sm cursor-zoom-in"
-                              onError={(e) => { 
+                              onError={(e) => {
                                 const target = e.target as HTMLImageElement;
-                                if (target.src !== fullUrl) return; 
-                                target.src = "https://placehold.co/400x200?text=Erro+ao+carregar+imagem"; 
+                                if (target.src !== fullUrl) return;
+                                target.src = "https://placehold.co/400x200?text=Erro+ao+carregar+imagem";
                               }}
                               onClick={() => setZoomImage(fullUrl)}
                             />
@@ -744,17 +744,17 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
               className="relative w-full max-w-lg bg-white rounded-3xl p-8 sm:p-10 shadow-2xl flex flex-col items-center text-center overflow-hidden"
             >
-              <button 
+              <button
                 onClick={() => setShowPendingModal(false)}
                 className="absolute top-4 right-4 text-gray-400 hover:bg-gray-100 hover:text-gray-700 p-2.5 rounded-full transition-colors cursor-pointer"
               >
                 <X size={20} strokeWidth={2.5} />
               </button>
-              
+
               <div className="w-20 h-20 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mb-6 shadow-inner ring-4 ring-amber-50">
                 <Clock size={40} strokeWidth={2.5} />
               </div>
-              
+
               <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 tracking-tight">
                 {ong.verificationStatus === 'verified' && ong.asaasAccountStatus !== 'approved'
                   ? "Homologação de Pagamento"
@@ -767,11 +767,11 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                   </>
                 ) : (
                   <>
-                    O seu perfil já está criado! Neste momento, nosso time de <strong className="text-amber-600 font-bold">Compliance e Auditoria</strong> e o <strong className="text-purple-700 font-bold">serviço de pagamentos da plataforma (Asaas)</strong> estão avaliando as informações e a documentação cadastral da sua instituição. Aguarde a homologação oficial para sua ONG ser exibida na vitrine e começar a receber doações.
+                    O seu perfil já está criado! Neste momento, nosso time de <strong className="text-amber-600 font-bold">Compliance e Auditoria</strong> e o <strong className="text-amber-600 font-bold">serviço de pagamentos da plataforma (Asaas)</strong> estão avaliando as informações e a documentação cadastral da sua instituição. Aguarde a homologação oficial para sua ONG ser exibida na vitrine e começar a receber doações.
                   </>
                 )}
               </p>
-              
+
               <button
                 onClick={() => setShowPendingModal(false)}
                 className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-bold text-base sm:text-lg shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all cursor-pointer"
@@ -801,17 +801,17 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
               className="relative w-full max-w-lg bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center overflow-hidden"
             >
-              <button 
+              <button
                 onClick={() => setShowRestrictedModal(false)}
                 className="absolute top-4 right-4 text-gray-400 hover:bg-gray-100 hover:text-gray-700 p-2 rounded-full transition-colors cursor-pointer"
               >
                 <X size={20} strokeWidth={2.5} />
               </button>
-              
+
               <div className="w-20 h-20 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-6 shadow-inner ring-4 ring-red-50">
                 <AlertTriangle size={40} strokeWidth={2.5} />
               </div>
-              
+
               <h2 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">Conta Restringida</h2>
               <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-medium mb-6 px-1">
                 Por medidas de conformidade e segurança da plataforma, a sua conta foi temporariamente <strong className="text-red-600 font-bold">restringida</strong> pela auditoria. Durante este período, o recebimento de doações e a exibição pública ficam suspensos.
@@ -823,7 +823,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                   Entre em contato com nossa equipe de suporte para regularizar a documentação ou obter mais detalhes.
                 </p>
               </div>
-              
+
               <div className="w-full flex flex-col sm:flex-row gap-3">
                 <a
                   href="mailto:suporte@doecerto.com.br?subject=Suporte%20-%20Conta%20Restringida"
