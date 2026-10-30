@@ -190,6 +190,15 @@ export async function api<T>(
 
     return { data: parsedData as any };
   } catch (error: any) {
+    const isAbort =
+      error?.name === "AbortError" ||
+      error?.message?.toLowerCase().includes("aborted") ||
+      error?.message?.toLowerCase().includes("abort");
+
+    if (isAbort) {
+      throw error;
+    }
+
     // Evita o popup vermelho chato do Next.js no Dev mode para erros 401 (normais quando usuário é visitante)
     const isUnauthorized =
       error?.status === 401 ||

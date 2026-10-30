@@ -107,6 +107,8 @@ interface DynamicPixData {
   trackingId?: string;
   paymentId: string;
   amount: number;
+  baseAmount?: number;
+  tipAmount?: number;
   netValue: number;
   fee: number;
   copyPaste: string;
@@ -194,13 +196,40 @@ function PixPageContent() {
     }
   }, [tipOption, customTip]);
 
+  // Estados Asaas (Pix Dinâmico)
+  const [dynamicPix, setDynamicPix] = useState<DynamicPixData | null>(() => {
+    if (typeof window !== "undefined" && ongId) {
+      try {
+        const activeCached = sessionStorage.getItem("dc_dynpix_active_" + ongId);
+        if (activeCached) {
+          const parsed = JSON.parse(activeCached) as DynamicPixData;
+          if (parsed && parsed.copyPaste) return parsed;
+        }
+        const cached = sessionStorage.getItem("dc_dynpix_" + ongId + "_" + initialValor);
+        if (cached) {
+          const parsed = JSON.parse(cached) as DynamicPixData;
+          if (parsed && parsed.copyPaste) return parsed;
+        }
+      } catch (e) {
+        // noop
+      }
+    }
+    return null;
+  });
+
   // Cálculos do valor base para a ONG, gorjeta voluntária e valor total
   const baseAmount = useMemo(() => {
+    if (step === "payment" && dynamicPix?.baseAmount) {
+      return dynamicPix.baseAmount;
+    }
     const num = parseFloat(valor);
     return isNaN(num) || num < 0 ? 0 : num;
-  }, [valor]);
+  }, [step, dynamicPix?.baseAmount, valor]);
 
   const tipAmount = useMemo(() => {
+    if (step === "payment" && dynamicPix?.tipAmount !== undefined) {
+      return dynamicPix.tipAmount;
+    }
     if (tipOption === "0" || baseAmount <= 0) return 0;
     if (tipOption === "custom") {
       const parsed = parseFloat(customTip.replace(",", "."));
@@ -209,11 +238,14 @@ function PixPageContent() {
     const pct = parseInt(tipOption, 10);
     if (isNaN(pct) || pct <= 0) return 0;
     return Math.round(baseAmount * pct) / 100;
-  }, [baseAmount, tipOption, customTip]);
+  }, [step, dynamicPix?.tipAmount, baseAmount, tipOption, customTip]);
 
   const totalAmount = useMemo(() => {
+    if (step === "payment" && dynamicPix?.amount) {
+      return Number(Number(dynamicPix.amount).toFixed(2));
+    }
     return Math.round((baseAmount + tipAmount) * 100) / 100;
-  }, [baseAmount, tipAmount]);
+  }, [step, dynamicPix?.amount, baseAmount, tipAmount]);
 
   const formattedBaseDisplay = useMemo(() => {
     return baseAmount.toLocaleString("pt-BR", {
@@ -246,25 +278,6 @@ function PixPageContent() {
       setTipOption(optionId);
     }
   };
-
-  // Estados Asaas (Pix Dinâmico)
-  const [dynamicPix, setDynamicPix] = useState<DynamicPixData | null>(() => {
-    if (typeof window !== "undefined" && ongId) {
-      try {
-        const cached =
-          sessionStorage.getItem(`dc_dynpix_${ongId}_${totalAmount}`) ||
-          sessionStorage.getItem(`dc_dynpix_${ongId}_${initialValor}`) ||
-          sessionStorage.getItem(`dc_dynpix_active_${ongId}`);
-        if (cached) {
-          const parsed = JSON.parse(cached) as DynamicPixData;
-          if (parsed && parsed.copyPaste) return parsed;
-        }
-      } catch (e) {
-        // noop
-      }
-    }
-    return null;
-  });
 
   const [isGeneratingPix, setIsGeneratingPix] = useState(false);
   const [dynamicPixError, setDynamicPixError] = useState<string | null>(null);
@@ -374,8 +387,28 @@ function PixPageContent() {
   };
 
   const handleBackFromPayment = () => {
-    navigateToStep("amount");
+    const realBase = dynamicPix?.baseAmount ? String(dynamicPix.baseAmount) : valor;
+    setValor(realBase);
+    navigateToStep("amount", realBase);
   };
+
+  // Sincroniza a URL e o estado local com os valores reais da cobrança ao carregar a tela de pagamento
+  useEffect(() => {
+    if (step === "payment" && dynamicPix) {
+      const realBase = dynamicPix.baseAmount ? String(dynamicPix.baseAmount) : String(dynamicPix.amount);
+      if (valor !== realBase) {
+        setValor(realBase);
+      }
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("valor") !== realBase) {
+          params.set("valor", realBase);
+          const newUrl = `${window.location.pathname}?${params.toString()}`;
+          window.history.replaceState(null, "", newUrl);
+        }
+      }
+    }
+  }, [step, dynamicPix]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -707,7 +740,7 @@ function PixPageContent() {
         }
       } catch (e: any) {
         // Ignora silenciosamente se o componente foi desmontado ou requisição abortada durante navegação
-        if (!isMounted || controller.signal.aborted || e?.name === "AbortError") return;
+        if (!isMounted || controller.signal.aborted || e?.name === "AbortError" || e?.message?.toLowerCase().includes("abort")) return;
         if (e instanceof TypeError && e.message?.includes("fetch")) return;
         console.error("Erro ao verificar status do Pix:", e);
       }
