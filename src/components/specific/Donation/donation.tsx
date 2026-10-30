@@ -24,6 +24,7 @@ import {
 } from "./GuestEmailModal";
 import { calculateImpact } from "@/utils/impactCalculator";
 import { CategoryImpactIcon } from "@/components/ui/CategoryImpactIcon";
+import { TurnstileWidget } from "@/components/ui/TurnstileWidget";
 
 export interface DonationData {
   tipoItem: string;
@@ -34,6 +35,7 @@ export interface DonationData {
   guestName?: string;
   guestPhone?: string;
   acceptedTerms?: boolean;
+  turnstileToken?: string;
 }
 
 export interface DonationProps {
@@ -74,6 +76,7 @@ export default function Donation({
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [lastGuestEmail, setLastGuestEmail] = useState("");
 
@@ -132,20 +135,23 @@ export default function Donation({
     setDescricaoAdicional("");
   };
 
-  const handleGuestEmailSubmit = async (email: string, phone?: string) => {
+  const handleGuestEmailSubmit = async (email: string, phone?: string, tokenFromModal?: string) => {
     saveGuestEmail(email);
     setGuestEmail(email);
     if (phone) {
       saveGuestPhone(phone);
       setGuestPhone(phone);
     }
+    if (tokenFromModal) {
+      setTurnstileToken(tokenFromModal);
+    }
     setIsEmailModalOpen(false);
     if (listaEnvio.length > 0) {
-      await handleConfirmarDoacao(email, phone);
+      await handleConfirmarDoacao(email, phone, tokenFromModal);
     }
   };
 
-  const handleConfirmarDoacao = async (emailOverride?: string, phoneOverride?: string) => {
+  const handleConfirmarDoacao = async (emailOverride?: string, phoneOverride?: string, tokenOverride?: string) => {
     if (isOngUser) {
       setErrorMessage("Você está conectado como uma ONG. Contas de instituições não podem realizar doações. Para doar, desconecte-se ou use uma conta de doador.");
       return;
@@ -158,6 +164,7 @@ export default function Donation({
 
     const effectiveGuestEmail = emailOverride || guestEmail;
     const effectiveGuestPhone = phoneOverride || guestPhone;
+    const effectiveTurnstileToken = tokenOverride || turnstileToken;
 
     if (!isAuthenticated) {
       if (!effectiveGuestEmail || !effectiveGuestPhone) {
@@ -183,6 +190,7 @@ export default function Donation({
               guestEmail: effectiveGuestEmail,
               guestPhone: effectiveGuestPhone.replace(/\D/g, ""),
               acceptedTerms: true,
+              turnstileToken: effectiveTurnstileToken || undefined,
             }
           : {}),
       };
@@ -316,7 +324,7 @@ export default function Donation({
         {/* ALERTA DE TELEFONE OBRIGATÓRIO (para agendamento presencial) */}
         <MissingPhoneAlert
           visible={isFormBlocked}
-          onGoToProfile={() => router.push("/profile/edit")}
+          onGoToProfile={() => router.push("/dashboard")}
         />
 
         {/* TRILHA DO IMPACTO: STEPPER VERTICAL FINTECH */}
@@ -576,6 +584,13 @@ export default function Donation({
                     <X size={16} />
                   </button>
                 </div>
+              )}
+
+              {!isAuthenticated && (
+                <TurnstileWidget
+                  onVerify={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken("")}
+                />
               )}
 
               {/* Botão de Finalização Direta (Sem modais intermediários) */}

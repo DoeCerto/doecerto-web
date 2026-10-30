@@ -25,6 +25,8 @@ type Ong = {
   rating: string;
   rawRating: number;
   categories: string[];
+  city?: string | null;
+  state?: string | null;
 };
 
 export function formatDistance(distanceInKm: number | string | null | undefined): string | null {
@@ -124,6 +126,8 @@ export default function HomeClient({
       rating: (parseFloat(ong.averageRating) || 0).toFixed(1),
       rawRating: parseFloat(ong.averageRating) || 0,
       categories: ong.categories?.map((c: any) => c.name) || [],
+      city: ong.city || ong.address?.city || null,
+      state: ong.state || ong.address?.state || null,
     }));
   });
 
@@ -153,6 +157,8 @@ export default function HomeClient({
       rating: (parseFloat(ong.averageRating) || 0).toFixed(1),
       rawRating: parseFloat(ong.averageRating) || 0,
       categories: ong.categories?.map((c: any) => c.name) || [],
+      city: ong.city || ong.address?.city || null,
+      state: ong.state || ong.address?.state || null,
     }));
   });
 
@@ -328,8 +334,64 @@ export default function HomeClient({
   const availableCategories = Array.from(new Set(allOngs.flatMap((ong) => ong.categories))).sort();
   const hasActiveFilters = activeCategories.length > 0 || sortBy !== 'default' || query !== "";
 
+  // UX-03: Busca dinâmica no backend quando o usuário digita pelo menos 2 caracteres,
+  // garantindo que ONGs fora do Top 10 inicial também sejam encontradas por nome, cidade ou causa.
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) return;
+
+    let isCurrent = true;
+    const timer = setTimeout(async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+        const res = await fetch(`${apiUrl}/catalog?searchTerm=${encodeURIComponent(trimmed)}`, {
+          credentials: "include",
+        });
+        if (!res.ok || !isCurrent) return;
+        const payload = await res.json();
+        const items: any[] = Array.isArray(payload)
+          ? payload.flatMap((s: any) => s.items || [])
+          : payload?.items || payload?.data?.items || [];
+
+        if (!items.length || !isCurrent) return;
+
+        setAllOngs((prev) => {
+          const existingIds = new Set(prev.map((o) => o.id));
+          const extra: Ong[] = items
+            .filter((item: any) => item?.id && !existingIds.has(item.id))
+            .map((ong: any) => ({
+              id: ong.id,
+              name: ong.name,
+              img: OngsProfileService._formatImageUrl(ong.avatarUrl),
+              distance: formatDistance(ong.distance),
+              rawDistance: ong.distance ? parseFloat(ong.distance) : Infinity,
+              rating: (parseFloat(ong.averageRating) || 0).toFixed(1),
+              rawRating: parseFloat(ong.averageRating) || 0,
+              categories: ong.categories?.map((c: any) => (typeof c === "string" ? c : c.name)) || [],
+              city: ong.city || ong.address?.city || null,
+              state: ong.state || ong.address?.state || null,
+            }));
+          return extra.length > 0 ? [...prev, ...extra] : prev;
+        });
+      } catch {
+        // Silencia erros de rede durante digitação
+      }
+    }, 300);
+
+    return () => {
+      isCurrent = false;
+      clearTimeout(timer);
+    };
+  }, [query]);
+
   const filteredCatalog = allOngs.filter((ong) => {
-    const matchesSearch = query === "" || ong.name.toLowerCase().includes(query.toLowerCase());
+    const normalizedQuery = query.trim().toLowerCase();
+    const matchesSearch =
+      normalizedQuery === "" ||
+      ong.name.toLowerCase().includes(normalizedQuery) ||
+      ong.categories.some((cat) => cat.toLowerCase().includes(normalizedQuery)) ||
+      (ong.city && ong.city.toLowerCase().includes(normalizedQuery)) ||
+      (ong.state && ong.state.toLowerCase().includes(normalizedQuery));
     const matchesCategory = activeCategories.length === 0 || activeCategories.some(c => ong.categories.includes(c));
     const matchesDistance = sortBy !== 'distance' || ong.rawDistance !== Infinity;
 

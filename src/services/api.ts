@@ -3,6 +3,43 @@ import { getClientDeviceFingerprint } from '@/utils/device-fingerprint';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+// WEB-01: Mutex compartilhado para evitar race condition quando múltiplas requisições paralelas
+// recebem 401 simultaneamente e tentam rotacionar o mesmo refresh_token ao mesmo tempo.
+let refreshPromise: Promise<{ ok: boolean; accessToken?: string }> | null = null;
+
+async function performSilentRefresh(): Promise<{ ok: boolean; accessToken?: string }> {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  refreshPromise = (async () => {
+    try {
+      const refreshRes = await fetch(`${API_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+
+      if (!refreshRes.ok) {
+        return { ok: false };
+      }
+
+      const refreshData = await refreshRes.json().catch(() => ({}));
+      if (refreshData?.accessToken) {
+        await SecureStorageService.setAccessToken(refreshData.accessToken);
+      }
+
+      return { ok: true, accessToken: refreshData?.accessToken };
+    } catch {
+      return { ok: false };
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
+}
+
 export class ApiError extends Error {
   status: number;
   data?: any;
@@ -79,46 +116,34 @@ export async function api<T>(
 
     if (!res.ok) {
       if (res.status === 401 && !endpoint.includes('/auth/refresh') && !endpoint.includes('/auth/login')) {
-        try {
-          // Tentativa de renovar o token (Silent Refresh) via cookie httpOnly refresh_token
-          const refreshRes = await fetch(`${API_URL}/auth/refresh`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include' // Envia os cookies (refresh_token httpOnly)
+        const refreshResult = await performSilentRefresh();
+
+        if (refreshResult.ok) {
+          if (refreshResult.accessToken) {
+            headers.set("Authorization", `Bearer ${refreshResult.accessToken}`);
+          }
+
+          // Refaz a request original com credentials: "include" (novo cookie httpOnly injetado pelo backend)
+          const retryRes = await fetch(`${API_URL}${endpoint}`, {
+            ...options,
+            headers,
+            credentials: "include",
           });
 
-          if (refreshRes.ok) {
-            const refreshData = await refreshRes.json().catch(() => ({}));
-            
-            if (refreshData?.accessToken) {
-              await SecureStorageService.setAccessToken(refreshData.accessToken);
-              headers.set("Authorization", `Bearer ${refreshData.accessToken}`);
+          const retryText = await retryRes.text();
+          if (retryRes.ok) {
+            let retryData: any = null;
+            try {
+              retryData = retryText ? JSON.parse(retryText) : null;
+            } catch {
+              retryData = retryText;
             }
-
-            // Refaz a request original com credentials: "include" (novo cookie httpOnly injetado pelo backend)
-            const retryRes = await fetch(`${API_URL}${endpoint}`, {
-              ...options,
-              headers,
-              credentials: "include",
-            });
-
-            const retryText = await retryRes.text();
-            if (retryRes.ok) {
-              let retryData: any = null;
-              try {
-                retryData = retryText ? JSON.parse(retryText) : null;
-              } catch {
-                retryData = retryText;
-              }
-              if (retryData?.trustedDeviceToken && typeof window !== "undefined") {
-                SecureStorageService.setTrustedDeviceToken(retryData.trustedDeviceToken).catch(() => {});
-              }
-              return { data: retryData as any };
+            if (retryData?.trustedDeviceToken && typeof window !== "undefined") {
+              SecureStorageService.setTrustedDeviceToken(retryData.trustedDeviceToken).catch(() => {});
             }
-            throw new ApiError(retryText || `Erro ${retryRes.status}`, retryRes.status);
+            return { data: retryData as any };
           }
-        } catch (refreshErr) {
-          // Silent refresh falhou de forma esperada quando não há cookie de renovação
+          throw new ApiError(retryText || `Erro ${retryRes.status}`, retryRes.status);
         }
 
         // Se chegou aqui, o refresh falhou (token de renovação expirou ou é inexistente)
@@ -186,5 +211,4 @@ export async function api<T>(
     }
     throw error;
   }
-
 }

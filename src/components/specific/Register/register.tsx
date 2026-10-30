@@ -329,8 +329,10 @@ function useRegisterForm() {
 
   useEffect(() => {
     if (isChecking) return;
+    // WEB-02: Nunca persiste senhas ou CPFs/documentos em texto puro no sessionStorage
     const subscription = form.watch((value) => {
-      sessionStorage.setItem("register_draft", JSON.stringify({ step, accountType, formData: value }));
+      const safeFormData = { ...value, senha: "", confirmarSenha: "", documento: "", cpfPresidente: "" };
+      sessionStorage.setItem("register_draft", JSON.stringify({ step, accountType, formData: safeFormData }));
     });
     return () => subscription.unsubscribe();
   }, [form.watch, step, accountType, isChecking]);

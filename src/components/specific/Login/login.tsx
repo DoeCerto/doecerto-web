@@ -70,21 +70,28 @@ function LoginContent() {
   const mainWrapperRef = useRef(null);
   const imageRef = useRef(null);
 
+  // WEB-02: Sanitiza destino de redirecionamento pós-login contra Open Redirect
+  const getSafeRedirectUrl = (rawFrom: string | null | undefined, fallback: string): string => {
+    if (!rawFrom) return fallback;
+    const trimmed = rawFrom.trim();
+    if (trimmed.startsWith("/") && !trimmed.startsWith("//") && !trimmed.startsWith("/\\")) {
+      return trimmed;
+    }
+    return fallback;
+  };
+
   // Verifica se já está logado usando o AuthContext (Padrão Ouro /me)
   useEffect(() => {
     if (!isLoading && isAuthenticated && !isPending && step === "credentials") {
       const roleLower = userRole?.toLowerCase() || "";
-      let redirect = "/home";
-      
-      const fromUrl = searchParams?.get("from");
-      if (fromUrl) {
-        redirect = fromUrl;
-      } else if (roleLower === "admin") {
-        redirect = "/adm-dashboard";
+      let defaultRedirect = "/home";
+      if (roleLower === "admin") {
+        defaultRedirect = "/adm-dashboard";
       } else if (roleLower === "ong") {
-        redirect = "/ong-dashboard";
+        defaultRedirect = "/ong-dashboard";
       }
 
+      const redirect = getSafeRedirectUrl(searchParams?.get("from"), defaultRedirect);
       router.replace(redirect);
     }
   }, [isLoading, isAuthenticated, userRole, isPending, step, router, searchParams]);
@@ -151,16 +158,12 @@ function LoginContent() {
 
     await refreshSession();
 
-    const fromUrl = searchParams?.get("from");
     const roleLower = finalRole?.toLowerCase() || "";
-    let redirectPath = "/home";
+    let defaultRedirect = "/home";
+    if (roleLower === "admin") defaultRedirect = "/adm-dashboard";
+    else if (roleLower === "ong") defaultRedirect = "/ong-dashboard";
 
-    if (fromUrl) {
-      redirectPath = fromUrl;
-    } else {
-      if (roleLower === "admin") redirectPath = "/adm-dashboard";
-      else if (roleLower === "ong") redirectPath = "/ong-dashboard";
-    }
+    const redirectPath = getSafeRedirectUrl(searchParams?.get("from"), defaultRedirect);
 
     setTimeout(() => {
       router.replace(redirectPath);

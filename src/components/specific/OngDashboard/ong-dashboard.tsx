@@ -709,7 +709,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                       <span className="font-black text-base text-slate-900">{r.donor?.user?.name || "Doador Anônimo"}</span>
                       <div className="flex gap-1">
                         {[1, 2, 3, 4, 5].map((star) => (
-                          <Star key={star} size={15} fill={star <= r.stars ? "#facc15" : "transparent"} className={star <= r.stars ? "text-yellow-400" : "text-gray-200"} />
+                          <Star key={star} size={15} fill={star <= Number(r.score ?? r.stars ?? 0) ? "#facc15" : "transparent"} className={star <= Number(r.score ?? r.stars ?? 0) ? "text-yellow-400" : "text-gray-200"} />
                         ))}
                       </div>
                     </div>

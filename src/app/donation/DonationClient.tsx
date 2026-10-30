@@ -29,6 +29,7 @@ export default function DonationClient() {
       guestName: data.guestName,
       guestPhone: data.guestPhone,
       acceptedTerms: data.acceptedTerms,
+      turnstileToken: data.turnstileToken,
     });
   };
 

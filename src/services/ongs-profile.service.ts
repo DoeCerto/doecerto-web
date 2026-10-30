@@ -19,20 +19,26 @@ export const OngsProfileService = {
   async getPublicProfile(ongId: number) {
     try {
       const [resBase, resProfile, resReviews] = await Promise.all([
-        api<any>(`/ongs/${ongId}`).catch(() => ({ data: {} })),
-        api<any>(`/ongs/${ongId}/profile`).catch(() => ({ data: {} })),
+        api<any>(`/ongs/${ongId}`).catch(() => ({ data: null })),
+        api<any>(`/ongs/${ongId}/profile`).catch(() => ({ data: null })),
         api<any>(`/ongs/${ongId}/ratings`).catch(() => ({ data: [] }))
       ]);
 
       const base = resBase.data;
       const profile = resProfile.data;
 
+      // UX-03: Se nem os dados base nem o perfil público existirem, lança erro 404 explícito
+      // em vez de renderizar "ONG sem nome" com selo de verificação falso.
+      if ((!base || (!base.id && !base.name && !base.cnpj)) && (!profile || (!profile.id && !profile.name))) {
+        throw new Error("ONG não encontrada.");
+      }
+
       // Normalização da descrição
-      const descriptionText = profile.description || profile.about || profile.bio || "ONG verificada.";
+      const descriptionText = profile?.description || profile?.about || profile?.bio || "ONG verificada.";
 
       // Normalização do Website
       let websiteLink = "Não informado";
-      const urls = profile.websiteUrls || profile.website || [];
+      const urls = profile?.websiteUrls || profile?.website || [];
       if (Array.isArray(urls) && urls.length > 0) {
         websiteLink = urls[0];
       } else if (typeof urls === 'string') {
@@ -40,26 +46,25 @@ export const OngsProfileService = {
       }
 
       return {
-        id: base.id || profile.id || ongId,
-        name: profile.name || base.name || "ONG sem nome",
-        cnpj: base.cnpj || "CNPJ não informado",
-        banner: this._formatImageUrl(profile.bannerUrl || base.bannerUrl),
-        logo: this._formatImageUrl(profile.avatarUrl || base.avatarUrl),
+        id: base?.id || profile?.id || ongId,
+        name: profile?.name || base?.name || "ONG sem nome",
+        cnpj: base?.cnpj || "CNPJ não informado",
+        banner: this._formatImageUrl(profile?.bannerUrl || base?.bannerUrl),
+        logo: this._formatImageUrl(profile?.avatarUrl || base?.avatarUrl),
         description: descriptionText,
-        phone: profile.contactNumber || base.contactNumber || "Não informado",
+        phone: profile?.contactNumber || base?.contactNumber || "Não informado",
         instagram: websiteLink,
-        address: profile.address?.city ? `${profile.address.city}, ${profile.address.state}` : "Endereço não informado",
-        yearsOfOperation: profile.yearsOfOperation,
-        rating: Number(profile.rating?.average || 0),
-        numberOfRatings: profile.rating?.count || 0,
-        categories: profile.categories || [],
-        primaryCategory: profile.primaryCategory || (profile.categories && profile.categories.length > 0 ? profile.categories[0] : null),
-        primaryCategoryId: profile.primaryCategoryId || (profile.categories && profile.categories.length > 0 ? profile.categories[0].id : null),
+        address: profile?.address?.city ? `${profile.address.city}, ${profile.address.state}` : "Endereço não informado",
+        yearsOfOperation: profile?.yearsOfOperation,
+        rating: Number(profile?.rating?.average || 0),
+        numberOfRatings: profile?.rating?.count || 0,
+        categories: profile?.categories || [],
+        primaryCategory: profile?.primaryCategory || (profile?.categories && profile.categories.length > 0 ? profile.categories[0] : null),
+        primaryCategoryId: profile?.primaryCategoryId || (profile?.categories && profile.categories.length > 0 ? profile.categories[0].id : null),
         reviews: Array.isArray(resReviews.data) ? resReviews.data : [],
-        donations: profile.receivedDonations || 0,
-        distance: base.distance || "—",
-        // AQUI ESTÁ A MÁGICA: Repassando a flag de permissão de avaliação para a interface
-        canReview: profile.canReview ?? false,
+        donations: profile?.receivedDonations || 0,
+        distance: base?.distance || "—",
+        canReview: profile?.canReview ?? false,
       };
     } catch (error) {
       console.error("Erro no getPublicProfile:", error);
@@ -99,5 +104,5 @@ export const OngsProfileService = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ score, comment }),
     });
-  }
+  },
 };

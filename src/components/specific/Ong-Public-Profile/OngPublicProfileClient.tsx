@@ -56,12 +56,14 @@ export default function OngPublicProfileClient({
 
   // INICIA COM OS DADOS DO SERVIDOR
   const [data, setData] = useState<{ ong: OngProfileData; reviews: Review[] } | null>(initialData);
+  const [notFound, setNotFound] = useState(false);
   const [errors, setErrors] = useState({ banner: false, logo: false });
 
   const loadData = async () => {
     if (!ongId) return;
     try {
       const result = await OngsProfileService.getPublicProfile(ongId);
+      setNotFound(false);
       setData({
         ong: {
           ...result,
@@ -70,15 +72,23 @@ export default function OngPublicProfileClient({
         reviews: result.reviews || []
       });
     } catch (err) {
+      if (!initialData) setNotFound(true);
       console.error("❌ Erro ao carregar perfil:", err);
     }
   };
 
   useEffect(() => {
     if (!initialData || isAuthenticated) {
-      loadData();
+      loadData().catch(() => { if (!initialData) setNotFound(true); });
     }
   }, [ongId, isAuthenticated]);
+
+  if (notFound) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4 px-4 text-center">
+      <h1 className="text-2xl font-bold text-slate-700">ONG não encontrada.</h1>
+      <button onClick={() => router.push("/home")} className="px-6 py-3 bg-[#6B39A7] text-white rounded-xl font-bold hover:bg-[#582d8c] transition-colors cursor-pointer">Voltar para o Início</button>
+    </div>
+  );
 
   if (!data) return (
     <div className="min-h-screen flex items-center justify-center bg-white">

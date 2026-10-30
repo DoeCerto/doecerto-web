@@ -19,6 +19,7 @@ import { calculateImpact } from "@/utils/impactCalculator";
 import { formatCPF, validateCPF, removeFormatting } from "@/utils/documentValidation";
 import DonationSuccessModal from "@/components/specific/Donation/DonationSuccessModal";
 import SlideCommit from "@/components/ui/SlideCommit";
+import { TurnstileWidget } from "@/components/ui/TurnstileWidget";
 
 // ==========================================
 // TEXTO DE IMPACTO SOCIAL TYPEWRITER
@@ -156,6 +157,7 @@ function PixPageContent() {
     return "";
   });
   const [guestFormError, setGuestFormError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string>("");
 
   const [ongData, setOngData] = useState<any>(null);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -247,9 +249,12 @@ function PixPageContent() {
 
   // Estados Asaas (Pix Dinâmico)
   const [dynamicPix, setDynamicPix] = useState<DynamicPixData | null>(() => {
-    if (typeof window !== "undefined" && ongId && initialValor) {
+    if (typeof window !== "undefined" && ongId) {
       try {
-        const cached = sessionStorage.getItem(`dc_dynpix_${ongId}_${initialValor}`);
+        const cached =
+          sessionStorage.getItem(`dc_dynpix_${ongId}_${totalAmount}`) ||
+          sessionStorage.getItem(`dc_dynpix_${ongId}_${initialValor}`) ||
+          sessionStorage.getItem(`dc_dynpix_active_${ongId}`);
         if (cached) {
           const parsed = JSON.parse(cached) as DynamicPixData;
           if (parsed && parsed.copyPaste) return parsed;
@@ -445,7 +450,9 @@ function PixPageContent() {
 
       if (typeof window !== "undefined") {
         try {
-          sessionStorage.setItem(`dc_dynpix_${ongId}_${totalAmount}`, JSON.stringify(data));
+          const serialized = JSON.stringify(data);
+          sessionStorage.setItem(`dc_dynpix_${ongId}_${totalAmount}`, serialized);
+          sessionStorage.setItem(`dc_dynpix_active_${ongId}`, serialized);
           const validExpMs = Date.now() + 20 * 60 * 1000;
           sessionStorage.setItem(`dc_pix_exp_${ongId}_${totalAmount}`, String(validExpMs));
         } catch (e) { }
@@ -469,6 +476,7 @@ function PixPageContent() {
     if (typeof window !== "undefined") {
       try {
         sessionStorage.removeItem(`dc_dynpix_${ongId}_${totalAmount}`);
+        sessionStorage.removeItem(`dc_dynpix_active_${ongId}`);
         sessionStorage.removeItem(`dc_pix_exp_${ongId}_${totalAmount}`);
       } catch (e) {
         // noop
@@ -490,7 +498,7 @@ function PixPageContent() {
         console.error("Erro ao renovar Pix do Visitante:", err);
       }
     } else {
-      navigateToStep("identification", String(totalAmount));
+      navigateToStep("identification", String(baseAmount));
     }
   };
 
@@ -548,6 +556,7 @@ function PixPageContent() {
           email: trimmedEmail || undefined,
           cpf: cleanCpf,
           isAnonymous: true,
+          turnstileToken: turnstileToken || undefined,
         }),
       });
 
@@ -559,14 +568,17 @@ function PixPageContent() {
 
       if (typeof window !== "undefined") {
         try {
-          sessionStorage.setItem(`dc_dynpix_${ongId}_${totalAmount}`, JSON.stringify(data));
+          const serialized = JSON.stringify(data);
+          sessionStorage.setItem(`dc_dynpix_${ongId}_${totalAmount}`, serialized);
+          sessionStorage.setItem(`dc_dynpix_active_${ongId}`, serialized);
           const validExpMs = Date.now() + 20 * 60 * 1000;
           sessionStorage.setItem(`dc_pix_exp_${ongId}_${totalAmount}`, String(validExpMs));
         } catch (e) { }
       }
 
       setTimeLeft(1199);
-      navigateToStep("payment", String(totalAmount));
+      // UX-02: Mantém valor=baseAmount na URL para que um F5 na tela do QR Code não aplique gorjeta composta (R$ 22 -> R$ 24,20)
+      navigateToStep("payment", String(baseAmount));
     } catch (err: any) {
       console.error("Erro ao gerar Pix do Visitante:", err);
       const msg = err?.message || "Não foi possível gerar seu Pix no momento. Tente novamente.";
@@ -592,7 +604,8 @@ function PixPageContent() {
       try {
         const pixData = await generateDynamicPix(baseAmount, tipAmount, isAnonymous);
         setTimeLeft(calculateRemainingSeconds(String(totalAmount), pixData));
-        navigateToStep("payment", String(totalAmount));
+        // UX-02: Mantém valor=baseAmount na URL para evitar gorjeta composta ao dar F5
+        navigateToStep("payment", String(baseAmount));
       } catch (err: any) {
         setErrorMessage(err?.message || "Falha ao gerar o QR Code no Asaas. Tente novamente.");
         throw err;
@@ -601,7 +614,7 @@ function PixPageContent() {
     }
 
     // 2. Visitante (deslogado): Identificação Rápida em 1 card (Padrão Fintech Enterprise)
-    navigateToStep("identification", String(totalAmount));
+    navigateToStep("identification", String(baseAmount));
   };
 
   // Garante que se o usuário recarregar (F5) na etapa de pagamento, o QR Code é restaurado do cache ou gerado imediatamente
@@ -619,13 +632,15 @@ function PixPageContent() {
     // 1. Tenta restaurar do cache de sessão
     if (typeof window !== "undefined") {
       try {
-        const cached = sessionStorage.getItem(`dc_dynpix_${ongId}_${totalAmount}`);
+        const cached =
+          sessionStorage.getItem(`dc_dynpix_${ongId}_${totalAmount}`) ||
+          sessionStorage.getItem(`dc_dynpix_active_${ongId}`);
         if (cached) {
           const parsed = JSON.parse(cached) as DynamicPixData;
-          if (parsed && parsed.copyPaste && parsed.amount === totalAmount) {
+          if (parsed && parsed.copyPaste) {
             setDynamicPix(parsed);
-            lastRequestedAmountRef.current = totalAmount;
-            setTimeLeft(calculateRemainingSeconds(String(totalAmount), parsed));
+            lastRequestedAmountRef.current = parsed.amount || totalAmount;
+            setTimeLeft(calculateRemainingSeconds(String(parsed.amount || totalAmount), parsed));
             return;
           }
         }
@@ -647,6 +662,7 @@ function PixPageContent() {
     if (!dynamicPix?.donationId || isPaymentConfirmed || showPopup || step !== "payment" || isExpired) return;
 
     let isMounted = true;
+    let interval: ReturnType<typeof setInterval> | null = null;
     const controller = new AbortController();
 
     const checkStatus = async () => {
@@ -656,7 +672,10 @@ function PixPageContent() {
         const res = await api<{ donationStatus: string }>(`/donations/${trackingKey}/status`, {
           signal: controller.signal,
         });
-        if (isMounted && res.data?.donationStatus === "completed") {
+        const status = res.data?.donationStatus;
+        if (!isMounted || !status) return;
+
+        if (status === "completed") {
           setIsPaymentConfirmed(true);
           setShowPopup(true);
           clearPixSessionData();
@@ -666,6 +685,25 @@ function PixPageContent() {
             const cleanUrl = `${window.location.pathname}?id=${ongId}`;
             window.history.replaceState(null, "", cleanUrl);
           }
+        } else if (status === "under_review") {
+          // UX-02: Interrompe polling e informa quando doação entra em análise preventiva
+          if (interval) clearInterval(interval);
+          clearPixSessionData();
+          setDynamicPixError(
+            "Seu pagamento foi identificado e está em análise preventiva de segurança. Você será notificado assim que for concluído."
+          );
+        } else if (
+          status === "canceled" ||
+          status === "refunded" ||
+          status === "chargeback" ||
+          status === "refund_in_progress"
+        ) {
+          // UX-02: Interrompe polling imediatamente se a cobrança foi cancelada ou estornada
+          if (interval) clearInterval(interval);
+          setTimeLeft(0);
+          setDynamicPixError(
+            "Esta cobrança Pix foi cancelada ou expirou. Clique em gerar novo QR Code caso deseje concluir sua doação."
+          );
         }
       } catch (e: any) {
         // Ignora silenciosamente se o componente foi desmontado ou requisição abortada durante navegação
@@ -678,12 +716,12 @@ function PixPageContent() {
     // Executa verificação instantânea na entrada ou recarregamento
     checkStatus();
 
-    const interval = setInterval(checkStatus, 3000);
+    interval = setInterval(checkStatus, 3000);
 
     return () => {
       isMounted = false;
       controller.abort();
-      clearInterval(interval);
+      if (interval) clearInterval(interval);
     };
   }, [dynamicPix?.donationId, dynamicPix?.trackingId, isPaymentConfirmed, showPopup, step, isExpired]);
 
@@ -1302,6 +1340,11 @@ function PixPageContent() {
                     <span>{guestFormError}</span>
                   </div>
                 )}
+
+                <TurnstileWidget
+                  onVerify={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken("")}
+                />
 
                 {/* BOTÃO PRINCIPAL (CTA) */}
                 <div className="pt-2">

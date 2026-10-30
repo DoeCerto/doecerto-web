@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowLeft, Loader2, Lock, AlertCircle } from "lucide-react";
 import { api } from "@/services/api";
+import { TurnstileWidget } from "@/components/ui/TurnstileWidget";
 
 // ==========================================
 // Persistência do e-mail e WhatsApp do visitante (somente na sessão do navegador)
@@ -68,7 +69,7 @@ export function clearGuestPhone() {
 // ==========================================
 
 interface GuestEmailFormProps {
-  onSubmit: (email: string, phone?: string) => Promise<void> | void;
+  onSubmit: (email: string, phone?: string, turnstileToken?: string) => Promise<void> | void;
   onBack?: () => void;
   ongName?: string;
   initialEmail?: string;
@@ -90,6 +91,7 @@ export function GuestEmailForm({
 }: GuestEmailFormProps) {
   const [email, setEmail] = useState(initialEmail);
   const [phone, setPhone] = useState(initialPhone);
+  const [turnstileToken, setTurnstileToken] = useState<string>("");
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -138,7 +140,7 @@ export function GuestEmailForm({
         return;
       }
 
-      await onSubmit(cleanEmail, cleanPhone);
+      await onSubmit(cleanEmail, cleanPhone, turnstileToken || undefined);
     } catch (err: any) {
       setError(err?.message || "Não foi possível continuar. Tente novamente.");
     }
@@ -256,6 +258,11 @@ export function GuestEmailForm({
             </div>
           </div>
         )}
+
+        <TurnstileWidget
+          onVerify={(token) => setTurnstileToken(token)}
+          onExpire={() => setTurnstileToken("")}
+        />
 
         <button
           id="guest-email-continue"

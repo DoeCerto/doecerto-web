@@ -35,6 +35,7 @@ export const DonationService = {
     guestName?: string;
     guestPhone?: string;
     acceptedTerms?: boolean;
+    turnstileToken?: string;
   }) {
     try {
       const body: any = {
@@ -51,6 +52,7 @@ export const DonationService = {
       if (payload.guestName) body.guestName = payload.guestName;
       if (payload.guestPhone) body.guestPhone = payload.guestPhone;
       if (payload.acceptedTerms !== undefined) body.acceptedTerms = payload.acceptedTerms;
+      if (payload.turnstileToken) body.turnstileToken = payload.turnstileToken;
 
       const response = await api<any>(`/donations`, {
         method: 'POST',

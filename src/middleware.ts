@@ -34,10 +34,11 @@ export async function middleware(request: NextRequest) {
 
     const cspHeader = `
         default-src 'self';
-        script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ${isDev ? "'unsafe-eval'" : ""};
+        script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com ${isDev ? "'unsafe-eval'" : ""};
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
         img-src 'self' blob: data: https: ${apiUrl};
         font-src 'self' https://fonts.gstatic.com data:;
+        frame-src 'self' https://challenges.cloudflare.com;
         object-src 'none';
         base-uri 'self';
         form-action 'self';
@@ -182,7 +183,8 @@ export async function middleware(request: NextRequest) {
         response.headers.set('Expires', '0');
     }
 
-    // Se houve renovação de tokens, injeta os novos cookies na response (seja ela next() ou redirect())
+    // WEB-02: Se houve renovação de tokens, injeta os novos cookies na response com sameSite: 'lax'
+    // alinhado com o backend para evitar que navegação a partir de links externos (WhatsApp/e-mail) descarte a sessão
     if (refreshedTokens) {
         const isProd = process.env.NODE_ENV === 'production';
         response.cookies.set({
@@ -190,7 +192,7 @@ export async function middleware(request: NextRequest) {
             value: refreshedTokens.accessToken,
             httpOnly: true,
             secure: isProd,
-            sameSite: 'strict',
+            sameSite: 'lax',
             path: '/',
             maxAge: 15 * 60, // 15 minutos
         });
@@ -200,7 +202,7 @@ export async function middleware(request: NextRequest) {
             value: refreshedTokens.refreshToken,
             httpOnly: true,
             secure: isProd,
-            sameSite: 'strict',
+            sameSite: 'lax',
             path: '/',
             maxAge: 7 * 24 * 60 * 60, // 7 dias
         });
