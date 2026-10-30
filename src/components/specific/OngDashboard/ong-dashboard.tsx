@@ -555,7 +555,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                             <img
                               src={fullUrl}
                               alt="Comprovante de Doação"
-                              className="w-full h-48 object-cover rounded-[18px] shadow-sm cursor-zoom-in"
+                              crossOrigin="use-credentials" className="w-full h-48 object-cover rounded-[18px] shadow-sm cursor-zoom-in"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
                                 if (target.src !== fullUrl) return;
@@ -685,7 +685,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
         {zoomImage && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setZoomImage(null)} className="fixed inset-0 z-[300] bg-black/95 flex items-center justify-center p-2 backdrop-blur-sm">
             <button className="absolute top-6 right-6 text-white bg-white/10 p-3 rounded-full hover:bg-white/20 transition-colors z-50" onClick={(e) => { e.stopPropagation(); setZoomImage(null); }}><X size={32} /></button>
-            <motion.img initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }} src={zoomImage} className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" alt="Comprovante ampliado" onClick={(e) => e.stopPropagation()} />
+            <motion.img initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }} src={zoomImage} crossOrigin="use-credentials" className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" alt="Comprovante ampliado" onClick={(e) => e.stopPropagation()} />
             <p className="absolute bottom-10 text-white/60 font-medium text-sm">Toque fora para fechar</p>
           </motion.div>
         )}
