@@ -196,6 +196,18 @@ function PixPageContent() {
     }
   }, [tipOption, customTip]);
 
+  // Persiste o valor base inserido pelo usuário na etapa de seleção
+  useEffect(() => {
+    if (typeof window !== "undefined" && ongId && step !== "payment") {
+      try {
+        const num = parseFloat(valor);
+        if (!isNaN(num) && num > 0) {
+          sessionStorage.setItem("dc_base_val_" + ongId, String(num));
+        }
+      } catch (e) { }
+    }
+  }, [valor, ongId, step]);
+
   // Estados Asaas (Pix Dinâmico)
   const [dynamicPix, setDynamicPix] = useState<DynamicPixData | null>(() => {
     if (typeof window !== "undefined" && ongId) {
@@ -219,16 +231,46 @@ function PixPageContent() {
 
   // Cálculos do valor base para a ONG, gorjeta voluntária e valor total
   const baseAmount = useMemo(() => {
-    if (step === "payment" && dynamicPix?.baseAmount) {
-      return dynamicPix.baseAmount;
+    if (step === "payment") {
+      if (dynamicPix?.baseAmount && dynamicPix.baseAmount > 0) {
+        return dynamicPix.baseAmount;
+      }
+      if (typeof window !== "undefined" && ongId) {
+        const savedBase = sessionStorage.getItem("dc_base_val_" + ongId);
+        if (savedBase) {
+          const parsed = parseFloat(savedBase);
+          if (!isNaN(parsed) && parsed > 0) return parsed;
+        }
+      }
+      // Se dynamicPix existir mas baseAmount não estiver explícito no objeto:
+      if (dynamicPix?.amount && dynamicPix.amount > 0) {
+        const pct = parseInt(tipOption, 10);
+        if (!isNaN(pct) && pct > 0) {
+          // Reverte o acréscimo percentual para evitar compounding ao atualizar a página
+          const reversed = Math.round((dynamicPix.amount / (1 + pct / 100)) * 100) / 100;
+          if (reversed >= 5) return reversed;
+        }
+      }
     }
     const num = parseFloat(valor);
     return isNaN(num) || num < 0 ? 0 : num;
-  }, [step, dynamicPix?.baseAmount, valor]);
+  }, [step, dynamicPix?.baseAmount, dynamicPix?.amount, tipOption, valor, ongId]);
 
   const tipAmount = useMemo(() => {
-    if (step === "payment" && dynamicPix?.tipAmount !== undefined) {
-      return dynamicPix.tipAmount;
+    if (step === "payment") {
+      if (dynamicPix?.tipAmount !== undefined) {
+        return dynamicPix.tipAmount;
+      }
+      if (typeof window !== "undefined" && ongId) {
+        const savedTip = sessionStorage.getItem("dc_tip_val_" + ongId);
+        if (savedTip !== null) {
+          const parsed = parseFloat(savedTip);
+          if (!isNaN(parsed) && parsed >= 0) return parsed;
+        }
+      }
+      if (dynamicPix?.amount && baseAmount > 0) {
+        return Math.max(0, Math.round((dynamicPix.amount - baseAmount) * 100) / 100);
+      }
     }
     if (tipOption === "0" || baseAmount <= 0) return 0;
     if (tipOption === "custom") {
@@ -238,7 +280,7 @@ function PixPageContent() {
     const pct = parseInt(tipOption, 10);
     if (isNaN(pct) || pct <= 0) return 0;
     return Math.round(baseAmount * pct) / 100;
-  }, [step, dynamicPix?.tipAmount, baseAmount, tipOption, customTip]);
+  }, [step, dynamicPix?.tipAmount, dynamicPix?.amount, baseAmount, tipOption, customTip, ongId]);
 
   const totalAmount = useMemo(() => {
     if (step === "payment" && dynamicPix?.amount) {
@@ -344,6 +386,10 @@ function PixPageContent() {
       sessionStorage.removeItem("dc_guest_cpf");
       sessionStorage.removeItem("dc_tip_option");
       sessionStorage.removeItem("dc_custom_tip");
+      if (ongId) {
+        sessionStorage.removeItem("dc_base_val_" + ongId);
+        sessionStorage.removeItem("dc_tip_val_" + ongId);
+      }
       Object.keys(sessionStorage).forEach((key) => {
         if (key.startsWith("dc_dynpix_") || key.startsWith("dc_pix_exp_")) {
           sessionStorage.removeItem(key);
@@ -394,21 +440,21 @@ function PixPageContent() {
 
   // Sincroniza a URL e o estado local com os valores reais da cobrança ao carregar a tela de pagamento
   useEffect(() => {
-    if (step === "payment" && dynamicPix) {
-      const realBase = dynamicPix.baseAmount ? String(dynamicPix.baseAmount) : String(dynamicPix.amount);
-      if (valor !== realBase) {
+    if (step === "payment") {
+      const realBase = dynamicPix?.baseAmount ? String(dynamicPix.baseAmount) : String(baseAmount);
+      if (valor !== realBase && parseFloat(realBase) > 0) {
         setValor(realBase);
       }
       if (typeof window !== "undefined") {
         const params = new URLSearchParams(window.location.search);
-        if (params.get("valor") !== realBase) {
+        if (params.get("valor") !== realBase && parseFloat(realBase) > 0) {
           params.set("valor", realBase);
           const newUrl = `${window.location.pathname}?${params.toString()}`;
           window.history.replaceState(null, "", newUrl);
         }
       }
     }
-  }, [step, dynamicPix]);
+  }, [step, dynamicPix?.baseAmount, baseAmount, valor]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -476,18 +522,25 @@ function PixPageContent() {
         }),
       });
       const data = response.data;
-      setDynamicPix(data);
+      const storedData: DynamicPixData = {
+        ...data,
+        baseAmount: data.baseAmount ?? donationBase,
+        tipAmount: data.tipAmount ?? donationTip,
+      };
+      setDynamicPix(storedData);
       lastRequestedAmountRef.current = totalAmount;
       setIsPaymentConfirmed(false);
       setCopied(false);
 
       if (typeof window !== "undefined") {
         try {
-          const serialized = JSON.stringify(data);
-          sessionStorage.setItem(`dc_dynpix_${ongId}_${totalAmount}`, serialized);
+          const serialized = JSON.stringify(storedData);
+          sessionStorage.setItem(`dc_dynpix_${ongId}_${storedData.amount}`, serialized);
           sessionStorage.setItem(`dc_dynpix_active_${ongId}`, serialized);
+          sessionStorage.setItem(`dc_base_val_${ongId}`, String(storedData.baseAmount));
+          sessionStorage.setItem(`dc_tip_val_${ongId}`, String(storedData.tipAmount));
           const validExpMs = Date.now() + 20 * 60 * 1000;
-          sessionStorage.setItem(`dc_pix_exp_${ongId}_${totalAmount}`, String(validExpMs));
+          sessionStorage.setItem(`dc_pix_exp_${ongId}_${storedData.amount}`, String(validExpMs));
         } catch (e) { }
       }
 
@@ -594,18 +647,25 @@ function PixPageContent() {
       });
 
       const data = response.data;
-      setDynamicPix(data);
+      const storedData: DynamicPixData = {
+        ...data,
+        baseAmount: data.baseAmount ?? baseAmount,
+        tipAmount: data.tipAmount ?? (tipAmount > 0 ? tipAmount : 0),
+      };
+      setDynamicPix(storedData);
       lastRequestedAmountRef.current = totalAmount;
       setIsPaymentConfirmed(false);
       setCopied(false);
 
       if (typeof window !== "undefined") {
         try {
-          const serialized = JSON.stringify(data);
-          sessionStorage.setItem(`dc_dynpix_${ongId}_${totalAmount}`, serialized);
+          const serialized = JSON.stringify(storedData);
+          sessionStorage.setItem(`dc_dynpix_${ongId}_${storedData.amount}`, serialized);
           sessionStorage.setItem(`dc_dynpix_active_${ongId}`, serialized);
+          sessionStorage.setItem(`dc_base_val_${ongId}`, String(storedData.baseAmount));
+          sessionStorage.setItem(`dc_tip_val_${ongId}`, String(storedData.tipAmount));
           const validExpMs = Date.now() + 20 * 60 * 1000;
-          sessionStorage.setItem(`dc_pix_exp_${ongId}_${totalAmount}`, String(validExpMs));
+          sessionStorage.setItem(`dc_pix_exp_${ongId}_${storedData.amount}`, String(validExpMs));
         } catch (e) { }
       }
 
@@ -687,6 +747,9 @@ function PixPageContent() {
       generateDynamicPix(baseAmount, tipAmount, isAnonymous).catch((err) => {
         console.error("Erro ao gerar Pix ao atualizar a página:", err);
       });
+    } else if (!isGeneratingPix && !isAuthenticated && !dynamicPix) {
+      // Se não há cobrança em cache e o usuário é visitante, redireciona para identificação para não ficar preso
+      navigateToStep("identification", String(baseAmount));
     }
   }, [step, dynamicPix, isGeneratingPix, initialLoading, totalAmount, baseAmount, tipAmount, ongId, isAnonymous, isAuthenticated, userRole]);
 
@@ -696,15 +759,12 @@ function PixPageContent() {
 
     let isMounted = true;
     let interval: ReturnType<typeof setInterval> | null = null;
-    const controller = new AbortController();
 
     const checkStatus = async () => {
       if (!isMounted || isPaymentConfirmed || showPopup) return;
       try {
         const trackingKey = dynamicPix.trackingId || dynamicPix.donationId;
-        const res = await api<{ donationStatus: string }>(`/donations/${trackingKey}/status`, {
-          signal: controller.signal,
-        });
+        const res = await api<{ donationStatus: string }>(`/donations/${trackingKey}/status`);
         const status = res.data?.donationStatus;
         if (!isMounted || !status) return;
 
@@ -739,8 +799,9 @@ function PixPageContent() {
           );
         }
       } catch (e: any) {
-        // Ignora silenciosamente se o componente foi desmontado ou requisição abortada durante navegação
-        if (!isMounted || controller.signal.aborted || e?.name === "AbortError" || e?.message?.toLowerCase().includes("abort")) return;
+        // Ignora silenciosamente se o componente foi desmontado
+        if (!isMounted) return;
+        if (e?.name === "AbortError" || e?.message?.toLowerCase().includes("abort")) return;
         if (e instanceof TypeError && e.message?.includes("fetch")) return;
         console.error("Erro ao verificar status do Pix:", e);
       }
@@ -753,7 +814,6 @@ function PixPageContent() {
 
     return () => {
       isMounted = false;
-      controller.abort();
       if (interval) clearInterval(interval);
     };
   }, [dynamicPix?.donationId, dynamicPix?.trackingId, isPaymentConfirmed, showPopup, step, isExpired]);
