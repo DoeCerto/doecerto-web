@@ -105,4 +105,11 @@ export const OngsProfileService = {
       body: JSON.stringify({ score, comment }),
     });
   },
+
+  async uploadDocuments(formData: FormData) {
+    return api<any>('/ongs/me/documents', {
+      method: "POST",
+      body: formData,
+    });
+  },
 };

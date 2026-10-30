@@ -14,6 +14,7 @@ import { DonationService } from "@/services/donations.service";
 import { api } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { LgpdDeleteAccountModal } from "@/components/specific/Lgpd/LgpdDeleteAccountModal";
+import { OngDocumentsModal } from "./OngDocumentsModal";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -50,6 +51,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [showRestrictedModal, setShowRestrictedModal] = useState(false);
   const [isLgpdModalOpen, setIsLgpdModalOpen] = useState(false);
+  const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
   const [dismissSetupPrompt, setDismissSetupPrompt] = useState(() => {
     if (typeof window !== "undefined") {
       return sessionStorage.getItem("dismiss_ong_setup_prompt") === "true";
@@ -240,6 +242,17 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
 
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-32">
+      {(!ong?.hasEstatuto || !ong?.hasAta) && (
+        <button
+          onClick={() => setIsDocsModalOpen(true)}
+          className="w-full bg-amber-500 hover:bg-amber-600 text-white px-4 sm:px-6 py-2.5 flex items-center justify-center gap-2 sm:gap-3 z-50 text-xs sm:text-sm shadow-md relative transition-colors cursor-pointer group"
+        >
+          <FileText size={18} className="shrink-0 group-hover:scale-110 transition-transform" />
+          <span className="font-bold text-center leading-tight">
+            Documentação Pendente para Receber Doações Pix: <span className="underline">Envie o Estatuto e a Ata da sua ONG para homologação bancária</span>.
+          </span>
+        </button>
+      )}
       {ong.verificationStatus === 'verified' && ong.isRestricted && (
         <button
           onClick={() => setShowRestrictedModal(true)}
@@ -299,7 +312,12 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                   transition={{ duration: 0.2 }}
                   className="absolute top-full right-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-[100] origin-top-right"
                 >
-                  <button onClick={() => { setIsMenuOpen(false); router.push(`/ong-profilesetup`); }} className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition text-left cursor-pointer">
+                  <button onClick={() => { setIsMenuOpen(false); setIsDocsModalOpen(true); }} className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition text-left cursor-pointer">
+                    <FileText size={18} className="text-[#6B39A7]" />
+                    <span className="font-bold text-slate-700">Documentos Societários</span>
+                  </button>
+                  <div className="border-t border-slate-100 my-1"></div>
+                  <button onClick={() => { setIsMenuOpen(false); router.push("/ong-profilesetup"); }} className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition text-left cursor-pointer">
                     <Pencil size={18} className="text-[#6B39A7]" />
                     <span className="font-bold text-slate-700">Editar Perfil</span>
                   </button>
@@ -772,6 +790,18 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
                 )}
               </p>
 
+              {(!ong?.hasEstatuto || !ong?.hasAta) && (
+                <button
+                  onClick={() => {
+                    setShowPendingModal(false);
+                    setIsDocsModalOpen(true);
+                  }}
+                  className="w-full mb-3 py-4 bg-[#6B39A7] hover:bg-[#582a8c] text-white rounded-2xl font-bold text-base shadow-lg shadow-purple-200 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <FileText size={18} />
+                  <span>Enviar Documentos para Homologação</span>
+                </button>
+              )}
               <button
                 onClick={() => setShowPendingModal(false)}
                 className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-bold text-base sm:text-lg shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all cursor-pointer"
@@ -844,6 +874,20 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
       </AnimatePresence>
 
       {/* Modal de Exclusão de Conta LGPD */}
+      <OngDocumentsModal
+        isOpen={isDocsModalOpen}
+        onClose={() => setIsDocsModalOpen(false)}
+        ong={ong}
+        onSuccess={(updated) => {
+          setOng((prev: any) => ({
+            ...prev,
+            ...updated,
+            hasEstatuto: true,
+            hasAta: true,
+          }));
+        }}
+      />
+
       <LgpdDeleteAccountModal
         isOpen={isLgpdModalOpen}
         onClose={() => setIsLgpdModalOpen(false)}
