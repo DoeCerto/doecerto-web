@@ -43,7 +43,7 @@ export async function middleware(request: NextRequest) {
         base-uri 'self';
         form-action 'self';
         frame-ancestors 'none';
-        connect-src 'self' ${apiUrl} https:;
+        connect-src 'self' ${apiUrl} https://viacep.com.br https://challenges.cloudflare.com;
         upgrade-insecure-requests;
     `.replace(/\s{2,}/g, ' ').trim();
 
