@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
 
     const cspHeader = `
         default-src 'self';
-        script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com ${isDev ? "'unsafe-eval'" : ""};
+        script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval' https://challenges.cloudflare.com ${isDev ? "'unsafe-eval'" : ""};
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
         img-src 'self' blob: data: https: ${apiUrl};
         font-src 'self' https://fonts.gstatic.com data:;
@@ -43,7 +43,7 @@ export async function middleware(request: NextRequest) {
         base-uri 'self';
         form-action 'self';
         frame-ancestors 'none';
-        connect-src 'self' ${apiUrl} https://viacep.com.br https://challenges.cloudflare.com;
+        connect-src 'self' ${apiUrl} https://viacep.com.br https://challenges.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com;
         upgrade-insecure-requests;
     `.replace(/\s{2,}/g, ' ').trim();
 
