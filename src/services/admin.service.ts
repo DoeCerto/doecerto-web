@@ -22,77 +22,168 @@ export interface OngAdminData {
   riskScore?: number;
   isRestricted?: boolean;
   lastAuditAt?: string;
-  auditResults?: any[];
+  auditResults?: Record<string, unknown>[];
   asaasWalletId?: string;
   asaasAccountStatus?: string;
 }
 
-interface ApiResponse {
-  data: any[];
-  total: number;
-}
+type RawRecord = Record<string, unknown>;
 
 // --- Normalização Simplificada ---
-function normalizeOng(raw: any, status: OngStatus): OngAdminData {
+function normalizeOng(raw: RawRecord, status: OngStatus): OngAdminData {
   // Garante que dados aninhados (ex: raw.ong) subam para o nível principal
-  const data = { ...raw, ...(raw.ong || {}), ...(raw.user || {}) };
+  const nestedOng = (raw.ong && typeof raw.ong === 'object' ? raw.ong : {}) as RawRecord;
+  const nestedUser = (raw.user && typeof raw.user === 'object' ? raw.user : {}) as RawRecord;
+  const data: RawRecord = { ...raw, ...nestedOng, ...nestedUser };
 
   return {
-    id: data.id ?? data.userId ?? data.ongId,
-    name: data.name ?? data.fullName ?? 'Nome não informado',
-    email: data.email ?? data.contactEmail ?? '',
-    cnpj: data.cnpj ?? data.document ?? '',
-    bio: data.bio ?? data.description ?? '',
-    contactNumber: data.contactNumber ?? data.phone ?? '',
-    address: data.address ?? data.location ?? '',
+    id: Number(data.id ?? data.userId ?? data.ongId ?? 0),
+    name: String(data.name ?? data.fullName ?? 'Nome não informado'),
+    email: String(data.email ?? data.contactEmail ?? ''),
+    cnpj: String(data.cnpj ?? data.document ?? ''),
+    bio: (data.bio ?? data.description ?? '') as string,
+    contactNumber: (data.contactNumber ?? data.phone ?? '') as string,
+    address: (data.address ?? data.location ?? '') as string,
     status: status, // Forçamos o status baseado na rota chamada
-    rejectionReason: data.rejectionReason ?? data.rejectionMessage,
-    createdAt: data.createdAt ?? new Date().toISOString(),
-    presidentName: data.presidentName,
-    presidentCpf: data.presidentCpf,
-    estatutoUrl: data.estatutoUrl,
-    ataUrl: data.ataUrl,
-    cartaoCnpjUrl: data.cartaoCnpjUrl,
-    riskScore: data.riskScore,
-    isRestricted: data.isRestricted,
-    lastAuditAt: data.lastAuditAt,
-    auditResults: data.auditResults,
-    asaasWalletId: data.asaasWalletId,
-    asaasAccountStatus: data.asaasAccountStatus,
+    rejectionReason: (data.rejectionReason ?? data.rejectionMessage) as string | undefined,
+    createdAt: String(data.createdAt ?? new Date().toISOString()),
+    presidentName: data.presidentName as string | undefined,
+    presidentCpf: data.presidentCpf as string | undefined,
+    estatutoUrl: data.estatutoUrl as string | undefined,
+    ataUrl: data.ataUrl as string | undefined,
+    cartaoCnpjUrl: data.cartaoCnpjUrl as string | undefined,
+    riskScore: data.riskScore as number | undefined,
+    isRestricted: data.isRestricted as boolean | undefined,
+    lastAuditAt: data.lastAuditAt as string | undefined,
+    auditResults: data.auditResults as Record<string, unknown>[] | undefined,
+    asaasWalletId: data.asaasWalletId as string | undefined,
+    asaasAccountStatus: data.asaasAccountStatus as string | undefined,
+  };
+}
+
+export interface AdminPaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface TransferAdminItem {
+  id: number;
+  ongId: number;
+  ongName: string;
+  ongEmail: string | null;
+  ongCnpj: string | null;
+  totalAmount: number;
+  asaasTransferId: string | null;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  transferredAt: string | null;
+  errorMessage: string | null;
+  donationsCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UnderReviewDonationItem {
+  id: number;
+  publicId: string;
+  donationType: 'monetary' | 'material';
+  donationStatus: string;
+  monetaryAmount: number;
+  tipAmount: number;
+  asaasPaymentId: string | null;
+  asaasNetValue: number | null;
+  asaasFee: number | null;
+  refundReason: string | null;
+  isAnonymous: boolean;
+  transferId: number | null;
+  createdAt: string;
+  updatedAt: string;
+  verifiedAt: string | null;
+  ong: {
+    id: number;
+    name: string;
+    email: string | null;
+    cnpj: string | null;
+    asaasAccountStatus: string | null;
+  };
+  donor: {
+    id: number | null;
+    name: string;
+    email: string | null;
+    isGuest: boolean;
+  };
+}
+
+export interface AuditLogItem {
+  id: number;
+  userId: number | null;
+  action: string;
+  resource: string;
+  resourceId: string | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  oldValue: Record<string, unknown> | null;
+  newValue: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+  } | null;
+}
+
+type PaginatedOngApiPayload = RawRecord[] | { data?: RawRecord[]; total?: number };
+
+function parseOngListResponse(payload: PaginatedOngApiPayload | undefined, status: OngStatus) {
+  const rawList = Array.isArray(payload) ? payload : (payload?.data || []);
+  const total = !Array.isArray(payload) ? (payload?.total ?? rawList.length) : rawList.length;
+
+  return {
+    data: rawList.map((item) => normalizeOng(item, status)),
+    total,
   };
 }
 
 // --- Serviços de Leitura ---
-export async function getOngsByStatus(status: OngStatus, skip = 0, limit = 10) {
+export async function getOngsByStatus(
+  status: OngStatus,
+  skip = 0,
+  limit = 10,
+  q?: string
+) {
   // Ajuste: O front usa 'approved', mas a rota da API é 'verified'
   const apiStatus = status === 'approved' ? 'verified' : status;
-  
-  // ✅ CORREÇÃO APLICADA: parênteses ao redor do template literal
-  const res = await api<any>(`/ongs/status/${apiStatus}?skip=${skip}&limit=${limit}`);
+  const params = new URLSearchParams({
+    skip: String(skip),
+    limit: String(limit),
+  });
+  if (q && q.trim()) {
+    params.set('q', q.trim());
+  }
 
-  // Suporta retorno direto de array ou objeto com { data, total }
-  const rawList = Array.isArray(res.data) ? res.data : (res.data?.data || []);
-  const total = res.data?.total ?? rawList.length;
-
-  return {
-    data: rawList.map((item: any) => normalizeOng(item, status)),
-    total
-  };
+  const res = await api<PaginatedOngApiPayload>(`/ongs/status/${apiStatus}?${params.toString()}`);
+  return parseOngListResponse(res.data, status);
 }
 
-export async function searchOngs(searchTerm: string, status: OngStatus) {
+export async function searchOngs(
+  searchTerm: string,
+  status: OngStatus,
+  skip = 0,
+  limit = 10
+) {
   const apiStatus = status === 'approved' ? 'verified' : status;
-  
-  // ✅ CORREÇÃO APLICADA: parênteses ao redor do template literal
-  const res = await api<any>(`/ongs/search?q=${encodeURIComponent(searchTerm)}&status=${apiStatus}`);
+  const params = new URLSearchParams({
+    q: searchTerm.trim(),
+    status: apiStatus,
+    skip: String(skip),
+    limit: String(limit),
+  });
 
-  const rawList = Array.isArray(res.data) ? res.data : (res.data?.data || []);
-  const total = res.data?.total ?? rawList.length;
-
-  return {
-    data: rawList.map((item: any) => normalizeOng(item, status)),
-    total
-  };
+  const res = await api<PaginatedOngApiPayload>(`/ongs/search?${params.toString()}`);
+  return parseOngListResponse(res.data, status);
 }
 
 // --- Serviços de Escrita (Ações) ---
@@ -116,14 +207,97 @@ export async function rejectOng(ongId: number, reason: string) {
   });
 }
 
+export interface AdminProfileResponse {
+  userId: number;
+  user?: {
+    id: number;
+    name?: string | null;
+    email?: string | null;
+  } | null;
+}
+
+export interface SyncOngAsaasResponse {
+  userId: number;
+  asaasAccountId: string | null;
+  asaasWalletId: string | null;
+  asaasAccountStatus: string;
+}
+
 export async function getMyProfile() {
-  const { data } = await api<any>('/admins/me');
+  const { data } = await api<AdminProfileResponse>('/admins/me');
   return data;
 }
 
 export async function syncOngAsaas(ongId: number) {
-  const { data } = await api<any>(`/ongs/${ongId}/sync-asaas`, {
+  const { data } = await api<SyncOngAsaasResponse>(`/ongs/${ongId}/sync-asaas`, {
     method: "POST",
   });
+  return data;
+}
+
+export async function getAdminTransfers(params?: {
+  status?: string;
+  ongId?: number;
+  page?: number;
+  limit?: number;
+}): Promise<{ data: TransferAdminItem[]; meta: AdminPaginationMeta }> {
+  const query = new URLSearchParams();
+  if (params?.status) query.set('status', params.status);
+  if (params?.ongId) query.set('ongId', String(params.ongId));
+  if (params?.page) query.set('page', String(params.page));
+  if (params?.limit) query.set('limit', String(params.limit));
+
+  const qs = query.toString();
+  const { data } = await api<{ data: TransferAdminItem[]; meta: AdminPaginationMeta }>(
+    `/admin/transfers${qs ? `?${qs}` : ''}`
+  );
+  return data;
+}
+
+export async function getUnderReviewDonations(
+  page = 1,
+  limit = 20
+): Promise<{ data: UnderReviewDonationItem[]; meta: AdminPaginationMeta }> {
+  const query = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
+  const { data } = await api<{ data: UnderReviewDonationItem[]; meta: AdminPaginationMeta }>(
+    `/admin/donations/under-review?${query.toString()}`
+  );
+  return data;
+}
+
+export async function resolveUnderReviewDonation(
+  donationId: number,
+  payload: { action: 'approve' | 'refund'; reason?: string }
+) {
+  const { data } = await api<{
+    id: number;
+    donationStatus: string;
+    action: 'approve' | 'refund';
+  }>(`/admin/donations/${donationId}/resolve`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+  return data;
+}
+
+export async function getAuditLogs(params?: {
+  action?: string;
+  resource?: string;
+  page?: number;
+  limit?: number;
+}): Promise<{ data: AuditLogItem[]; meta: AdminPaginationMeta }> {
+  const query = new URLSearchParams();
+  if (params?.action) query.set('action', params.action);
+  if (params?.resource) query.set('resource', params.resource);
+  if (params?.page) query.set('page', String(params.page));
+  if (params?.limit) query.set('limit', String(params.limit));
+
+  const qs = query.toString();
+  const { data } = await api<{ data: AuditLogItem[]; meta: AdminPaginationMeta }>(
+    `/admin/audit-logs${qs ? `?${qs}` : ''}`
+  );
   return data;
 }

@@ -19,18 +19,19 @@ import {
   CreditCard,
   RefreshCw,
   Clock,
-  Copy
+  Copy,
+  Search
 } from 'lucide-react';
 import {
   getOngsByStatus,
+  searchOngs,
   approveOng,
   rejectOng,
   syncOngAsaas,
-  type OngAdminData
+  type OngAdminData,
+  type OngStatus
 } from '@/services/admin.service';
 import toast from 'react-hot-toast';
-
-type OngStatus = 'pending' | 'approved' | 'rejected';
 
 // --- SUB-COMPONENTE: BADGE DE STATUS ---
 const StatusBadge = ({ status }: { status: string }) => {
@@ -522,10 +523,12 @@ const DetailsModal = ({ ong, onClose, status, onApproveClick, onRejectClick, onO
 // --- COMPONENTE PRINCIPAL ---
 export default function OngTableWithAPI({ status, onClose, onUpdate }: any) {
   const [ongs, setOngs] = useState<OngAdminData[]>([]);
-  const [allOngs, setAllOngs] = useState<OngAdminData[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [searchInput, setSearchInput] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
+  const [refreshTick, setRefreshTick] = useState(0);
 
   const [selectedOng, setSelectedOng] = useState<any>(null);
   const [ongToApprove, setOngToApprove] = useState<any>(null);
@@ -534,27 +537,58 @@ export default function OngTableWithAPI({ status, onClose, onUpdate }: any) {
 
   const itemsPerPage = 10;
 
-  useEffect(() => { loadOngs(); }, [status]);
-
   useEffect(() => {
-    if (allOngs.length > 0) {
-      const startIndex = (currentPage - 1) * itemsPerPage;
-      setOngs(allOngs.slice(startIndex, startIndex + itemsPerPage));
-    }
-  }, [currentPage, allOngs]);
+    let cancelled = false;
 
-  const loadOngs = async () => {
+    (async () => {
+      try {
+        const skip = (currentPage - 1) * itemsPerPage;
+        const response = appliedSearch
+          ? await searchOngs(appliedSearch, status, skip, itemsPerPage)
+          : await getOngsByStatus(status, skip, itemsPerPage);
+        if (cancelled) return;
+
+        const nextData = response.data || [];
+        const nextTotal = response.total ?? 0;
+        if (nextData.length === 0 && currentPage > 1 && nextTotal > 0) {
+          setCurrentPage((p) => Math.max(1, p - 1));
+          return;
+        }
+        setOngs(nextData);
+        setTotal(nextTotal);
+      } catch {
+        if (!cancelled) {
+          toast.error('Erro ao carregar dados');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [status, currentPage, appliedSearch, refreshTick]);
+
+  const reloadOngs = () => {
     setLoading(true);
-    try {
-      const response = await getOngsByStatus(status, 0, 1000);
-      const data = response.data || [];
-      setAllOngs(data);
-      setTotal(data.length);
-    } catch (error) {
-      toast.error('Erro ao carregar dados');
-    } finally {
-      setLoading(false);
-    }
+    setRefreshTick((t) => t + 1);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setCurrentPage(1);
+    setAppliedSearch(searchInput.trim());
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setLoading(true);
+    setCurrentPage(1);
+    setAppliedSearch('');
   };
 
   const handleConfirmApprove = async (releaseRestriction: boolean = false) => {
@@ -563,9 +597,9 @@ export default function OngTableWithAPI({ status, onClose, onUpdate }: any) {
       toast.success('ONG aprovada!');
       setOngToApprove(null);
       setSelectedOng(null);
-      loadOngs();
+      reloadOngs();
       if (onUpdate) onUpdate();
-    } catch (error) {
+    } catch {
       toast.error('Falha na aprovação');
     }
   };
@@ -577,9 +611,9 @@ export default function OngTableWithAPI({ status, onClose, onUpdate }: any) {
       setOngToRejectId(null);
       setRejectReason('');
       setSelectedOng(null);
-      loadOngs();
+      reloadOngs();
       if (onUpdate) onUpdate();
-    } catch (error) {
+    } catch {
       toast.error('Falha na rejeição');
     }
   };
@@ -594,15 +628,44 @@ export default function OngTableWithAPI({ status, onClose, onUpdate }: any) {
   return (
     <div className="h-full flex flex-col bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-100">
       {/* Header do Card */}
-      <div className={`${config.bg} border-b ${config.border} p-8`}>
-        <div className="flex items-center justify-between">
+      <div className={`${config.bg} border-b ${config.border} p-6 sm:p-8`}>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <h2 className={`text-3xl font-black ${config.color} tracking-tight`}>{config.title}</h2>
             <p className="text-xs font-black text-gray-400 uppercase tracking-widest mt-1">Total: {total}</p>
           </div>
-          {onClose && (
-            <button onClick={onClose} className="p-3 hover:bg-white/60 rounded-2xl transition-all"><X size={24} className={config.color} /></button>
-          )}
+          <div className="flex flex-wrap items-center gap-3">
+            <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
+              <div className="relative">
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="Buscar nome, e-mail ou CNPJ..."
+                  className="pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-800 focus:outline-none focus:border-purple-500 w-64"
+                />
+              </div>
+              <button
+                type="submit"
+                className="px-4 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-bold hover:bg-purple-700 transition-colors cursor-pointer"
+              >
+                Buscar
+              </button>
+              {appliedSearch && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="px-3 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-600 text-sm font-bold hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  Limpar
+                </button>
+              )}
+            </form>
+            {onClose && (
+              <button onClick={onClose} className="p-3 hover:bg-white/60 rounded-2xl transition-all"><X size={24} className={config.color} /></button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -611,6 +674,11 @@ export default function OngTableWithAPI({ status, onClose, onUpdate }: any) {
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="w-12 h-12 border-[6px] border-purple-100 border-t-purple-600 rounded-full animate-spin" />
+          </div>
+        ) : ongs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full min-h-[220px] text-center p-8">
+            <Building2 size={40} className="text-gray-300 mb-3" />
+            <p className="text-lg font-bold text-gray-600">Nenhuma ONG encontrada neste filtro.</p>
           </div>
         ) : (
           <table className="w-full">
@@ -659,14 +727,14 @@ export default function OngTableWithAPI({ status, onClose, onUpdate }: any) {
         <div className="px-8 py-6 border-t border-gray-100 bg-gray-50/30 flex items-center justify-between">
           <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Página {currentPage} de {Math.ceil(total / itemsPerPage)}</p>
           <div className="flex gap-2">
-            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-3 rounded-xl border-2 border-gray-200 disabled:opacity-20 hover:bg-white transition-all"><ChevronLeft size={20} /></button>
-            <button onClick={() => setCurrentPage(p => Math.min(Math.ceil(total / itemsPerPage), p + 1))} disabled={currentPage >= total / itemsPerPage} className="p-3 rounded-xl border-2 border-gray-200 disabled:opacity-20 hover:bg-white transition-all"><ChevronRight size={20} /></button>
+            <button onClick={() => { setLoading(true); setCurrentPage(p => Math.max(1, p - 1)); }} disabled={currentPage === 1} className="p-3 rounded-xl border-2 border-gray-200 disabled:opacity-20 hover:bg-white transition-all"><ChevronLeft size={20} /></button>
+            <button onClick={() => { setLoading(true); setCurrentPage(p => Math.min(Math.ceil(total / itemsPerPage), p + 1)); }} disabled={currentPage >= total / itemsPerPage} className="p-3 rounded-xl border-2 border-gray-200 disabled:opacity-20 hover:bg-white transition-all"><ChevronRight size={20} /></button>
           </div>
         </div>
       )}
 
       {/* Modais */}
-      <DetailsModal ong={selectedOng} status={status} onClose={() => setSelectedOng(null)} onApproveClick={(ong: any) => setOngToApprove(ong)} onRejectClick={(id: number) => setOngToRejectId(id)} onOngUpdated={loadOngs} />
+      <DetailsModal ong={selectedOng} status={status} onClose={() => setSelectedOng(null)} onApproveClick={(ong: any) => setOngToApprove(ong)} onRejectClick={(id: number) => setOngToRejectId(id)} onOngUpdated={reloadOngs} />
       <ApproveModal isOpen={!!ongToApprove} ong={ongToApprove} status={status} onClose={() => setOngToApprove(null)} onConfirm={handleConfirmApprove} />
       <RejectModal isOpen={!!ongToRejectId} reason={rejectReason} setReason={setRejectReason} onClose={() => { setOngToRejectId(null); setRejectReason(''); }} onConfirm={handleConfirmReject} />
     </div>

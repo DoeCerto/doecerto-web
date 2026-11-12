@@ -8,26 +8,40 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
-  X
+  X,
+  ArrowRightLeft,
+  ShieldAlert,
+  FileSearch
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import MetricsPanel from '../specific/Adm-Dashboard/dashboard-metrics/MetricsPanel';
 import { useAuth } from '@/contexts/AuthContext';
 
+export type AdminMenu = 'home' | 'dashboard' | 'transfers' | 'under-review' | 'audit-logs';
+
 type AdminLayoutProps = {
   children: React.ReactNode;
-  activeMenu?: 'home' | 'dashboard';
+  activeMenu?: AdminMenu;
   adminName?: string;
-  onMenuChange?: (menu: 'home' | 'dashboard') => void;
+  underReviewCount?: number;
+  onMenuChange?: (menu: AdminMenu) => void;
 };
 
-export default function AdminLayout({ children, activeMenu: initialActiveMenu = 'home', adminName = 'Administrador', onMenuChange }: AdminLayoutProps) {
+export default function AdminLayout({
+  children,
+  activeMenu: controlledActiveMenu = 'home',
+  adminName = 'Administrador',
+  underReviewCount = 0,
+  onMenuChange
+}: AdminLayoutProps) {
   const { logout } = useAuth();
-  const [activeMenu, setActiveMenu] = useState<'home' | 'dashboard'>(initialActiveMenu);
+  const [internalMenu, setInternalMenu] = useState<AdminMenu>(controlledActiveMenu);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const handleMenuChange = (menu: 'home' | 'dashboard') => {
-    setActiveMenu(menu);
+  const activeMenu = onMenuChange ? controlledActiveMenu : internalMenu;
+
+  const handleMenuChange = (menu: AdminMenu) => {
+    setInternalMenu(menu);
     setMobileMenuOpen(false);
     onMenuChange?.(menu);
   };
@@ -66,6 +80,25 @@ export default function AdminLayout({ children, activeMenu: initialActiveMenu = 
             label="Métricas"
             active={activeMenu === 'dashboard'}
             onClick={() => handleMenuChange('dashboard')}
+          />
+          <SidebarLink
+            icon={<ArrowRightLeft size={22} />}
+            label="Repasses"
+            active={activeMenu === 'transfers'}
+            onClick={() => handleMenuChange('transfers')}
+          />
+          <SidebarLink
+            icon={<ShieldAlert size={22} />}
+            label="Em Análise"
+            badge={underReviewCount > 0 ? underReviewCount : undefined}
+            active={activeMenu === 'under-review'}
+            onClick={() => handleMenuChange('under-review')}
+          />
+          <SidebarLink
+            icon={<FileSearch size={22} />}
+            label="Auditoria"
+            active={activeMenu === 'audit-logs'}
+            onClick={() => handleMenuChange('audit-logs')}
           />
         </nav>
       </div>
@@ -147,14 +180,26 @@ export default function AdminLayout({ children, activeMenu: initialActiveMenu = 
 
         {/* Conteúdo */}
         <div className="flex-1 overflow-y-auto">
-          {activeMenu === 'home' ? children : <MetricsPanel />}
+          {activeMenu === 'dashboard' ? <MetricsPanel /> : children}
         </div>
       </main>
     </div>
   );
 }
 
-function SidebarLink({ icon, label, active = false, onClick }: { icon: React.ReactNode; label: string; active?: boolean; onClick?: () => void }) {
+function SidebarLink({
+  icon,
+  label,
+  badge,
+  active = false,
+  onClick
+}: {
+  icon: React.ReactNode;
+  label: string;
+  badge?: number;
+  active?: boolean;
+  onClick?: () => void;
+}) {
   return (
     <button
       type="button"
@@ -171,7 +216,12 @@ function SidebarLink({ icon, label, active = false, onClick }: { icon: React.Rea
       <span className="transition-transform group-hover:scale-105 duration-200">
         {icon}
       </span>
-      <span className="text-lg tracking-tight">{label}</span>
+      <span className="text-lg tracking-tight flex-1 text-left">{label}</span>
+      {badge !== undefined && (
+        <span className="px-2 py-0.5 text-xs font-black rounded-full bg-amber-400 text-purple-950">
+          {badge}
+        </span>
+      )}
     </button>
   );
 }
