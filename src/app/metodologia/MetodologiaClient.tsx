@@ -282,7 +282,7 @@ export default function MetodologiaClient({ initialMetrics }: MetodologiaClientP
     },
     {
       question: "Como funciona a divisão entre microdoações e o Pix Instantâneo?",
-      answer: "Criamos uma política justa para não prejudicar pequenas contribuições: se alguém doar R$ 1, R$ 2 ou R$ 4, o Pix é feito direto para a chave da ONG sem nenhuma taxa (0%), com envio do comprovante. Para doações a partir de R$ 5 feitas por doadores cadastrados, geramos o Pix Dinâmico com confirmação em tempo real na tela, cuja tarifa bancária de processamento (~R$ 0,99) é descontada na fonte pela adquirente parceira."
+      answer: "Criamos uma política justa para não prejudicar pequenas contribuições: em microdoações de R$ 1, R$ 2 ou R$ 4, o Pix vai direto para a chave da ONG sem taxa bancária (0%), com envio do comprovante. Para doações a partir de R$ 5 (tanto para doadores cadastrados quanto no checkout rápido sem cadastro), geramos o Pix Dinâmico com confirmação automática em tempo real, cuja tarifa operacional bancária do gateway parceiro (~R$ 0,99) é descontada na fonte — mantendo a taxa do DoeCerto em 0%."
     },
     {
       question: "O dinheiro da doação passa pela conta do DoeCerto?",

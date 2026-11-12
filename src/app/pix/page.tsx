@@ -159,6 +159,7 @@ function PixPageContent() {
     return "";
   });
   const [guestFormError, setGuestFormError] = useState<string | null>(null);
+  const [guestAcceptedTerms, setGuestAcceptedTerms] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string>("");
 
   const [ongData, setOngData] = useState<any>(null);
@@ -617,6 +618,11 @@ function PixPageContent() {
     const cleanCpf = removeFormatting(guestCpf);
     if (!validateCPF(cleanCpf)) {
       setGuestFormError("CPF inválido. Por favor, confira os números digitados.");
+      return;
+    }
+
+    if (step === "identification" && !guestAcceptedTerms) {
+      setGuestFormError("Para continuar, confirme que leu e concorda com os Termos de Uso e a Política de Privacidade.");
       return;
     }
 
@@ -1433,6 +1439,40 @@ function PixPageContent() {
                     <span>{guestFormError}</span>
                   </div>
                 )}
+
+                {/* ACEITE EXPLÍCITO LGPD (OPT-IN) */}
+                <label className="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-50 cursor-pointer transition-colors text-left">
+                  <input
+                    type="checkbox"
+                    checked={guestAcceptedTerms}
+                    onChange={(e) => {
+                      setGuestAcceptedTerms(e.target.checked);
+                      if (guestFormError) setGuestFormError(null);
+                    }}
+                    className="mt-1 h-4 w-4 rounded border-slate-300 text-[#6B39A7] focus:ring-[#6B39A7] shrink-0 cursor-pointer"
+                  />
+                  <span className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
+                    Li e concordo com os{" "}
+                    <Link
+                      href="/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#6B39A7] font-bold underline hover:text-[#582d8c]"
+                    >
+                      Termos de Uso
+                    </Link>{" "}
+                    e com a{" "}
+                    <Link
+                      href="/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#6B39A7] font-bold underline hover:text-[#582d8c]"
+                    >
+                      Política de Privacidade
+                    </Link>{" "}
+                    para processamento da minha doação via Pix.
+                  </span>
+                </label>
 
                 <TurnstileWidget
                   onVerify={(token) => setTurnstileToken(token)}

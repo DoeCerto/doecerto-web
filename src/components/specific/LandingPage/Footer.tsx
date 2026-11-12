@@ -29,14 +29,14 @@ export function Footer() {
               <ul className="space-y-3 md:space-y-4 text-white/80 text-sm font-light">
                 <li><Link href="/login" className="hover:text-white transition-colors">Entrar</Link></li>
                 <li><Link href="/register" className="hover:text-white transition-colors">Cadastre-se</Link></li>
-                <li><Link href="/ongs" className="hover:text-white transition-colors">Catálogo de ONGs</Link></li>
+                <li><Link href="/home" className="hover:text-white transition-colors">Catálogo de ONGs</Link></li>
               </ul>
             </div>
 
             <div>
               <h3 className="text-white font-semibold mb-4 md:mb-6">Suporte</h3>
               <ul className="space-y-3 md:space-y-4 text-white/80 text-sm font-light">
-                <li><Link href="/help" className="hover:text-white transition-colors">Central de Ajuda</Link></li>
+                <li><Link href="/help-center" className="hover:text-white transition-colors">Central de Ajuda</Link></li>
                 <li><Link href="/terms" className="hover:text-white transition-colors">Termos de Uso</Link></li>
                 <li><Link href="/privacy" className="hover:text-white transition-colors">Privacidade</Link></li>
               </ul>

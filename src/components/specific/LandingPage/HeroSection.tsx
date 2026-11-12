@@ -14,6 +14,7 @@ export function HeroSection() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showAppModal, setShowAppModal] = useState(false);
   const heroRef = useRef<HTMLElement>(null);
 
   // ==========================================
@@ -22,7 +23,7 @@ export function HeroSection() {
   useEffect(() => {
     const lenis = (window as any).lenis;
     
-    if (isMobileMenuOpen) {
+    if (isMobileMenuOpen || showAppModal) {
       document.body.style.overflow = 'hidden';
       if (lenis) lenis.stop();
     } else {
@@ -34,7 +35,7 @@ export function HeroSection() {
       document.body.style.overflow = 'unset'; 
       if ((window as any).lenis) (window as any).lenis.start();
     }
-  }, [isMobileMenuOpen]);
+  }, [isMobileMenuOpen, showAppModal]);
 
   // ==========================================
   // CORREÇÃO DO SCROLL AO CARREGAR A PÁGINA COM #HASH
@@ -187,7 +188,7 @@ export function HeroSection() {
           </div>
           <div className={`absolute flex items-center gap-2 transition-all duration-500 ${isMobileMenuOpen ? 'opacity-100 translate-y-0 rotate-0 scale-100' : 'opacity-0 translate-y-6 -rotate-12 scale-50'}`}>
             <X size={18} />
-            <span className="font-bold tracking-widest text-sm uppercase">Close</span>
+            <span className="font-bold tracking-widest text-sm uppercase">Fechar</span>
           </div>
         </button>
       </div>
@@ -258,7 +259,11 @@ export function HeroSection() {
         </h1>
 
         <div className="hero-anim flex flex-col sm:flex-row gap-4 w-full sm:w-max">
-          <button className="w-full sm:w-auto justify-center bg-[#6B21A8] hover:bg-purple-900 transition-colors text-white font-bold py-4 px-8 rounded-xl shadow-lg flex items-center gap-2 active:scale-95 cursor-pointer">
+          <button
+            type="button"
+            onClick={() => setShowAppModal(true)}
+            className="w-full sm:w-auto justify-center bg-[#6B21A8] hover:bg-purple-900 transition-colors text-white font-bold py-4 px-8 rounded-xl shadow-lg flex items-center gap-2 active:scale-95 cursor-pointer"
+          >
             <Download size={20} />
             Baixar aplicativo
           </button>
@@ -268,6 +273,59 @@ export function HeroSection() {
           </Link>
         </div>
       </div>
+
+      {/* ========================================= */}
+      {/* MODAL: APLICATIVO EM BREVE                */}
+      {/* ========================================= */}
+      {showAppModal && (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          onClick={() => setShowAppModal(false)}
+        >
+          <div
+            className="relative w-full max-w-md rounded-3xl bg-white p-7 sm:p-8 text-slate-900 shadow-2xl border border-slate-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowAppModal(false)}
+              aria-label="Fechar aviso"
+              className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="w-14 h-14 rounded-2xl bg-purple-100 text-[#6B21A8] flex items-center justify-center mb-5">
+              <Download size={28} />
+            </div>
+
+            <h3 className="text-2xl font-black tracking-tight text-slate-900 mb-2">
+              App mobile em breve nas lojas
+            </h3>
+            <p className="text-slate-600 text-sm sm:text-base leading-relaxed mb-6">
+              Estamos finalizando a publicação do aplicativo DoeCerto para Android e iOS. Enquanto isso, você já pode explorar ONGs auditadas e doar via Pix instantâneo com segurança pela versão web.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link
+                href="/splash"
+                onClick={() => setShowAppModal(false)}
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[#6B21A8] hover:bg-purple-900 text-white font-bold py-3.5 px-5 transition-colors"
+              >
+                <Globe size={18} />
+                Acessar versão web
+              </Link>
+              <button
+                type="button"
+                onClick={() => setShowAppModal(false)}
+                className="rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3.5 px-5 transition-colors cursor-pointer"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ========================================= */}
       {/* ONDA INFERIOR (Fica fixa na base, não sofre Parallax) */}

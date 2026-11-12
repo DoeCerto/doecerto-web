@@ -247,7 +247,7 @@ export default function DonationSuccessModal({
         await navigator.share({
           title: "DoeCerto - Comprovante de Doação",
           text: `Acabei de doar R$ ${formattedBaseAmount || formattedAmount} via Pix para ${ongData?.name || "a instituição"} pelo DoeCerto. Faça a sua parte também!`,
-          url: typeof window !== "undefined" ? window.location.origin : "https://doecerto.com.br",
+          url: typeof window !== "undefined" ? window.location.origin : "https://doecerto.net.br",
         });
       } catch {
         // Cancelado pelo usuário

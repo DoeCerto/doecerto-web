@@ -7,11 +7,10 @@ import {
   Star, 
   Search, 
   Layers, 
-  User, 
-  ShieldCheck, 
   ChevronRight,
   LifeBuoy
 } from "lucide-react";
+import { HelpCenterAccountSection } from "./HelpCenterAccountSection";
 
 interface HelpCardProps {
   title: string;
@@ -149,29 +148,7 @@ export default function HelpCenterPage() {
           </div>
         </section>
 
-        <section>
-          <h2 className="text-sm font-black tracking-widest text-slate-400 uppercase mb-5 ml-2">
-            Sua Conta
-          </h2>
-          <div className="grid sm:grid-cols-2 gap-6">
-            <HelpCard 
-              title="Gerenciar perfil" 
-              description="Altere sua foto, nome, endereço e contatos." 
-              icon={<User size={28} strokeWidth={2.5} />} 
-              href="/dashboard" 
-              colorClass="text-slate-600" 
-              bgClass="bg-slate-100" 
-            />
-            <HelpCard 
-              title="Segurança e Privacidade" 
-              description="Leia nossos termos e veja como protegemos seus dados." 
-              icon={<ShieldCheck size={28} strokeWidth={2.5} />} 
-              href="/terms" 
-              colorClass="text-orange-600" 
-              bgClass="bg-orange-50" 
-            />
-          </div>
-        </section>
+        <HelpCenterAccountSection />
 
       </main>
     </div>

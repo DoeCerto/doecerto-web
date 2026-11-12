@@ -43,7 +43,7 @@ export function GuestDonationModal({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(true);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {

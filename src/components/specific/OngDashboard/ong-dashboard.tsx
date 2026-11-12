@@ -856,7 +856,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
 
               <div className="w-full flex flex-col sm:flex-row gap-3">
                 <a
-                  href="mailto:suporte@doecerto.com.br?subject=Suporte%20-%20Conta%20Restringida"
+                  href="mailto:contato@doecerto.net.br?subject=Suporte%20-%20Conta%20Restringida"
                   className="flex-1 py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-base shadow-lg shadow-red-600/20 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center"
                 >
                   Falar com Suporte
