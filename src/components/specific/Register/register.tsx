@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import { Eye, EyeClosed, Lock, Mail, User, Building2, ArrowLeft, ArrowRight, FileText, IdCard, UploadCloud, CheckCircle, CheckCircle2, X, LucideIcon, Loader2 } from "lucide-react";
 import gsap from "gsap";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,18 +23,63 @@ import TermosModal from "@/components/shared/TermosModal";
 // ==========================================
 type AccountType = "donor" | "ong" | null;
 
+const PASSWORD_SPECIAL_REGEX = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/;
+
+function getPasswordChecks(password: string, accountType: AccountType) {
+  const minLength = accountType === "ong" ? 10 : 8;
+  return [
+    {
+      key: "length",
+      label: `Mínimo de ${minLength} caracteres${accountType === "ong" ? " (conta ONG)" : ""}`,
+      met: password.length >= minLength && password.length <= 128,
+      error: password.length > 128 ? "A senha deve ter no máximo 128 caracteres" : `Mínimo de ${minLength} caracteres`,
+    },
+    {
+      key: "upper",
+      label: "1 letra maiúscula (A-Z)",
+      met: /[A-Z]/.test(password),
+      error: "A senha deve conter pelo menos uma letra maiúscula",
+    },
+    {
+      key: "lower",
+      label: "1 letra minúscula (a-z)",
+      met: /[a-z]/.test(password),
+      error: "A senha deve conter pelo menos uma letra minúscula",
+    },
+    {
+      key: "digit",
+      label: "1 número (0-9)",
+      met: /[0-9]/.test(password),
+      error: "A senha deve conter pelo menos um número",
+    },
+    {
+      key: "special",
+      label: "1 caractere especial (!@#$...)",
+      met: PASSWORD_SPECIAL_REGEX.test(password),
+      error: "A senha deve conter pelo menos um caractere especial",
+    },
+  ];
+}
+
 const registerSchema = z.object({
   accountType: z.enum(["donor", "ong"]).nullable(),
   nome: z.string().min(3, "Mínimo de 3 caracteres").regex(/^[^0-9]*$/, "Não pode conter números"),
   email: z.string().min(1, "O e-mail é obrigatório").email("E-mail inválido"),
-  senha: z.string().min(8, "Mínimo de 8 caracteres"),
+  senha: z.string().min(1, "A senha é obrigatória"),
   confirmarSenha: z.string().min(1, "Confirme sua senha"),
   documento: z.string().min(1, "Documento é obrigatório"),
   nomePresidente: z.string().optional(),
   cpfPresidente: z.string().optional(),
 }).superRefine((data, ctx) => {
 
-  // Validação de Senha
+  // Validação de Senha alinhada ao PasswordPolicyService do backend
+  if (data.senha.length > 0) {
+    const failedCheck = getPasswordChecks(data.senha, data.accountType).find((c) => !c.met);
+    if (failedCheck) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: failedCheck.error, path: ["senha"] });
+    }
+  }
+
   if (data.senha !== data.confirmarSenha) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "As senhas não coincidem", path: ["confirmarSenha"] });
   }
@@ -565,6 +610,22 @@ function useRegisterForm() {
           message: "Este CNPJ já possui cadastro no DoeCerto.",
         });
         toast.error("Este CNPJ já possui cadastro no DoeCerto.");
+      } else if (
+        lower.includes("senha") ||
+        lower.includes("password") ||
+        lower.includes("caracter") ||
+        lower.includes("maiúscula") ||
+        lower.includes("minúscula") ||
+        lower.includes("especial") ||
+        lower.includes("vazada") ||
+        lower.includes("vazamento")
+      ) {
+        setStep(2);
+        form.setError("senha", {
+          type: "manual",
+          message: errorMsg,
+        });
+        toast.error(errorMsg);
       } else {
         toast.error(errorMsg);
       }
@@ -585,7 +646,9 @@ function useRegisterForm() {
 // ==========================================
 export default function Register() {
   const { form, step, setStep, accountType, isChecking, modalAberto, setModalAberto, isPending, successModalAberto, setSuccessModalAberto, clearDraft, handleSelectType, handleNextStep, handleFinalSubmit, submitToApi, isCheckingEmail, isCheckingDocumento, handleEmailBlur, handleDocumentoBlur, files } = useRegisterForm();
-  const { register, formState: { errors }, setValue, clearErrors, trigger } = form;
+  const { register, control, formState: { errors }, setValue, clearErrors, trigger } = form;
+  const watchedPassword = useWatch({ control, name: "senha", defaultValue: "" }) || "";
+  const passwordChecks = getPasswordChecks(watchedPassword, accountType);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -722,12 +785,29 @@ export default function Register() {
                 />
 
                 <InputField
-                  label="Senha" icon={Lock} type="password" placeholder="Mínimo de 8 caracteres"
+                  label="Senha" icon={Lock} type="password" placeholder={accountType === "ong" ? "Mínimo de 10 caracteres" : "Mínimo de 8 caracteres"}
                   {...register("senha")}
-                  onChange={(e: any) => { register("senha").onChange(e); clearErrors("senha"); }}
-                  onBlur={(e: any) => { register("senha").onBlur(e); if (e.target.value.trim() !== "") trigger("senha"); }}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => { register("senha").onChange(e); clearErrors("senha"); }}
+                  onBlur={(e: React.FocusEvent<HTMLInputElement>) => { register("senha").onBlur(e); if (e.target.value.trim() !== "") trigger("senha"); }}
                   error={errors.senha?.message}
                 />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 -mt-2 px-1">
+                  {passwordChecks.map((check) => (
+                    <div
+                      key={check.key}
+                      className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
+                        check.met ? "text-emerald-600" : "text-gray-500"
+                      }`}
+                    >
+                      <CheckCircle2
+                        size={14}
+                        className={check.met ? "text-emerald-600 shrink-0" : "text-gray-300 shrink-0"}
+                      />
+                      <span>{check.label}</span>
+                    </div>
+                  ))}
+                </div>
 
                 <InputField
                   label="Confirmar Senha" icon={Lock} type="password" placeholder="Repita sua senha"

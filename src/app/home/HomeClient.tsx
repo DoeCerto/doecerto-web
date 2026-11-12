@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { DonorService } from "@/services/donor.service";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { useAuth } from "@/contexts/AuthContext";
+import { api } from "@/services/api";
 
 type Ong = {
   id: number;
@@ -186,52 +187,55 @@ export default function HomeClient({
             document.cookie = `user_avatar=${encodeURIComponent(profile.avatarUrl)}; path=/; max-age=604800; SameSite=Lax`;
           }
 
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-          const nearbyRes = await fetch(`${apiUrl}/ongs/nearby`, {
-            credentials: "include"
-          });
+          type NearbyOngItem = {
+            id: number;
+            name: string;
+            avatarUrl?: string | null;
+            distance: string | number;
+            averageRating?: string | number | null;
+          };
+
+          const { data: nearbyData } = await api<{ data?: NearbyOngItem[] } | null>("/ongs/nearby").catch(() => ({ data: null }));
 
           if (!isMounted) return;
 
-          if (nearbyRes.ok) {
-            const nearbyData = await nearbyRes.json();
+          if (nearbyData?.data) {
+            const nearbyItems = nearbyData.data;
 
-            if (nearbyData?.data) {
-              const applyDistances = (list: Ong[]) => {
-                return list.map(ong => {
-                  const found = nearbyData.data.find((n: any) => n.id === ong.id);
-                  if (found) {
-                    return {
-                      ...ong,
-                      distance: formatDistance(found.distance),
-                      rawDistance: parseFloat(found.distance)
-                    };
-                  }
-                  return ong;
-                });
-              };
-
-              setPremiumOngs(prev => applyDistances(prev));
-
-              setAllOngs(prev => {
-                const updatedList = applyDistances(prev);
-
-                const newItems = nearbyData.data
-                  .filter((n: any) => !updatedList.some(o => o.id === n.id))
-                  .map((n: any) => ({
-                    id: n.id,
-                    name: n.name,
-                    img: OngsProfileService._formatImageUrl(n.avatarUrl),
-                    distance: formatDistance(n.distance),
-                    rawDistance: parseFloat(n.distance),
-                    rating: (n.averageRating || 0).toFixed(1),
-                    rawRating: parseFloat(n.averageRating) || 0,
-                    categories: [],
-                  }));
-
-                return [...updatedList, ...newItems];
+            const applyDistances = (list: Ong[]) => {
+              return list.map(ong => {
+                const found = nearbyItems.find((n) => n.id === ong.id);
+                if (found) {
+                  return {
+                    ...ong,
+                    distance: formatDistance(found.distance),
+                    rawDistance: parseFloat(String(found.distance))
+                  };
+                }
+                return ong;
               });
-            }
+            };
+
+            setPremiumOngs(prev => applyDistances(prev));
+
+            setAllOngs(prev => {
+              const updatedList = applyDistances(prev);
+
+              const newItems = nearbyItems
+                .filter((n) => !updatedList.some(o => o.id === n.id))
+                .map((n) => ({
+                  id: n.id,
+                  name: n.name,
+                  img: OngsProfileService._formatImageUrl(n.avatarUrl ?? null),
+                  distance: formatDistance(n.distance),
+                  rawDistance: parseFloat(String(n.distance)),
+                  rating: (parseFloat(String(n.averageRating || 0)) || 0).toFixed(1),
+                  rawRating: parseFloat(String(n.averageRating || 0)) || 0,
+                  categories: [],
+                }));
+
+              return [...updatedList, ...newItems];
+            });
           }
         }
       } catch (err) {
