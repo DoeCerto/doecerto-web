@@ -17,8 +17,6 @@ export const WishlistService = {
       const response = await api<any>(`/ongs/${ongId}/wishlist-items`, {
         method: "GET",
       }) as any;
-      
-      console.log("WishlistService DEBUG - Resposta Bruta:", response);
 
       // Usamos uma variável auxiliar tipada como any para fazer a extração
       let rawData: any = response?.data ?? response;
@@ -35,7 +33,6 @@ export const WishlistService = {
       }
 
       const finalArray = Array.isArray(rawData) ? rawData : [];
-      console.log("WishlistService DEBUG - Itens Processados:", finalArray);
       
       return finalArray as WishlistItem[];
     } catch (error) {

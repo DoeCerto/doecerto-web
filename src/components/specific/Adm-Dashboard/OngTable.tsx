@@ -216,7 +216,6 @@ const RejectModal = ({ isOpen, onClose, onConfirm, reason, setReason }: any) => 
 const DetailsModal = ({ ong, onClose, status, onApproveClick, onRejectClick, onOngUpdated }: any) => {
   const [isSyncingAsaas, setIsSyncingAsaas] = useState(false);
   if (!ong) return null;
-  console.log('[DEBUG] ONG no Modal de Detalhes:', ong);
 
   const handleSyncAsaas = async () => {
     setIsSyncingAsaas(true);

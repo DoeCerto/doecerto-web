@@ -118,7 +118,6 @@ export async function rejectOng(ongId: number, reason: string) {
 
 export async function getMyProfile() {
   const { data } = await api<any>('/admins/me');
-  console.log('API response for /admins/me:', data);
   return data;
 }
 

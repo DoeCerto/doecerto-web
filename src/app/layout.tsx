@@ -11,8 +11,19 @@ const darker = Darker_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "DoeCerto",
-  description: "App de Doação",
+  title: {
+    default: "DoeCerto — Doações Transparentes e Seguras para ONGs Verificadas",
+    template: "%s | DoeCerto",
+  },
+  description:
+    "Conecte-se a instituições sociais auditadas e realize doações via Pix Dinâmico ou itens materiais com rastreabilidade e transparência.",
+  openGraph: {
+    title: "DoeCerto — Doações Transparentes e Seguras",
+    description:
+      "Plataforma de doações para ONGs verificadas com auditoria pública e repasse seguro.",
+    locale: "pt_BR",
+    type: "website",
+  },
 };
 
 export default async function RootLayout({
