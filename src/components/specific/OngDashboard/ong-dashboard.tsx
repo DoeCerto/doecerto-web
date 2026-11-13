@@ -6,17 +6,30 @@ import {
   MapPin, Heart, Award, X, Phone, Home, Star, Pencil,
   History, Package, CheckCircle2, Clock, FileText, ArrowRight,
   Camera, AlertCircle, Tag, MessageSquare, AlertTriangle, ExternalLink,
-  LogOut, Download, Trash2, ShieldAlert
+  LogOut, Download, Trash2, ShieldAlert, Globe
 } from "lucide-react";
+import { FaInstagram, FaFacebook, FaWhatsapp } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { Toaster } from "react-hot-toast";
 import { OngAsaasKycSummary, OngsProfileService } from "@/services/ongs-profile.service";
+import { BankAccountData, BankAccountService } from "@/services/bank-account.service";
 import { DonationService } from "@/services/donations.service";
 import { api } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { LgpdDeleteAccountModal } from "@/components/specific/Lgpd/LgpdDeleteAccountModal";
 import { OngDocumentsModal } from "./OngDocumentsModal";
 import { OngAsaasKycCard } from "./OngAsaasKycCard";
+import { OngBankAccountCard } from "./OngBankAccountCard";
+import {
+  buildWebsiteHref,
+  formatWebsiteLabel,
+  buildInstagramHref,
+  formatInstagramLabel,
+  buildFacebookHref,
+  formatFacebookLabel,
+  buildWhatsappHref,
+  formatWhatsappLabel,
+} from "@/utils/socialChannels";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -34,6 +47,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
   const [ong, setOng] = useState<any>(initialOng);
   const [reviews, setReviews] = useState<any[]>([]);
   const [donations, setDonations] = useState<any[]>([]);
+  const [bankAccount, setBankAccount] = useState<BankAccountData | null>(null);
   const [kycSummary, setKycSummary] = useState<OngAsaasKycSummary | null>(null);
   const [loadingKycSummary, setLoadingKycSummary] = useState(false);
 
@@ -200,25 +214,31 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
       setOng(profileData);
 
       if (profileData.id) {
-        const [reviewsRes, donationsData, kycRes] = await Promise.all([
+        const [reviewsRes, donationsData, kycRes, bankRes] = await Promise.all([
           api(`/ongs/${profileData.id}/ratings`),
           DonationService.getReceivedDonations(),
           OngsProfileService.getMyAsaasKycStatus().catch((error) => {
             console.error("Erro ao consultar status KYC no Asaas:", error);
             return null;
           }),
+          BankAccountService.getMyAccount().catch(() => null),
         ]);
 
         setReviews(Array.isArray(reviewsRes.data) ? reviewsRes.data : []);
         setDonations(donationsData);
+        setBankAccount(bankRes);
         if (kycRes) {
           applyKycSummary(kycRes);
         }
       } else {
-        const kycRes = await OngsProfileService.getMyAsaasKycStatus().catch((error) => {
-          console.error("Erro ao consultar status KYC no Asaas:", error);
-          return null;
-        });
+        const [kycRes, bankRes] = await Promise.all([
+          OngsProfileService.getMyAsaasKycStatus().catch((error) => {
+            console.error("Erro ao consultar status KYC no Asaas:", error);
+            return null;
+          }),
+          BankAccountService.getMyAccount().catch(() => null),
+        ]);
+        setBankAccount(bankRes);
         if (kycRes) {
           applyKycSummary(kycRes);
         }
@@ -469,7 +489,9 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
           </span>
           <span className="flex items-center gap-1.5">
             <Award size={18} className="text-blue-400" />
-            {ong.yearsOfOperation ? `${ong.yearsOfOperation} ${ong.yearsOfOperation === 1 ? 'ano' : 'anos'} de atuação` : (ong.displayYears || "Tempo não informado")}
+            {typeof ong.yearsOfOperation === "number"
+              ? `${ong.yearsOfOperation} ${ong.yearsOfOperation === 1 ? "ano" : "anos"} de atuação`
+              : (ong.displayYears || "Tempo não informado")}
           </span>
         </div>
 
@@ -521,21 +543,90 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
           <div className="p-4 sm:p-6 rounded-2xl bg-white shadow-md border border-gray-100">
             <h2 className="text-lg sm:text-xl font-bold text-[#6B39A7]">Sobre</h2>
             <p className="mt-3 text-gray-700 text-sm sm:text-lg leading-relaxed">{ong.description || "Nenhuma descrição informada ainda."}</p>
-            <div className="mt-5 pt-5 border-t border-gray-50 space-y-4">
-              <div className="flex items-center gap-3 text-gray-600"><Phone size={18} className="text-[#6B39A7]" /><span className="text-sm sm:text-base font-bold">{ong.contactNumber || "Não informado"}</span></div>
-              <div className="flex items-center gap-3 text-gray-600">
-                <ExternalLink size={16} className="text-pink-600" />
-                {ong.website ? (
-                  <a href={ong.website.startsWith("http") ? ong.website : `https://${ong.website}`} target="_blank" rel="noopener noreferrer" className="text-sm sm:text-base font-bold text-[#6B39A7] underline break-all">
-                    {ong.website.replace(/^https?:\/\//, "")}
-                  </a>
-                ) : (
-                  <span className="text-sm sm:text-base font-bold text-gray-900">Não informado</span>
-                )}
+            <div className="mt-5 pt-5 border-t border-gray-50 grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              <div className="flex items-center gap-3 text-gray-700">
+                <Phone size={18} className="text-[#6B39A7] shrink-0" />
+                <span className="text-sm sm:text-base font-bold">
+                  {ong.contactNumber ? formatWhatsappLabel(ong.contactNumber) : "Não informado"}
+                </span>
               </div>
-              <div className="flex items-start gap-3 text-gray-600"><Home size={18} className="text-blue-600 mt-0.5" /><span className="text-sm sm:text-base font-bold">{ong.address ? `${ong.address.city} - ${ong.address.state}` : "Endereço não informado"}</span></div>
+
+              {ong.whatsappNumber && (
+                <div className="flex items-center gap-3 text-gray-700">
+                  <FaWhatsapp size={19} className="text-emerald-600 shrink-0" />
+                  <a
+                    href={buildWhatsappHref(ong.whatsappNumber)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm sm:text-base font-bold text-emerald-700 hover:underline inline-flex items-center gap-1.5 break-all"
+                  >
+                    <span>{formatWhatsappLabel(ong.whatsappNumber)}</span>
+                    <ExternalLink size={13} className="shrink-0 opacity-75" />
+                  </a>
+                </div>
+              )}
+
+              {(ong.websiteUrl || ong.website) && (
+                <div className="flex items-center gap-3 text-gray-700">
+                  <Globe size={18} className="text-[#6B39A7] shrink-0" />
+                  <a
+                    href={buildWebsiteHref(ong.websiteUrl || ong.website)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm sm:text-base font-bold text-[#6B39A7] underline inline-flex items-center gap-1.5 break-all"
+                  >
+                    <span>{formatWebsiteLabel(ong.websiteUrl || ong.website)}</span>
+                    <ExternalLink size={13} className="shrink-0 opacity-75" />
+                  </a>
+                </div>
+              )}
+
+              {ong.instagramUrl && (
+                <div className="flex items-center gap-3 text-gray-700">
+                  <FaInstagram size={18} className="text-pink-600 shrink-0" />
+                  <a
+                    href={buildInstagramHref(ong.instagramUrl)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm sm:text-base font-bold text-pink-700 hover:underline inline-flex items-center gap-1.5 break-all"
+                  >
+                    <span>{formatInstagramLabel(ong.instagramUrl)}</span>
+                    <ExternalLink size={13} className="shrink-0 opacity-75" />
+                  </a>
+                </div>
+              )}
+
+              {ong.facebookUrl && (
+                <div className="flex items-center gap-3 text-gray-700">
+                  <FaFacebook size={18} className="text-blue-600 shrink-0" />
+                  <a
+                    href={buildFacebookHref(ong.facebookUrl)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm sm:text-base font-bold text-blue-700 hover:underline inline-flex items-center gap-1.5 break-all"
+                  >
+                    <span>{formatFacebookLabel(ong.facebookUrl)}</span>
+                    <ExternalLink size={13} className="shrink-0 opacity-75" />
+                  </a>
+                </div>
+              )}
+
+              <div className="flex items-start gap-3 text-gray-700">
+                <Home size={18} className="text-blue-600 mt-0.5 shrink-0" />
+                <span className="text-sm sm:text-base font-bold">
+                  {ong.address ? `${ong.address.city} - ${ong.address.state}` : "Endereço não informado"}
+                </span>
+              </div>
             </div>
           </div>
+
+          <OngBankAccountCard
+            bankAccount={bankAccount}
+            ongCnpj={ong.cnpj}
+            ongName={ong.name}
+            loading={loading}
+            onAccountUpdated={(updated) => setBankAccount(updated)}
+          />
 
           <div className="p-4 sm:p-6 rounded-2xl bg-white shadow-md border border-gray-100">
             <h3 className="text-lg sm:text-xl font-bold text-[#6B39A7] mb-4">Gestão e Estatísticas</h3>

@@ -15,10 +15,15 @@ export interface AddressData {
 export interface OngUpdateData {
   description?: string;
   contactNumber?: string;
+  whatsappNumber?: string;
+  websiteUrl?: string;
+  instagramUrl?: string;
+  facebookUrl?: string;
   websiteUrls?: string[];
   yearsOfOperation?: number;
   categoryIds?: number[];
-  address?: AddressData; 
+  primaryCategoryId?: number;
+  address?: AddressData;
 }
 
 export const OngSetupService = {
@@ -36,21 +41,36 @@ export const OngSetupService = {
   },
 
   async updateProfileData(data: OngUpdateData) {
-    let url = (data.websiteUrls && data.websiteUrls.length > 0) 
-      ? data.websiteUrls[0].trim() 
-      : '';
+    let normalizedWebsite = (
+      data.websiteUrl ??
+      (data.websiteUrls && data.websiteUrls.length > 0 ? data.websiteUrls[0] : '')
+    ).trim();
 
-    if (url && !url.startsWith('http')) {
-      url = `https://${url}`;
+    if (normalizedWebsite && !/^https?:\/\//i.test(normalizedWebsite)) {
+      normalizedWebsite = `https://${normalizedWebsite}`;
     }
 
-    
-    const profilePayload = {
+    const normalizedInstagram = (data.instagramUrl ?? '').trim();
+    const normalizedFacebook = (data.facebookUrl ?? '').trim();
+    const normalizedWhatsapp = (data.whatsappNumber ?? '').trim();
+
+    const profilePayload: Record<string, unknown> = {
       description: data.description || '',
       contactNumber: data.contactNumber || '',
-      website: url ? [url] : undefined,
+      whatsappNumber: normalizedWhatsapp,
+      websiteUrl: normalizedWebsite,
+      instagramUrl: normalizedInstagram,
+      facebookUrl: normalizedFacebook,
+      website: normalizedWebsite ? [normalizedWebsite] : undefined,
       categoryIds: data.categoryIds ? data.categoryIds.map(Number) : [],
-      yearsOfOperation: data.yearsOfOperation || null,
+      primaryCategoryId:
+        typeof data.primaryCategoryId === 'number'
+          ? data.primaryCategoryId
+          : undefined,
+      yearsOfOperation:
+        typeof data.yearsOfOperation === 'number'
+          ? data.yearsOfOperation
+          : undefined,
     };
 
     const profileResponse = await api('/ongs/me/profile', {
@@ -59,7 +79,6 @@ export const OngSetupService = {
       body: JSON.stringify(profilePayload),
     });
 
-    
     if (data.address) {
       await this.updateAddress(data.address);
     }

@@ -1,22 +1,29 @@
 import { api } from "./api";
 
 export interface BankAccountData {
-  bankName: string;
-  agencyNumber: string;
-  accountNumber: string;
-  accountType: string;
-  pixKey: string;
+  id?: number;
+  bankName?: string | null;
+  bankCode?: string | null;
+  ispb?: string | null;
+  agencyNumber?: string | null;
+  accountNumber?: string | null;
+  accountType?: string | null;
+  pixKeyOwnerName?: string | null;
+  pixKey?: string | null;
+  pixKeyUpdatedAt?: string | null;
   currentPassword?: string;
+  twoFactorCode?: string;
 }
 
 export const BankAccountService = {
   // Busca a conta da ONG logada
   getMyAccount: async (): Promise<BankAccountData | null> => {
     try {
-      const response = await api("/ongs/bank-account/me");
-      const data = (response.data || response) as BankAccountData | BankAccountData[]; 
-      return Array.isArray(data) ? data[0] : data;
-    } catch (error) {
+      const response = await api<BankAccountData | BankAccountData[]>("/ongs/bank-account/me");
+      const data = response.data || (response as unknown as BankAccountData | BankAccountData[]);
+      if (!data) return null;
+      return Array.isArray(data) ? data[0] ?? null : data;
+    } catch {
       return null;
     }
   },

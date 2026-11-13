@@ -85,14 +85,19 @@ export const OngsProfileService = {
       // Normalização da descrição
       const descriptionText = profile?.description || profile?.about || profile?.bio || "ONG verificada.";
 
-      // Normalização do Website
-      let websiteLink = "Não informado";
+      // Normalização de canais sociais e website
       const urls = profile?.websiteUrls || profile?.website || [];
-      if (Array.isArray(urls) && urls.length > 0) {
-        websiteLink = urls[0];
-      } else if (typeof urls === 'string') {
-        websiteLink = urls;
-      }
+      const legacyUrl =
+        Array.isArray(urls) && urls.length > 0
+          ? urls[0]
+          : typeof urls === 'string'
+            ? urls
+            : "";
+
+      const websiteUrl = (profile?.websiteUrl || legacyUrl || "").trim();
+      const instagramUrl = (profile?.instagramUrl || "").trim();
+      const facebookUrl = (profile?.facebookUrl || "").trim();
+      const whatsappNumber = (profile?.whatsappNumber || "").trim();
 
       return {
         id: base?.id || profile?.id || ongId,
@@ -102,8 +107,14 @@ export const OngsProfileService = {
         logo: this._formatImageUrl(profile?.avatarUrl || base?.avatarUrl),
         description: descriptionText,
         phone: profile?.contactNumber || base?.contactNumber || "Não informado",
-        instagram: websiteLink,
+        whatsappNumber: whatsappNumber || null,
+        websiteUrl: websiteUrl || null,
+        instagramUrl: instagramUrl || null,
+        facebookUrl: facebookUrl || null,
+        website: websiteUrl || "Não informado",
+        instagram: instagramUrl || websiteUrl || "Não informado",
         address: profile?.address?.city ? `${profile.address.city}, ${profile.address.state}` : "Endereço não informado",
+        foundedAt: profile?.foundedAt || base?.foundedAt || null,
         yearsOfOperation: profile?.yearsOfOperation,
         rating: Number(profile?.rating?.average || 0),
         numberOfRatings: profile?.rating?.count || 0,
@@ -124,22 +135,29 @@ export const OngsProfileService = {
   async getMyProfile() {
     const { data } = await api<any>('/ongs/me/profile');
 
-    let websiteValue = "";
-    if (data.websiteUrls && Array.isArray(data.websiteUrls) && data.websiteUrls.length > 0) {
+    let websiteValue = data.websiteUrl || "";
+    if (!websiteValue && data.websiteUrls && Array.isArray(data.websiteUrls) && data.websiteUrls.length > 0) {
       websiteValue = data.websiteUrls[0];
-    } else if (data.website && Array.isArray(data.website)) {
-       websiteValue = data.website[0] || "";
+    } else if (!websiteValue && data.website && Array.isArray(data.website)) {
+      websiteValue = data.website[0] || "";
     }
 
     return {
       ...data,
       name: data.name || "Minha ONG",
-      
       description: data.description || data.about || data.bio || "",
       website: websiteValue,
+      websiteUrl: data.websiteUrl || websiteValue || "",
+      instagramUrl: data.instagramUrl || "",
+      facebookUrl: data.facebookUrl || "",
+      whatsappNumber: data.whatsappNumber || "",
+      foundedAt: data.foundedAt || null,
       avatarUrl: this._formatImageUrl(data.avatarUrl),
       bannerUrl: this._formatImageUrl(data.bannerUrl),
-      displayYears: this._calculateYears(data.createdAt || new Date()),
+      displayYears:
+        typeof data.yearsOfOperation === "number"
+          ? data.yearsOfOperation
+          : this._calculateYears(data.foundedAt || data.createdAt || new Date()),
       stats: {
         donations: data.receivedDonations || 0,
         ratingAverage: Number(data.rating?.average) || 0,

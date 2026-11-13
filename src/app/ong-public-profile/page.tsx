@@ -69,13 +69,18 @@ export default async function OngPublicProfilePage(props: {
 
     const descriptionText = profile.description || profile.about || profile.bio || "ONG verificada.";
 
-    let websiteLink = "Não informado";
+    let legacyWebsite = "";
     const urls = profile.websiteUrls || profile.website || [];
     if (Array.isArray(urls) && urls.length > 0) {
-      websiteLink = urls[0];
+      legacyWebsite = urls[0];
     } else if (typeof urls === 'string') {
-      websiteLink = urls;
+      legacyWebsite = urls;
     }
+
+    const websiteUrl = (profile.websiteUrl || legacyWebsite || "").trim() || null;
+    const instagramUrl = (profile.instagramUrl || "").trim() || null;
+    const facebookUrl = (profile.facebookUrl || "").trim() || null;
+    const whatsappNumber = (profile.whatsappNumber || "").trim() || null;
 
     const formattedOng = {
       id: base.id || profile.id || ongId,
@@ -85,8 +90,14 @@ export default async function OngPublicProfilePage(props: {
       logo: formatImageUrl(profile.avatarUrl || base.avatarUrl),
       description: descriptionText,
       phone: profile.contactNumber || base.contactNumber || "Não informado",
-      instagram: websiteLink,
+      whatsappNumber,
+      websiteUrl,
+      instagramUrl,
+      facebookUrl,
+      instagram: instagramUrl || websiteUrl || "Não informado",
+      website: websiteUrl || "Não informado",
       address: profile.address?.city ? `${profile.address.city}, ${profile.address.state}` : "Endereço não informado",
+      foundedAt: profile.foundedAt || base.foundedAt || null,
       yearsOfOperation: profile.yearsOfOperation || 0,
       rating: Number(profile.rating?.average || 0),
       numberOfRatings: profile.rating?.count || 0,

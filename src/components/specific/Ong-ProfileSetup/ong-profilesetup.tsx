@@ -7,38 +7,36 @@ import {
   Plus,
   Trash2,
   Phone,
-  Instagram,
   Tag,
-  Wallet,
   Loader2,
   ArrowLeft,
   Building2,
   Search,
+  Globe,
   Globe2,
   MapPinned,
   Milestone,
   Info,
   Navigation,
   Flag,
-  ExternalLink,
   LogOut,
   ChevronDown,
   Check,
-  Lock,
-  Eye,
-  EyeOff,
-  ShieldCheck
+  CheckCircle2,
+  Calendar,
+  MapPin
 } from "lucide-react";
+import { FaInstagram, FaFacebook, FaWhatsapp } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import { FormSection } from "@/components/ui/form-section";
-import { CustomSelect } from "@/components/ui/custom-select";
 import { InputGroup } from "@/components/ui/input-group";
 import { ImageUploader } from "@/components/ui/image-uploader";
-import { BankAccountService } from "@/services/bank-account.service";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { OngSetupService } from "@/services/ongSetup.service";
 import { WishlistService } from "@/services/wishlist.service";
+import { lookupCep } from "@/services/register-ong.service";
+import { formatCEP, formatBrazilianPhone } from "@/utils/documentValidation";
 import { useAuth } from "@/contexts/AuthContext";
 import { CategoryImpactIcon } from "@/components/ui/CategoryImpactIcon";
 import { LgpdSecurityZone } from "@/components/specific/Lgpd/LgpdSecurityZone";
@@ -75,10 +73,19 @@ export default function OngSetupProfile() {
     await logout("/login");
   };
 
-  // Campos do Perfil
+  // Campos do Perfil e Canais Sociais
   const [description, setDescription] = useState("");
   const [phone, setPhone] = useState("");
-  const [website, setWebsite] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [facebookUrl, setFacebookUrl] = useState("");
+  const [foundedAt, setFoundedAt] = useState<string | null>(null);
+  const [years, setYears] = useState("");
+
+  // Endereço (somente leitura quando já cadastrado no /register; fallback CEP para ONGs legadas)
+  const [hasExistingAddress, setHasExistingAddress] = useState(false);
+  const [lookingUpCep, setLookingUpCep] = useState(false);
   const [street, setStreet] = useState("");
   const [number, setNumber] = useState("");
   const [complement, setComplement] = useState("");
@@ -87,7 +94,6 @@ export default function OngSetupProfile() {
   const [state, setState] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [country, setCountry] = useState("Brasil");
-  const [years, setYears] = useState("");
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
   const [primaryCategoryId, setPrimaryCategoryId] = useState<number | null>(null);
   const [isPrimaryDropdownOpen, setIsPrimaryDropdownOpen] = useState(false);
@@ -115,22 +121,6 @@ export default function OngSetupProfile() {
   const [items, setItems] = useState<any[]>([]);
   const [ongId, setOngId] = useState<number | null>(null);
 
-  // Dados Bancários
-  const [bankName, setBankName] = useState("");
-  const [agencyNumber, setAgencyNumber] = useState("");
-  const [accountNumber, setAccountNumber] = useState("");
-  const [pixKey, setPixKey] = useState("");
-  const [accountType, setAccountType] = useState("Corrente");
-  const [pixKeyType, setPixKeyType] = useState("CPF");
-
-  // Senha atual e rastreamento de alteração de Pix
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [initialPixKey, setInitialPixKey] = useState("");
-  const [hasExistingAccount, setHasExistingAccount] = useState(false);
-
-  const accountTypeOptions = ["Corrente", "Poupança", "Aplicação"];
-
   const primaryCategoryObj = availableCategories.find((c) => c.id === primaryCategoryId);
 
   useEffect(() => {
@@ -156,28 +146,43 @@ export default function OngSetupProfile() {
         setOngName(profile.name || "Minha ONG");
         setDescription(profile.description || "");
         setPhone(profile.contactNumber || "");
-        setWebsite(profile.website || "");
+        setWhatsappNumber(profile.whatsappNumber || "");
+        setWebsiteUrl(profile.websiteUrl || profile.website || "");
+        setInstagramUrl(profile.instagramUrl || "");
+        setFacebookUrl(profile.facebookUrl || "");
+        setFoundedAt(profile.foundedAt || null);
 
         try {
           const wishlistData = await WishlistService.getItems(profile.id);
           setItems(wishlistData || []);
-        } catch (err) {
+        } catch {
           console.error("Erro ao carregar wishlist");
         }
 
         if (profile.address && typeof profile.address === 'object') {
-          setStreet(profile.address.street || "");
-          setNumber(profile.address.number || "");
-          setComplement(profile.address.complement || "");
-          setNeighborhood(profile.address.neighborhood || "");
-          setCity(profile.address.city || "");
-          setState(profile.address.state || "");
-          setZipCode(profile.address.zipCode || "");
-          setCountry(profile.address.country || "Brasil");
+          const addr = profile.address;
+          const addressComplete = Boolean(addr.street && addr.city && addr.state && addr.zipCode);
+          setHasExistingAddress(addressComplete);
+          setStreet(addr.street || "");
+          setNumber(addr.number || "");
+          setComplement(addr.complement || "");
+          setNeighborhood(addr.neighborhood || "");
+          setCity(addr.city || "");
+          setState(addr.state || "");
+          setZipCode(addr.zipCode || "");
+          setCountry(addr.country || "Brasil");
         }
 
-        if (profile.yearsOfOperation) setYears(profile.yearsOfOperation.toString());
+        if (typeof profile.yearsOfOperation === "number") {
+          setYears(profile.yearsOfOperation.toString());
+        } else if (profile.foundedAt) {
+          const diff = Math.max(0, new Date().getFullYear() - new Date(profile.foundedAt).getFullYear());
+          setYears(diff.toString());
+        }
+
         if (profile.avatarUrl) setLogoPreview(profile.avatarUrl);
+        if (profile.bannerUrl) setBannerPreview(profile.bannerUrl);
+
         if (profile.categories) {
           setSelectedCategoryIds(profile.categories.map((c: any) => c.id));
         }
@@ -187,33 +192,6 @@ export default function OngSetupProfile() {
           setPrimaryCategoryId(profile.primaryCategory.id);
         } else if (profile.categories && profile.categories.length > 0) {
           setPrimaryCategoryId(profile.categories[0].id);
-        }
-
-        const bankData = await BankAccountService.getMyAccount().catch(() => null);
-        if (bankData) {
-          setHasExistingAccount(true);
-          const savedKey = bankData.pixKey || "";
-          setInitialPixKey(savedKey);
-
-          setBankName(bankData.bankName || "");
-          setAgencyNumber(bankData.agencyNumber || "");
-          setAccountNumber(bankData.accountNumber || "");
-          setPixKey(bankData.pixKey || "");
-          setAccountType(bankData.accountType || "Corrente");
-
-          if (savedKey.includes("@")) {
-            setPixKeyType("E-mail");
-          } else if (savedKey.startsWith("55") && savedKey.length >= 12) {
-            setPixKeyType("Telefone");
-          } else if (savedKey.length === 14) {
-            setPixKeyType("CNPJ");
-          } else if (savedKey.length === 11) {
-            setPixKeyType("CPF");
-          } else if (savedKey.length > 0) {
-            setPixKeyType("Chave Aleatória");
-          } else {
-            setPixKeyType("CPF");
-          }
         }
 
       } catch (error: any) {
@@ -286,57 +264,53 @@ export default function OngSetupProfile() {
     const cleanCEP = zipCode.replace(/\D/g, "");
     if (cleanCEP.length !== 8) return;
 
+    setLookingUpCep(true);
     try {
-      const res = await fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`);
-      const data = await res.json();
-      if (data.erro) {
-        toast.error("CEP inválido ou não encontrado.");
-        return;
-      }
-      setStreet(data.logradouro);
-      setNeighborhood(data.bairro);
-      setCity(data.localidade);
-      setState(data.uf);
+      const data = await lookupCep(cleanCEP);
+      if (data.street) setStreet(data.street);
+      if (data.neighborhood) setNeighborhood(data.neighborhood);
+      if (data.city) setCity(data.city);
+      if (data.state) setState(data.state);
       toast.success("Endereço localizado!");
-    } catch (error) {
-      toast.error("Erro ao consultar o serviço de CEP.");
+    } catch (error: any) {
+      toast.error(error?.message || "Erro ao consultar o serviço de CEP.");
+    } finally {
+      setLookingUpCep(false);
     }
   };
 
   const validateForm = () => {
     if (!description.trim()) { toast.error("A descrição da ONG é obrigatória."); return false; }
-    if (!years) { toast.error("Informe os anos de atuação."); return false; }
+    if (!foundedAt && years.trim() === "") { toast.error("Informe os anos de atuação."); return false; }
 
-    // TRAVA DE VALIDAÇÃO DO WHATSAPP (Impede apenas o "55" ou campo incompleto)
+    // Validação do Telefone Principal (aceita 10-11 dígitos locais ou 55 + 10-11 dígitos)
     const rawPhone = phone.replace(/\D/g, "");
-    if (!rawPhone || rawPhone === "55" || rawPhone.length < 12) {
+    const localPhone = rawPhone.startsWith("55") && rawPhone.length >= 12 ? rawPhone.slice(2) : rawPhone;
+    if (localPhone.length < 10 || localPhone.length > 11) {
       toast.error("O número de contato válido com o DDD é obrigatório.");
       return false;
     }
 
-    if (!zipCode.trim()) { toast.error("O CEP é obrigatório."); return false; }
-    if (!street.trim()) { toast.error("O nome da rua é obrigatório."); return false; }
-    if (!number.trim()) { toast.error("O número do endereço é obrigatório."); return false; }
-    if (!neighborhood.trim()) { toast.error("O bairro é obrigatório."); return false; }
-    if (!city.trim()) { toast.error("A cidade é obrigatória."); return false; }
-    if (!state.trim()) { toast.error("O estado (UF) é obrigatório."); return false; }
+    const rawWhatsapp = whatsappNumber.replace(/\D/g, "");
+    if (rawWhatsapp && rawWhatsapp !== "55") {
+      const localWa = rawWhatsapp.startsWith("55") && rawWhatsapp.length >= 12 ? rawWhatsapp.slice(2) : rawWhatsapp;
+      if (localWa.length < 10 || localWa.length > 11) {
+        toast.error("Número de WhatsApp inválido. Informe DDD + número ou deixe em branco.");
+        return false;
+      }
+    }
+
+    if (!hasExistingAddress) {
+      if (!zipCode.trim()) { toast.error("O CEP é obrigatório."); return false; }
+      if (!street.trim()) { toast.error("O nome da rua é obrigatório."); return false; }
+      if (!number.trim()) { toast.error("O número do endereço é obrigatório."); return false; }
+      if (!neighborhood.trim()) { toast.error("O bairro é obrigatório."); return false; }
+      if (!city.trim()) { toast.error("A cidade é obrigatória."); return false; }
+      if (!state.trim()) { toast.error("O estado (UF) é obrigatório."); return false; }
+    }
+
     if (selectedCategoryIds.length === 0) { toast.error("Selecione pelo menos uma categoria."); return false; }
     if (!primaryCategoryId) { toast.error("Selecione a Causa Principal da sua ONG."); return false; }
-
-    if (!bankName.trim() || !pixKey.trim()) {
-      toast.error("Complete os dados bancários para receber doações.");
-      return false;
-    }
-
-    const isPixKeyModified = pixKey.trim() !== initialPixKey.trim();
-    if (isPixKeyModified && !currentPassword.trim()) {
-      toast.error(
-        initialPixKey
-          ? "Por segurança, informe sua senha atual para alterar a chave Pix de repasses."
-          : "Por segurança, informe sua senha atual para cadastrar a chave Pix de repasses."
-      );
-      return false;
-    }
 
     return true;
   };
@@ -347,15 +321,24 @@ export default function OngSetupProfile() {
     setLoading(true);
     try {
       const cleanPhone = phone.replace(/\D/g, "");
+      const cleanWa = whatsappNumber.replace(/\D/g, "");
+      const normalizedWa = cleanWa && cleanWa !== "55" ? cleanWa : "";
 
       const payload = {
         description,
         contactNumber: cleanPhone,
-        websiteUrls: website?.trim() ? [website.trim()] : undefined,
+        whatsappNumber: normalizedWa,
+        websiteUrl: websiteUrl.trim(),
+        instagramUrl: instagramUrl.trim(),
+        facebookUrl: facebookUrl.trim(),
         categoryIds: selectedCategoryIds,
         primaryCategoryId: primaryCategoryId || (selectedCategoryIds.length > 0 ? selectedCategoryIds[0] : undefined),
-        yearsOfOperation: years ? Number(years) : undefined,
-        address: { street, number, complement, neighborhood, city, state, zipCode, country },
+        yearsOfOperation: !foundedAt && years !== "" ? Number(years) : undefined,
+        ...(hasExistingAddress
+          ? {}
+          : {
+              address: { street, number, complement, neighborhood, city, state, zipCode, country },
+            }),
       };
 
       await OngSetupService.updateProfileData(payload);
@@ -367,15 +350,6 @@ export default function OngSetupProfile() {
           bannerFile ? bannerCrop : undefined
         );
       }
-
-      await BankAccountService.saveAccount({
-        bankName,
-        agencyNumber,
-        accountNumber,
-        accountType,
-        pixKey,
-        currentPassword: currentPassword.trim() || undefined,
-      });
 
       toast.success("Perfil atualizado com sucesso!");
       setTimeout(() => {
@@ -495,101 +469,200 @@ export default function OngSetupProfile() {
               </div>
             </FormSection>
 
-            <FormSection title="Atuação (Anos) *" icon={Award} className="flex flex-col justify-center">
-              <input
-                type="number"
-                value={years}
-                onChange={(e) => setYears(e.target.value)}
-                placeholder="Ex: 5"
-                className="w-full text-xl font-black text-gray-900 bg-gray-50 p-4 rounded-xl outline-none border-none"
-              />
+            <FormSection title="Tempo de Atuação" icon={Award} className="flex flex-col justify-center">
+              {foundedAt ? (
+                <div className="bg-purple-50/70 border border-purple-100 rounded-xl p-4 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-2xl font-black text-gray-900">
+                      {years || "0"} {Number(years) === 1 ? "ano" : "anos"}
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider">
+                      <CheckCircle2 size={12} />
+                      CNPJ
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 font-medium flex items-center gap-1.5">
+                    <Calendar size={13} className="text-[#6B39A7] shrink-0" />
+                    <span>
+                      Fundada em {new Date(foundedAt).toLocaleDateString("pt-BR", { timeZone: "UTC" })} (Receita Federal)
+                    </span>
+                  </p>
+                </div>
+              ) : (
+                <input
+                  type="number"
+                  min={0}
+                  value={years}
+                  onChange={(e) => setYears(e.target.value)}
+                  placeholder="Ex: 5"
+                  className="w-full text-xl font-black text-gray-900 bg-gray-50 p-4 rounded-xl outline-none border-none"
+                />
+              )}
             </FormSection>
           </div>
-          
 
-          <FormSection title="Canais de Contato *" italicTitle>
+          <FormSection title="Canais de Contato & Redes Sociais" italicTitle>
             <div className="space-y-3 sm:space-y-4">
-
-              {/* CONTAINER COM O PREFIXO +55 FIXO VISUALMENTE */}
-              <div className="flex rounded-xl bg-gray-50 overflow-hidden border border-transparent focus-within:border-purple-200 focus-within:ring-2 focus-within:ring-purple-100 transition-all">
-                <div className="flex items-center justify-center bg-gray-100 text-gray-500 px-4 text-sm font-bold select-none border-r border-gray-200/60 gap-2">
-                  <Phone size={16} className="text-gray-400" />
-                  <span>+55</span>
+              {/* TELEFONE PRINCIPAL COM +55 FIXO */}
+              <div>
+                <label className="text-[10px] font-black uppercase text-gray-400 tracking-wider ml-1 mb-1.5 block">
+                  Telefone Institucional *
+                </label>
+                <div className="flex rounded-xl bg-gray-50 overflow-hidden border border-transparent focus-within:border-purple-200 focus-within:ring-2 focus-within:ring-purple-100 transition-all">
+                  <div className="flex items-center justify-center bg-gray-100 text-gray-500 px-4 text-sm font-bold select-none border-r border-gray-200/60 gap-2">
+                    <Phone size={16} className="text-[#6B39A7]" />
+                    <span>+55</span>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="(DDD) 99999-9999"
+                    value={formatBrazilianPhone(getDisplayPhone(phone))}
+                    className="w-full bg-transparent p-4 outline-none text-sm text-gray-700"
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+                      setPhone(digits ? `55${digits}` : "");
+                    }}
+                  />
                 </div>
-                <input
-                  type="text"
-                  placeholder="(DDD) 99999-9999"
-                  value={getDisplayPhone(phone)}
-                  className="w-full bg-transparent p-4 outline-none text-sm text-gray-700"
-                  onChange={(e) => {
-                    const digits = e.target.value.replace(/\D/g, "");
-                    // Mantém o '55' guardado de forma transparente no state
-                    setPhone(`55${digits}`);
-                  }}
-                />
               </div>
 
+              {/* WHATSAPP */}
+              <div>
+                <label className="text-[10px] font-black uppercase text-gray-400 tracking-wider ml-1 mb-1.5 block">
+                  WhatsApp de Atendimento (Opcional)
+                </label>
+                <div className="flex rounded-xl bg-gray-50 overflow-hidden border border-transparent focus-within:border-emerald-200 focus-within:ring-2 focus-within:ring-emerald-100 transition-all">
+                  <div className="flex items-center justify-center bg-gray-100 text-emerald-700 px-4 text-sm font-bold select-none border-r border-gray-200/60 gap-2">
+                    <FaWhatsapp size={17} className="text-emerald-600" />
+                    <span>+55</span>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="(DDD) 99999-9999"
+                    value={formatBrazilianPhone(getDisplayPhone(whatsappNumber))}
+                    className="w-full bg-transparent p-4 outline-none text-sm text-gray-700"
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+                      setWhatsappNumber(digits ? `55${digits}` : "");
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* SITE OFICIAL */}
               <InputGroup
-                icon={ExternalLink}
-                placeholder="Ex: https://site.org ou instagram.com/suaong"
-                iconColor="text-pink-400"
-                value={website}
-                onChange={(e) => setWebsite(e.target.value)}
-              />
-            </div>
-          </FormSection>
-
-          <FormSection title="Localização *" italicTitle>
-            <div className="space-y-3 sm:space-y-4">
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                <InputGroup
-                  icon={Search}
-                  placeholder="CEP"
-                  value={zipCode}
-                  onChange={(e) => setZipCode(e.target.value)}
-                  onBlur={handleCEPBlur}
-                />
-                <InputGroup
-                  icon={Globe2}
-                  placeholder="País"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                />
-              </div>
-
-              <InputGroup
-                icon={MapPinned}
-                placeholder="Rua / Logradouro"
-                value={street}
-                onChange={(e) => setStreet(e.target.value)}
+                icon={Globe}
+                placeholder="Site oficial (Ex: https://suaong.org.br)"
+                iconColor="text-[#6B39A7]"
+                value={websiteUrl}
+                onChange={(e) => setWebsiteUrl(e.target.value)}
               />
 
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <div className="w-full sm:w-1/3">
-                  <InputGroup icon={Milestone} placeholder="Nº" value={number} onChange={(e) => setNumber(e.target.value)} />
+              {/* INSTAGRAM E FACEBOOK */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="flex items-center gap-3 w-full bg-gray-50 p-3.5 rounded-xl border border-transparent focus-within:border-pink-200 focus-within:bg-white transition-all">
+                  <FaInstagram size={18} className="text-pink-600 shrink-0" />
+                  <input
+                    type="text"
+                    placeholder="Instagram (@perfil ou URL)"
+                    value={instagramUrl}
+                    onChange={(e) => setInstagramUrl(e.target.value)}
+                    className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder:text-gray-400"
+                  />
                 </div>
-                <div className="w-full sm:w-2/3">
-                  <InputGroup icon={Info} placeholder="Complemento" value={complement} onChange={(e) => setComplement(e.target.value)} />
-                </div>
-              </div>
 
-              <InputGroup icon={Navigation} placeholder="Bairro" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} />
-
-              <div className="grid grid-cols-3 gap-3 sm:gap-4">
-                <div className="col-span-2">
-                  <InputGroup icon={Building2} placeholder="Cidade" value={city} onChange={(e) => setCity(e.target.value)} />
-                </div>
-                <div className="col-span-1">
-                  <InputGroup
-                    icon={Flag}
-                    placeholder="UF"
-                    value={state}
-                    maxLength={2}
-                    onChange={(e) => setState(e.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase())}
+                <div className="flex items-center gap-3 w-full bg-gray-50 p-3.5 rounded-xl border border-transparent focus-within:border-blue-200 focus-within:bg-white transition-all">
+                  <FaFacebook size={18} className="text-blue-600 shrink-0" />
+                  <input
+                    type="text"
+                    placeholder="Facebook (facebook.com/suaong)"
+                    value={facebookUrl}
+                    onChange={(e) => setFacebookUrl(e.target.value)}
+                    className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder:text-gray-400"
                   />
                 </div>
               </div>
             </div>
+          </FormSection>
+
+          <FormSection title={hasExistingAddress ? "Sede Cadastrada" : "Localização *"} italicTitle>
+            {hasExistingAddress ? (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-100 text-[#6B39A7] flex items-center justify-center shrink-0">
+                    <MapPin size={20} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">
+                      {street}{number ? `, ${number}` : ""}{complement ? ` • ${complement}` : ""}
+                    </p>
+                    <p className="text-xs text-slate-600 font-medium mt-0.5">
+                      {neighborhood ? `${neighborhood} — ` : ""}{city}/{state} • CEP {formatCEP(zipCode)}
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Endereço validado no cadastro inicial e sincronizado com a geolocalização.
+                    </p>
+                  </div>
+                </div>
+                <span className="self-start sm:self-center inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-black uppercase tracking-wider shrink-0">
+                  <CheckCircle2 size={13} />
+                  Verificado
+                </span>
+              </div>
+            ) : (
+              <div className="space-y-3 sm:space-y-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <div className="relative">
+                    <InputGroup
+                      icon={lookingUpCep ? Loader2 : Search}
+                      placeholder="CEP"
+                      value={formatCEP(zipCode)}
+                      onChange={(e) => setZipCode(formatCEP(e.target.value))}
+                      onBlur={handleCEPBlur}
+                    />
+                  </div>
+                  <InputGroup
+                    icon={Globe2}
+                    placeholder="País"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                  />
+                </div>
+
+                <InputGroup
+                  icon={MapPinned}
+                  placeholder="Rua / Logradouro"
+                  value={street}
+                  onChange={(e) => setStreet(e.target.value)}
+                />
+
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  <div className="w-full sm:w-1/3">
+                    <InputGroup icon={Milestone} placeholder="Nº" value={number} onChange={(e) => setNumber(e.target.value)} />
+                  </div>
+                  <div className="w-full sm:w-2/3">
+                    <InputGroup icon={Info} placeholder="Complemento" value={complement} onChange={(e) => setComplement(e.target.value)} />
+                  </div>
+                </div>
+
+                <InputGroup icon={Navigation} placeholder="Bairro" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} />
+
+                <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                  <div className="col-span-2">
+                    <InputGroup icon={Building2} placeholder="Cidade" value={city} onChange={(e) => setCity(e.target.value)} />
+                  </div>
+                  <div className="col-span-1">
+                    <InputGroup
+                      icon={Flag}
+                      placeholder="UF"
+                      value={state}
+                      maxLength={2}
+                      onChange={(e) => setState(e.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase())}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </FormSection>
 
           <FormSection title="Categorias de Atuação *" icon={Tag}>
@@ -722,215 +795,6 @@ export default function OngSetupProfile() {
                   )}
                 </div>
               </div>
-            </div>
-          </FormSection>
-
-          <FormSection
-            title="Dados de Recebimento *"
-            icon={Wallet}
-            className="bg-gradient-to-br from-white to-purple-50"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-
-              {/* BANCO */}
-              <div className="md:col-span-2">
-                <label className="text-[10px] font-black uppercase text-purple-400 mb-1 block ml-1">
-                  Instituição Bancária *
-                </label>
-
-                <input
-                  value={bankName}
-                  onChange={(e) => setBankName(e.target.value)}
-                  placeholder="Ex: Nubank, Itaú..."
-                  className="w-full bg-white p-4 rounded-xl border border-gray-100 outline-none text-sm focus:border-purple-300 transition-colors shadow-sm"
-                />
-              </div>
-
-              {/* TIPO DE CONTA */}
-              <CustomSelect
-                label="Tipo de Conta *"
-                value={accountType}
-                options={accountTypeOptions}
-                onChange={setAccountType}
-              />
-
-              {/* TIPO DE CHAVE PIX */}
-              <div className="relative">
-                <CustomSelect
-                  label="Tipo de Chave PIX *"
-                  value={pixKeyType || "CPF"}
-                  options={[
-                    "CPF",
-                    "CNPJ",
-                    "Telefone",
-                    "E-mail",
-                    "Chave Aleatória",
-                  ]}
-                  onChange={(value) => {
-                    setPixKeyType(value);
-
-                    // telefone já começa com 55
-                    setPixKey(value === "Telefone" ? "55" : "");
-                  }}
-                />
-              </div>
-
-              {/* CHAVE PIX */}
-              {pixKeyType && (
-                <div className="flex flex-col md:col-span-2">
-                  <label className="text-[10px] font-black uppercase text-purple-400 mb-1 block ml-1">
-                    Chave PIX *
-                  </label>
-
-                  {/* TELEFONE */}
-                  {pixKeyType === "Telefone" ? (
-                    <div className="flex items-center bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden focus-within:border-purple-300 transition-colors">
-
-                      {/* PREFIXO FIXO */}
-                      <div className="px-4 py-4 bg-purple-50 text-purple-600 font-black text-sm border-r border-gray-100">
-                        +55
-                      </div>
-
-                      {/* INPUT */}
-                      <input
-                        value={pixKey.replace(/^55/, "")}
-                        onChange={(e) => {
-                          let value = e.target.value.replace(/\D/g, "");
-
-                          // DDD + número
-                          value = value.slice(0, 11);
-
-                          setPixKey(`55${value}`);
-                        }}
-                        placeholder="81999999999"
-                        className="w-full bg-white p-4 outline-none text-sm"
-                      />
-                    </div>
-                  ) : (
-                    <input
-                      value={pixKey}
-                      onChange={(e) => {
-                        let value = e.target.value;
-
-                        // CPF
-                        if (pixKeyType === "CPF") {
-                          value = value.replace(/\D/g, "").slice(0, 11);
-                        }
-
-                        // CNPJ
-                        if (pixKeyType === "CNPJ") {
-                          value = value.replace(/\D/g, "").slice(0, 14);
-                        }
-
-                        setPixKey(value);
-                      }}
-                      placeholder={
-                        pixKeyType === "CPF"
-                          ? "Somente números do CPF"
-                          : pixKeyType === "CNPJ"
-                            ? "Somente números do CNPJ"
-                            : pixKeyType === "E-mail"
-                              ? "email@exemplo.com"
-                              : "Cole sua chave aleatória"
-                      }
-                      className="w-full bg-white p-4 rounded-xl border border-gray-100 outline-none text-sm focus:border-purple-300 transition-colors shadow-sm"
-                    />
-                  )}
-
-                  {pixKeyType === "Telefone" && (
-                    <span className="text-xs sm:text-sm text-gray-500 mt-2 ml-1 font-medium">
-                      O código do Brasil (+55) é fixo e não pode ser removido.
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* AGÊNCIA */}
-              <div className="flex flex-col">
-                <label className="text-[10px] font-black uppercase text-purple-400 mb-1 block ml-1">
-                  Agência
-                </label>
-
-                <input
-                  value={agencyNumber}
-                  onChange={(e) => setAgencyNumber(e.target.value)}
-                  placeholder="0001"
-                  className="w-full bg-white p-4 rounded-xl border border-gray-100 outline-none text-sm focus:border-purple-300 transition-colors shadow-sm"
-                />
-              </div>
-
-              {/* CONTA */}
-              <div className="flex flex-col">
-                <label className="text-[10px] font-black uppercase text-purple-400 mb-1 block ml-1">
-                  Conta com Dígito
-                </label>
-
-                <input
-                  value={accountNumber}
-                  onChange={(e) => setAccountNumber(e.target.value)}
-                  placeholder="12345-6"
-                  className="w-full bg-white p-4 rounded-xl border border-gray-100 outline-none text-sm focus:border-purple-300 transition-colors shadow-sm"
-                />
-              </div>
-
-              {/* CONFIRMAÇÃO DE SENHA PARA CHAVE PIX */}
-              <div className="md:col-span-2 pt-2 border-t border-purple-100/60 mt-2">
-                <div className={`p-4 sm:p-5 rounded-2xl border transition-all ${
-                  pixKey.trim() !== initialPixKey.trim()
-                    ? "bg-purple-50/80 border-purple-300 shadow-sm"
-                    : "bg-slate-50/70 border-slate-200/80"
-                }`}>
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className="w-9 h-9 rounded-xl bg-purple-100 flex items-center justify-center shrink-0 text-[#6B39A7] mt-0.5">
-                      <ShieldCheck size={20} />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-bold text-slate-900">
-                          Confirmação de Segurança
-                        </h4>
-                        {pixKey.trim() !== initialPixKey.trim() && (
-                          <span className="px-2 py-0.5 text-[10px] font-black uppercase rounded-full bg-purple-200/70 text-[#6B39A7]">
-                            Obrigatório
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                        {initialPixKey
-                          ? "Para proteger sua instituição contra desvios de repasse, confirme sua senha atual apenas se você estiver alterando a chave Pix."
-                          : "Por normas de segurança bancária, confirme sua senha atual para cadastrar a chave Pix onde a ONG receberá as doações."}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col mt-2">
-                    <label className="text-[10px] font-black uppercase text-purple-700 mb-1.5 ml-1">
-                      Sua Senha Atual {pixKey.trim() !== initialPixKey.trim() && <span className="text-red-500">*</span>}
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <Lock size={16} />
-                      </div>
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                        placeholder="Digite sua senha atual para confirmar o Pix"
-                        className="w-full bg-white pl-10 pr-12 py-3.5 rounded-xl border border-slate-200 outline-none text-sm text-slate-800 focus:border-[#6B39A7] focus:ring-2 focus:ring-[#6B39A7]/15 transition-all shadow-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        aria-label={showPassword ? "Ocultar senha" : "Exibir senha"}
-                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-[#6B39A7] cursor-pointer transition-colors"
-                      >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
             </div>
           </FormSection>
 

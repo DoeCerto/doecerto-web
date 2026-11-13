@@ -5,12 +5,23 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin, HeartHandshake, Award, Phone, Home,
   Star, ArrowLeft, Image as ImageIcon, MessageSquare, X, Tag,
-  Globe, CheckCircle2, Copy, Heart, Send, AlertCircle, User
+  Globe, CheckCircle2, Copy, Heart, Send, AlertCircle, User, ExternalLink
 } from "lucide-react";
+import { FaInstagram, FaFacebook, FaWhatsapp } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import DonateModal from "@/components/specific/DonateModal";
 import { OngsProfileService } from "@/services/ongs-profile.service";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  buildWebsiteHref,
+  formatWebsiteLabel,
+  buildInstagramHref,
+  formatInstagramLabel,
+  buildFacebookHref,
+  formatFacebookLabel,
+  buildWhatsappHref,
+  formatWhatsappLabel,
+} from "@/utils/socialChannels";
 
 // --- INTERFACES ---
 export interface Review {
@@ -27,7 +38,13 @@ export interface OngProfileData {
   logo: string;
   description: string;
   phone: string;
-  instagram: string;
+  whatsappNumber?: string | null;
+  websiteUrl?: string | null;
+  instagramUrl?: string | null;
+  facebookUrl?: string | null;
+  website?: string;
+  instagram?: string;
+  foundedAt?: string | null;
   address: string;
   distance: string;
   yearsOfOperation: number;
@@ -221,9 +238,50 @@ export default function OngPublicProfileClient({
           <p className="text-sm sm:text-base lg:text-lg text-slate-700 leading-relaxed">{ong.description}</p>
 
           <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
-            <ContactInfo icon={<Phone size={18} className="text-purple-600 sm:w-5 sm:h-5" />} text={ong.phone} copyable />
-            <ContactInfo icon={<Globe size={18} className="text-purple-600 sm:w-5 sm:h-5" />} text={ong.instagram} />
-            <ContactInfo icon={<Home size={18} className="text-slate-600 sm:w-5 sm:h-5" />} text={ong.address} />
+            <ContactInfo
+              icon={<Phone size={18} className="text-purple-600 sm:w-5 sm:h-5" />}
+              label="Telefone"
+              text={ong.phone}
+              copyable
+            />
+            {ong.whatsappNumber && (
+              <ContactInfo
+                icon={<FaWhatsapp size={19} className="text-emerald-600 sm:w-5 sm:h-5" />}
+                label="WhatsApp"
+                text={formatWhatsappLabel(ong.whatsappNumber)}
+                href={buildWhatsappHref(ong.whatsappNumber)}
+                copyable
+              />
+            )}
+            {ong.websiteUrl && (
+              <ContactInfo
+                icon={<Globe size={18} className="text-purple-600 sm:w-5 sm:h-5" />}
+                label="Site oficial"
+                text={formatWebsiteLabel(ong.websiteUrl)}
+                href={buildWebsiteHref(ong.websiteUrl)}
+              />
+            )}
+            {ong.instagramUrl && (
+              <ContactInfo
+                icon={<FaInstagram size={19} className="text-pink-600 sm:w-5 sm:h-5" />}
+                label="Instagram"
+                text={formatInstagramLabel(ong.instagramUrl)}
+                href={buildInstagramHref(ong.instagramUrl)}
+              />
+            )}
+            {ong.facebookUrl && (
+              <ContactInfo
+                icon={<FaFacebook size={19} className="text-blue-600 sm:w-5 sm:h-5" />}
+                label="Facebook"
+                text={formatFacebookLabel(ong.facebookUrl)}
+                href={buildFacebookHref(ong.facebookUrl)}
+              />
+            )}
+            <ContactInfo
+              icon={<Home size={18} className="text-slate-600 sm:w-5 sm:h-5" />}
+              label="Localização"
+              text={ong.address}
+            />
           </div>
         </div>
 
@@ -320,7 +378,19 @@ export default function OngPublicProfileClient({
 
 // --- COMPONENTES AUXILIARES ---
 
-function ContactInfo({ icon, text, copyable }: { icon: React.ReactNode, text: string, copyable?: boolean }) {
+function ContactInfo({
+  icon,
+  text,
+  href,
+  label,
+  copyable,
+}: {
+  icon: React.ReactNode;
+  text: string;
+  href?: string;
+  label?: string;
+  copyable?: boolean;
+}) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -335,7 +405,26 @@ function ContactInfo({ icon, text, copyable }: { icon: React.ReactNode, text: st
     <div className="flex items-center justify-between text-slate-700 text-xs sm:text-sm lg:text-base font-bold bg-slate-50 p-3 sm:p-4 rounded-2xl border border-slate-100">
       <div className="flex items-center gap-3 sm:gap-4 min-w-0">
         <div className="shrink-0">{icon}</div>
-        <span className="truncate">{text || "Não informado"}</span>
+        <div className="min-w-0 flex flex-col">
+          {label && (
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              {label}
+            </span>
+          )}
+          {href ? (
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="truncate text-[#6B39A7] hover:text-[#582d8c] hover:underline inline-flex items-center gap-1.5"
+            >
+              <span className="truncate">{text || "Não informado"}</span>
+              <ExternalLink size={13} className="shrink-0 opacity-70" />
+            </a>
+          ) : (
+            <span className="truncate">{text || "Não informado"}</span>
+          )}
+        </div>
       </div>
       {copyable && text && text !== "Não informado" && (
         <button

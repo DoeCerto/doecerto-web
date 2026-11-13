@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState, useRef, useEffect, forwardRef, InputHTMLAttributes } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
-import { Eye, EyeClosed, Lock, Mail, User, Building2, ArrowLeft, ArrowRight, FileText, IdCard, UploadCloud, CheckCircle, CheckCircle2, X, LucideIcon, Loader2 } from "lucide-react";
+import { Eye, EyeClosed, Lock, Mail, User, Building2, ArrowLeft, ArrowRight, FileText, IdCard, UploadCloud, CheckCircle, CheckCircle2, X, LucideIcon, Loader2, MapPin, Phone, MessageCircle, KeyRound, Landmark, AlertTriangle, Sparkles } from "lucide-react";
 import gsap from "gsap";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,10 +13,19 @@ import * as z from "zod";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Importações dos serviços
-import { registerOng } from "@/services/register-ong.service";
+import {
+  registerOng,
+  lookupCep,
+  lookupCnpj,
+  lookupPixKey,
+  type CnpjLookupResult,
+  type PixKeyLookupResult,
+  type OngOnboardingSummary,
+} from "@/services/register-ong.service";
 import { registerDonor, checkAvailability } from "@/services/register.service";
-import { formatCNPJ, removeFormatting, validateCNPJ, formatCPF, validateCPF } from "@/utils/documentValidation";
+import { formatCNPJ, removeFormatting, validateCNPJ, formatCPF, validateCPF, formatCEP, formatBrazilianPhone } from "@/utils/documentValidation";
 import TermosModal from "@/components/shared/TermosModal";
+import OngKycSelfieStep from "@/components/specific/Register/OngKycSelfieStep";
 
 // ==========================================
 // 1. TIPAGENS E SCHEMAS
@@ -63,14 +72,27 @@ function getPasswordChecks(password: string, accountType: AccountType) {
 
 const registerSchema = z.object({
   accountType: z.enum(["donor", "ong"]).nullable(),
-  nome: z.string().min(3, "Mínimo de 3 caracteres").regex(/^[^0-9]*$/, "Não pode conter números"),
+  nome: z.string().min(3, "Mínimo de 3 caracteres"),
   email: z.string().min(1, "O e-mail é obrigatório").email("E-mail inválido"),
   senha: z.string().min(1, "A senha é obrigatória"),
   confirmarSenha: z.string().min(1, "Confirme sua senha"),
   documento: z.string().min(1, "Documento é obrigatório"),
+  cep: z.string().optional(),
+  rua: z.string().optional(),
+  numero: z.string().optional(),
+  complemento: z.string().optional(),
+  bairro: z.string().optional(),
+  cidade: z.string().optional(),
+  uf: z.string().optional(),
+  telefone: z.string().optional(),
+  whatsapp: z.string().optional(),
+  pixKey: z.string().optional(),
   nomePresidente: z.string().optional(),
   cpfPresidente: z.string().optional(),
 }).superRefine((data, ctx) => {
+  if (data.accountType === "donor" && /\d/.test(data.nome)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Não pode conter números", path: ["nome"] });
+  }
 
   // Validação de Senha alinhada ao PasswordPolicyService do backend
   if (data.senha.length > 0) {
@@ -326,7 +348,7 @@ function FileDropzone({ title, subtitle, file, setFile }: { title: string, subti
 function useRegisterForm() {
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [accountType, setAccountType] = useState<AccountType>(null);
   const [modalAberto, setModalAberto] = useState(false);
   const [isPending, setIsPending] = useState(false);
@@ -338,10 +360,28 @@ function useRegisterForm() {
 
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [isCheckingDocumento, setIsCheckingDocumento] = useState(false);
+  const [isLookingUpCnpj, setIsLookingUpCnpj] = useState(false);
+  const [isLookingUpCep, setIsLookingUpCep] = useState(false);
+  const [isCheckingPhone, setIsCheckingPhone] = useState(false);
+  const [isLookingUpPix, setIsLookingUpPix] = useState(false);
 
-  // Cache em memória para evitar requisições repetidas ao mesmo CPF/CNPJ/Email
+  const [cnpjMeta, setCnpjMeta] = useState<CnpjLookupResult | null>(null);
+  const [cepGeoVerified, setCepGeoVerified] = useState(false);
+  const [pixLookupResult, setPixLookupResult] = useState<PixKeyLookupResult | null>(null);
+  const [sameWhatsappAsPhone, setSameWhatsappAsPhone] = useState(true);
+  const [kycSession, setKycSession] = useState<{
+    ongName: string;
+    email: string;
+    onboardingKycToken?: string;
+    initialOnboarding?: OngOnboardingSummary;
+  } | null>(null);
+
+  // Cache em memória para evitar requisições repetidas ao mesmo CPF/CNPJ/Email/CEP/Pix
   const lastCheckedEmailRef = useRef<{ value: string; available: boolean; message?: string } | null>(null);
   const lastCheckedDocRef = useRef<{ value: string; available: boolean; message?: string } | null>(null);
+  const lastLookedUpCnpjRef = useRef<string | null>(null);
+  const lastLookedUpCepRef = useRef<string | null>(null);
+  const lastValidatedPixRef = useRef<{ key: string; cnpj: string; result: PixKeyLookupResult } | null>(null);
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -352,6 +392,16 @@ function useRegisterForm() {
       senha: "",
       confirmarSenha: "",
       documento: "",
+      cep: "",
+      rua: "",
+      numero: "",
+      complemento: "",
+      bairro: "",
+      cidade: "",
+      uf: "",
+      telefone: "",
+      whatsapp: "",
+      pixKey: "",
       nomePresidente: "",
       cpfPresidente: ""
     }
@@ -360,10 +410,17 @@ function useRegisterForm() {
   useEffect(() => {
     const draft = sessionStorage.getItem("register_draft");
     if (draft) {
-      const parsed = JSON.parse(draft);
-      form.reset(parsed.formData);
-      setStep(parsed.step || 1);
-      setAccountType(parsed.accountType || null);
+      try {
+        const parsed = JSON.parse(draft);
+        form.reset(parsed.formData);
+        const restoredStep = parsed.step >= 1 && parsed.step <= 4 ? parsed.step : 1;
+        setStep(restoredStep);
+        setAccountType(parsed.accountType || null);
+      } catch {
+        setStep(1);
+        setAccountType(null);
+        form.reset();
+      }
     } else {
       setStep(1);
       setAccountType(null);
@@ -373,10 +430,17 @@ function useRegisterForm() {
   }, [router, form]);
 
   useEffect(() => {
-    if (isChecking) return;
-    // WEB-02: Nunca persiste senhas ou CPFs/documentos em texto puro no sessionStorage
+    if (isChecking || step >= 5) return;
+    // WEB-02: Nunca persiste senhas, CPFs/documentos ou chaves Pix em texto puro no sessionStorage
     const subscription = form.watch((value) => {
-      const safeFormData = { ...value, senha: "", confirmarSenha: "", documento: "", cpfPresidente: "" };
+      const safeFormData = {
+        ...value,
+        senha: "",
+        confirmarSenha: "",
+        documento: "",
+        cpfPresidente: "",
+        pixKey: "",
+      };
       sessionStorage.setItem("register_draft", JSON.stringify({ step, accountType, formData: safeFormData }));
     });
     return () => subscription.unsubscribe();
@@ -387,8 +451,33 @@ function useRegisterForm() {
     setAccountType(null);
     lastCheckedEmailRef.current = null;
     lastCheckedDocRef.current = null;
+    lastLookedUpCnpjRef.current = null;
+    lastLookedUpCepRef.current = null;
+    lastValidatedPixRef.current = null;
+    setCnpjMeta(null);
+    setCepGeoVerified(false);
+    setPixLookupResult(null);
+    setSameWhatsappAsPhone(true);
+    setKycSession(null);
     form.reset({
-      accountType: null, nome: "", email: "", senha: "", confirmarSenha: "", documento: "", nomePresidente: "", cpfPresidente: ""
+      accountType: null,
+      nome: "",
+      email: "",
+      senha: "",
+      confirmarSenha: "",
+      documento: "",
+      cep: "",
+      rua: "",
+      numero: "",
+      complemento: "",
+      bairro: "",
+      cidade: "",
+      uf: "",
+      telefone: "",
+      whatsapp: "",
+      pixKey: "",
+      nomePresidente: "",
+      cpfPresidente: ""
     });
     setFileEstatuto(null); setFileAta(null); setFileCartaoCnpj(null);
     setTimeout(() => { sessionStorage.removeItem("register_draft"); }, 50);
@@ -446,6 +535,48 @@ function useRegisterForm() {
     }
   };
 
+  const performCnpjLookup = async (cleanCnpj: string) => {
+    if (cleanCnpj.length !== 14 || lastLookedUpCnpjRef.current === cleanCnpj) return;
+    setIsLookingUpCnpj(true);
+    try {
+      const res = await lookupCnpj(cleanCnpj);
+      lastLookedUpCnpjRef.current = cleanCnpj;
+      setCnpjMeta(res);
+
+      if (res.found) {
+        const currentName = form.getValues("nome")?.trim();
+        const suggestedName = res.nomeFantasia || res.razaoSocial;
+        if (!currentName && suggestedName) {
+          form.setValue("nome", suggestedName.slice(0, 100));
+          form.clearErrors("nome");
+        }
+
+        const currentPhone = form.getValues("telefone")?.trim();
+        if (!currentPhone && res.phone) {
+          const maskedPhone = formatBrazilianPhone(res.phone);
+          if (maskedPhone.length >= 14) {
+            form.setValue("telefone", maskedPhone);
+          }
+        }
+
+        const currentCep = form.getValues("cep")?.trim();
+        if (!currentCep && res.address?.zipCode) {
+          form.setValue("cep", formatCEP(res.address.zipCode));
+          if (res.address.street) form.setValue("rua", res.address.street);
+          if (res.address.number) form.setValue("numero", res.address.number);
+          if (res.address.complement) form.setValue("complemento", res.address.complement);
+          if (res.address.neighborhood) form.setValue("bairro", res.address.neighborhood);
+          if (res.address.city) form.setValue("cidade", res.address.city);
+          if (res.address.state) form.setValue("uf", res.address.state);
+        }
+      }
+    } catch {
+      /* Consulta oficial best-effort não bloqueia preenchimento manual */
+    } finally {
+      setIsLookingUpCnpj(false);
+    }
+  };
+
   const handleDocumentoBlur = async (docValue: string) => {
     const clean = removeFormatting(docValue);
     if (!clean) return;
@@ -461,6 +592,9 @@ function useRegisterForm() {
         });
       } else {
         form.clearErrors("documento");
+        if (accountType === "ong") {
+          performCnpjLookup(clean);
+        }
       }
       return;
     }
@@ -485,11 +619,106 @@ function useRegisterForm() {
         });
       } else {
         form.clearErrors("documento");
+        if (accountType === "ong") {
+          performCnpjLookup(clean);
+        }
       }
     } catch {
       /* noop */
     } finally {
       setIsCheckingDocumento(false);
+    }
+  };
+
+  const handleCepLookup = async (rawCep: string, force = false) => {
+    const cleanCep = removeFormatting(rawCep);
+    if (cleanCep.length !== 8) {
+      setCepGeoVerified(false);
+      return;
+    }
+    if (!force && lastLookedUpCepRef.current === cleanCep) return;
+
+    setIsLookingUpCep(true);
+    try {
+      const data = await lookupCep(cleanCep);
+      lastLookedUpCepRef.current = cleanCep;
+      form.setValue("cep", formatCEP(data.zipCode || cleanCep));
+      if (data.street) form.setValue("rua", data.street);
+      if (data.neighborhood) form.setValue("bairro", data.neighborhood);
+      if (data.city) form.setValue("cidade", data.city);
+      if (data.state) form.setValue("uf", data.state.toUpperCase());
+      form.clearErrors(["cep", "rua", "bairro", "cidade", "uf"]);
+      setCepGeoVerified(typeof data.latitude === "number" && typeof data.longitude === "number");
+    } catch (err: any) {
+      setCepGeoVerified(false);
+      form.setError("cep", {
+        type: "manual",
+        message: err?.message || "CEP não encontrado. Verifique os dígitos.",
+      });
+    } finally {
+      setIsLookingUpCep(false);
+    }
+  };
+
+  const handlePhoneBlur = async (phoneValue: string) => {
+    const digits = removeFormatting(phoneValue);
+    if (digits.length < 10) return;
+
+    setIsCheckingPhone(true);
+    try {
+      const res = await checkAvailability({ phone: digits });
+      if (!res.available && !res.rateLimited) {
+        form.setError("telefone", {
+          type: "manual",
+          message: res.message || "Este telefone já possui cadastro no DoeCerto.",
+        });
+      } else {
+        form.clearErrors("telefone");
+      }
+    } catch {
+      /* noop */
+    } finally {
+      setIsCheckingPhone(false);
+    }
+  };
+
+  const handlePixKeyLookup = async (rawPixKey?: string): Promise<PixKeyLookupResult | null> => {
+    const pixValue = (rawPixKey ?? form.getValues("pixKey") ?? "").trim();
+    const cleanCnpj = removeFormatting(form.getValues("documento") || "");
+    if (!pixValue) {
+      setPixLookupResult(null);
+      return null;
+    }
+    if (cleanCnpj.length !== 14) {
+      form.setError("pixKey", { type: "manual", message: "Preencha um CNPJ válido antes de validar a chave Pix." });
+      return null;
+    }
+
+    if (
+      lastValidatedPixRef.current &&
+      lastValidatedPixRef.current.key === pixValue &&
+      lastValidatedPixRef.current.cnpj === cleanCnpj
+    ) {
+      form.clearErrors("pixKey");
+      setPixLookupResult(lastValidatedPixRef.current.result);
+      return lastValidatedPixRef.current.result;
+    }
+
+    setIsLookingUpPix(true);
+    try {
+      const res = await lookupPixKey(pixValue, cleanCnpj);
+      lastValidatedPixRef.current = { key: pixValue, cnpj: cleanCnpj, result: res };
+      setPixLookupResult(res);
+      form.clearErrors("pixKey");
+      return res;
+    } catch (err: any) {
+      setPixLookupResult(null);
+      lastValidatedPixRef.current = null;
+      const msg = err?.message || "Chave Pix inválida para pessoa jurídica.";
+      form.setError("pixKey", { type: "manual", message: msg });
+      return null;
+    } finally {
+      setIsLookingUpPix(false);
     }
   };
 
@@ -531,13 +760,85 @@ function useRegisterForm() {
         return;
       }
 
-      if (accountType === "ong") setStep(3);
-      else setModalAberto(true);
+      if (accountType === "ong") {
+        if (lastLookedUpCnpjRef.current !== docClean) {
+          performCnpjLookup(docClean);
+        }
+        setStep(3);
+      } else {
+        setModalAberto(true);
+      }
     } catch (err: any) {
       toast.error(err?.message || "Erro ao verificar dados. Tente novamente.");
     } finally {
       setIsPending(false);
     }
+  };
+
+  const handleNextOperationalStep = async () => {
+    const values = form.getValues();
+    let hasError = false;
+    form.clearErrors(["cep", "rua", "numero", "bairro", "cidade", "uf", "telefone", "whatsapp", "pixKey"]);
+
+    const cepDigits = removeFormatting(values.cep || "");
+    if (cepDigits.length !== 8) {
+      form.setError("cep", { type: "manual", message: "Informe um CEP válido com 8 dígitos." });
+      hasError = true;
+    }
+    if (!values.rua?.trim()) {
+      form.setError("rua", { type: "manual", message: "Logradouro é obrigatório." });
+      hasError = true;
+    }
+    if (!values.numero?.trim()) {
+      form.setError("numero", { type: "manual", message: "Número é obrigatório (ou informe S/N)." });
+      hasError = true;
+    }
+    if (!values.bairro?.trim()) {
+      form.setError("bairro", { type: "manual", message: "Bairro é obrigatório." });
+      hasError = true;
+    }
+    if (!values.cidade?.trim()) {
+      form.setError("cidade", { type: "manual", message: "Cidade é obrigatória." });
+      hasError = true;
+    }
+    const ufClean = (values.uf || "").trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(ufClean)) {
+      form.setError("uf", { type: "manual", message: "UF inválida (ex: SP)." });
+      hasError = true;
+    }
+
+    const phoneDigits = removeFormatting(values.telefone || "");
+    if (phoneDigits.length !== 10 && phoneDigits.length !== 11) {
+      form.setError("telefone", { type: "manual", message: "Telefone inválido. Informe DDD + número." });
+      hasError = true;
+    }
+
+    if (!sameWhatsappAsPhone && values.whatsapp?.trim()) {
+      const waDigits = removeFormatting(values.whatsapp);
+      if (waDigits.length !== 10 && waDigits.length !== 11) {
+        form.setError("whatsapp", { type: "manual", message: "WhatsApp inválido. Informe DDD + número." });
+        hasError = true;
+      }
+    }
+
+    const pixTrimmed = (values.pixKey || "").trim();
+    if (!pixTrimmed) {
+      form.setError("pixKey", { type: "manual", message: "Informe a chave Pix da ONG para recebimento." });
+      hasError = true;
+    }
+
+    if (hasError) {
+      toast.error("Revise os campos destacados de endereço, contato e chave Pix.");
+      return;
+    }
+
+    const pixRes = await handlePixKeyLookup(pixTrimmed);
+    if (!pixRes) {
+      toast.error("Verifique a chave Pix informada antes de avançar.");
+      return;
+    }
+
+    setStep(4);
   };
 
   const handleFinalSubmit = async () => {
@@ -553,26 +854,53 @@ function useRegisterForm() {
 
   const submitToApi = async () => {
     setIsPending(true);
+    const data = form.getValues();
     try {
-      const data = form.getValues();
       if (data.accountType === 'ong') {
         const formData = new FormData();
-        formData.append('name', data.nome);
-        formData.append('email', data.email);
+        formData.append('name', data.nome.trim());
+        formData.append('email', data.email.trim());
         formData.append('password', data.senha);
         formData.append('cnpj', removeFormatting(data.documento));
-        formData.append('presidentName', data.nomePresidente || '');
+        formData.append('presidentName', (data.nomePresidente || '').trim());
         formData.append('presidentCpf', removeFormatting(data.cpfPresidente || ''));
+
+        const cleanPhoneDigits = removeFormatting(data.telefone || '');
+        if (cleanPhoneDigits) {
+          formData.append('contactNumber', `+55${cleanPhoneDigits}`);
+        }
+        const rawWhatsapp = sameWhatsappAsPhone ? data.telefone : data.whatsapp;
+        const cleanWhatsappDigits = removeFormatting(rawWhatsapp || '');
+        if (cleanWhatsappDigits) {
+          formData.append('whatsappNumber', `+55${cleanWhatsappDigits}`);
+        }
+        if (data.pixKey?.trim()) {
+          formData.append('pixKey', pixLookupResult?.normalizedPixKey || data.pixKey.trim());
+        }
+        if (data.cep?.trim()) formData.append('zipCode', formatCEP(data.cep));
+        if (data.rua?.trim()) formData.append('street', data.rua.trim());
+        if (data.numero?.trim()) formData.append('number', data.numero.trim());
+        if (data.complemento?.trim()) formData.append('complement', data.complemento.trim());
+        if (data.bairro?.trim()) formData.append('neighborhood', data.bairro.trim());
+        if (data.cidade?.trim()) formData.append('city', data.cidade.trim());
+        if (data.uf?.trim()) formData.append('state', data.uf.trim().toUpperCase());
+        formData.append('country', 'Brasil');
 
         if (fileEstatuto) formData.append('estatuto', fileEstatuto);
         if (fileAta) formData.append('ata', fileAta);
         if (fileCartaoCnpj) formData.append('cartaoCnpj', fileCartaoCnpj);
 
-        await registerOng(formData);
+        const { data: res } = await registerOng(formData);
 
         setModalAberto(false);
         sessionStorage.removeItem("register_draft");
-        setSuccessModalAberto(true);
+        setKycSession({
+          ongName: res?.user?.name || data.nome,
+          email: res?.user?.email || data.email,
+          onboardingKycToken: res?.onboardingKycToken,
+          initialOnboarding: res?.onboarding,
+        });
+        setStep(5);
       } else {
         await registerDonor({
           name: data.nome,
@@ -596,13 +924,30 @@ function useRegisterForm() {
           message: "Este e-mail já está cadastrado no DoeCerto.",
         });
         toast.error("Este e-mail já está cadastrado no DoeCerto.");
+      } else if (lower.includes("pix") || lower.includes("chave")) {
+        setStep(3);
+        form.setError("pixKey", { type: "manual", message: errorMsg });
+        toast.error(errorMsg);
+      } else if (lower.includes("telefone") || lower.includes("whatsapp")) {
+        setStep(3);
+        form.setError("telefone", { type: "manual", message: errorMsg });
+        toast.error(errorMsg);
+      } else if (lower.includes("cep") || lower.includes("endereço") || lower.includes("uf")) {
+        setStep(3);
+        form.setError("cep", { type: "manual", message: errorMsg });
+        toast.error(errorMsg);
       } else if (lower.includes("cpf")) {
-        setStep(2);
-        form.setError("documento", {
-          type: "manual",
-          message: "Este CPF já possui cadastro no DoeCerto.",
-        });
-        toast.error("Este CPF já possui cadastro no DoeCerto.");
+        if (data.accountType === "ong") {
+          setStep(4);
+          form.setError("cpfPresidente", { type: "manual", message: errorMsg });
+        } else {
+          setStep(2);
+          form.setError("documento", {
+            type: "manual",
+            message: "Este CPF já possui cadastro no DoeCerto.",
+          });
+        }
+        toast.error(errorMsg);
       } else if (lower.includes("cnpj")) {
         setStep(2);
         form.setError("documento", {
@@ -635,8 +980,11 @@ function useRegisterForm() {
   };
 
   return {
-    form, step, setStep, accountType, isChecking, modalAberto, setModalAberto, isPending, successModalAberto, setSuccessModalAberto, clearDraft, handleSelectType, handleNextStep, handleFinalSubmit, submitToApi,
-    isCheckingEmail, isCheckingDocumento, handleEmailBlur, handleDocumentoBlur,
+    form, step, setStep, accountType, isChecking, modalAberto, setModalAberto, isPending, successModalAberto, setSuccessModalAberto,
+    clearDraft, handleSelectType, handleNextStep, handleNextOperationalStep, handleFinalSubmit, submitToApi,
+    isCheckingEmail, isCheckingDocumento, isLookingUpCnpj, isLookingUpCep, isCheckingPhone, isLookingUpPix,
+    cnpjMeta, cepGeoVerified, pixLookupResult, setPixLookupResult, sameWhatsappAsPhone, setSameWhatsappAsPhone, kycSession,
+    handleEmailBlur, handleDocumentoBlur, handleCepLookup, handlePhoneBlur, handlePixKeyLookup,
     files: { fileEstatuto, setFileEstatuto, fileAta, setFileAta, fileCartaoCnpj, setFileCartaoCnpj }
   };
 }
@@ -645,9 +993,19 @@ function useRegisterForm() {
 // 4. TELA PRINCIPAL (O Componente Register)
 // ==========================================
 export default function Register() {
-  const { form, step, setStep, accountType, isChecking, modalAberto, setModalAberto, isPending, successModalAberto, setSuccessModalAberto, clearDraft, handleSelectType, handleNextStep, handleFinalSubmit, submitToApi, isCheckingEmail, isCheckingDocumento, handleEmailBlur, handleDocumentoBlur, files } = useRegisterForm();
+  const {
+    form, step, setStep, accountType, isChecking, modalAberto, setModalAberto, isPending, successModalAberto, setSuccessModalAberto,
+    clearDraft, handleSelectType, handleNextStep, handleNextOperationalStep, handleFinalSubmit, submitToApi,
+    isCheckingEmail, isCheckingDocumento, isLookingUpCnpj, isLookingUpCep, isCheckingPhone, isLookingUpPix,
+    cnpjMeta, cepGeoVerified, pixLookupResult, setPixLookupResult, sameWhatsappAsPhone, setSameWhatsappAsPhone, kycSession,
+    handleEmailBlur, handleDocumentoBlur, handleCepLookup, handlePhoneBlur, handlePixKeyLookup,
+    files,
+  } = useRegisterForm();
   const { register, control, formState: { errors }, setValue, clearErrors, trigger } = form;
   const watchedPassword = useWatch({ control, name: "senha", defaultValue: "" }) || "";
+  const watchedCnpj = useWatch({ control, name: "documento", defaultValue: "" }) || "";
+  const watchedCep = useWatch({ control, name: "cep", defaultValue: "" }) || "";
+  const watchedPixKey = useWatch({ control, name: "pixKey", defaultValue: "" }) || "";
   const passwordChecks = getPasswordChecks(watchedPassword, accountType);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -730,6 +1088,32 @@ export default function Register() {
             <AccountTypeSelection onSelect={handleSelectType} />
           )}
 
+          {/* BARRA DE PROGRESSO ONG (STEPS 2 a 4) */}
+          {accountType === 'ong' && step >= 2 && step <= 4 && (
+            <div className="mb-6 flex items-center gap-2 text-xs font-bold">
+              {[
+                { id: 2, label: "1. Conta" },
+                { id: 3, label: "2. Sede & Pix" },
+                { id: 4, label: "3. Documentos" },
+              ].map((s, idx) => (
+                <div key={s.id} className="flex items-center gap-2 flex-1">
+                  <div
+                    className={`flex-1 py-2 px-2.5 rounded-xl text-center transition-all border ${
+                      step === s.id
+                        ? "bg-[#6B39A7] text-white border-[#6B39A7] shadow-sm"
+                        : step > s.id
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-gray-100 text-gray-500 border-gray-200"
+                    }`}
+                  >
+                    {s.label}
+                  </div>
+                  {idx < 2 && <div className="w-2 h-0.5 bg-gray-200 shrink-0 hidden sm:block" />}
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* STEP 2 */}
           {step === 2 && (
             <>
@@ -746,19 +1130,10 @@ export default function Register() {
               <form onSubmit={(e) => { e.preventDefault(); handleNextStep(); }} className="flex flex-col gap-5">
 
                 <InputField
-                  label={accountType === 'ong' ? 'Razão Social / Nome' : 'Nome Completo'}
-                  icon={User} placeholder="Digite aqui"
-                  {...register("nome")}
-                  onChange={(e: any) => { register("nome").onChange(e); clearErrors("nome"); }}
-                  onBlur={(e: any) => { register("nome").onBlur(e); if (e.target.value.trim() !== "") trigger("nome"); }}
-                  error={errors.nome?.message}
-                />
-
-                <InputField
                   label={accountType === 'ong' ? 'CNPJ' : 'CPF'} icon={IdCard}
                   placeholder={accountType === 'ong' ? "00.000.000/0000-00" : "000.000.000-00"}
                   maxLength={accountType === 'ong' ? 18 : 14}
-                  isLoading={isCheckingDocumento}
+                  isLoading={isCheckingDocumento || isLookingUpCnpj}
                   {...register("documento")}
                   onChange={(e: any) => {
                     const val = accountType === 'ong' ? formatCNPJ(e.target.value) : formatCPF(e.target.value);
@@ -770,6 +1145,32 @@ export default function Register() {
                     handleDocumentoBlur(e.target.value);
                   }}
                   error={errors.documento?.message}
+                />
+
+                {accountType === 'ong' && cnpjMeta?.found && (
+                  <div className={`-mt-2 p-3.5 rounded-xl border text-xs font-medium flex items-start gap-2.5 ${cnpjMeta.isAtiva ? "bg-emerald-50 border-emerald-200 text-emerald-900" : "bg-amber-50 border-amber-200 text-amber-900"}`}>
+                    <Sparkles size={16} className={`shrink-0 mt-0.5 ${cnpjMeta.isAtiva ? "text-emerald-600" : "text-amber-600"}`} />
+                    <div>
+                      <p className="font-bold">
+                        Receita Federal: {cnpjMeta.situacaoCadastral || (cnpjMeta.isAtiva ? "ATIVA" : "Situação pendente")}
+                        {cnpjMeta.yearsOfOperation !== null && ` • ${cnpjMeta.yearsOfOperation} ${cnpjMeta.yearsOfOperation === 1 ? "ano" : "anos"} de atuação`}
+                      </p>
+                      {cnpjMeta.foundedAt && (
+                        <p className="opacity-80 mt-0.5">
+                          Abertura oficial: {cnpjMeta.foundedAt.split("-").reverse().join("/")} (calculado automaticamente)
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <InputField
+                  label={accountType === 'ong' ? 'Razão Social / Nome' : 'Nome Completo'}
+                  icon={User} placeholder="Digite aqui"
+                  {...register("nome")}
+                  onChange={(e: any) => { register("nome").onChange(e); clearErrors("nome"); }}
+                  onBlur={(e: any) => { register("nome").onBlur(e); if (e.target.value.trim() !== "") trigger("nome"); }}
+                  error={errors.nome?.message}
                 />
 
                 <InputField
@@ -817,17 +1218,283 @@ export default function Register() {
                   error={errors.confirmarSenha?.message}
                 />
 
-                <button type="submit" className="w-full flex justify-center items-center h-[60px] mt-4 bg-purple-700 hover:bg-purple-800 text-white font-bold text-lg rounded-xl shadow-md active:scale-[0.98] transition-all">
-                  {accountType === 'ong' ? "Avançar para Documentação" : "Continuar e Ler Termos"}
+                <button type="submit" disabled={isPending} className="w-full flex justify-center items-center gap-2 h-[60px] mt-4 bg-purple-700 hover:bg-purple-800 text-white font-bold text-lg rounded-xl shadow-md active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60">
+                  {isPending ? (
+                    <>
+                      <Loader2 size={20} className="animate-spin" />
+                      Verificando dados...
+                    </>
+                  ) : accountType === 'ong' ? (
+                    <>
+                      Avançar para Sede & Pix <ArrowRight size={20} />
+                    </>
+                  ) : (
+                    "Continuar e Ler Termos"
+                  )}
                 </button>
               </form>
             </>
           )}
 
-          {/* STEP 3 (Apenas ONG) */}
+          {/* STEP 3 (Apenas ONG: Endereço com CEP + Contato + Chave Pix DICT) */}
           {step === 3 && accountType === 'ong' && (
             <>
-              <button type="button" onClick={() => setStep(2)} className="flex items-center text-gray-500 hover:text-[#6B39A7] font-semibold mb-6 transition-colors group w-fit">
+              <button type="button" onClick={() => setStep(2)} className="flex items-center text-gray-500 hover:text-[#6B39A7] font-semibold mb-6 transition-colors group w-fit cursor-pointer">
+                <ArrowLeft size={20} className="mr-2 group-hover:-translate-x-1 transition-transform" /> Voltar
+              </button>
+
+              <div className="mb-7 text-left">
+                <h1 className="text-3xl sm:text-[2.3rem] font-bold text-gray-900 mb-2 leading-tight">Sede, Contato & Pix</h1>
+                <p className="text-gray-500 text-base font-medium leading-relaxed">
+                  Esses dados habilitam geolocalização, segurança financeira e criação instantânea da subconta.
+                </p>
+              </div>
+
+              <form onSubmit={(e) => { e.preventDefault(); handleNextOperationalStep(); }} className="flex flex-col gap-5">
+                {/* CEP + Endereço */}
+                <div className="p-5 bg-gray-50/80 border border-gray-200 rounded-2xl flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-extrabold text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                      <MapPin size={16} className="text-[#6B39A7]" /> Endereço da Sede
+                    </h3>
+                    {cepGeoVerified && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                        <CheckCircle2 size={12} /> Geolocalização ativa
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1">
+                      <InputField
+                        label="CEP" icon={MapPin} placeholder="00000-000" maxLength={9}
+                        isLoading={isLookingUpCep}
+                        {...register("cep")}
+                        onChange={(e: any) => {
+                          const formatted = formatCEP(e.target.value);
+                          setValue("cep", formatted);
+                          clearErrors("cep");
+                          if (removeFormatting(formatted).length === 8) {
+                            handleCepLookup(formatted);
+                          }
+                        }}
+                        onBlur={(e: any) => {
+                          register("cep").onBlur(e);
+                          handleCepLookup(e.target.value);
+                        }}
+                        error={errors.cep?.message}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCepLookup(watchedCep, true)}
+                      disabled={isLookingUpCep || removeFormatting(watchedCep).length !== 8}
+                      className="h-[58px] px-4 rounded-xl bg-white border border-gray-200 hover:border-[#6B39A7] text-[#6B39A7] font-bold text-sm transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      Buscar CEP
+                    </button>
+                  </div>
+
+                  <InputField
+                    label="Logradouro (Rua / Av.)" icon={MapPin} placeholder="Av. Paulista"
+                    {...register("rua")}
+                    onChange={(e: any) => { register("rua").onChange(e); clearErrors("rua"); }}
+                    error={errors.rua?.message}
+                  />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <InputField
+                      label="Número" icon={Building2} placeholder="1000"
+                      {...register("numero")}
+                      onChange={(e: any) => { register("numero").onChange(e); clearErrors("numero"); }}
+                      error={errors.numero?.message}
+                    />
+                    <InputField
+                      label="Complemento (Opcional)" icon={Building2} placeholder="Sala 402"
+                      {...register("complemento")}
+                      onChange={(e: any) => { register("complemento").onChange(e); }}
+                      error={errors.complemento?.message}
+                    />
+                  </div>
+
+                  <InputField
+                    label="Bairro" icon={MapPin} placeholder="Bela Vista"
+                    {...register("bairro")}
+                    onChange={(e: any) => { register("bairro").onChange(e); clearErrors("bairro"); }}
+                    error={errors.bairro?.message}
+                  />
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-2">
+                      <InputField
+                        label="Cidade" icon={MapPin} placeholder="São Paulo"
+                        {...register("cidade")}
+                        onChange={(e: any) => { register("cidade").onChange(e); clearErrors("cidade"); }}
+                        error={errors.cidade?.message}
+                      />
+                    </div>
+                    <InputField
+                      label="UF" icon={MapPin} placeholder="SP" maxLength={2}
+                      {...register("uf")}
+                      onChange={(e: any) => {
+                        setValue("uf", e.target.value.toUpperCase().replace(/[^A-Z]/g, ""));
+                        clearErrors("uf");
+                      }}
+                      error={errors.uf?.message}
+                    />
+                  </div>
+                </div>
+
+                {/* Contatos */}
+                <div className="p-5 bg-gray-50/80 border border-gray-200 rounded-2xl flex flex-col gap-4">
+                  <h3 className="text-sm font-extrabold text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                    <Phone size={16} className="text-[#6B39A7]" /> Canais de Contato
+                  </h3>
+
+                  <InputField
+                    label="Telefone Principal da ONG" icon={Phone} placeholder="(11) 99999-9999" maxLength={15}
+                    isLoading={isCheckingPhone}
+                    {...register("telefone")}
+                    onChange={(e: any) => {
+                      setValue("telefone", formatBrazilianPhone(e.target.value));
+                      clearErrors("telefone");
+                    }}
+                    onBlur={(e: any) => {
+                      register("telefone").onBlur(e);
+                      handlePhoneBlur(e.target.value);
+                    }}
+                    error={errors.telefone?.message}
+                  />
+
+                  <label className="flex items-center gap-2.5 text-sm font-semibold text-gray-700 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={sameWhatsappAsPhone}
+                      onChange={(e) => setSameWhatsappAsPhone(e.target.checked)}
+                      className="w-4 h-4 accent-[#6B39A7] rounded"
+                    />
+                    Este número também é o WhatsApp da instituição
+                  </label>
+
+                  {!sameWhatsappAsPhone && (
+                    <InputField
+                      label="WhatsApp de Atendimento" icon={MessageCircle} placeholder="(11) 99999-9999" maxLength={15}
+                      {...register("whatsapp")}
+                      onChange={(e: any) => {
+                        setValue("whatsapp", formatBrazilianPhone(e.target.value));
+                        clearErrors("whatsapp");
+                      }}
+                      error={errors.whatsapp?.message}
+                    />
+                  )}
+                </div>
+
+                {/* Chave Pix DICT */}
+                <div className="p-5 bg-purple-50/50 border border-purple-200 rounded-2xl flex flex-col gap-4">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <h3 className="text-sm font-extrabold text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                      <KeyRound size={16} className="text-[#6B39A7]" /> Chave Pix de Repasse
+                    </h3>
+                    {watchedCnpj && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setValue("pixKey", watchedCnpj);
+                          clearErrors("pixKey");
+                          handlePixKeyLookup(watchedCnpj);
+                        }}
+                        className="text-xs font-bold text-[#6B39A7] bg-white border border-purple-200 hover:bg-purple-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Usar CNPJ da ONG
+                      </button>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-gray-600 font-medium leading-relaxed -mt-2">
+                    Aceita CNPJ da entidade, e-mail institucional, telefone ou chave aleatória (EVP). <strong>CPF pessoal não é aceito</strong> para proteção financeira.
+                  </p>
+
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1">
+                      <InputField
+                        label="" icon={KeyRound} placeholder="CNPJ, e-mail, +55DDD... ou EVP"
+                        isLoading={isLookingUpPix}
+                        {...register("pixKey")}
+                        onChange={(e: any) => {
+                          register("pixKey").onChange(e);
+                          clearErrors("pixKey");
+                          setPixLookupResult(null);
+                        }}
+                        onBlur={(e: any) => {
+                          register("pixKey").onBlur(e);
+                          if (e.target.value.trim()) handlePixKeyLookup(e.target.value);
+                        }}
+                        error={errors.pixKey?.message}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handlePixKeyLookup()}
+                      disabled={isLookingUpPix || !watchedPixKey.trim()}
+                      className="h-[58px] px-4 rounded-xl bg-white border border-purple-200 hover:border-[#6B39A7] text-[#6B39A7] font-bold text-sm transition-colors cursor-pointer disabled:opacity-50 shrink-0"
+                    >
+                      Validar Pix
+                    </button>
+                  </div>
+
+                  {pixLookupResult?.found && (
+                    <div className="p-4 rounded-xl bg-white border border-emerald-200 flex flex-col gap-2 text-xs">
+                      <div className="flex items-center justify-between text-emerald-700 font-bold">
+                        <span className="flex items-center gap-1.5">
+                          <Landmark size={15} /> Dados Bancários Detectados (DICT)
+                        </span>
+                        <span className="uppercase">{pixLookupResult.keyType}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-gray-700">
+                        <div><span className="text-gray-400">Banco:</span> <strong>{pixLookupResult.bankName || "—"} {pixLookupResult.bankCode ? `(${pixLookupResult.bankCode})` : ""}</strong></div>
+                        <div><span className="text-gray-400">Tipo:</span> <strong>{pixLookupResult.accountType || "—"}</strong></div>
+                        <div><span className="text-gray-400">Agência:</span> <strong>{pixLookupResult.agencyNumber || "—"}</strong></div>
+                        <div><span className="text-gray-400">Conta:</span> <strong>{pixLookupResult.accountNumber || "—"}</strong></div>
+                      </div>
+                      {pixLookupResult.ownerName && (
+                        <div className="text-gray-600 pt-1 border-t border-gray-100">
+                          Titular: <strong>{pixLookupResult.ownerName}</strong>
+                        </div>
+                      )}
+                      {pixLookupResult.ownerMatchesCnpj === false && (
+                        <div className="mt-1 p-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 font-semibold flex items-center gap-1.5">
+                          <AlertTriangle size={14} className="shrink-0" />
+                          Atenção: o titular desta chave diverge do CNPJ informado. Recomendamos chave vinculada ao CNPJ da ONG.
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {pixLookupResult && !pixLookupResult.found && pixLookupResult.validFormat && (
+                    <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+                      <CheckCircle2 size={15} className="shrink-0" />
+                      <span>
+                        Chave Pix ({pixLookupResult.keyType}) validada com segurança ({pixLookupResult.maskedPixKey}). Os dados bancários são sincronizados automaticamente em produção.
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLookingUpPix || isLookingUpCep}
+                  className="w-full flex justify-center items-center gap-2 h-[60px] mt-2 bg-purple-700 hover:bg-purple-800 text-white font-bold text-lg rounded-xl shadow-md active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60"
+                >
+                  Avançar para Documentação <ArrowRight size={20} />
+                </button>
+              </form>
+            </>
+          )}
+
+          {/* STEP 4 (Apenas ONG: Documentação Legal & Representante) */}
+          {step === 4 && accountType === 'ong' && (
+            <>
+              <button type="button" onClick={() => setStep(3)} className="flex items-center text-gray-500 hover:text-[#6B39A7] font-semibold mb-6 transition-colors group w-fit cursor-pointer">
                 <ArrowLeft size={20} className="mr-2 group-hover:-translate-x-1 transition-transform" /> Voltar
               </button>
 
@@ -866,20 +1533,32 @@ export default function Register() {
                   <FileDropzone title="Cartão CNPJ" subtitle="Arraste ou clique" file={files.fileCartaoCnpj} setFile={files.setFileCartaoCnpj} />
                 </div>
 
-                <button type="submit" className="w-full h-[60px] mt-2 bg-[#4A2675] hover:bg-[#3b1a66] text-white font-bold text-lg rounded-xl shadow-md active:scale-[0.98] transition-all">
+                <button type="submit" disabled={isPending} className="w-full h-[60px] mt-2 bg-[#4A2675] hover:bg-[#3b1a66] text-white font-bold text-lg rounded-xl shadow-md active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60">
                   Finalizar Cadastro
                 </button>
               </form>
             </>
           )}
 
+          {/* STEP 5 (Pós-Cadastro Big-Enterprise: QR Code de Selfie Asaas + Acompanhamento KYC) */}
+          {step === 5 && kycSession && (
+            <OngKycSelfieStep
+              ongName={kycSession.ongName}
+              email={kycSession.email}
+              onboardingKycToken={kycSession.onboardingKycToken}
+              initialOnboarding={kycSession.initialOnboarding}
+            />
+          )}
+
           {/* RODAPÉ UNIFICADO */}
-          <div className="text-center mt-8 border-t border-gray-100 pt-6">
-            <span className="text-lg text-gray-500 font-medium">Já tem uma conta? </span>
-            <Link href="/login" onClick={clearDraft} className="text-lg font-bold text-[#6B39A7] hover:text-purple-800 transition-colors">
-              Entrar
-            </Link>
-          </div>
+          {step < 5 && (
+            <div className="text-center mt-8 border-t border-gray-100 pt-6">
+              <span className="text-lg text-gray-500 font-medium">Já tem uma conta? </span>
+              <Link href="/login" onClick={clearDraft} className="text-lg font-bold text-[#6B39A7] hover:text-purple-800 transition-colors">
+                Entrar
+              </Link>
+            </div>
+          )}
 
         </div>
       </div>
