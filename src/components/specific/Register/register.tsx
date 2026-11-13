@@ -185,15 +185,29 @@ InputField.displayName = "InputField";
 // --- Step 1: Seleção de Perfil ---
 function AccountTypeSelection({ onSelect }: { onSelect: (type: AccountType) => void }) {
   const options = [
-    { type: "donor", icon: User, title: "Sou um Doador", desc: "Quero encontrar campanhas e ajudar causas sociais." },
-    { type: "ong", icon: Building2, title: "Sou uma ONG", desc: "Quero cadastrar minha instituição e receber doações." }
+    {
+      type: "donor",
+      icon: User,
+      title: "Sou Doador(a)",
+      desc: "Quero apoiar campanhas verificadas, doar com segurança e acompanhar cada impacto.",
+    },
+    {
+      type: "ong",
+      icon: Building2,
+      title: "Represento uma ONG",
+      desc: "Quero validar nossa instituição, habilitar repasses via Pix e receber doações.",
+    },
   ];
 
   return (
     <>
       <div className="mb-10 text-left">
-        <h1 className="text-4xl sm:text-[3rem] font-bold text-gray-900 mb-2 tracking-tight leading-tight">Junte-se a nós!</h1>
-        <p className="text-gray-500 text-lg font-medium">Como você deseja usar o DoeCerto?</p>
+        <h1 className="text-4xl sm:text-[3rem] font-bold text-gray-900 mb-2 tracking-tight leading-tight">
+          Crie sua conta no DoeCerto
+        </h1>
+        <p className="text-gray-500 text-lg font-medium leading-relaxed">
+          Escolha seu perfil para liberarmos as etapas certas para você.
+        </p>
       </div>
       <div className="flex flex-col gap-4">
         {options.map((opt) => (
@@ -232,6 +246,16 @@ function FileDropzone({ title, subtitle, file, setFile }: { title: string, subti
   };
 
   const processFile = (selectedFile: File) => {
+    const allowedTypes = ["application/pdf", "image/png", "image/jpeg"];
+    if (!allowedTypes.includes(selectedFile.type) && !/\.(pdf|png|jpe?g)$/i.test(selectedFile.name)) {
+      toast.error("Formato não aceito. Envie PDF, PNG ou JPG.");
+      return;
+    }
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      toast.error("O arquivo ultrapassa o limite máximo de 10 MB.");
+      return;
+    }
+
     setFile(selectedFile);
     setUploadState('uploading');
     setUploadProgress(0);
@@ -251,7 +275,7 @@ function FileDropzone({ title, subtitle, file, setFile }: { title: string, subti
 
         setTimeout(() => {
           setUploadState('success');
-          toast.success(`${title} processado!`);
+          toast.success(`${title} anexado!`);
         }, 600);
       } else {
         setUploadProgress(Math.floor(currentProgress));
@@ -366,6 +390,7 @@ function useRegisterForm() {
   const [isLookingUpPix, setIsLookingUpPix] = useState(false);
 
   const [cnpjMeta, setCnpjMeta] = useState<CnpjLookupResult | null>(null);
+  const [cnpjAutoFilledAddress, setCnpjAutoFilledAddress] = useState(false);
   const [cepGeoVerified, setCepGeoVerified] = useState(false);
   const [pixLookupResult, setPixLookupResult] = useState<PixKeyLookupResult | null>(null);
   const [sameWhatsappAsPhone, setSameWhatsappAsPhone] = useState(true);
@@ -382,6 +407,16 @@ function useRegisterForm() {
   const lastLookedUpCnpjRef = useRef<string | null>(null);
   const lastLookedUpCepRef = useRef<string | null>(null);
   const lastValidatedPixRef = useRef<{ key: string; cnpj: string; result: PixKeyLookupResult } | null>(null);
+  const cnpjAutofillRef = useRef<{
+    cnpj: string;
+    nome?: string;
+    telefone?: string;
+    hasAddress: boolean;
+  } | null>(null);
+  const inFlightCnpjLookupRef = useRef<{
+    cnpj: string;
+    promise: Promise<void>;
+  } | null>(null);
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -454,7 +489,10 @@ function useRegisterForm() {
     lastLookedUpCnpjRef.current = null;
     lastLookedUpCepRef.current = null;
     lastValidatedPixRef.current = null;
+    cnpjAutofillRef.current = null;
+    inFlightCnpjLookupRef.current = null;
     setCnpjMeta(null);
+    setCnpjAutoFilledAddress(false);
     setCepGeoVerified(false);
     setPixLookupResult(null);
     setSameWhatsappAsPhone(true);
@@ -535,51 +573,170 @@ function useRegisterForm() {
     }
   };
 
-  const performCnpjLookup = async (cleanCnpj: string) => {
-    if (cleanCnpj.length !== 14 || lastLookedUpCnpjRef.current === cleanCnpj) return;
-    setIsLookingUpCnpj(true);
-    try {
-      const res = await lookupCnpj(cleanCnpj);
-      lastLookedUpCnpjRef.current = cleanCnpj;
-      setCnpjMeta(res);
-
-      if (res.found) {
-        const currentName = form.getValues("nome")?.trim();
-        const suggestedName = res.nomeFantasia || res.razaoSocial;
-        if (!currentName && suggestedName) {
-          form.setValue("nome", suggestedName.slice(0, 100));
-          form.clearErrors("nome");
-        }
-
-        const currentPhone = form.getValues("telefone")?.trim();
-        if (!currentPhone && res.phone) {
-          const maskedPhone = formatBrazilianPhone(res.phone);
-          if (maskedPhone.length >= 14) {
-            form.setValue("telefone", maskedPhone);
-          }
-        }
-
-        const currentCep = form.getValues("cep")?.trim();
-        if (!currentCep && res.address?.zipCode) {
-          form.setValue("cep", formatCEP(res.address.zipCode));
-          if (res.address.street) form.setValue("rua", res.address.street);
-          if (res.address.number) form.setValue("numero", res.address.number);
-          if (
-            res.address.complement &&
-            res.address.complement.trim().toLowerCase() !== "undefined" &&
-            res.address.complement.trim().toLowerCase() !== "null"
-          ) {
-            form.setValue("complemento", res.address.complement.trim());
-          }
-          if (res.address.neighborhood) form.setValue("bairro", res.address.neighborhood);
-          if (res.address.city) form.setValue("cidade", res.address.city);
-          if (res.address.state) form.setValue("uf", res.address.state);
-        }
+  const resetCnpjAutofilledFields = () => {
+    const prevAuto = cnpjAutofillRef.current;
+    if (prevAuto) {
+      if (prevAuto.nome && form.getValues("nome")?.trim() === prevAuto.nome) {
+        form.setValue("nome", "");
+        form.clearErrors("nome");
       }
+      if (prevAuto.telefone && form.getValues("telefone")?.trim() === prevAuto.telefone) {
+        form.setValue("telefone", "");
+        form.clearErrors("telefone");
+      }
+      if (prevAuto.hasAddress) {
+        const addressFields = ["cep", "rua", "numero", "complemento", "bairro", "cidade", "uf"] as const;
+        for (const field of addressFields) {
+          form.setValue(field, "");
+        }
+        form.clearErrors(addressFields);
+      }
+      const currentPixDigits = removeFormatting(form.getValues("pixKey") || "");
+      if (currentPixDigits && currentPixDigits === prevAuto.cnpj) {
+        form.setValue("pixKey", "");
+        form.clearErrors("pixKey");
+      }
+    }
+
+    cnpjAutofillRef.current = null;
+    lastLookedUpCepRef.current = null;
+    lastValidatedPixRef.current = null;
+    setCnpjAutoFilledAddress(false);
+    setCepGeoVerified(false);
+    setPixLookupResult(null);
+  };
+
+  const verifyCepCoordinatesFromCnpj = async (cleanCep: string, expectedCnpj: string) => {
+    if (cleanCep.length !== 8) return;
+    try {
+      const cepData = await lookupCep(cleanCep);
+      // Descarta se o usuário trocou de CNPJ enquanto a geolocalização do CEP ainda carregava
+      if (removeFormatting(form.getValues("documento") || "") !== expectedCnpj) return;
+
+      lastLookedUpCepRef.current = cleanCep;
+      if (!form.getValues("rua")?.trim() && cepData.street) form.setValue("rua", cepData.street);
+      if (!form.getValues("bairro")?.trim() && cepData.neighborhood) form.setValue("bairro", cepData.neighborhood);
+      if (!form.getValues("cidade")?.trim() && cepData.city) form.setValue("cidade", cepData.city);
+      if (!form.getValues("uf")?.trim() && cepData.state) form.setValue("uf", cepData.state.toUpperCase());
+      setCepGeoVerified(typeof cepData.latitude === "number" && typeof cepData.longitude === "number");
     } catch {
-      /* Consulta oficial best-effort não bloqueia preenchimento manual */
-    } finally {
-      setIsLookingUpCnpj(false);
+      /* Mantém os campos já preenchidos pela Receita Federal mesmo se o CEP v2 oscilar */
+    }
+  };
+
+  const performCnpjLookup = async (cleanCnpj: string) => {
+    if (cleanCnpj.length !== 14) return;
+    if (inFlightCnpjLookupRef.current?.cnpj === cleanCnpj) {
+      return inFlightCnpjLookupRef.current.promise;
+    }
+    if (lastLookedUpCnpjRef.current === cleanCnpj) return;
+
+    // Se havia dados auto-preenchidos de um CNPJ anterior, limpa antes de consultar o novo CNPJ
+    if (cnpjAutofillRef.current && cnpjAutofillRef.current.cnpj !== cleanCnpj) {
+      resetCnpjAutofilledFields();
+    }
+
+    const task = (async () => {
+      setIsLookingUpCnpj(true);
+      try {
+        const res = await lookupCnpj(cleanCnpj);
+        // Garante que uma resposta atrasada não sobrescreva caso o usuário já tenha alterado o CNPJ
+        if (removeFormatting(form.getValues("documento") || "") !== cleanCnpj) return;
+
+        lastLookedUpCnpjRef.current = cleanCnpj;
+        setCnpjMeta(res);
+
+        if (res.found) {
+          const nextAuto: {
+            cnpj: string;
+            nome?: string;
+            telefone?: string;
+            hasAddress: boolean;
+          } = { cnpj: cleanCnpj, hasAddress: false };
+
+          const currentName = form.getValues("nome")?.trim();
+          const suggestedName = (res.nomeFantasia || res.razaoSocial || "").trim().slice(0, 100);
+          if (!currentName && suggestedName) {
+            form.setValue("nome", suggestedName);
+            form.clearErrors("nome");
+            nextAuto.nome = suggestedName;
+          }
+
+          const currentPhone = form.getValues("telefone")?.trim();
+          if (!currentPhone && res.phone) {
+            const maskedPhone = formatBrazilianPhone(res.phone);
+            if (maskedPhone.length >= 14) {
+              form.setValue("telefone", maskedPhone);
+              form.clearErrors("telefone");
+              nextAuto.telefone = maskedPhone;
+            }
+          }
+
+          const hasManualAddress = Boolean(
+            form.getValues("cep")?.trim() ||
+              form.getValues("rua")?.trim() ||
+              form.getValues("bairro")?.trim() ||
+              form.getValues("cidade")?.trim(),
+          );
+
+          if (!hasManualAddress && res.address?.zipCode) {
+            const cleanZip = removeFormatting(res.address.zipCode);
+            form.setValue("cep", formatCEP(res.address.zipCode));
+            if (res.address.street) form.setValue("rua", res.address.street);
+            if (res.address.number) form.setValue("numero", res.address.number);
+            if (
+              res.address.complement &&
+              res.address.complement.trim().toLowerCase() !== "undefined" &&
+              res.address.complement.trim().toLowerCase() !== "null"
+            ) {
+              form.setValue("complemento", res.address.complement.trim());
+            }
+            if (res.address.neighborhood) form.setValue("bairro", res.address.neighborhood);
+            if (res.address.city) form.setValue("cidade", res.address.city);
+            if (res.address.state) form.setValue("uf", res.address.state.toUpperCase());
+            form.clearErrors(["cep", "rua", "numero", "complemento", "bairro", "cidade", "uf"]);
+
+            nextAuto.hasAddress = true;
+            setCnpjAutoFilledAddress(true);
+            void verifyCepCoordinatesFromCnpj(cleanZip, cleanCnpj);
+          }
+
+          cnpjAutofillRef.current = nextAuto;
+        }
+      } catch {
+        /* Consulta oficial best-effort não bloqueia preenchimento manual */
+      } finally {
+        if (inFlightCnpjLookupRef.current?.cnpj === cleanCnpj) {
+          inFlightCnpjLookupRef.current = null;
+        }
+        setIsLookingUpCnpj(false);
+      }
+    })();
+
+    inFlightCnpjLookupRef.current = { cnpj: cleanCnpj, promise: task };
+    return task;
+  };
+
+  const handleDocumentoChange = (rawValue: string) => {
+    const formatted = accountType === "ong" ? formatCNPJ(rawValue) : formatCPF(rawValue);
+    form.setValue("documento", formatted);
+    form.clearErrors("documento");
+
+    if (accountType !== "ong") return;
+
+    const cleanDigits = removeFormatting(formatted);
+    if (cleanDigits !== lastLookedUpCnpjRef.current) {
+      setCnpjMeta(null);
+      lastLookedUpCnpjRef.current = null;
+    }
+
+    if (cleanDigits.length === 0 && cnpjAutofillRef.current) {
+      resetCnpjAutofilledFields();
+      return;
+    }
+
+    if (cleanDigits.length === 14 && validateCNPJ(formatted)) {
+      void performCnpjLookup(cleanDigits);
     }
   };
 
@@ -663,6 +820,21 @@ function useRegisterForm() {
       });
     } finally {
       setIsLookingUpCep(false);
+    }
+  };
+
+  const handleCepChange = (rawValue: string) => {
+    const formatted = formatCEP(rawValue);
+    form.setValue("cep", formatted);
+    form.clearErrors("cep");
+    setCnpjAutoFilledAddress(false);
+
+    const cleanCep = removeFormatting(formatted);
+    if (cleanCep !== lastLookedUpCepRef.current) {
+      setCepGeoVerified(false);
+    }
+    if (cleanCep.length === 8) {
+      void handleCepLookup(formatted);
     }
   };
 
@@ -767,9 +939,7 @@ function useRegisterForm() {
       }
 
       if (accountType === "ong") {
-        if (lastLookedUpCnpjRef.current !== docClean) {
-          performCnpjLookup(docClean);
-        }
+        await performCnpjLookup(docClean);
         setStep(3);
       } else {
         setModalAberto(true);
@@ -852,7 +1022,7 @@ function useRegisterForm() {
     if (!isValid) return;
 
     if (!fileEstatuto || !fileAta || !fileCartaoCnpj) {
-      toast.error("Por favor, anexe os 3 documentos obrigatórios.");
+      toast.error("Anexe os 3 documentos obrigatórios (Estatuto, Ata e Cartão CNPJ) para continuar.");
       return;
     }
     setModalAberto(true);
@@ -996,8 +1166,8 @@ function useRegisterForm() {
     form, step, setStep, accountType, isChecking, modalAberto, setModalAberto, isPending, successModalAberto, setSuccessModalAberto,
     clearDraft, handleSelectType, handleNextStep, handleNextOperationalStep, handleFinalSubmit, submitToApi,
     isCheckingEmail, isCheckingDocumento, isLookingUpCnpj, isLookingUpCep, isCheckingPhone, isLookingUpPix,
-    cnpjMeta, cepGeoVerified, pixLookupResult, setPixLookupResult, sameWhatsappAsPhone, setSameWhatsappAsPhone, kycSession,
-    handleEmailBlur, handleDocumentoBlur, handleCepLookup, handlePhoneBlur, handlePixKeyLookup,
+    cnpjMeta, cnpjAutoFilledAddress, cepGeoVerified, pixLookupResult, setPixLookupResult, sameWhatsappAsPhone, setSameWhatsappAsPhone, kycSession,
+    handleEmailBlur, handleDocumentoChange, handleDocumentoBlur, handleCepChange, handleCepLookup, handlePhoneBlur, handlePixKeyLookup,
     files: { fileEstatuto, setFileEstatuto, fileAta, setFileAta, fileCartaoCnpj, setFileCartaoCnpj }
   };
 }
@@ -1010,8 +1180,8 @@ export default function Register() {
     form, step, setStep, accountType, isChecking, modalAberto, setModalAberto, isPending, successModalAberto, setSuccessModalAberto,
     clearDraft, handleSelectType, handleNextStep, handleNextOperationalStep, handleFinalSubmit, submitToApi,
     isCheckingEmail, isCheckingDocumento, isLookingUpCnpj, isLookingUpCep, isCheckingPhone, isLookingUpPix,
-    cnpjMeta, cepGeoVerified, pixLookupResult, setPixLookupResult, sameWhatsappAsPhone, setSameWhatsappAsPhone, kycSession,
-    handleEmailBlur, handleDocumentoBlur, handleCepLookup, handlePhoneBlur, handlePixKeyLookup,
+    cnpjMeta, cnpjAutoFilledAddress, cepGeoVerified, pixLookupResult, setPixLookupResult, sameWhatsappAsPhone, setSameWhatsappAsPhone, kycSession,
+    handleEmailBlur, handleDocumentoChange, handleDocumentoBlur, handleCepChange, handleCepLookup, handlePhoneBlur, handlePixKeyLookup,
     files,
   } = useRegisterForm();
   const { register, control, formState: { errors }, setValue, clearErrors, trigger } = form;
@@ -1105,8 +1275,8 @@ export default function Register() {
           {accountType === 'ong' && step >= 2 && step <= 4 && (
             <div className="mb-6 flex items-center gap-2 text-xs font-bold">
               {[
-                { id: 2, label: "1. Conta" },
-                { id: 3, label: "2. Sede & Pix" },
+                { id: 2, label: "1. Acesso e CNPJ" },
+                { id: 3, label: "2. Endereço e Pix" },
                 { id: 4, label: "3. Documentos" },
               ].map((s, idx) => (
                 <div key={s.id} className="flex items-center gap-2 flex-1">
@@ -1130,37 +1300,46 @@ export default function Register() {
           {/* STEP 2 */}
           {step === 2 && (
             <>
-              <button type="button" onClick={() => { clearDraft(); }} className="flex items-center text-gray-500 hover:text-[#6B39A7] font-semibold mb-6 transition-colors group w-fit">
-                <ArrowLeft size={20} className="mr-2 group-hover:-translate-x-1 transition-transform" /> Voltar
+              <button type="button" onClick={() => { clearDraft(); }} className="flex items-center text-gray-500 hover:text-[#6B39A7] font-semibold mb-6 transition-colors group w-fit cursor-pointer">
+                <ArrowLeft size={20} className="mr-2 group-hover:-translate-x-1 transition-transform" /> Trocar perfil
               </button>
               <div className="mb-8 text-left">
                 <h1 className="text-4xl sm:text-[2.5rem] font-bold text-gray-900 mb-2 leading-tight">
-                  {accountType === 'ong' ? 'Dados da ONG' : 'Criar conta Doador'}
+                  {accountType === 'ong' ? 'Identidade e acesso da ONG' : 'Criar conta de Doador'}
                 </h1>
-                <p className="text-gray-500 text-lg font-medium">Preencha os dados abaixo para começar.</p>
+                <p className="text-gray-500 text-lg font-medium leading-relaxed">
+                  {accountType === 'ong'
+                    ? 'Digite o CNPJ da instituição para preenchermos os dados oficiais automaticamente.'
+                    : 'Preencha seus dados básicos para começar a doar com segurança.'}
+                </p>
               </div>
 
               <form onSubmit={(e) => { e.preventDefault(); handleNextStep(); }} className="flex flex-col gap-5">
 
                 <InputField
-                  label={accountType === 'ong' ? 'CNPJ' : 'CPF'} icon={IdCard}
+                  label={accountType === 'ong' ? 'CNPJ da instituição' : 'CPF'} icon={IdCard}
                   placeholder={accountType === 'ong' ? "00.000.000/0000-00" : "000.000.000-00"}
                   maxLength={accountType === 'ong' ? 18 : 14}
                   isLoading={isCheckingDocumento || isLookingUpCnpj}
                   {...register("documento")}
-                  onChange={(e: any) => {
-                    const val = accountType === 'ong' ? formatCNPJ(e.target.value) : formatCPF(e.target.value);
-                    setValue("documento", val);
-                    clearErrors("documento");
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    handleDocumentoChange(e.target.value);
                   }}
-                  onBlur={(e: any) => {
+                  onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                     register("documento").onBlur(e);
                     handleDocumentoBlur(e.target.value);
                   }}
                   error={errors.documento?.message}
                 />
 
-                {accountType === 'ong' && cnpjMeta?.found && (
+                {accountType === 'ong' && isLookingUpCnpj && (
+                  <p className="-mt-3 text-xs font-semibold text-[#6B39A7] flex items-center gap-1.5">
+                    <Loader2 size={13} className="animate-spin" />
+                    Consultando situação cadastral e endereço oficial na Receita Federal...
+                  </p>
+                )}
+
+                {accountType === 'ong' && !isLookingUpCnpj && cnpjMeta?.found && (
                   <div className={`-mt-2 p-3.5 rounded-xl border text-xs font-medium flex items-start gap-2.5 ${cnpjMeta.isAtiva ? "bg-emerald-50 border-emerald-200 text-emerald-900" : "bg-amber-50 border-amber-200 text-amber-900"}`}>
                     <Sparkles size={16} className={`shrink-0 mt-0.5 ${cnpjMeta.isAtiva ? "text-emerald-600" : "text-amber-600"}`} />
                     <div>
@@ -1168,18 +1347,20 @@ export default function Register() {
                         Receita Federal: {cnpjMeta.situacaoCadastral || (cnpjMeta.isAtiva ? "ATIVA" : "Situação pendente")}
                         {cnpjMeta.yearsOfOperation !== null && ` • ${cnpjMeta.yearsOfOperation} ${cnpjMeta.yearsOfOperation === 1 ? "ano" : "anos"} de atuação`}
                       </p>
-                      {cnpjMeta.foundedAt && (
-                        <p className="opacity-80 mt-0.5">
-                          Abertura oficial: {cnpjMeta.foundedAt.split("-").reverse().join("/")} (calculado automaticamente)
-                        </p>
-                      )}
+                      <p className="opacity-85 mt-0.5 leading-relaxed">
+                        {cnpjMeta.isAtiva
+                          ? "Razão social e endereço atualizados pelo CNPJ."
+                          : "Pendências fiscais podem impedir a abertura da subconta financeira."}
+                        {cnpjMeta.foundedAt && ` Abertura oficial: ${cnpjMeta.foundedAt.split("-").reverse().join("/")}.`}
+                      </p>
                     </div>
                   </div>
                 )}
 
                 <InputField
-                  label={accountType === 'ong' ? 'Razão Social / Nome' : 'Nome Completo'}
-                  icon={User} placeholder="Digite aqui"
+                  label={accountType === 'ong' ? 'Razão Social ou Nome da ONG' : 'Nome completo'}
+                  icon={User}
+                  placeholder={accountType === 'ong' ? "Ex.: Instituto Esperança Solidária" : "Digite seu nome completo"}
                   {...register("nome")}
                   onChange={(e: any) => { register("nome").onChange(e); clearErrors("nome"); }}
                   onBlur={(e: any) => { register("nome").onBlur(e); if (e.target.value.trim() !== "") trigger("nome"); }}
@@ -1187,7 +1368,10 @@ export default function Register() {
                 />
 
                 <InputField
-                  label="Endereço de Email" icon={Mail} type="email" placeholder="exemplo@email.com"
+                  label={accountType === 'ong' ? 'E-mail institucional' : 'E-mail'}
+                  icon={Mail}
+                  type="email"
+                  placeholder={accountType === 'ong' ? "contato@suaong.org.br" : "voce@email.com"}
                   isLoading={isCheckingEmail}
                   {...register("email")}
                   onChange={(e: any) => { register("email").onChange(e); clearErrors("email"); }}
@@ -1199,7 +1383,7 @@ export default function Register() {
                 />
 
                 <InputField
-                  label="Senha" icon={Lock} type="password" placeholder={accountType === "ong" ? "Mínimo de 10 caracteres" : "Mínimo de 8 caracteres"}
+                  label="Crie uma senha" icon={Lock} type="password" placeholder={accountType === "ong" ? "Mínimo de 10 caracteres" : "Mínimo de 8 caracteres"}
                   {...register("senha")}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => { register("senha").onChange(e); clearErrors("senha"); }}
                   onBlur={(e: React.FocusEvent<HTMLInputElement>) => { register("senha").onBlur(e); if (e.target.value.trim() !== "") trigger("senha"); }}
@@ -1224,25 +1408,25 @@ export default function Register() {
                 </div>
 
                 <InputField
-                  label="Confirmar Senha" icon={Lock} type="password" placeholder="Repita sua senha"
+                  label="Confirmar senha" icon={Lock} type="password" placeholder="Digite a senha novamente"
                   {...register("confirmarSenha")}
                   onChange={(e: any) => { register("confirmarSenha").onChange(e); clearErrors("confirmarSenha"); }}
                   onBlur={(e: any) => { register("confirmarSenha").onBlur(e); if (e.target.value.trim() !== "") trigger("confirmarSenha"); }}
                   error={errors.confirmarSenha?.message}
                 />
 
-                <button type="submit" disabled={isPending} className="w-full flex justify-center items-center gap-2 h-[60px] mt-4 bg-purple-700 hover:bg-purple-800 text-white font-bold text-lg rounded-xl shadow-md active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60">
-                  {isPending ? (
+                <button type="submit" disabled={isPending || isLookingUpCnpj} className="w-full flex justify-center items-center gap-2 h-[60px] mt-4 bg-purple-700 hover:bg-purple-800 text-white font-bold text-lg rounded-xl shadow-md active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60">
+                  {isPending || isLookingUpCnpj ? (
                     <>
                       <Loader2 size={20} className="animate-spin" />
-                      Verificando dados...
+                      {isLookingUpCnpj ? "Consultando CNPJ..." : "Validando dados..."}
                     </>
                   ) : accountType === 'ong' ? (
                     <>
-                      Avançar para Sede & Pix <ArrowRight size={20} />
+                      Continuar para Endereço e Pix <ArrowRight size={20} />
                     </>
                   ) : (
-                    "Continuar e Ler Termos"
+                    "Revisar Termos e Concluir"
                   )}
                 </button>
               </form>
@@ -1253,29 +1437,35 @@ export default function Register() {
           {step === 3 && accountType === 'ong' && (
             <>
               <button type="button" onClick={() => setStep(2)} className="flex items-center text-gray-500 hover:text-[#6B39A7] font-semibold mb-6 transition-colors group w-fit cursor-pointer">
-                <ArrowLeft size={20} className="mr-2 group-hover:-translate-x-1 transition-transform" /> Voltar
+                <ArrowLeft size={20} className="mr-2 group-hover:-translate-x-1 transition-transform" /> Voltar para Acesso e CNPJ
               </button>
 
               <div className="mb-7 text-left">
-                <h1 className="text-3xl sm:text-[2.3rem] font-bold text-gray-900 mb-2 leading-tight">Sede, Contato & Pix</h1>
+                <h1 className="text-3xl sm:text-[2.3rem] font-bold text-gray-900 mb-2 leading-tight">Endereço, Contato e Pix</h1>
                 <p className="text-gray-500 text-base font-medium leading-relaxed">
-                  Esses dados habilitam geolocalização, segurança financeira e criação instantânea da subconta.
+                  Esses dados posicionam sua ONG no mapa por proximidade e habilitam repasses financeiros seguros.
                 </p>
               </div>
 
               <form onSubmit={(e) => { e.preventDefault(); handleNextOperationalStep(); }} className="flex flex-col gap-5">
                 {/* CEP + Endereço */}
                 <div className="p-5 bg-gray-50/80 border border-gray-200 rounded-2xl flex flex-col gap-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
                     <h3 className="text-sm font-extrabold text-gray-800 uppercase tracking-wider flex items-center gap-2">
                       <MapPin size={16} className="text-[#6B39A7]" /> Endereço da Sede
                     </h3>
                     {cepGeoVerified && (
                       <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                        <CheckCircle2 size={12} /> Geolocalização ativa
+                        <CheckCircle2 size={12} /> Mapa e CEP verificados
                       </span>
                     )}
                   </div>
+
+                  {cnpjAutoFilledAddress && (
+                    <div className="p-3 rounded-xl bg-purple-50/80 border border-purple-200 text-xs text-purple-950 font-medium leading-relaxed">
+                      Endereço preenchido automaticamente a partir do CNPJ informado. Confira o número ou edite caso a sede funcione em outro local.
+                    </div>
+                  )}
 
                   <div className="flex items-end gap-2">
                     <div className="flex-1">
@@ -1283,15 +1473,10 @@ export default function Register() {
                         label="CEP" icon={MapPin} placeholder="00000-000" maxLength={9}
                         isLoading={isLookingUpCep}
                         {...register("cep")}
-                        onChange={(e: any) => {
-                          const formatted = formatCEP(e.target.value);
-                          setValue("cep", formatted);
-                          clearErrors("cep");
-                          if (removeFormatting(formatted).length === 8) {
-                            handleCepLookup(formatted);
-                          }
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          handleCepChange(e.target.value);
                         }}
-                        onBlur={(e: any) => {
+                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                           register("cep").onBlur(e);
                           handleCepLookup(e.target.value);
                         }}
@@ -1304,7 +1489,7 @@ export default function Register() {
                       disabled={isLookingUpCep || removeFormatting(watchedCep).length !== 8}
                       className="h-[58px] px-4 rounded-xl bg-white border border-gray-200 hover:border-[#6B39A7] text-[#6B39A7] font-bold text-sm transition-colors cursor-pointer disabled:opacity-50"
                     >
-                      Buscar CEP
+                      Atualizar CEP
                     </button>
                   </div>
 
@@ -1317,13 +1502,13 @@ export default function Register() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <InputField
-                      label="Número" icon={Building2} placeholder="1000"
+                      label="Número" icon={Building2} placeholder="Ex.: 1000 ou S/N"
                       {...register("numero")}
                       onChange={(e: any) => { register("numero").onChange(e); clearErrors("numero"); }}
                       error={errors.numero?.message}
                     />
                     <InputField
-                      label="Complemento (Opcional)" icon={Building2} placeholder="Sala 402"
+                      label="Complemento (opcional)" icon={Building2} placeholder="Sala, bloco, andar"
                       {...register("complemento")}
                       onChange={(e: any) => { register("complemento").onChange(e); }}
                       error={errors.complemento?.message}
@@ -1360,12 +1545,17 @@ export default function Register() {
 
                 {/* Contatos */}
                 <div className="p-5 bg-gray-50/80 border border-gray-200 rounded-2xl flex flex-col gap-4">
-                  <h3 className="text-sm font-extrabold text-gray-800 uppercase tracking-wider flex items-center gap-2">
-                    <Phone size={16} className="text-[#6B39A7]" /> Canais de Contato
-                  </h3>
+                  <div>
+                    <h3 className="text-sm font-extrabold text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                      <Phone size={16} className="text-[#6B39A7]" /> Contatos Oficiais
+                    </h3>
+                    <p className="text-xs text-gray-500 font-medium mt-1">
+                      Usado na abertura da conta de repasse e para doadores falarem com sua equipe.
+                    </p>
+                  </div>
 
                   <InputField
-                    label="Telefone Principal da ONG" icon={Phone} placeholder="(11) 99999-9999" maxLength={15}
+                    label="Telefone principal (com DDD)" icon={Phone} placeholder="(11) 99999-9999" maxLength={15}
                     isLoading={isCheckingPhone}
                     {...register("telefone")}
                     onChange={(e: any) => {
@@ -1386,7 +1576,7 @@ export default function Register() {
                       onChange={(e) => setSameWhatsappAsPhone(e.target.checked)}
                       className="w-4 h-4 accent-[#6B39A7] rounded"
                     />
-                    Este número também é o WhatsApp da instituição
+                    Usar este mesmo número como WhatsApp público no perfil
                   </label>
 
                   {!sameWhatsappAsPhone && (
@@ -1406,7 +1596,7 @@ export default function Register() {
                 <div className="p-5 bg-purple-50/50 border border-purple-200 rounded-2xl flex flex-col gap-4">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <h3 className="text-sm font-extrabold text-gray-800 uppercase tracking-wider flex items-center gap-2">
-                      <KeyRound size={16} className="text-[#6B39A7]" /> Chave Pix de Repasse
+                      <KeyRound size={16} className="text-[#6B39A7]" /> Chave Pix para Repasses
                     </h3>
                     {watchedCnpj && (
                       <button
@@ -1418,19 +1608,19 @@ export default function Register() {
                         }}
                         className="text-xs font-bold text-[#6B39A7] bg-white border border-purple-200 hover:bg-purple-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
                       >
-                        Usar CNPJ da ONG
+                        Preencher com CNPJ da ONG
                       </button>
                     )}
                   </div>
 
                   <p className="text-xs text-gray-600 font-medium leading-relaxed -mt-2">
-                    Aceita CNPJ da entidade, e-mail institucional, telefone ou chave aleatória (EVP). <strong>CPF pessoal não é aceito</strong> para proteção financeira.
+                    Informe a chave Pix vinculada à conta da instituição (CNPJ, e-mail, telefone ou chave aleatória). Para segurança financeira, <strong>chaves de CPF pessoal não são aceitas</strong>.
                   </p>
 
                   <div className="flex items-end gap-2">
                     <div className="flex-1">
                       <InputField
-                        label="" icon={KeyRound} placeholder="CNPJ, e-mail, +55DDD... ou EVP"
+                        label="" icon={KeyRound} placeholder="CNPJ, e-mail, telefone ou chave aleatória"
                         isLoading={isLookingUpPix}
                         {...register("pixKey")}
                         onChange={(e: any) => {
@@ -1451,7 +1641,7 @@ export default function Register() {
                       disabled={isLookingUpPix || !watchedPixKey.trim()}
                       className="h-[58px] px-4 rounded-xl bg-white border border-purple-200 hover:border-[#6B39A7] text-[#6B39A7] font-bold text-sm transition-colors cursor-pointer disabled:opacity-50 shrink-0"
                     >
-                      Validar Pix
+                      Verificar chave
                     </button>
                   </div>
 
@@ -1459,7 +1649,7 @@ export default function Register() {
                     <div className="p-4 rounded-xl bg-white border border-emerald-200 flex flex-col gap-2 text-xs">
                       <div className="flex items-center justify-between text-emerald-700 font-bold">
                         <span className="flex items-center gap-1.5">
-                          <Landmark size={15} /> Dados Bancários Detectados (DICT)
+                          <Landmark size={15} /> Conta Bancária Localizada
                         </span>
                         <span className="uppercase">{pixLookupResult.keyType}</span>
                       </div>
@@ -1477,7 +1667,7 @@ export default function Register() {
                       {pixLookupResult.ownerMatchesCnpj === false && (
                         <div className="mt-1 p-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 font-semibold flex items-center gap-1.5">
                           <AlertTriangle size={14} className="shrink-0" />
-                          Atenção: o titular desta chave diverge do CNPJ informado. Recomendamos chave vinculada ao CNPJ da ONG.
+                          Atenção: a titularidade desta chave diverge do CNPJ cadastrado. Recomendamos chave vinculada ao CNPJ da ONG.
                         </div>
                       )}
                     </div>
@@ -1487,7 +1677,7 @@ export default function Register() {
                     <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
                       <CheckCircle2 size={15} className="shrink-0" />
                       <span>
-                        Chave Pix ({pixLookupResult.keyType}) validada com segurança ({pixLookupResult.maskedPixKey}). Os dados bancários são sincronizados automaticamente em produção.
+                        Chave Pix ({pixLookupResult.keyType}) validada ({pixLookupResult.maskedPixKey}). Os dados bancários são sincronizados automaticamente após a ativação da conta.
                       </span>
                     </div>
                   )}
@@ -1498,7 +1688,7 @@ export default function Register() {
                   disabled={isLookingUpPix || isLookingUpCep}
                   className="w-full flex justify-center items-center gap-2 h-[60px] mt-2 bg-purple-700 hover:bg-purple-800 text-white font-bold text-lg rounded-xl shadow-md active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60"
                 >
-                  Avançar para Documentação <ArrowRight size={20} />
+                  Continuar para Documentos <ArrowRight size={20} />
                 </button>
               </form>
             </>
@@ -1508,20 +1698,27 @@ export default function Register() {
           {step === 4 && accountType === 'ong' && (
             <>
               <button type="button" onClick={() => setStep(3)} className="flex items-center text-gray-500 hover:text-[#6B39A7] font-semibold mb-6 transition-colors group w-fit cursor-pointer">
-                <ArrowLeft size={20} className="mr-2 group-hover:-translate-x-1 transition-transform" /> Voltar
+                <ArrowLeft size={20} className="mr-2 group-hover:-translate-x-1 transition-transform" /> Voltar para Endereço e Pix
               </button>
 
               <div className="mb-8 text-left">
-                <h1 className="text-4xl sm:text-[2.5rem] font-bold text-gray-900 mb-2 leading-tight">Documentação Legal</h1>
-                <p className="text-gray-500 text-lg font-medium leading-relaxed">Validação dos documentos do representante e instituição.</p>
+                <h1 className="text-4xl sm:text-[2.5rem] font-bold text-gray-900 mb-2 leading-tight">Responsável e Documentos</h1>
+                <p className="text-gray-500 text-lg font-medium leading-relaxed">
+                  Identifique quem assina pela ONG e anexe os documentos oficiais para nossa análise de segurança.
+                </p>
               </div>
 
               <form onSubmit={(e) => { e.preventDefault(); handleFinalSubmit(); }} className="flex flex-col gap-8">
                 <div className="p-6 bg-gray-50 border border-gray-200 rounded-2xl flex flex-col gap-5">
-                  <h3 className="text-base font-bold text-gray-800 uppercase tracking-wider">Representante</h3>
+                  <div>
+                    <h3 className="text-base font-bold text-gray-800 uppercase tracking-wider">Representante Legal (Presidente / Diretor)</h3>
+                    <p className="text-xs text-gray-500 font-medium mt-1 leading-relaxed">
+                      Deve constar na Ata ou Estatuto — será a pessoa que fará a selfie com documento na etapa seguinte.
+                    </p>
+                  </div>
 
                   <InputField
-                    label="" icon={User} placeholder="Nome do Presidente"
+                    label="Nome completo do representante" icon={User} placeholder="Nome completo conforme o RG/CNH"
                     {...register("nomePresidente")}
                     onChange={(e: any) => { register("nomePresidente").onChange(e); clearErrors("nomePresidente"); }}
                     onBlur={(e: any) => { register("nomePresidente").onBlur(e); if (e.target.value.trim() !== "") trigger("nomePresidente"); }}
@@ -1529,7 +1726,7 @@ export default function Register() {
                   />
 
                   <InputField
-                    label="" icon={IdCard} maxLength={14} placeholder="CPF do Presidente"
+                    label="CPF do representante" icon={IdCard} maxLength={14} placeholder="000.000.000-00"
                     {...register("cpfPresidente")}
                     onChange={(e: any) => {
                       setValue("cpfPresidente", formatCPF(e.target.value));
@@ -1541,13 +1738,13 @@ export default function Register() {
                 </div>
 
                 <div className="flex flex-col gap-6">
-                  <FileDropzone title="Estatuto Social" subtitle="Arraste ou clique" file={files.fileEstatuto} setFile={files.setFileEstatuto} />
-                  <FileDropzone title="Ata de Constituição" subtitle="Arraste ou clique" file={files.fileAta} setFile={files.setFileAta} />
-                  <FileDropzone title="Cartão CNPJ" subtitle="Arraste ou clique" file={files.fileCartaoCnpj} setFile={files.setFileCartaoCnpj} />
+                  <FileDropzone title="Estatuto Social" subtitle="Clique ou arraste o estatuto vigente registrado" file={files.fileEstatuto} setFile={files.setFileEstatuto} />
+                  <FileDropzone title="Ata de Constituição ou Eleição" subtitle="Ata mais recente que comprova o presidente atual" file={files.fileAta} setFile={files.setFileAta} />
+                  <FileDropzone title="Cartão CNPJ" subtitle="Comprovante oficial emitido pela Receita Federal" file={files.fileCartaoCnpj} setFile={files.setFileCartaoCnpj} />
                 </div>
 
                 <button type="submit" disabled={isPending} className="w-full h-[60px] mt-2 bg-[#4A2675] hover:bg-[#3b1a66] text-white font-bold text-lg rounded-xl shadow-md active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60">
-                  Finalizar Cadastro
+                  Revisar Termos e Enviar Cadastro
                 </button>
               </form>
             </>

@@ -72,12 +72,14 @@ export default function OngKycSelfieStep({
   const isRestricted =
     Boolean(liveStatus?.complianceStatus?.isRestricted) ||
     initialOnboarding?.status === "compliance_restricted";
+  const provisionError = liveStatus?.provisionError ?? null;
   const hasAuditCompleted = Boolean(liveStatus?.complianceStatus?.lastAuditAt);
   const isInconclusiveOrManual =
     isRestricted ||
     verificationStatus === "rejected" ||
     initialOnboarding?.status === "compliance_inconclusive" ||
     initialOnboarding?.status === "awaiting_admin_review" ||
+    (!hasSubaccount && Boolean(provisionError)) ||
     (hasAuditCompleted && !hasSubaccount);
 
   const selfieDocGroup = liveStatus?.documents?.find(
@@ -135,17 +137,17 @@ export default function OngKycSelfieStep({
     <div className="flex flex-col gap-6">
       <div className="text-left">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold uppercase tracking-wider mb-3">
-          <CheckCircle2 size={14} /> Cadastro recebido
+          <CheckCircle2 size={14} /> Pré-cadastro enviado
         </div>
         <h1 className="text-3xl sm:text-[2.2rem] font-extrabold text-gray-900 leading-tight mb-2">
           {onboardingUrl
-            ? "Selfie com Documento"
+            ? "Confirme a identidade com uma selfie"
             : isInconclusiveOrManual
-              ? "Análise em Andamento"
-              : "Preparando sua Verificação"}
+              ? "Cadastro em análise manual"
+              : "Preparando verificação biométrica"}
         </h1>
         <p className="text-gray-600 text-base font-medium leading-relaxed">
-          {ongName}, confira o andamento da validação cadastral e financeira da sua instituição.
+          {ongName}, confira abaixo os últimos passos para liberar repasses financeiros e exibir sua ONG na plataforma.
         </p>
       </div>
 
@@ -158,12 +160,12 @@ export default function OngKycSelfieStep({
           <div>
             <h3 className="text-lg font-bold text-gray-900 mb-1">
               {hasSubaccount
-                ? "Gerando link oficial de biometria no Asaas..."
-                : "Validando Compliance em bases públicas..."}
+                ? "Gerando link oficial de biometria..."
+                : "Validando dados públicos e regulatórios..."}
             </h3>
             <p className="text-sm text-gray-600 leading-relaxed">
-              Isso leva apenas alguns segundos. Assim que o link estiver pronto, o QR Code aparecerá
-              automaticamente aqui e também será enviado para{" "}
+              Isso leva apenas alguns segundos. Assim que estiver pronto, o QR Code aparecerá aqui
+              automaticamente e também será enviado para{" "}
               <strong className="text-gray-800">{email}</strong>.
             </p>
           </div>
@@ -191,10 +193,10 @@ export default function OngKycSelfieStep({
               </div>
               <div>
                 <h3 className="text-base font-extrabold text-gray-900">
-                  Biometria do Presidente (Asaas KYC)
+                  Verificação Facial do Presidente
                 </h3>
                 <p className="text-xs font-medium text-gray-500">
-                  Escaneie com o celular ou abra o link oficial abaixo
+                  Escaneie com a câmera do celular ou abra o link oficial abaixo
                 </p>
               </div>
             </div>
@@ -216,8 +218,8 @@ export default function OngKycSelfieStep({
             <div className="p-3 bg-white rounded-2xl shadow-sm border border-gray-100">
               <QRCodeSVG value={onboardingUrl} size={184} level="M" includeMargin={false} />
             </div>
-            <p className="text-xs text-gray-500 font-medium mt-3 text-center max-w-xs">
-              Aponte a câmera do celular do representante legal para enviar a CNH/RG e fazer a selfie em ambiente seguro do Asaas.
+            <p className="text-xs text-gray-500 font-medium mt-3 text-center max-w-xs leading-relaxed">
+              O presidente deve fotografar o documento (RG ou CNH) e realizar a selfie no ambiente seguro do nosso parceiro financeiro (Asaas).
             </p>
           </div>
 
@@ -229,7 +231,7 @@ export default function OngKycSelfieStep({
               className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-[#6B39A7] hover:bg-[#582c8c] text-white font-bold text-sm shadow-sm transition-all"
             >
               <ExternalLink size={16} />
-              Abrir Verificação no Navegador
+              Abrir Verificação Agora
             </a>
             <button
               type="button"
@@ -266,11 +268,14 @@ export default function OngKycSelfieStep({
           <ShieldAlert size={22} className="text-amber-600 shrink-0 mt-0.5" />
           <div className="text-left">
             <h3 className="text-sm font-extrabold text-amber-950 mb-1">
-              Encaminhado para Revisão do Administrador
+              {provisionError
+                ? "Ativação financeira aguardando ajuste"
+                : "Encaminhado para Revisão da Equipe"}
             </h3>
             <p className="text-sm text-amber-900/90 leading-relaxed">
-              {initialOnboarding?.message ||
-                "Seus dados e documentos foram recebidos com segurança. Nossa equipe de Compliance e Administração finalizará a conferência manual antes de liberar a biometria e a exibição pública."}
+              {provisionError ||
+                initialOnboarding?.message ||
+                "Seus dados e documentos foram recebidos com segurança. Nossa equipe finalizará a conferência manual antes de liberar a biometria e a exibição pública."}
             </p>
           </div>
         </div>
@@ -284,7 +289,7 @@ export default function OngKycSelfieStep({
             Última etapa: Aprovação da Curadoria
           </p>
           <p className="text-xs text-slate-600 leading-relaxed">
-            A liberação pública na vitrine (<strong>/home</strong>) sempre passa pela conferência final do Administrador do DoeCerto. Você já pode entrar no painel para personalizar fotos, redes sociais e itens de necessidade enquanto concluímos.
+            A liberação pública na vitrine (<strong>/home</strong>) sempre depende da aprovação final do Administrador do DoeCerto. Você já pode acessar sua conta para completar fotos, redes sociais e itens necessários enquanto concluímos a revisão.
           </p>
         </div>
       </div>
@@ -294,7 +299,7 @@ export default function OngKycSelfieStep({
         onClick={() => window.location.replace("/login")}
         className="w-full py-4 px-6 bg-[#4A2675] hover:bg-[#3b1a66] text-white rounded-xl font-bold text-lg shadow-md active:scale-[0.98] transition-all cursor-pointer"
       >
-        Ir para Login agora
+        Acessar minha conta
       </button>
     </div>
   );
