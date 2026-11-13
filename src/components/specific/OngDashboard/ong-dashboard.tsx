@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { FaInstagram, FaFacebook, FaWhatsapp } from "react-icons/fa";
 import { useRouter } from "next/navigation";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import { OngAsaasKycSummary, OngsProfileService } from "@/services/ongs-profile.service";
 import { BankAccountData, BankAccountService } from "@/services/bank-account.service";
 import { DonationService } from "@/services/donations.service";
@@ -203,6 +203,30 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
       applyKycSummary(summary);
     } catch (error) {
       console.error("Erro ao consultar status KYC no Asaas:", error);
+    } finally {
+      setLoadingKycSummary(false);
+    }
+  }
+
+  async function activateSubaccount() {
+    try {
+      setLoadingKycSummary(true);
+      const summary = await OngsProfileService.syncMyAsaasSubaccount();
+      applyKycSummary(summary);
+      if (summary.hasSubaccount) {
+        toast.success("Subconta financeira ativada com sucesso!");
+      } else if (summary.provisionError) {
+        toast.error(summary.provisionError);
+      } else {
+        toast("Subconta ainda pendente. Verifique os requisitos indicados.");
+      }
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error && error.message
+          ? error.message
+          : "Não foi possível ativar a subconta financeira no momento.";
+      toast.error(msg);
+      throw error;
     } finally {
       setLoadingKycSummary(false);
     }
@@ -533,6 +557,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
             summary={kycSummary}
             loadingSummary={loadingKycSummary}
             onRefreshSummary={loadKycSummary}
+            onActivateSubaccount={activateSubaccount}
             onSummaryUpdated={applyKycSummary}
             onCompleteProfile={() => router.push('/ong-profilesetup')}
             onOpenLegacyDocsModal={() => setIsDocsModalOpen(true)}

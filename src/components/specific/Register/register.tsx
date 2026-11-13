@@ -564,7 +564,13 @@ function useRegisterForm() {
           form.setValue("cep", formatCEP(res.address.zipCode));
           if (res.address.street) form.setValue("rua", res.address.street);
           if (res.address.number) form.setValue("numero", res.address.number);
-          if (res.address.complement) form.setValue("complemento", res.address.complement);
+          if (
+            res.address.complement &&
+            res.address.complement.trim().toLowerCase() !== "undefined" &&
+            res.address.complement.trim().toLowerCase() !== "null"
+          ) {
+            form.setValue("complemento", res.address.complement.trim());
+          }
           if (res.address.neighborhood) form.setValue("bairro", res.address.neighborhood);
           if (res.address.city) form.setValue("cidade", res.address.city);
           if (res.address.state) form.setValue("uf", res.address.state);
@@ -880,7 +886,14 @@ function useRegisterForm() {
         if (data.cep?.trim()) formData.append('zipCode', formatCEP(data.cep));
         if (data.rua?.trim()) formData.append('street', data.rua.trim());
         if (data.numero?.trim()) formData.append('number', data.numero.trim());
-        if (data.complemento?.trim()) formData.append('complement', data.complemento.trim());
+        const cleanComplement = data.complemento?.trim();
+        if (
+          cleanComplement &&
+          cleanComplement.toLowerCase() !== 'undefined' &&
+          cleanComplement.toLowerCase() !== 'null'
+        ) {
+          formData.append('complement', cleanComplement);
+        }
         if (data.bairro?.trim()) formData.append('neighborhood', data.bairro.trim());
         if (data.cidade?.trim()) formData.append('city', data.cidade.trim());
         if (data.uf?.trim()) formData.append('state', data.uf.trim().toUpperCase());

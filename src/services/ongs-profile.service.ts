@@ -42,6 +42,8 @@ export interface OngAsaasKycSummary {
   documents: OngAsaasKycDocument[];
   rejectReasons: string | null;
   pendingInitialization: boolean;
+  provisionError?: string | null;
+  provisionErrorCode?: string | null;
 }
 
 export interface SendAsaasKycDocumentResponse {
@@ -182,6 +184,13 @@ export const OngsProfileService = {
 
   async getMyAsaasKycStatus(): Promise<OngAsaasKycSummary> {
     const { data } = await api<OngAsaasKycSummary>('/ongs/me/asaas-status');
+    return data;
+  },
+
+  async syncMyAsaasSubaccount(): Promise<OngAsaasKycSummary> {
+    const { data } = await api<OngAsaasKycSummary>('/ongs/me/sync-asaas', {
+      method: 'POST',
+    });
     return data;
   },
 

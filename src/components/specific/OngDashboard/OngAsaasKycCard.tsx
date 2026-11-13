@@ -33,6 +33,7 @@ interface OngAsaasKycCardProps {
   summary: OngAsaasKycSummary | null;
   loadingSummary: boolean;
   onRefreshSummary: () => Promise<void>;
+  onActivateSubaccount?: () => Promise<void>;
   onSummaryUpdated: (nextSummary: OngAsaasKycSummary) => void;
   onCompleteProfile: () => void;
   onOpenLegacyDocsModal: () => void;
@@ -128,16 +129,40 @@ export function OngAsaasKycCard({
   summary,
   loadingSummary,
   onRefreshSummary,
+  onActivateSubaccount,
   onSummaryUpdated,
   onCompleteProfile,
   onOpenLegacyDocsModal,
 }: OngAsaasKycCardProps) {
   const [uploadingDocId, setUploadingDocId] = useState<string | null>(null);
+  const [activatingSubaccount, setActivatingSubaccount] = useState(false);
+  const [activationError, setActivationError] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const verificationStatus = summary?.verificationStatus || ong.verificationStatus || "pending";
   const asaasStatus = (summary?.asaasAccountStatus || ong.asaasAccountStatus || "pending").toLowerCase();
   const hasSubaccount = summary?.hasSubaccount ?? Boolean(ong.hasAsaasSubaccount);
+  const displayProvisionError = activationError || summary?.provisionError || null;
+
+  const handleActivateSubaccount = async () => {
+    setActivationError(null);
+    setActivatingSubaccount(true);
+    try {
+      if (onActivateSubaccount) {
+        await onActivateSubaccount();
+      } else {
+        await onRefreshSummary();
+      }
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Não foi possível ativar a subconta financeira no momento.";
+      setActivationError(message);
+    } finally {
+      setActivatingSubaccount(false);
+    }
+  };
 
   const handleFileSelected = async (
     doc: OngAsaasKycDocument,
@@ -281,6 +306,20 @@ export function OngAsaasKycCard({
                   ))}
                 </div>
               )}
+
+              {displayProvisionError && (
+                <div className="mt-3 flex items-start gap-2.5 rounded-2xl border border-amber-200 bg-amber-50/90 p-3.5 text-xs sm:text-sm text-amber-950">
+                  <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-600" />
+                  <div>
+                    <p className="font-bold text-amber-950">
+                      Não foi possível ativar a subconta automaticamente
+                    </p>
+                    <p className="mt-0.5 leading-relaxed text-amber-900">
+                      {displayProvisionError}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -296,12 +335,16 @@ export function OngAsaasKycCard({
             ) : (
               <button
                 type="button"
-                onClick={() => void onRefreshSummary()}
-                disabled={loadingSummary}
+                onClick={() => void handleActivateSubaccount()}
+                disabled={loadingSummary || activatingSubaccount}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold text-sm shadow-md transition-all cursor-pointer disabled:opacity-60"
               >
-                {loadingSummary ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-                Ativar Subconta Agora
+                {loadingSummary || activatingSubaccount ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <RefreshCw size={16} />
+                )}
+                {activatingSubaccount ? "Ativando..." : "Ativar Subconta Agora"}
               </button>
             )}
           </div>
