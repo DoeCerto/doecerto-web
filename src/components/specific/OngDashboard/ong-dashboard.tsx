@@ -6,15 +6,17 @@ import {
   MapPin, Heart, Award, X, Phone, Home, Star, Pencil,
   History, Package, CheckCircle2, Clock, FileText, ArrowRight,
   Camera, AlertCircle, Tag, MessageSquare, AlertTriangle, ExternalLink,
-  LogOut, Download, Trash2
+  LogOut, Download, Trash2, ShieldAlert
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { OngsProfileService } from "@/services/ongs-profile.service";
+import { Toaster } from "react-hot-toast";
+import { OngAsaasKycSummary, OngsProfileService } from "@/services/ongs-profile.service";
 import { DonationService } from "@/services/donations.service";
 import { api } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { LgpdDeleteAccountModal } from "@/components/specific/Lgpd/LgpdDeleteAccountModal";
 import { OngDocumentsModal } from "./OngDocumentsModal";
+import { OngAsaasKycCard } from "./OngAsaasKycCard";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -32,6 +34,8 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
   const [ong, setOng] = useState<any>(initialOng);
   const [reviews, setReviews] = useState<any[]>([]);
   const [donations, setDonations] = useState<any[]>([]);
+  const [kycSummary, setKycSummary] = useState<OngAsaasKycSummary | null>(null);
+  const [loadingKycSummary, setLoadingKycSummary] = useState(false);
 
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -65,6 +69,16 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
     }
     setDismissSetupPrompt(true);
   };
+
+  const hasAsaasSubaccount = kycSummary?.hasSubaccount ?? Boolean(ong?.hasAsaasSubaccount);
+  const effectiveAsaasStatus = (
+    kycSummary?.asaasAccountStatus ||
+    ong?.asaasAccountStatus ||
+    "pending"
+  ).toLowerCase();
+  const isAsaasMissingProfile =
+    ong?.verificationStatus === "verified" && !hasAsaasSubaccount;
+
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const handleLogout = async (e?: React.MouseEvent) => {
@@ -154,19 +168,60 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
     doc.save(`doacao_protocolo_${donation.id}.pdf`);
   };
 
+  const applyKycSummary = (summary: OngAsaasKycSummary) => {
+    setKycSummary(summary);
+    setOng((prev: Record<string, unknown> | null) =>
+      prev
+        ? {
+            ...prev,
+            asaasAccountStatus: summary.asaasAccountStatus,
+            hasAsaasSubaccount: summary.hasSubaccount,
+            verificationStatus: summary.verificationStatus || prev.verificationStatus,
+          }
+        : prev,
+    );
+  };
+
+  async function loadKycSummary() {
+    try {
+      setLoadingKycSummary(true);
+      const summary = await OngsProfileService.getMyAsaasKycStatus();
+      applyKycSummary(summary);
+    } catch (error) {
+      console.error("Erro ao consultar status KYC no Asaas:", error);
+    } finally {
+      setLoadingKycSummary(false);
+    }
+  }
+
   async function loadData() {
     try {
       const profileData = await OngsProfileService.getMyProfile();
       setOng(profileData);
 
       if (profileData.id) {
-        const [reviewsRes, donationsData] = await Promise.all([
+        const [reviewsRes, donationsData, kycRes] = await Promise.all([
           api(`/ongs/${profileData.id}/ratings`),
-          DonationService.getReceivedDonations()
+          DonationService.getReceivedDonations(),
+          OngsProfileService.getMyAsaasKycStatus().catch((error) => {
+            console.error("Erro ao consultar status KYC no Asaas:", error);
+            return null;
+          }),
         ]);
 
         setReviews(Array.isArray(reviewsRes.data) ? reviewsRes.data : []);
         setDonations(donationsData);
+        if (kycRes) {
+          applyKycSummary(kycRes);
+        }
+      } else {
+        const kycRes = await OngsProfileService.getMyAsaasKycStatus().catch((error) => {
+          console.error("Erro ao consultar status KYC no Asaas:", error);
+          return null;
+        });
+        if (kycRes) {
+          applyKycSummary(kycRes);
+        }
       }
     } catch (error) {
       console.error("Erro ao carregar dados do dashboard:", error);
@@ -242,6 +297,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
 
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-32">
+      <Toaster position="top-center" />
       {(!ong?.hasEstatuto || !ong?.hasAta) && (
         <button
           onClick={() => setIsDocsModalOpen(true)}
@@ -361,20 +417,40 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
               <AlertTriangle size={14} strokeWidth={2.5} className="sm:w-4 sm:h-4 text-red-600" />
               Restringida
             </button>
-          ) : (ong.verificationStatus !== 'verified' || ong.asaasAccountStatus !== 'approved') ? (
+          ) : (ong.verificationStatus !== 'verified' || effectiveAsaasStatus !== 'approved') ? (
             <button
               onClick={() => setShowPendingModal(true)}
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-amber-100 text-amber-700 text-xs sm:text-sm font-bold shadow-sm hover:bg-amber-200 hover:scale-[1.02] transition-all active:scale-95 shrink-0 cursor-pointer translate-y-0.5 sm:translate-y-1"
+              className={`inline-flex items-center justify-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold shadow-sm hover:scale-[1.02] transition-all active:scale-95 shrink-0 cursor-pointer translate-y-0.5 sm:translate-y-1 ${
+                effectiveAsaasStatus === 'rejected'
+                  ? "bg-rose-100 text-rose-700 hover:bg-rose-200"
+                  : isAsaasMissingProfile
+                    ? "bg-purple-100 text-[#6B39A7] hover:bg-purple-200"
+                    : "bg-amber-100 text-amber-700 hover:bg-amber-200"
+              }`}
               title={
-                ong.verificationStatus === 'verified'
-                  ? "Aguardando aprovação do serviço de pagamentos (Asaas)"
-                  : "Sua conta está em análise de auditoria e conformidade"
+                isAsaasMissingProfile
+                  ? "Complete endereço e telefone no perfil para abrir a subconta no Asaas"
+                  : effectiveAsaasStatus === 'rejected'
+                    ? "Há pendências documentais recusadas no Asaas"
+                    : ong.verificationStatus === 'verified'
+                      ? "Aguardando aprovação do serviço de pagamentos (Asaas)"
+                      : "Sua conta está em análise de auditoria e conformidade"
               }
             >
-              <Clock size={14} strokeWidth={3} className="sm:w-4 sm:h-4" />
-              {ong.verificationStatus === 'verified' ? "Aprovação Bancária" : "Em Análise"}
+              {effectiveAsaasStatus === 'rejected' ? (
+                <ShieldAlert size={14} strokeWidth={2.5} className="sm:w-4 sm:h-4" />
+              ) : (
+                <Clock size={14} strokeWidth={3} className="sm:w-4 sm:h-4" />
+              )}
+              {isAsaasMissingProfile
+                ? "Completar Cadastro"
+                : effectiveAsaasStatus === 'rejected'
+                  ? "Ajuste Bancário (KYC)"
+                  : ong.verificationStatus === 'verified'
+                    ? "Aprovação Bancária"
+                    : "Em Análise"}
             </button>
-          ) : (ong.verificationStatus === 'verified' && ong.asaasAccountStatus === 'approved') ? (
+          ) : (ong.verificationStatus === 'verified' && effectiveAsaasStatus === 'approved') ? (
             <motion.img
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -428,6 +504,18 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
             </button>
           </div>
         )}
+
+        <div className="mt-6">
+          <OngAsaasKycCard
+            ong={ong}
+            summary={kycSummary}
+            loadingSummary={loadingKycSummary}
+            onRefreshSummary={loadKycSummary}
+            onSummaryUpdated={applyKycSummary}
+            onCompleteProfile={() => router.push('/ong-profilesetup')}
+            onOpenLegacyDocsModal={() => setIsDocsModalOpen(true)}
+          />
+        </div>
 
         <div className="mt-8 grid grid-cols-1 gap-4">
           <div className="p-4 sm:p-6 rounded-2xl bg-white shadow-md border border-gray-100">
@@ -774,21 +862,73 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
               </div>
 
               <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 tracking-tight">
-                {ong.verificationStatus === 'verified' && ong.asaasAccountStatus !== 'approved'
-                  ? "Homologação de Pagamento"
-                  : "Conta em Análise"}
+                {isAsaasMissingProfile
+                  ? "Complete Seu Cadastro Bancário"
+                  : effectiveAsaasStatus === 'rejected'
+                    ? "Pendência na Homologação Bancária"
+                    : ong.verificationStatus === 'verified' && effectiveAsaasStatus !== 'approved'
+                      ? "Homologação de Pagamento"
+                      : "Conta em Análise"}
               </h2>
-              <p className="text-base sm:text-lg text-slate-600 font-medium leading-relaxed mb-8 px-2">
-                {ong.verificationStatus === 'verified' && ong.asaasAccountStatus !== 'approved' ? (
+              <div className="text-base sm:text-lg text-slate-600 font-medium leading-relaxed mb-8 px-2 space-y-3">
+                {isAsaasMissingProfile ? (
                   <>
-                    Sua instituição já foi <strong className="text-emerald-700 font-bold">aprovada pela auditoria do DoeCerto</strong>! No momento, sua subconta exclusiva está em fase de homologação cadastral pelo <strong className="text-amber-600 font-bold">serviço de pagamentos da plataforma (Asaas)</strong>. Assim que a aprovação bancária for concluída (prazo médio de 1 a 2 dias úteis), sua ONG será publicada na vitrine oficial e liberada para receber doações via Pix diretamente.
+                    <p>
+                      Sua instituição já foi <strong className="text-emerald-700 font-bold">aprovada pela auditoria do DoeCerto</strong>! Para abrir automaticamente sua subconta no <strong className="text-[#6B39A7] font-bold">Asaas</strong>, falta apenas completar seu endereço e telefone em Editar Perfil.
+                    </p>
+                    {kycSummary?.missingFields && kycSummary.missingFields.length > 0 && (
+                      <p className="text-sm text-purple-900 bg-purple-50 border border-purple-200 rounded-xl p-3">
+                        Campos pendentes: <strong>{kycSummary.missingFields.join(", ")}</strong>.
+                      </p>
+                    )}
                   </>
+                ) : effectiveAsaasStatus === 'rejected' ? (
+                  <>
+                    <p>
+                      O <strong className="text-rose-700 font-bold">serviço de pagamentos (Asaas)</strong> solicitou ajustes nos documentos da sua subconta antes de liberar os recebimentos via Pix.
+                    </p>
+                    {kycSummary?.rejectReasons && (
+                      <p className="text-sm text-rose-900 bg-rose-50 border border-rose-200 rounded-xl p-3">
+                        Motivo: <strong>{kycSummary.rejectReasons}</strong>
+                      </p>
+                    )}
+                  </>
+                ) : ong.verificationStatus === 'verified' && effectiveAsaasStatus !== 'approved' ? (
+                  <p>
+                    Sua instituição já foi <strong className="text-emerald-700 font-bold">aprovada pela auditoria do DoeCerto</strong>! No momento, sua subconta exclusiva está em fase de homologação cadastral (KYC) pelo <strong className="text-amber-600 font-bold">serviço de pagamentos da plataforma (Asaas)</strong>. Após o envio dos documentos/selfie solicitados no card abaixo, a análise leva em média <strong className="text-slate-800">1 a 2 dias úteis</strong>.
+                  </p>
                 ) : (
-                  <>
-                    O seu perfil já está criado! Neste momento, nosso time de <strong className="text-amber-600 font-bold">Compliance e Auditoria</strong> e o <strong className="text-amber-600 font-bold">serviço de pagamentos da plataforma (Asaas)</strong> estão avaliando as informações e a documentação cadastral da sua instituição. Aguarde a homologação oficial para sua ONG ser exibida na vitrine e começar a receber doações.
-                  </>
+                  <p>
+                    O seu perfil já está criado! Neste momento, nosso time de <strong className="text-amber-600 font-bold">Compliance e Auditoria</strong> está avaliando as informações da sua instituição. Assim que aprovado, sua subconta no Asaas será criada automaticamente.
+                  </p>
                 )}
-              </p>
+              </div>
+
+              {isAsaasMissingProfile && (
+                <button
+                  onClick={() => {
+                    setShowPendingModal(false);
+                    router.push('/ong-profilesetup');
+                  }}
+                  className="w-full mb-3 py-4 bg-[#6B39A7] hover:bg-[#582a8c] text-white rounded-2xl font-bold text-base shadow-lg shadow-purple-200 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <span>Completar Endereço e Telefone</span>
+                  <ArrowRight size={18} />
+                </button>
+              )}
+
+              {ong.verificationStatus === 'verified' && kycSummary?.onboardingUrl && (
+                <a
+                  href={kycSummary.onboardingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setShowPendingModal(false)}
+                  className="w-full mb-3 py-4 bg-[#6B39A7] hover:bg-[#582a8c] text-white rounded-2xl font-bold text-base shadow-lg shadow-purple-200 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <span>Abrir Selfie / Validação no Asaas</span>
+                  <ExternalLink size={18} />
+                </a>
+              )}
 
               {(!ong?.hasEstatuto || !ong?.hasAta) && (
                 <button
@@ -885,6 +1025,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
             hasEstatuto: true,
             hasAta: true,
           }));
+          void loadKycSummary();
         }}
       />
 

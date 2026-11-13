@@ -28,6 +28,9 @@ import {
   approveOng,
   rejectOng,
   syncOngAsaas,
+  syncPendingAsaasBatch,
+  getOngAsaasKycStatus,
+  type OngAsaasKycSummary,
   type OngAdminData,
   type OngStatus
 } from '@/services/admin.service';
@@ -52,8 +55,54 @@ const StatusBadge = ({ status }: { status: string }) => {
 };
 
 // --- SUB-COMPONENTE: BADGE DE STATUS ASAAS ---
-const AsaasBadge = ({ status, walletId }: { status?: string; walletId?: string }) => {
+const AsaasBadge = ({
+  status,
+  walletId,
+  hasCompleteProfile,
+  verificationStatus,
+}: {
+  status?: string;
+  walletId?: string;
+  hasCompleteProfile?: boolean;
+  verificationStatus?: string;
+}) => {
   if (!walletId || status === 'not_created') {
+    if (hasCompleteProfile === false) {
+      return (
+        <span
+          title="Falta endereço completo ou telefone com DDD no perfil da ONG"
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200"
+        >
+          <span className="w-2 h-2 rounded-full bg-slate-400" />
+          Aguardando Perfil
+        </span>
+      );
+    }
+
+    if (hasCompleteProfile && (verificationStatus === 'approved' || verificationStatus === 'verified')) {
+      return (
+        <span
+          title="Perfil completo e ONG aprovada: clique em sincronizar ou aguarde provisionamento"
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200"
+        >
+          <span className="w-2 h-2 rounded-full bg-purple-500" />
+          Pronta p/ Criar Subconta
+        </span>
+      );
+    }
+
+    if (hasCompleteProfile) {
+      return (
+        <span
+          title="Perfil completo: subconta será criada automaticamente ao aprovar"
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200"
+        >
+          <span className="w-2 h-2 rounded-full bg-indigo-500" />
+          Pronta após Aprovação
+        </span>
+      );
+    }
+
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
         <span className="w-2 h-2 rounded-full bg-slate-400" />
@@ -158,12 +207,33 @@ const ApproveModal = ({ isOpen, onClose, onConfirm, ong, status }: any) => {
               A homologação bancária já foi concluída com sucesso. Ao aprovar, a ONG ficará imediatamente apta a receber doações Pix na plataforma.
             </div>
           </div>
-        ) : (
+        ) : ong?.asaasWalletId ? (
           <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-2xl text-xs sm:text-sm font-bold mb-6 text-left leading-relaxed flex items-start gap-3">
             <Clock size={20} className="text-amber-600 shrink-0 mt-0.5" />
             <div>
               <span className="font-black block text-amber-900">Aviso: Subconta Asaas em Homologação</span>
-              A subconta Asaas desta ONG ainda está em análise pelo gateway (prazo de 1 a 2 dias úteis). Você pode aprovar o compliance agora; a ONG só aparecerá no catálogo público quando o Asaas homologar a subconta.
+              A subconta Asaas desta ONG já existe e está em análise pelo gateway (prazo de 1 a 2 dias úteis). Ao aprovar o compliance agora, a ONG só aparecerá na vitrine quando o Asaas homologar a subconta.
+            </div>
+          </div>
+        ) : ong?.hasCompleteAsaasProfileData ? (
+          <div className="bg-purple-50 border border-purple-200 text-purple-900 p-4 rounded-2xl text-xs sm:text-sm font-bold mb-6 text-left leading-relaxed flex items-start gap-3">
+            <CheckCircle size={20} className="text-purple-600 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-black block text-purple-950">Subconta Asaas será criada automaticamente</span>
+              A ONG já preencheu endereço e telefone válidos! Ao aprovar agora, o sistema criará a subconta no Asaas imediatamente para iniciar a análise bancária (1 a 2 dias úteis).
+            </div>
+          </div>
+        ) : (
+          <div className="bg-amber-50 border border-amber-200 text-amber-900 p-4 rounded-2xl text-xs sm:text-sm font-bold mb-6 text-left leading-relaxed flex items-start gap-3">
+            <AlertTriangle size={20} className="text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-black block text-amber-950">Aviso: Perfil Incompleto para Subconta Asaas</span>
+              Você já pode aprovar o compliance agora; a subconta será criada automaticamente assim que a ONG preencher:{" "}
+              <span className="underline">
+                {ong?.missingAsaasProfileFields?.length
+                  ? ong.missingAsaasProfileFields.join(', ')
+                  : 'endereço completo e telefone com DDD'}
+              </span>.
             </div>
           </div>
         )}
@@ -216,16 +286,72 @@ const RejectModal = ({ isOpen, onClose, onConfirm, reason, setReason }: any) => 
 // --- SUB-COMPONENTE: MODAL DE DETALHES ---
 const DetailsModal = ({ ong, onClose, status, onApproveClick, onRejectClick, onOngUpdated }: any) => {
   const [isSyncingAsaas, setIsSyncingAsaas] = useState(false);
+  const [loadingKyc, setLoadingKyc] = useState(false);
+  const [kycState, setKycState] = useState<{
+    ongId: number;
+    summary: OngAsaasKycSummary;
+  } | null>(null);
+
+  const targetOngId = ong?.id || ong?.userId;
+  const kycSummary =
+    kycState && targetOngId && kycState.ongId === targetOngId
+      ? kycState.summary
+      : null;
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!targetOngId) return;
+
+    Promise.resolve()
+      .then(() => {
+        if (!cancelled) setLoadingKyc(true);
+        return getOngAsaasKycStatus(targetOngId);
+      })
+      .then((summary) => {
+        if (!cancelled) {
+          setKycState({ ongId: targetOngId, summary });
+        }
+      })
+      .catch(() => {
+        // Falha silenciosa ao abrir; botão manual continua disponível
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadingKyc(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [targetOngId]);
+
   if (!ong) return null;
+
+  const effectiveWalletId = kycSummary?.asaasWalletId ?? ong.asaasWalletId;
+  const effectiveAsaasStatus = (
+    kycSummary?.asaasAccountStatus ||
+    ong.asaasAccountStatus ||
+    'pending'
+  ).toLowerCase();
+  const hasSubaccount = kycSummary?.hasSubaccount ?? Boolean(effectiveWalletId);
+  const effectiveCompleteProfile =
+    kycSummary?.hasCompleteProfileData ?? ong.hasCompleteAsaasProfileData;
+  const effectiveMissingFields =
+    kycSummary?.missingFields ?? ong.missingAsaasProfileFields ?? [];
 
   const handleSyncAsaas = async () => {
     setIsSyncingAsaas(true);
     try {
-      const res = await syncOngAsaas(ong.id || ong.userId);
-      toast.success('Status do Asaas sincronizado!');
-      if (res) {
-        ong.asaasWalletId = res.asaasWalletId;
-        ong.asaasAccountStatus = res.asaasAccountStatus;
+      const res = await syncOngAsaas(targetOngId);
+      const freshSummary = await getOngAsaasKycStatus(targetOngId).catch(() => null);
+      if (freshSummary) {
+        setKycState({ ongId: targetOngId, summary: freshSummary });
+      }
+      if (res && res.asaasWalletId && !res.webhookConfigured) {
+        toast.success('Subconta sincronizada (verifique configuração do webhook no ambiente).');
+      } else {
+        toast.success('Status do Asaas sincronizado!');
       }
       if (onOngUpdated) onOngUpdated();
     } catch (err: any) {
@@ -372,19 +498,33 @@ const DetailsModal = ({ ong, onClose, status, onApproveClick, onRejectClick, onO
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-2xl bg-white border border-slate-100 space-y-1">
-                <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">Homologação Bancária</span>
-                {ong.asaasAccountStatus === 'approved' ? (
+              <div className="p-4 rounded-2xl bg-white border border-slate-100 space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">Homologação Bancária</span>
+                  {loadingKyc && <span className="text-[11px] font-bold text-slate-400">Consultando gateway...</span>}
+                </div>
+                {effectiveAsaasStatus === 'approved' && hasSubaccount ? (
                   <p className="text-sm font-bold text-emerald-700 flex items-center gap-1.5">
                     <CheckCircle size={16} className="shrink-0 text-emerald-600" /> Subconta Aprovada e Ativa (Apta a receber doações Pix)
                   </p>
-                ) : ong.asaasWalletId ? (
+                ) : effectiveAsaasStatus === 'rejected' && hasSubaccount ? (
+                  <p className="text-sm font-bold text-red-700 flex items-center gap-1.5">
+                    <XCircle size={16} className="shrink-0 text-red-600" /> Homologação Recusada no Asaas (Aguardando ajustes)
+                  </p>
+                ) : hasSubaccount ? (
                   <p className="text-sm font-bold text-amber-700 flex items-center gap-1.5">
                     <Clock size={16} className="shrink-0 text-amber-600 animate-pulse" /> Em Análise pelo Asaas (Prazo: 1 a 2 dias úteis)
                   </p>
+                ) : effectiveCompleteProfile === false ? (
+                  <p className="text-sm font-bold text-slate-700 flex items-center gap-1.5">
+                    <AlertTriangle size={16} className="shrink-0 text-amber-500" /> Subconta aguardando perfil completo ({effectiveMissingFields.join(', ') || 'endereço/telefone'})
+                  </p>
                 ) : (
-                  <p className="text-sm font-bold text-slate-600 flex items-center gap-1.5">
-                    <AlertTriangle size={16} className="shrink-0 text-slate-500" /> Subconta não provisionada (Clique em Sincronizar)
+                  <p className="text-sm font-bold text-purple-700 flex items-center gap-1.5">
+                    <AlertTriangle size={16} className="shrink-0 text-purple-500" />
+                    {status === 'approved'
+                      ? 'Perfil completo — clique em "Sincronizar Status Asaas" para criar agora'
+                      : 'Perfil completo — subconta será criada automaticamente após aprovação'}
                   </p>
                 )}
               </div>
@@ -393,14 +533,14 @@ const DetailsModal = ({ ong, onClose, status, onApproveClick, onRejectClick, onO
                 <div>
                   <span className="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Subconta Wallet ID</span>
                   <p className="text-xs sm:text-sm font-mono font-bold text-slate-800 break-all">
-                    {ong.asaasWalletId || 'Não gerado'}
+                    {effectiveWalletId || 'Não gerado'}
                   </p>
                 </div>
-                {ong.asaasWalletId && (
+                {effectiveWalletId && (
                   <button
                     type="button"
                     onClick={() => {
-                      navigator.clipboard.writeText(ong.asaasWalletId);
+                      navigator.clipboard.writeText(effectiveWalletId);
                       toast.success('Wallet ID copiado!');
                     }}
                     className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors shrink-0 ml-2"
@@ -411,6 +551,106 @@ const DetailsModal = ({ ong, onClose, status, onApproveClick, onRejectClick, onO
                 )}
               </div>
             </div>
+
+            {kycSummary?.rejectReasons && (
+              <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-xs sm:text-sm text-red-900">
+                <span className="font-black block text-red-800 mb-1">Motivo da Recusa (Asaas):</span>
+                <span className="font-medium whitespace-pre-line">{kycSummary.rejectReasons}</span>
+              </div>
+            )}
+
+            {kycSummary?.pendingInitialization && (
+              <div className="p-3.5 rounded-2xl bg-sky-50 border border-sky-200 text-xs sm:text-sm text-sky-900 font-semibold">
+                Subconta recém-criada: o Asaas ainda está finalizando a validação inicial na Receita Federal (~15s a alguns minutos) antes de listar os documentos KYC.
+              </div>
+            )}
+
+            {kycSummary?.gatewayStatus && (
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="px-3 py-1 rounded-xl bg-white border border-slate-200 font-bold text-slate-700">
+                  Geral: {kycSummary.gatewayStatus.general}
+                </span>
+                {kycSummary.gatewayStatus.commercialInfo && (
+                  <span className="px-3 py-1 rounded-xl bg-white border border-slate-200 font-bold text-slate-700">
+                    Comercial: {kycSummary.gatewayStatus.commercialInfo}
+                  </span>
+                )}
+                {kycSummary.gatewayStatus.documentation && (
+                  <span className="px-3 py-1 rounded-xl bg-white border border-slate-200 font-bold text-slate-700">
+                    Docs: {kycSummary.gatewayStatus.documentation}
+                  </span>
+                )}
+                {kycSummary.gatewayStatus.bankAccountInfo && (
+                  <span className="px-3 py-1 rounded-xl bg-white border border-slate-200 font-bold text-slate-700">
+                    Banco: {kycSummary.gatewayStatus.bankAccountInfo}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {kycSummary?.onboardingUrl && (
+              <div className="p-4 rounded-2xl bg-purple-50 border border-purple-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <span className="text-xs font-black text-purple-900 uppercase tracking-wider block">
+                    Link de Selfie / Onboarding Asaas (p/ ONG)
+                  </span>
+                  <p className="text-xs font-mono text-purple-800 truncate mt-0.5">{kycSummary.onboardingUrl}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(kycSummary.onboardingUrl!);
+                      toast.success('Link de validação Asaas copiado!');
+                    }}
+                    className="px-3 py-2 bg-white hover:bg-purple-100 text-purple-800 border border-purple-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Copy size={13} /> Copiar Link
+                  </button>
+                  <a
+                    href={kycSummary.onboardingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  >
+                    Abrir <ExternalLink size={13} />
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {kycSummary?.documents && kycSummary.documents.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">
+                  Documentos KYC no Gateway ({kycSummary.documents.length})
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {kycSummary.documents.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="p-3 rounded-2xl bg-white border border-slate-200 flex items-center justify-between gap-2 text-xs"
+                    >
+                      <span className="font-bold text-slate-800 truncate">
+                        {doc.title || doc.type}
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full font-black uppercase text-[10px] shrink-0 ${
+                          doc.status === 'APPROVED'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : doc.status === 'REJECTED'
+                              ? 'bg-red-100 text-red-700'
+                              : doc.status === 'PENDING'
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        {doc.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Dossiê de Integridade & Compliance */}
@@ -534,6 +774,7 @@ export default function OngTableWithAPI({ status, onClose, onUpdate }: any) {
   const [ongToApprove, setOngToApprove] = useState<any>(null);
   const [ongToRejectId, setOngToRejectId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [isBatchSyncing, setIsBatchSyncing] = useState(false);
 
   const itemsPerPage = 10;
 
@@ -618,6 +859,31 @@ export default function OngTableWithAPI({ status, onClose, onUpdate }: any) {
     }
   };
 
+  const handleBatchSyncAsaas = async () => {
+    if (isBatchSyncing) return;
+    setIsBatchSyncing(true);
+    try {
+      const res = await syncPendingAsaasBatch(50);
+      if (res.processed === 0) {
+        toast.success('Todas as ONGs aprovadas já estão sincronizadas com subconta ativa!');
+      } else {
+        const msg = `Lote Asaas: ${res.created} criada(s), ${res.synced} sincronizada(s), ${res.skippedIncomplete} sem perfil completo, ${res.failed} falha(s).`;
+        if (res.failed > 0 && res.created === 0 && res.synced === 0) {
+          toast.error(msg);
+        } else {
+          toast.success(msg);
+        }
+      }
+      reloadOngs();
+      if (onUpdate) onUpdate();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao sincronizar subcontas Asaas em lote';
+      toast.error(msg);
+    } finally {
+      setIsBatchSyncing(false);
+    }
+  };
+
   const config = {
     pending: { title: 'ONGs Pendentes', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
     approved: { title: 'ONGs Aprovadas', color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200' },
@@ -635,6 +901,18 @@ export default function OngTableWithAPI({ status, onClose, onUpdate }: any) {
             <p className="text-xs font-black text-gray-400 uppercase tracking-widest mt-1">Total: {total}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
+            {(status === 'approved' || status === 'restricted') && (
+              <button
+                type="button"
+                disabled={isBatchSyncing}
+                onClick={handleBatchSyncAsaas}
+                className="px-4 py-2.5 rounded-xl bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 text-sm font-bold transition-all shadow-sm flex items-center gap-2 disabled:opacity-60 cursor-pointer"
+                title="Provisiona e sincroniza subcontas Asaas de ONGs aprovadas pendentes (em lote)"
+              >
+                <RefreshCw size={15} className={isBatchSyncing ? 'animate-spin' : ''} />
+                {isBatchSyncing ? 'Sincronizando Lote...' : 'Sincronizar Pendentes em Lote'}
+              </button>
+            )}
             <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
               <div className="relative">
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -706,7 +984,12 @@ export default function OngTableWithAPI({ status, onClose, onUpdate }: any) {
                   <td className="px-8 py-5 text-sm text-gray-600 font-bold">{ong.email}</td>
                   <td className="px-8 py-5 text-sm text-gray-600 font-bold">{ong.cnpj}</td>
                   <td className="px-8 py-5">
-                    <AsaasBadge status={ong.asaasAccountStatus} walletId={ong.asaasWalletId} />
+                    <AsaasBadge
+                      status={ong.asaasAccountStatus}
+                      walletId={ong.asaasWalletId}
+                      hasCompleteProfile={ong.hasCompleteAsaasProfileData}
+                      verificationStatus={ong.status}
+                    />
                   </td>
                   <td className="px-8 py-5">
                     <div className="flex items-center justify-end gap-3">

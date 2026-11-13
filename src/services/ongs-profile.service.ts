@@ -2,6 +2,55 @@ import { api } from './api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+export interface OngAsaasKycSubDocument {
+  id: string;
+  status: string;
+}
+
+export interface OngAsaasKycDocument {
+  id: string;
+  status: 'NOT_SENT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'IGNORED' | string;
+  type: string;
+  title?: string;
+  description?: string;
+  onboardingUrl?: string | null;
+  onboardingUrlExpirationDate?: string | null;
+  responsible?: {
+    name?: string;
+    type?: string;
+  };
+  documents?: OngAsaasKycSubDocument[];
+  canUploadViaApi: boolean;
+}
+
+export interface OngAsaasKycSummary {
+  ongId: number;
+  verificationStatus: string;
+  hasSubaccount: boolean;
+  asaasAccountId: string | null;
+  asaasWalletId: string | null;
+  asaasAccountStatus: string;
+  hasCompleteProfileData: boolean;
+  missingFields: string[];
+  gatewayStatus: {
+    general: string;
+    commercialInfo?: string;
+    bankAccountInfo?: string;
+    documentation?: string;
+  } | null;
+  onboardingUrl: string | null;
+  documents: OngAsaasKycDocument[];
+  rejectReasons: string | null;
+  pendingInitialization: boolean;
+}
+
+export interface SendAsaasKycDocumentResponse {
+  id?: string;
+  status?: string;
+  sent: boolean;
+  summary: OngAsaasKycSummary;
+}
+
 export const OngsProfileService = {
   _formatImageUrl(path: string | null) {
     if (!path) return "";
@@ -111,5 +160,31 @@ export const OngsProfileService = {
       method: "POST",
       body: formData,
     });
+  },
+
+  async getMyAsaasKycStatus(): Promise<OngAsaasKycSummary> {
+    const { data } = await api<OngAsaasKycSummary>('/ongs/me/asaas-status');
+    return data;
+  },
+
+  async submitAsaasKycDocument(
+    documentGroupId: string,
+    file: File,
+    type?: string,
+  ): Promise<SendAsaasKycDocumentResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (type) {
+      formData.append('type', type);
+    }
+
+    const { data } = await api<SendAsaasKycDocumentResponse>(
+      `/ongs/me/asaas-documents/${encodeURIComponent(documentGroupId)}`,
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
+    return data;
   },
 };

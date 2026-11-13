@@ -13,7 +13,7 @@ import {
   ShieldAlert,
   FileSearch
 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import MetricsPanel from '../specific/Adm-Dashboard/dashboard-metrics/MetricsPanel';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -118,6 +118,7 @@ export default function AdminLayout({
 
   return (
     <div className="flex h-screen bg-white font-sans text-gray-800 overflow-hidden">
+      <Toaster position="top-center" />
       {/* Sidebar Desktop */}
       <aside className="hidden md:flex w-72 bg-[#6B39A7] text-white flex-col shrink-0 shadow-2xl z-20">
         {sidebarContent}

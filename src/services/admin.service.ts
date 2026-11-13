@@ -1,4 +1,7 @@
 import { api } from "./api";
+import type { OngAsaasKycDocument, OngAsaasKycSummary } from "./ongs-profile.service";
+
+export type { OngAsaasKycDocument, OngAsaasKycSummary };
 
 // --- Tipos ---
 export type OngStatus = 'pending' | 'approved' | 'rejected' | 'restricted';
@@ -23,8 +26,11 @@ export interface OngAdminData {
   isRestricted?: boolean;
   lastAuditAt?: string;
   auditResults?: Record<string, unknown>[];
+  asaasAccountId?: string;
   asaasWalletId?: string;
   asaasAccountStatus?: string;
+  hasCompleteAsaasProfileData?: boolean;
+  missingAsaasProfileFields?: string[];
 }
 
 type RawRecord = Record<string, unknown>;
@@ -56,8 +62,16 @@ function normalizeOng(raw: RawRecord, status: OngStatus): OngAdminData {
     isRestricted: data.isRestricted as boolean | undefined,
     lastAuditAt: data.lastAuditAt as string | undefined,
     auditResults: data.auditResults as Record<string, unknown>[] | undefined,
-    asaasWalletId: data.asaasWalletId as string | undefined,
+    asaasAccountId: (data.asaasAccountId as string | null | undefined) ?? undefined,
+    asaasWalletId: (data.asaasWalletId as string | null | undefined) ?? undefined,
     asaasAccountStatus: data.asaasAccountStatus as string | undefined,
+    hasCompleteAsaasProfileData:
+      typeof data.hasCompleteAsaasProfileData === 'boolean'
+        ? data.hasCompleteAsaasProfileData
+        : undefined,
+    missingAsaasProfileFields: Array.isArray(data.missingAsaasProfileFields)
+      ? (data.missingAsaasProfileFields as string[])
+      : undefined,
   };
 }
 
@@ -221,6 +235,24 @@ export interface SyncOngAsaasResponse {
   asaasAccountId: string | null;
   asaasWalletId: string | null;
   asaasAccountStatus: string;
+  webhookConfigured?: boolean;
+}
+
+export interface SyncAsaasBatchDetail {
+  ongId: number;
+  name: string;
+  outcome: 'created' | 'synced' | 'skipped_incomplete' | 'failed';
+  missingFields?: string[];
+  error?: string;
+}
+
+export interface SyncAsaasBatchResponse {
+  processed: number;
+  created: number;
+  synced: number;
+  skippedIncomplete: number;
+  failed: number;
+  details: SyncAsaasBatchDetail[];
 }
 
 export async function getMyProfile() {
@@ -232,6 +264,19 @@ export async function syncOngAsaas(ongId: number) {
   const { data } = await api<SyncOngAsaasResponse>(`/ongs/${ongId}/sync-asaas`, {
     method: "POST",
   });
+  return data;
+}
+
+export async function syncPendingAsaasBatch(limit?: number) {
+  const { data } = await api<SyncAsaasBatchResponse>('/ongs/sync-asaas-batch', {
+    method: "POST",
+    body: JSON.stringify(limit ? { limit } : {}),
+  });
+  return data;
+}
+
+export async function getOngAsaasKycStatus(ongId: number) {
+  const { data } = await api<OngAsaasKycSummary>(`/ongs/${ongId}/asaas-status`);
   return data;
 }
 
