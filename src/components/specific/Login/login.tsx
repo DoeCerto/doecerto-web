@@ -201,32 +201,11 @@ function AuthenticatorTutorialModal({
 }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [dontShowAgain, setDontShowAgain] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return localStorage.getItem("hide2FATutorial") === "true";
-    } catch {
-      return false;
-    }
-  });
 
   const handleCloseModal = () => {
     setStepIndex(0);
     setIsTransitioning(false);
     onClose();
-  };
-
-  const handleToggleDontShowAgain = (checked: boolean) => {
-    setDontShowAgain(checked);
-    try {
-      if (checked) {
-        localStorage.setItem("hide2FATutorial", "true");
-      } else {
-        localStorage.removeItem("hide2FATutorial");
-      }
-    } catch {
-      /* noop */
-    }
   };
 
   useEffect(() => {
@@ -368,7 +347,7 @@ function AuthenticatorTutorialModal({
         </div>
 
         {/* FOOTER */}
-        <div className="border-t border-gray-100 p-5 sm:p-6 bg-gray-50/50 flex flex-col gap-4 shrink-0">
+        <div className="border-t border-gray-100 p-5 sm:p-6 bg-gray-50/50 shrink-0">
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
@@ -404,18 +383,6 @@ function AuthenticatorTutorialModal({
               </button>
             )}
           </div>
-
-          <label className="flex items-center justify-center gap-2.5 py-0.5 text-gray-600 hover:text-gray-800 cursor-pointer select-none transition-colors group">
-            <input
-              type="checkbox"
-              checked={dontShowAgain}
-              onChange={(e) => handleToggleDontShowAgain(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 text-[#6B39A7] focus:ring-[#6B39A7] cursor-pointer accent-[#6B39A7]"
-            />
-            <span className="text-sm font-semibold group-hover:underline">
-              Não mostrar este guia automaticamente
-            </span>
-          </label>
         </div>
       </div>
     </div>
@@ -605,14 +572,8 @@ function LoginContent() {
       setError2FA(null);
       setShowManualKey(false);
       setSetupSubStep("qr");
+      setIs2FATutorialOpen(false);
       setStep("2fa_setup");
-      try {
-        if (localStorage.getItem("hide2FATutorial") !== "true") {
-          setIs2FATutorialOpen(true);
-        }
-      } catch {
-        /* noop */
-      }
       setIsPending(false);
       setIsGooglePending(false);
       await load2FASetup(data.tempToken);
