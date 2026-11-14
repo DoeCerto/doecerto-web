@@ -114,6 +114,7 @@ export default function HomeClient({
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
   const [guestModal, setGuestModal] = useState<{ isOpen: boolean; type: 'donate' | 'location' }>({ isOpen: false, type: 'donate' });
+  const [hasUserAddress, setHasUserAddress] = useState<boolean | null>(null);
 
   const [premiumOngs, setPremiumOngs] = useState<Ong[]>(() => {
     const section = initialCatalog?.find((s) => s.type === 'topRated');
@@ -186,57 +187,66 @@ export default function HomeClient({
             localStorage.setItem("userAvatar", profile.avatarUrl);
             document.cookie = `user_avatar=${encodeURIComponent(profile.avatarUrl)}; path=/; max-age=604800; SameSite=Lax`;
           }
+        }
 
-          type NearbyOngItem = {
-            id: number;
-            name: string;
-            avatarUrl?: string | null;
-            distance: string | number;
-            averageRating?: string | number | null;
+        type NearbyOngItem = {
+          id: number;
+          name: string;
+          avatarUrl?: string | null;
+          distance: string | number;
+          averageRating?: string | number | null;
+        };
+
+        let nearbyData: { data?: NearbyOngItem[] } | null = null;
+        try {
+          const response = await api<{ data?: NearbyOngItem[] } | null>("/ongs/nearby");
+          nearbyData = response.data;
+          if (isMounted) setHasUserAddress(true);
+        } catch (err: any) {
+          if (isMounted && (err?.status === 400 || err?.statusCode === 400)) {
+            setHasUserAddress(false);
+          }
+        }
+
+        if (!isMounted) return;
+
+        if (nearbyData?.data) {
+          const nearbyItems = nearbyData.data;
+
+          const applyDistances = (list: Ong[]) => {
+            return list.map(ong => {
+              const found = nearbyItems.find((n) => n.id === ong.id);
+              if (found) {
+                return {
+                  ...ong,
+                  distance: formatDistance(found.distance),
+                  rawDistance: parseFloat(String(found.distance))
+                };
+              }
+              return ong;
+            });
           };
 
-          const { data: nearbyData } = await api<{ data?: NearbyOngItem[] } | null>("/ongs/nearby").catch(() => ({ data: null }));
+          setPremiumOngs(prev => applyDistances(prev));
 
-          if (!isMounted) return;
+          setAllOngs(prev => {
+            const updatedList = applyDistances(prev);
 
-          if (nearbyData?.data) {
-            const nearbyItems = nearbyData.data;
+            const newItems = nearbyItems
+              .filter((n) => !updatedList.some(o => o.id === n.id))
+              .map((n) => ({
+                id: n.id,
+                name: n.name,
+                img: OngsProfileService._formatImageUrl(n.avatarUrl ?? null),
+                distance: formatDistance(n.distance),
+                rawDistance: parseFloat(String(n.distance)),
+                rating: (parseFloat(String(n.averageRating || 0)) || 0).toFixed(1),
+                rawRating: parseFloat(String(n.averageRating || 0)) || 0,
+                categories: [],
+              }));
 
-            const applyDistances = (list: Ong[]) => {
-              return list.map(ong => {
-                const found = nearbyItems.find((n) => n.id === ong.id);
-                if (found) {
-                  return {
-                    ...ong,
-                    distance: formatDistance(found.distance),
-                    rawDistance: parseFloat(String(found.distance))
-                  };
-                }
-                return ong;
-              });
-            };
-
-            setPremiumOngs(prev => applyDistances(prev));
-
-            setAllOngs(prev => {
-              const updatedList = applyDistances(prev);
-
-              const newItems = nearbyItems
-                .filter((n) => !updatedList.some(o => o.id === n.id))
-                .map((n) => ({
-                  id: n.id,
-                  name: n.name,
-                  img: OngsProfileService._formatImageUrl(n.avatarUrl ?? null),
-                  distance: formatDistance(n.distance),
-                  rawDistance: parseFloat(String(n.distance)),
-                  rating: (parseFloat(String(n.averageRating || 0)) || 0).toFixed(1),
-                  rawRating: parseFloat(String(n.averageRating || 0)) || 0,
-                  categories: [],
-                }));
-
-              return [...updatedList, ...newItems];
-            });
-          }
+            return [...updatedList, ...newItems];
+          });
         }
       } catch (err) {
         if (isMounted) console.debug("Erro ao carregar dados complementares:", err);
@@ -935,14 +945,48 @@ export default function HomeClient({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredCatalog.length === 0 ? (
-              <div className="col-span-full bg-white rounded-3xl p-12 text-center shadow-sm border border-slate-100">
-                <p className="text-slate-500 font-medium text-lg">
-                  {sortBy === 'distance'
-                    ? "Nenhuma ONG encontrada dentro do raio de 10km da sua localização."
-                    : "Nenhuma ONG encontrada com estes filtros."}
-                </p>
-                <button onClick={clearFilters} className="mt-4 text-purple-600 font-bold hover:underline cursor-pointer">Limpar filtros</button>
-              </div>
+              sortBy === 'distance' && hasUserAddress === false ? (
+                <div className="col-span-full bg-white rounded-3xl p-10 sm:p-12 text-center shadow-sm border border-slate-100 max-w-2xl mx-auto w-full">
+                  <div className="w-14 h-14 rounded-2xl bg-[#F3E8FF] text-[#6B39A7] flex items-center justify-center mx-auto mb-4">
+                    <MapPin size={26} />
+                  </div>
+                  <h3 className="text-xl font-bold text-[#140C29] mb-2">
+                    Você ainda não cadastrou seu endereço
+                  </h3>
+                  <p className="text-slate-500 text-base leading-relaxed mb-6">
+                    Para encontrarmos as ONGs mais próximas de você, precisamos saber sua localização. Complete seu endereço no perfil para habilitar a busca por proximidade.
+                  </p>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <button
+                      onClick={() =>
+                        router.push(
+                          role?.toUpperCase() === "ONG"
+                            ? "/ong-profilesetup"
+                            : "/dashboard?edit=address"
+                        )
+                      }
+                      className="bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold px-6 py-3.5 rounded-xl transition cursor-pointer"
+                    >
+                      Completar meu endereço
+                    </button>
+                    <button
+                      onClick={clearFilters}
+                      className="text-purple-600 font-bold hover:underline px-4 py-3 cursor-pointer"
+                    >
+                      Limpar filtro
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="col-span-full bg-white rounded-3xl p-12 text-center shadow-sm border border-slate-100">
+                  <p className="text-slate-500 font-medium text-lg">
+                    {sortBy === 'distance'
+                      ? "Nenhuma ONG encontrada dentro do raio de 10km da sua localização."
+                      : "Nenhuma ONG encontrada com estes filtros."}
+                  </p>
+                  <button onClick={clearFilters} className="mt-4 text-purple-600 font-bold hover:underline cursor-pointer">Limpar filtros</button>
+                </div>
+              )
             ) : (
               filteredCatalog.map((ong) => (
                 <div

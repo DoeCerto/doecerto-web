@@ -46,11 +46,12 @@ async function fetchJsonSafe(url: string, accessToken: string): Promise<{ ok: bo
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ tab?: string }>;
+  searchParams?: Promise<{ tab?: string; edit?: string }>;
 }) {
   const resolvedParams = searchParams ? await searchParams : undefined;
   const initialTab: "info" | "history" =
     resolvedParams?.tab === "history" ? "history" : "info";
+  const initialEdit = resolvedParams?.edit === "address";
 
   const cookieStore = await cookies();
   const accessToken = cookieStore.get("access_token")?.value;
@@ -146,6 +147,7 @@ export default async function DashboardPage({
       initialHistory={initialHistory}
       initialAddress={initialAddress}
       initialTab={initialTab}
+      initialEdit={initialEdit}
       hasServerProfile={hasServerProfile}
     />
   );

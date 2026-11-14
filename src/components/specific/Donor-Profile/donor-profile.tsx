@@ -37,11 +37,19 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { LgpdSecurityZone } from "@/components/specific/Lgpd/LgpdSecurityZone";
 
+function formatCpf(cpf?: string | null): string {
+  if (!cpf) return "";
+  const digits = cpf.replace(/\D/g, "");
+  if (digits.length !== 11) return cpf;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+}
+
 interface DonorProfileProps {
   initialProfile?: DonorProfileData | null;
   initialHistory?: DonationHistory[];
   initialAddress?: Address | null;
   initialTab?: "info" | "history";
+  initialEdit?: boolean;
   hasServerProfile?: boolean;
 }
 
@@ -50,6 +58,7 @@ export default function DonorProfile({
   initialHistory,
   initialAddress,
   initialTab = "info",
+  initialEdit = false,
   hasServerProfile = false,
 }: DonorProfileProps) {
   const router = useRouter();
@@ -58,7 +67,7 @@ export default function DonorProfile({
   const [showCompleteModal, setShowCompleteModal] = useState(false);
 
   const [profileImage, setProfileImage] = useState<string | null>(initialProfile?.avatarUrl ?? null);
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(Boolean(initialEdit));
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [donationHistory, setDonationHistory] = useState<DonationHistory[]>(initialHistory ?? []);
@@ -192,13 +201,46 @@ export default function DonorProfile({
     loadAllData();
   }, [hasServerProfile, initialProfile?.avatarUrl]);
 
+  useEffect(() => {
+    if (!initialEdit) return;
+    setIsEditingProfile(true);
+    setActiveTab("info");
+    const timer = setTimeout(() => {
+      document
+        .getElementById("donor-address-section")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 180);
+    return () => clearTimeout(timer);
+  }, [initialEdit]);
+
   // SALVAR ALTERAÇÕES
   const handleUpdateInfo = async () => {
     const rawPhone = donorData.phone.replace(/\D/g, "");
+    const hasPhoneDigits = Boolean(rawPhone && rawPhone !== "55");
 
-    if (!rawPhone || rawPhone === "55" || rawPhone.length < 12) {
+    if (hasPhoneDigits && rawPhone.length < 12) {
       toast.error("Por favor, informe um número de telefone válido com o DDD.");
       return;
+    }
+
+    const hasAddressInput = Boolean(
+      address.zipCode.trim() ||
+      address.street.trim() ||
+      address.neighborhood.trim() ||
+      address.city.trim(),
+    );
+
+    if (hasAddressInput) {
+      if (
+        !address.zipCode.trim() ||
+        !address.street.trim() ||
+        !address.neighborhood.trim() ||
+        !address.city.trim() ||
+        !address.state.trim()
+      ) {
+        toast.error("Para salvar o endereço, preencha CEP, rua, bairro, cidade e estado.");
+        return;
+      }
     }
 
     try {
@@ -216,14 +258,36 @@ export default function DonorProfile({
         refreshSession();
       }
 
-      if (address) {
-        await DonorService.createOrUpdateAddress(address);
+      if (hasAddressInput) {
+        const cleanNumber = address.number.trim() || "S/N";
+        const cleanComplement = address.complement.trim();
+        const savedAddress = await DonorService.createOrUpdateAddress({
+          zipCode: address.zipCode.trim(),
+          street: address.street.trim(),
+          number: cleanNumber,
+          ...(cleanComplement ? { complement: cleanComplement } : {}),
+          neighborhood: address.neighborhood.trim(),
+          city: address.city.trim(),
+          state: address.state.trim().toUpperCase(),
+          country: address.country.trim() || "Brasil",
+        });
+
+        setAddress({
+          zipCode: savedAddress?.zipCode || address.zipCode.trim(),
+          street: savedAddress?.street || address.street.trim(),
+          number: savedAddress?.number || cleanNumber,
+          complement: savedAddress?.complement || cleanComplement,
+          neighborhood: savedAddress?.neighborhood || address.neighborhood.trim(),
+          city: savedAddress?.city || address.city.trim(),
+          state: savedAddress?.state || address.state.trim().toUpperCase(),
+          country: savedAddress?.country || address.country.trim() || "Brasil",
+        });
       }
 
       // 2. Atualizar Perfil
       const profilePayload: UpdateProfileDTO = {
-        contactNumber: rawPhone,
         description: donorData.description || "",
+        ...(hasPhoneDigits ? { contactNumber: rawPhone } : {}),
       };
       await DonorService.updateProfile(profilePayload);
 
@@ -239,15 +303,11 @@ export default function DonorProfile({
 
       setIsEditingProfile(false);
       setShowCompleteModal(false);
-
-      if (!showCompleteModal) {
-        toast.success("Perfil atualizado com sucesso!");
-      }
-
+      toast.success("Perfil atualizado com sucesso!");
     } catch (error: any) {
       console.error("Erro na atualização:", error);
-      const msg = error.response?.data?.message;
-      toast.error(Array.isArray(msg) ? msg[0] : "Erro ao salvar os dados.");
+      const msg = error?.data?.message || error?.response?.data?.message || error?.message;
+      toast.error(Array.isArray(msg) ? msg[0] : (msg || "Erro ao salvar os dados."));
     } finally {
       setIsLoading(false);
     }
@@ -511,14 +571,14 @@ export default function DonorProfile({
                     <div className="flex-1 min-w-0">
                       <h4 className="text-lg sm:text-xl font-bold text-gray-900">CPF</h4>
                       <p className={`text-lg sm:text-xl mt-1 ${donorData.cpf ? "text-gray-800 font-medium" : "text-gray-500 italic font-medium"}`}>
-                        {donorData.cpf || "Não informado"}
+                        {formatCpf(donorData.cpf) || "Não informado"}
                       </p>
                     </div>
                   </div>
                 </div>
 
                 {/* Endereço */}
-                <div className="flex items-start justify-between gap-4 p-5 sm:p-6">
+                <div id="donor-address-section" className="flex items-start justify-between gap-4 p-5 sm:p-6">
                   <div className="flex items-start gap-4 flex-1 min-w-0">
                     <div className="w-12 h-12 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0 mt-0.5">
                       <MapPin size={24} />
