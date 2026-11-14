@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState, useRef, useEffect, forwardRef, InputHTMLAttributes } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
-import { Eye, EyeClosed, Lock, Mail, User, Building2, ArrowLeft, ArrowRight, FileText, IdCard, UploadCloud, CheckCircle, CheckCircle2, X, LucideIcon, Loader2, MapPin, Phone, MessageCircle, KeyRound, Landmark, AlertTriangle, Sparkles } from "lucide-react";
+import { Eye, EyeClosed, Lock, Mail, User, Building2, ArrowLeft, ArrowRight, FileText, IdCard, UploadCloud, CheckCircle, CheckCircle2, X, LucideIcon, Loader2, MapPin, Phone, MessageCircle, KeyRound, Landmark, AlertTriangle } from "lucide-react";
 import gsap from "gsap";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -148,10 +148,11 @@ interface InputFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   icon: LucideIcon;
   error?: string;
   isLoading?: boolean;
+  isValid?: boolean;
 }
 
 const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
-  ({ label, icon: Icon, error, isLoading, type = "text", ...props }, ref) => {
+  ({ label, icon: Icon, error, isLoading, isValid, type = "text", ...props }, ref) => {
     const [showPassword, setShowPassword] = useState(false);
     const isPassword = type === "password";
     const inputType = isPassword ? (showPassword ? "text" : "password") : type;
@@ -164,12 +165,17 @@ const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
           <input
             ref={ref}
             type={inputType}
-            className={`w-full bg-white border text-gray-900 rounded-xl pl-12 ${isPassword || isLoading ? 'pr-12' : 'pr-4'} py-4 focus:outline-none focus:ring-2 transition-all placeholder:text-gray-400 text-lg sm:text-xl font-medium shadow-sm ${error ? "border-red-400 focus:border-red-500 ring-red-100 ring-2 animate-[shake_0.5s_ease-in-out]" : "border-gray-200 focus:ring-[#6B39A7]/20 focus:border-[#6B39A7]"}`}
+            className={`w-full bg-white border text-gray-900 rounded-xl pl-12 ${isPassword || isLoading || isValid ? 'pr-12' : 'pr-4'} py-4 focus:outline-none focus:ring-2 transition-all placeholder:text-gray-400 text-lg sm:text-xl font-medium shadow-sm ${error ? "border-red-400 focus:border-red-500 ring-red-100 ring-2 animate-[shake_0.5s_ease-in-out]" : "border-gray-200 focus:ring-[#6B39A7]/20 focus:border-[#6B39A7]"}`}
             {...props}
           />
           {isLoading && (
             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6B39A7]">
               <Loader2 size={20} className="animate-spin" />
+            </div>
+          )}
+          {!isLoading && isValid && !error && !isPassword && (
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-500 pointer-events-none">
+              <CheckCircle2 size={22} />
             </div>
           )}
           {isPassword && !isLoading && (
@@ -1461,6 +1467,7 @@ export default function Register() {
                   placeholder={accountType === 'ong' ? "00.000.000/0000-00" : "000.000.000-00"}
                   maxLength={accountType === 'ong' ? 18 : 14}
                   isLoading={isCheckingDocumento || isLookingUpCnpj}
+                  isValid={accountType === 'ong' && !isLookingUpCnpj && !isCheckingDocumento && !errors.documento && Boolean(cnpjMeta?.found && cnpjMeta.isAtiva)}
                   {...register("documento")}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     handleDocumentoChange(e.target.value);
@@ -1479,19 +1486,15 @@ export default function Register() {
                   </p>
                 )}
 
-                {accountType === 'ong' && !isLookingUpCnpj && cnpjMeta?.found && (
-                  <div className={`-mt-2 p-4 rounded-xl border text-sm sm:text-base font-medium flex items-start gap-3 ${cnpjMeta.isAtiva ? "bg-emerald-50 border-emerald-200 text-emerald-900" : "bg-amber-50 border-amber-200 text-amber-900"}`}>
-                    <Sparkles size={18} className={`shrink-0 mt-0.5 ${cnpjMeta.isAtiva ? "text-emerald-600" : "text-amber-600"}`} />
+                {accountType === 'ong' && !isLookingUpCnpj && cnpjMeta?.found && !cnpjMeta.isAtiva && (
+                  <div className="-mt-2 p-4 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 text-sm sm:text-base font-medium flex items-start gap-3">
+                    <AlertTriangle size={18} className="shrink-0 mt-0.5 text-amber-600" />
                     <div>
                       <p className="font-bold">
-                        Receita Federal: {cnpjMeta.situacaoCadastral || (cnpjMeta.isAtiva ? "ATIVA" : "Situação pendente")}
-                        {cnpjMeta.yearsOfOperation !== null && ` • ${cnpjMeta.yearsOfOperation} ${cnpjMeta.yearsOfOperation === 1 ? "ano" : "anos"} de atuação`}
+                        Receita Federal: {cnpjMeta.situacaoCadastral || "Situação pendente"}
                       </p>
                       <p className="opacity-85 mt-1 leading-relaxed">
-                        {cnpjMeta.isAtiva
-                          ? "Razão social e endereço atualizados pelo CNPJ."
-                          : "Pendências fiscais podem impedir a abertura da subconta financeira."}
-                        {cnpjMeta.foundedAt && ` Abertura oficial: ${cnpjMeta.foundedAt.split("-").reverse().join("/")}.`}
+                        Pendências fiscais podem impedir a abertura da subconta financeira.
                       </p>
                     </div>
                   </div>
