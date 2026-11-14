@@ -537,14 +537,7 @@ function LoginContent() {
                 </button>
               </form>
 
-              <div className="animate-item opacity-0 relative flex items-center justify-center my-5">
-                <div className="absolute border-t border-gray-200 w-full"></div>
-                <span className="bg-[#F9FAFB] lg:bg-white px-4 text-xs uppercase tracking-wider text-gray-400 font-bold relative">
-                  ou
-                </span>
-              </div>
-
-              <div className="animate-item opacity-0">
+              <div className="animate-item opacity-0 mt-3">
                 <GoogleAuthButton
                   onSuccess={handleGoogleAuthSuccess}
                   onError={(msg) => setLoginError(msg)}
