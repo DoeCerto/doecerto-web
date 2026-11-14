@@ -190,7 +190,7 @@ export default function GoogleAuthButton({
       type="button"
       onClick={triggerGoogleFlow}
       disabled={disabled || busy}
-      className={`w-full flex items-center justify-center gap-3.5 h-[56px] sm:h-[58px] px-6 bg-white hover:bg-gray-50/90 text-[#1F1F1F] font-semibold text-base sm:text-lg rounded-full border border-gray-300 hover:border-gray-400 shadow-xs transition-all duration-200 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer ${className}`}
+      className={`w-full flex justify-center items-center gap-3 h-[56px] px-6 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-base sm:text-lg rounded-xl transition-all shadow-sm active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer ${className}`}
     >
       {busy ? (
         <Loader2 className="w-5 h-5 animate-spin text-[#6B39A7]" />
