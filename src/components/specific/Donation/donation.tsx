@@ -8,9 +8,9 @@ import {
   Building2, IdCard, Lock, Loader2, PackageOpen, Trash2,
   FileText, CheckCircle2, AlertCircle, AlertTriangle, X
 } from "lucide-react";
-import { WishlistService } from "@/services/wishlist.service";
+import { WishlistItem, WishlistService } from "@/services/wishlist.service";
 import { DonorService, DonorProfileData } from "@/services/donor.service";
-import { OngsProfileService } from "@/services/ongs-profile.service";
+import { OngPublicProfile, OngsProfileService } from "@/services/ongs-profile.service";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { MissingPhoneAlert } from "@/components/ui/MissingPhoneAlert";
 import { useAuth } from "@/contexts/AuthContext";
@@ -41,6 +41,10 @@ export interface DonationData {
 export interface DonationProps {
   ongId: number;
   ongName?: string;
+  initialItems?: WishlistItem[];
+  initialOngData?: OngPublicProfile | null;
+  initialUserProfile?: DonorProfileData | null;
+  hasServerData?: boolean;
   onSubmit?: (data: DonationData) => Promise<void> | void;
   onCancel?: () => void;
 }
@@ -55,21 +59,25 @@ export interface ListaItem {
 export default function Donation({
   ongId,
   ongName = "ONG Selecionada",
+  initialItems = [],
+  initialOngData = null,
+  initialUserProfile = null,
+  hasServerData = false,
   onSubmit,
   onCancel,
 }: DonationProps) {
   const { isAuthenticated, userRole } = useAuth();
   const isOngUser = isAuthenticated && userRole === "ong";
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [itemsCadastrados, setItemsCadastrados] = useState<any[]>([]);
-  const [userProfile, setUserProfile] = useState<DonorProfileData | null>(null);
-  const [ongData, setOngData] = useState<any>(null);
+  const [itemsCadastrados, setItemsCadastrados] = useState<WishlistItem[]>(initialItems);
+  const [userProfile, setUserProfile] = useState<DonorProfileData | null>(initialUserProfile);
+  const [ongData, setOngData] = useState<OngPublicProfile | null>(initialOngData);
   const [selectedItemId, setSelectedItemId] = useState("");
   const [quantidade, setQuantidade] = useState<number | "">("");
   const [descricaoAdicional, setDescricaoAdicional] = useState("");
   const [listaEnvio, setListaEnvio] = useState<ListaItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [fetchingData, setFetchingData] = useState(true);
+  const [fetchingData, setFetchingData] = useState(!hasServerData);
   const [isSuccess, setIsSuccess] = useState(false);
 
   // Estados de visitante e anonimato no mesmo padrão da doação monetária (Pix)
@@ -83,11 +91,26 @@ export default function Donation({
   const router = useRouter();
 
   useEffect(() => {
-    setGuestEmail(readGuestEmail());
-    setGuestPhone(readGuestPhone());
+    void Promise.resolve().then(() => {
+      setGuestEmail(readGuestEmail());
+      setGuestPhone(readGuestPhone());
+    });
   }, []);
 
   useEffect(() => {
+    if (!ongId) return;
+
+    if (hasServerData) {
+      if (isAuthenticated && userRole !== "ong" && !userProfile) {
+        DonorService.getMyProfile()
+          .then((profile) => {
+            if (profile) setUserProfile(profile);
+          })
+          .catch(() => null);
+      }
+      return;
+    }
+
     async function loadInitialData() {
       try {
         setFetchingData(true);
@@ -107,8 +130,8 @@ export default function Donation({
         setFetchingData(false);
       }
     }
-    if (ongId) loadInitialData();
-  }, [ongId, isAuthenticated]);
+    loadInitialData();
+  }, [ongId, isAuthenticated, userRole, hasServerData, userProfile]);
 
   const handleAddItem = () => {
     const qty = Number(quantidade);

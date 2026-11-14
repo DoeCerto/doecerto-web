@@ -57,6 +57,41 @@ export interface OngProfileCategory {
   name: string;
 }
 
+export interface OngPublicReview {
+  score: number;
+  comment: string;
+  createdAt: string;
+  donor: { user: { name: string } };
+}
+
+export interface OngPublicProfile {
+  id: number;
+  name: string;
+  cnpj: string;
+  banner: string;
+  logo: string;
+  description: string;
+  phone: string;
+  whatsappNumber: string | null;
+  websiteUrl: string | null;
+  instagramUrl: string | null;
+  facebookUrl: string | null;
+  website: string;
+  instagram: string;
+  address: string;
+  foundedAt: string | null;
+  yearsOfOperation: number;
+  rating: number;
+  numberOfRatings: number;
+  categories: OngProfileCategory[];
+  primaryCategory: OngProfileCategory | null;
+  primaryCategoryId: number | null;
+  reviews: OngPublicReview[];
+  donations: number;
+  distance: string;
+  canReview: boolean;
+}
+
 export interface OngMyProfile {
   id: number;
   name: string;
@@ -120,67 +155,130 @@ export const OngsProfileService = {
     return diff <= 0 ? "Novo" : `${diff} ${diff === 1 ? 'ano' : 'anos'}`;
   },
 
-  async getPublicProfile(ongId: number) {
+  buildPublicProfile(
+    baseRaw: Record<string, unknown> | null | undefined,
+    profileRaw: Record<string, unknown> | null | undefined,
+    reviewsRaw: unknown,
+    ongId: number,
+  ): OngPublicProfile | null {
+    const base = baseRaw ?? null;
+    const profile = profileRaw ?? null;
+
+    if (
+      (!base || (!base.id && !base.name && !base.cnpj)) &&
+      (!profile || (!profile.id && !profile.name))
+    ) {
+      return null;
+    }
+
+    const descriptionText =
+      (typeof profile?.description === 'string' && profile.description) ||
+      (typeof profile?.about === 'string' && profile.about) ||
+      (typeof profile?.bio === 'string' && profile.bio) ||
+      'ONG verificada.';
+
+    const urls = profile?.websiteUrls || profile?.website || [];
+    const legacyUrl =
+      Array.isArray(urls) && urls.length > 0
+        ? String(urls[0] || '')
+        : typeof urls === 'string'
+          ? urls
+          : '';
+
+    const websiteUrl = (typeof profile?.websiteUrl === 'string' ? profile.websiteUrl : legacyUrl).trim();
+    const instagramUrl = (typeof profile?.instagramUrl === 'string' ? profile.instagramUrl : '').trim();
+    const facebookUrl = (typeof profile?.facebookUrl === 'string' ? profile.facebookUrl : '').trim();
+    const whatsappNumber = (typeof profile?.whatsappNumber === 'string' ? profile.whatsappNumber : '').trim();
+
+    const categories = Array.isArray(profile?.categories)
+      ? (profile.categories as OngProfileCategory[])
+      : [];
+    const primaryCategory =
+      (profile?.primaryCategory as OngProfileCategory | null | undefined) ||
+      (categories.length > 0 ? categories[0] : null);
+    const primaryCategoryId =
+      typeof profile?.primaryCategoryId === 'number'
+        ? profile.primaryCategoryId
+        : categories.length > 0
+          ? categories[0].id
+          : null;
+
+    const addressObj =
+      profile?.address && typeof profile.address === 'object'
+        ? (profile.address as { city?: string; state?: string })
+        : null;
+    const ratingObj =
+      profile?.rating && typeof profile.rating === 'object'
+        ? (profile.rating as { average?: number | string; count?: number })
+        : null;
+
+    return {
+      id: Number(base?.id || profile?.id || ongId),
+      name:
+        (typeof profile?.name === 'string' && profile.name) ||
+        (typeof base?.name === 'string' && base.name) ||
+        'ONG sem nome',
+      cnpj: (typeof base?.cnpj === 'string' && base.cnpj) || 'CNPJ não informado',
+      banner: this._formatImageUrl(
+        (typeof profile?.bannerUrl === 'string' ? profile.bannerUrl : null) ||
+          (typeof base?.bannerUrl === 'string' ? base.bannerUrl : null)
+      ),
+      logo: this._formatImageUrl(
+        (typeof profile?.avatarUrl === 'string' ? profile.avatarUrl : null) ||
+          (typeof base?.avatarUrl === 'string' ? base.avatarUrl : null)
+      ),
+      description: descriptionText,
+      phone:
+        (typeof profile?.contactNumber === 'string' && profile.contactNumber) ||
+        (typeof base?.contactNumber === 'string' && base.contactNumber) ||
+        'Não informado',
+      whatsappNumber: whatsappNumber || null,
+      websiteUrl: websiteUrl || null,
+      instagramUrl: instagramUrl || null,
+      facebookUrl: facebookUrl || null,
+      website: websiteUrl || 'Não informado',
+      instagram: instagramUrl || websiteUrl || 'Não informado',
+      address: addressObj?.city ? `${addressObj.city}, ${addressObj.state}` : 'Endereço não informado',
+      foundedAt:
+        (typeof profile?.foundedAt === 'string' && profile.foundedAt) ||
+        (typeof base?.foundedAt === 'string' && base.foundedAt) ||
+        null,
+      yearsOfOperation:
+        typeof profile?.yearsOfOperation === 'number' ? profile.yearsOfOperation : 0,
+      rating: Number(ratingObj?.average || 0),
+      numberOfRatings: Number(ratingObj?.count || 0),
+      categories,
+      primaryCategory,
+      primaryCategoryId,
+      reviews: Array.isArray(reviewsRaw) ? (reviewsRaw as OngPublicReview[]) : [],
+      donations: Number(profile?.receivedDonations || 0),
+      distance: (typeof base?.distance === 'string' && base.distance) || '—',
+      canReview: Boolean(profile?.canReview),
+    };
+  },
+
+  async getPublicProfile(ongId: number): Promise<OngPublicProfile> {
     try {
       const [resBase, resProfile, resReviews] = await Promise.all([
-        api<any>(`/ongs/${ongId}`).catch(() => ({ data: null })),
-        api<any>(`/ongs/${ongId}/profile`).catch(() => ({ data: null })),
-        api<any>(`/ongs/${ongId}/ratings`).catch(() => ({ data: [] }))
+        api<Record<string, unknown> | null>(`/ongs/${ongId}`).catch(() => ({ data: null })),
+        api<Record<string, unknown> | null>(`/ongs/${ongId}/profile`).catch(() => ({ data: null })),
+        api<unknown[]>(`/ongs/${ongId}/ratings`).catch(() => ({ data: [] }))
       ]);
 
-      const base = resBase.data;
-      const profile = resProfile.data;
+      const built = this.buildPublicProfile(
+        resBase.data,
+        resProfile.data,
+        resReviews.data,
+        ongId
+      );
 
       // UX-03: Se nem os dados base nem o perfil público existirem, lança erro 404 explícito
       // em vez de renderizar "ONG sem nome" com selo de verificação falso.
-      if ((!base || (!base.id && !base.name && !base.cnpj)) && (!profile || (!profile.id && !profile.name))) {
+      if (!built) {
         throw new Error("ONG não encontrada.");
       }
 
-      // Normalização da descrição
-      const descriptionText = profile?.description || profile?.about || profile?.bio || "ONG verificada.";
-
-      // Normalização de canais sociais e website
-      const urls = profile?.websiteUrls || profile?.website || [];
-      const legacyUrl =
-        Array.isArray(urls) && urls.length > 0
-          ? urls[0]
-          : typeof urls === 'string'
-            ? urls
-            : "";
-
-      const websiteUrl = (profile?.websiteUrl || legacyUrl || "").trim();
-      const instagramUrl = (profile?.instagramUrl || "").trim();
-      const facebookUrl = (profile?.facebookUrl || "").trim();
-      const whatsappNumber = (profile?.whatsappNumber || "").trim();
-
-      return {
-        id: base?.id || profile?.id || ongId,
-        name: profile?.name || base?.name || "ONG sem nome",
-        cnpj: base?.cnpj || "CNPJ não informado",
-        banner: this._formatImageUrl(profile?.bannerUrl || base?.bannerUrl),
-        logo: this._formatImageUrl(profile?.avatarUrl || base?.avatarUrl),
-        description: descriptionText,
-        phone: profile?.contactNumber || base?.contactNumber || "Não informado",
-        whatsappNumber: whatsappNumber || null,
-        websiteUrl: websiteUrl || null,
-        instagramUrl: instagramUrl || null,
-        facebookUrl: facebookUrl || null,
-        website: websiteUrl || "Não informado",
-        instagram: instagramUrl || websiteUrl || "Não informado",
-        address: profile?.address?.city ? `${profile.address.city}, ${profile.address.state}` : "Endereço não informado",
-        foundedAt: profile?.foundedAt || base?.foundedAt || null,
-        yearsOfOperation: profile?.yearsOfOperation,
-        rating: Number(profile?.rating?.average || 0),
-        numberOfRatings: profile?.rating?.count || 0,
-        categories: profile?.categories || [],
-        primaryCategory: profile?.primaryCategory || (profile?.categories && profile.categories.length > 0 ? profile.categories[0] : null),
-        primaryCategoryId: profile?.primaryCategoryId || (profile?.categories && profile.categories.length > 0 ? profile.categories[0].id : null),
-        reviews: Array.isArray(resReviews.data) ? resReviews.data : [],
-        donations: profile?.receivedDonations || 0,
-        distance: base?.distance || "—",
-        canReview: profile?.canReview ?? false,
-      };
+      return built;
     } catch (error) {
       console.error("Erro no getPublicProfile:", error);
       throw error;

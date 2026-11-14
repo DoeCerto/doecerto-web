@@ -1,3 +1,5 @@
+import { OngsProfileService, type OngPublicProfile } from '@/services/ongs-profile.service';
+
 export function decodeJwtRole(token?: string | null): string | null {
   if (!token) return null;
   try {
@@ -15,7 +17,8 @@ export async function ssrFetchJson<T = unknown>(
   endpoint: string,
   token?: string | null
 ): Promise<{ status: number; data: T | null }> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const apiUrl =
+    process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
   const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
 
   try {
@@ -46,3 +49,21 @@ export async function ssrFetchJson<T = unknown>(
   }
 }
 
+export async function ssrFetchPublicOngProfile(
+  ongId: number
+): Promise<OngPublicProfile | null> {
+  if (!Number.isFinite(ongId) || ongId <= 0) return null;
+
+  const [baseRes, profileRes, reviewsRes] = await Promise.all([
+    ssrFetchJson<Record<string, unknown>>(`/ongs/${ongId}`),
+    ssrFetchJson<Record<string, unknown>>(`/ongs/${ongId}/profile`),
+    ssrFetchJson<unknown[]>(`/ongs/${ongId}/ratings`),
+  ]);
+
+  return OngsProfileService.buildPublicProfile(
+    baseRes.data,
+    profileRes.data,
+    reviewsRes.data,
+    ongId
+  );
+}
