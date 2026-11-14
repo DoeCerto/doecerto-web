@@ -32,23 +32,43 @@ import toast, { Toaster } from "react-hot-toast";
 import { FormSection } from "@/components/ui/form-section";
 import { InputGroup } from "@/components/ui/input-group";
 import { ImageUploader } from "@/components/ui/image-uploader";
-import { OngsProfileService } from "@/services/ongs-profile.service";
+import { OngMyProfile, OngProfileCategory, OngsProfileService } from "@/services/ongs-profile.service";
 import { OngSetupService } from "@/services/ongSetup.service";
-import { WishlistService } from "@/services/wishlist.service";
+import { WishlistItem, WishlistService } from "@/services/wishlist.service";
 import { lookupCep } from "@/services/register-ong.service";
 import { formatCEP, formatBrazilianPhone } from "@/utils/documentValidation";
 import { useAuth } from "@/contexts/AuthContext";
 import { CategoryImpactIcon } from "@/components/ui/CategoryImpactIcon";
 import { LgpdSecurityZone } from "@/components/specific/Lgpd/LgpdSecurityZone";
 
-export default function OngSetupProfile() {
+interface OngSetupProfileProps {
+  initialProfile?: OngMyProfile | null;
+  initialCategories?: OngProfileCategory[];
+  initialItems?: WishlistItem[];
+  hasServerData?: boolean;
+}
+
+export default function OngSetupProfile({
+  initialProfile = null,
+  initialCategories = [],
+  initialItems = [],
+  hasServerData = false,
+}: OngSetupProfileProps) {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading, userRole, refreshSession, logout } = useAuth();
 
+  const initialAddr =
+    initialProfile?.address && typeof initialProfile.address === "object"
+      ? initialProfile.address
+      : null;
+  const initialSelectedIds = Array.isArray(initialProfile?.categories)
+    ? initialProfile.categories.map((c) => c.id)
+    : [];
+
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [ongName, setOngName] = useState("Minha ONG");
-  const [availableCategories, setAvailableCategories] = useState<any[]>([]);
+  const [initialLoading, setInitialLoading] = useState(!hasServerData);
+  const [ongName, setOngName] = useState(initialProfile?.name || "Minha ONG");
+  const [availableCategories, setAvailableCategories] = useState<OngProfileCategory[]>(initialCategories);
 
   // Bloqueio rigoroso de autenticação: redireciona para login se deslogado ou sem role de ONG
   useEffect(() => {
@@ -74,28 +94,45 @@ export default function OngSetupProfile() {
   };
 
   // Campos do Perfil e Canais Sociais
-  const [description, setDescription] = useState("");
-  const [phone, setPhone] = useState("");
-  const [whatsappNumber, setWhatsappNumber] = useState("");
-  const [websiteUrl, setWebsiteUrl] = useState("");
-  const [instagramUrl, setInstagramUrl] = useState("");
-  const [facebookUrl, setFacebookUrl] = useState("");
-  const [foundedAt, setFoundedAt] = useState<string | null>(null);
-  const [years, setYears] = useState("");
+  const [description, setDescription] = useState(initialProfile?.description || "");
+  const [phone, setPhone] = useState(initialProfile?.contactNumber || "");
+  const [whatsappNumber, setWhatsappNumber] = useState(initialProfile?.whatsappNumber || "");
+  const [websiteUrl, setWebsiteUrl] = useState(
+    initialProfile?.websiteUrl || initialProfile?.website || ""
+  );
+  const [instagramUrl, setInstagramUrl] = useState(initialProfile?.instagramUrl || "");
+  const [facebookUrl, setFacebookUrl] = useState(initialProfile?.facebookUrl || "");
+  const [foundedAt, setFoundedAt] = useState<string | null>(initialProfile?.foundedAt || null);
+  const [years, setYears] = useState(() => {
+    if (typeof initialProfile?.yearsOfOperation === "number") {
+      return initialProfile.yearsOfOperation.toString();
+    }
+    if (initialProfile?.foundedAt) {
+      const diff = Math.max(0, new Date().getFullYear() - new Date(initialProfile.foundedAt).getFullYear());
+      return diff.toString();
+    }
+    return "";
+  });
 
   // Endereço (somente leitura quando já cadastrado no /register; fallback CEP para ONGs legadas)
-  const [hasExistingAddress, setHasExistingAddress] = useState(false);
+  const [hasExistingAddress, setHasExistingAddress] = useState(
+    Boolean(initialAddr?.street && initialAddr?.city && initialAddr?.state && initialAddr?.zipCode)
+  );
   const [lookingUpCep, setLookingUpCep] = useState(false);
-  const [street, setStreet] = useState("");
-  const [number, setNumber] = useState("");
-  const [complement, setComplement] = useState("");
-  const [neighborhood, setNeighborhood] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
-  const [zipCode, setZipCode] = useState("");
-  const [country, setCountry] = useState("Brasil");
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
-  const [primaryCategoryId, setPrimaryCategoryId] = useState<number | null>(null);
+  const [street, setStreet] = useState(initialAddr?.street || "");
+  const [number, setNumber] = useState(initialAddr?.number || "");
+  const [complement, setComplement] = useState(initialAddr?.complement || "");
+  const [neighborhood, setNeighborhood] = useState(initialAddr?.neighborhood || "");
+  const [city, setCity] = useState(initialAddr?.city || "");
+  const [state, setState] = useState(initialAddr?.state || "");
+  const [zipCode, setZipCode] = useState(initialAddr?.zipCode || "");
+  const [country, setCountry] = useState(initialAddr?.country || "Brasil");
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>(initialSelectedIds);
+  const [primaryCategoryId, setPrimaryCategoryId] = useState<number | null>(
+    initialProfile?.primaryCategoryId ||
+      initialProfile?.primaryCategory?.id ||
+      (initialSelectedIds.length > 0 ? initialSelectedIds[0] : null)
+  );
   const [isPrimaryDropdownOpen, setIsPrimaryDropdownOpen] = useState(false);
   const primaryDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -112,18 +149,20 @@ export default function OngSetupProfile() {
   // Imagens
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
-  const [logoPreview, setLogoPreview] = useState("");
-  const [bannerPreview, setBannerPreview] = useState("");
+  const [logoPreview, setLogoPreview] = useState(initialProfile?.avatarUrl || "");
+  const [bannerPreview, setBannerPreview] = useState(initialProfile?.bannerUrl || "");
   const [bannerCrop, setBannerCrop] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
 
   // Lista de Desejos
   const [newItem, setNewItem] = useState("");
-  const [items, setItems] = useState<any[]>([]);
-  const [ongId, setOngId] = useState<number | null>(null);
+  const [items, setItems] = useState<WishlistItem[]>(initialItems);
+  const [ongId, setOngId] = useState<number | null>(initialProfile?.id ?? null);
 
   const primaryCategoryObj = availableCategories.find((c) => c.id === primaryCategoryId);
 
   useEffect(() => {
+    if (hasServerData) return;
+
     async function loadInitialData() {
       try {
         setInitialLoading(true);
@@ -205,7 +244,7 @@ export default function OngSetupProfile() {
       }
     }
     loadInitialData();
-  }, []);
+  }, [hasServerData]);
 
   const handleLogoChange = (file: File) => {
     setLogoFile(file);
@@ -375,7 +414,7 @@ export default function OngSetupProfile() {
     return clean;
   };
 
-  if (authLoading || initialLoading || !isAuthenticated || (userRole !== "ong" && userRole !== "admin")) {
+  if ((!hasServerData && (authLoading || !isAuthenticated || (userRole !== "ong" && userRole !== "admin"))) || initialLoading) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-3">
         <Loader2 className="animate-spin text-[#6B39A7]" size={40} />

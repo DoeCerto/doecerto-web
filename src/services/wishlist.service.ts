@@ -8,6 +8,26 @@ export interface WishlistItem {
 }
 
 export const WishlistService = {
+  parseItems(payload: unknown): WishlistItem[] {
+    let rawData: unknown = payload;
+
+    // Se o backend envelopa em { data: [...] } ou { items: [...] }
+    if (rawData && typeof rawData === "object" && !Array.isArray(rawData)) {
+      const record = rawData as Record<string, unknown>;
+      rawData = record.data ?? record.items ?? rawData;
+    }
+
+    // Se ainda não for array, tenta achar algum array dentro do objeto
+    if (!Array.isArray(rawData) && rawData && typeof rawData === "object") {
+      const potentialArray = Object.values(rawData as Record<string, unknown>).find((val) =>
+        Array.isArray(val)
+      );
+      if (potentialArray) rawData = potentialArray;
+    }
+
+    return Array.isArray(rawData) ? (rawData as WishlistItem[]) : [];
+  },
+
   /**
    * Lista todos os itens da wishlist de uma ONG específica
    */
@@ -18,23 +38,7 @@ export const WishlistService = {
         method: "GET",
       }) as any;
 
-      // Usamos uma variável auxiliar tipada como any para fazer a extração
-      let rawData: any = response?.data ?? response;
-
-      // Se o backend envelopa em { data: [...] } ou { items: [...] }
-      if (rawData && typeof rawData === 'object' && !Array.isArray(rawData)) {
-        rawData = rawData.data ?? rawData.items ?? rawData;
-      }
-
-      // Se ainda não for array, tenta achar algum array dentro do objeto
-      if (!Array.isArray(rawData) && rawData && typeof rawData === 'object') {
-        const potentialArray = Object.values(rawData).find(val => Array.isArray(val));
-        if (potentialArray) rawData = potentialArray;
-      }
-
-      const finalArray = Array.isArray(rawData) ? rawData : [];
-      
-      return finalArray as WishlistItem[];
+      return this.parseItems(response?.data ?? response);
     } catch (error) {
       console.error("Erro ao buscar itens da wishlist:", error);
       return [];
