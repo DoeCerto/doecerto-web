@@ -1,6 +1,6 @@
 import { api } from "./api";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export interface UpdateProfileDTO {
   contactNumber?: string;
@@ -162,29 +162,54 @@ async completeRegistration(data: { name: string; cpf: string; phone: string }) {
     return data;
   },
 
-  async getDonationHistory(): Promise<DonationHistory[]> {
-    try {
-      const response = await api<any>('/donations/me/sent', {
-        method: 'GET',
-      });
+  _mapDonationHistory(rawResponse: unknown): DonationHistory[] {
+    let rawArray: unknown[] = [];
+    if (Array.isArray(rawResponse)) {
+      rawArray = rawResponse;
+    } else if (rawResponse && typeof rawResponse === "object") {
+      const top = rawResponse as { data?: unknown };
+      if (Array.isArray(top.data)) {
+        rawArray = top.data;
+      } else if (top.data && typeof top.data === "object") {
+        const nested = top.data as { data?: unknown };
+        if (Array.isArray(nested.data)) {
+          rawArray = nested.data;
+        }
+      }
+    }
 
-      const rawArray = response?.data?.data || response?.data || [];
-
-      if (!Array.isArray(rawArray)) return [];
-
-      return rawArray.map((d: any) => ({
+    return rawArray.map((item) => {
+      const d = item as {
+        id: number;
+        donationType?: string;
+        donationStatus?: string;
+        monetaryAmount?: number;
+        materialDescription?: string;
+        createdAt: string;
+        ong?: { user?: { name?: string } };
+      };
+      return {
         id: d.id,
-        donationType: d.donationType.toLowerCase(),
-        donationStatus: d.donationStatus.toLowerCase(),
+        donationType: (d.donationType?.toLowerCase() || "monetary") as "monetary" | "material",
+        donationStatus: (d.donationStatus?.toLowerCase() || "pending") as "pending" | "completed" | "canceled",
         monetaryAmount: d.monetaryAmount,
         materialDescription: d.materialDescription,
         createdAt: d.createdAt,
         ong: {
           user: {
-            name: d.ong?.user?.name || "Instituição"
-          }
-        }
-      }));
+            name: d.ong?.user?.name || "Instituição",
+          },
+        },
+      };
+    });
+  },
+
+  async getDonationHistory(): Promise<DonationHistory[]> {
+    try {
+      const response = await api<unknown>('/donations/me/sent', {
+        method: 'GET',
+      });
+      return this._mapDonationHistory(response);
     } catch (error) {
       console.error("Erro ao buscar histórico:", error);
       return [];

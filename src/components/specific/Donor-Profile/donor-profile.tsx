@@ -26,39 +26,60 @@ import {
 import { useRouter } from "next/navigation";
 import { MonetaryDonationDetails } from "@/components/ui/MonetaryDonationDetails";
 import { MaterialDonationDetails } from "@/components/ui/MaterialDonationDetails";
-import { DonorService, cacheUserAvatar, type UpdateProfileDTO, type DonationHistory, Address } from "@/services/donor.service";
+import {
+  DonorService,
+  cacheUserAvatar,
+  type UpdateProfileDTO,
+  type DonationHistory,
+  type DonorProfileData,
+  Address,
+} from "@/services/donor.service";
 import { useAuth } from "@/contexts/AuthContext";
 import { LgpdSecurityZone } from "@/components/specific/Lgpd/LgpdSecurityZone";
 
-export default function DonorProfile() {
+interface DonorProfileProps {
+  initialProfile?: DonorProfileData | null;
+  initialHistory?: DonationHistory[];
+  initialAddress?: Address | null;
+  initialTab?: "info" | "history";
+  hasServerProfile?: boolean;
+}
+
+export default function DonorProfile({
+  initialProfile,
+  initialHistory,
+  initialAddress,
+  initialTab = "info",
+  hasServerProfile = false,
+}: DonorProfileProps) {
   const router = useRouter();
-  const { userAvatar, refreshSession } = useAuth();
-  const [activeTab, setActiveTab] = useState<"info" | "history">("info");
+  const { userAvatar, userName, refreshSession } = useAuth();
+  const [activeTab, setActiveTab] = useState<"info" | "history">(initialTab);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
 
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(initialProfile?.avatarUrl ?? null);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [donationHistory, setDonationHistory] = useState<DonationHistory[]>([]);
+  const [donationHistory, setDonationHistory] = useState<DonationHistory[]>(initialHistory ?? []);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [address, setAddress] = useState<Address>({
-    zipCode: "",
-    street: "",
-    number: "",
-    complement: "",
-    neighborhood: "",
-    city: "",
-    state: "",
-    country: "Brasil",
+    zipCode: initialAddress?.zipCode || "",
+    street: initialAddress?.street || "",
+    number: initialAddress?.number || "",
+    complement: initialAddress?.complement || "",
+    neighborhood: initialAddress?.neighborhood || "",
+    city: initialAddress?.city || "",
+    state: initialAddress?.state || "",
+    country: initialAddress?.country || "Brasil",
   });
 
   const [donorData, setDonorData] = useState({
-    name: "Carregando...",
-    email: "",
-    cpf: "",
-    phone: "",
-    description: "",
+    name: initialProfile?.name || "",
+    email: initialProfile?.email || "",
+    cpf: initialProfile?.cpf || "",
+    phone: initialProfile?.phone || "",
+    description: initialProfile?.description || "",
   });
 
   const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,18 +118,15 @@ export default function DonorProfile() {
 
   // CARREGAR PERFIL E HISTÓRICO
   useEffect(() => {
-    // Redireciona para aba Histórico se vier com parâmetro na URL
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("tab") === "history") {
-        setActiveTab("history");
-      }
+    if (initialProfile?.avatarUrl) {
+      cacheUserAvatar(initialProfile.avatarUrl);
     }
 
     async function loadAllData() {
       try {
-        setIsLoading(true);
-        setIsHistoryLoading(true);
+        if (!hasServerProfile) {
+          setIsHistoryLoading(true);
+        }
 
         const [profile, history, addressRes] = await Promise.allSettled([
           DonorService.getMyProfile(),
@@ -172,7 +190,7 @@ export default function DonorProfile() {
     }
 
     loadAllData();
-  }, []);
+  }, [hasServerProfile, initialProfile?.avatarUrl]);
 
   // SALVAR ALTERAÇÕES
   const handleUpdateInfo = async () => {
@@ -293,6 +311,7 @@ export default function DonorProfile() {
 
   const resolvedAvatar =
     profileImage || (userAvatar ? DonorService._formatImageUrl(userAvatar) : null);
+  const resolvedName = (donorData.name || userName || "").replace("undefined", "").trim();
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 pb-20">
@@ -334,7 +353,7 @@ export default function DonorProfile() {
 
       {/* RESUMO */}
       <div className="mt-20 px-6 text-center max-w-4xl mx-auto">
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">{donorData.name || "Doador"}</h1>
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">{resolvedName || "Doador"}</h1>
         <p className="text-base sm:text-lg text-gray-500 font-medium mt-1">{donorData.email}</p>
 
         <div className="grid grid-cols-2 gap-4 mt-6 max-w-lg mx-auto">
@@ -425,7 +444,7 @@ export default function DonorProfile() {
                         />
                       ) : (
                         <p className="text-lg sm:text-xl text-gray-800 font-medium mt-1">
-                          {(donorData.name || "").replace("undefined", "").trim() || "Não informado"}
+                          {resolvedName || "Não informado"}
                         </p>
                       )}
                     </div>
