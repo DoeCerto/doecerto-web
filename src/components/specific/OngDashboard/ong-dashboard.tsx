@@ -1,19 +1,23 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin, Heart, Award, X, Phone, Home, Star, Pencil,
   History, Package, CheckCircle2, Clock, FileText, ArrowRight,
   Camera, AlertCircle, Tag, MessageSquare, AlertTriangle, ExternalLink,
-  LogOut, Download, Trash2, ShieldAlert, Globe
+  LogOut, Download, Trash2, ShieldAlert, Globe, Loader2
 } from "lucide-react";
 import { FaInstagram, FaFacebook, FaWhatsapp } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
-import { OngAsaasKycSummary, OngsProfileService } from "@/services/ongs-profile.service";
+import {
+  OngAsaasKycSummary,
+  OngMyProfile,
+  OngsProfileService,
+} from "@/services/ongs-profile.service";
 import { BankAccountData, BankAccountService } from "@/services/bank-account.service";
-import { DonationService } from "@/services/donations.service";
+import { DonationService, type DonationService as DonationRecord } from "@/services/donations.service";
 import { api } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { LgpdDeleteAccountModal } from "@/components/specific/Lgpd/LgpdDeleteAccountModal";
@@ -33,23 +37,74 @@ import {
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-interface OngDashboardProps {
-  ong?: any;
+export interface OngReviewRecord {
+  id?: number | string;
+  score?: number;
+  stars?: number;
+  comment?: string | null;
+  donor?: {
+    user?: {
+      name?: string | null;
+    } | null;
+  } | null;
+  [key: string]: unknown;
 }
 
-export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
+interface OngDashboardProps {
+  ong?: OngMyProfile | null;
+  initialReviews?: OngReviewRecord[];
+  initialDonations?: DonationRecord[];
+  initialBankAccount?: BankAccountData | null;
+  initialKycSummary?: OngAsaasKycSummary | null;
+  hasServerData?: boolean;
+}
+
+export default function OngDashboard({
+  ong: initialOng,
+  initialReviews = [],
+  initialDonations = [],
+  initialBankAccount = null,
+  initialKycSummary = null,
+  hasServerData = false,
+}: OngDashboardProps) {
   const router = useRouter();
-  const { refreshSession, logout } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, userRole, refreshSession, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isReviewsOpen, setIsReviewsOpen] = useState(false);
-  const [loading, setLoading] = useState(!initialOng);
-  const [ong, setOng] = useState<any>(initialOng);
-  const [reviews, setReviews] = useState<any[]>([]);
-  const [donations, setDonations] = useState<any[]>([]);
-  const [bankAccount, setBankAccount] = useState<BankAccountData | null>(null);
-  const [kycSummary, setKycSummary] = useState<OngAsaasKycSummary | null>(null);
+  const [loading, setLoading] = useState(!hasServerData && !initialOng);
+  const [ong, setOng] = useState<OngMyProfile | undefined>(() => {
+    if (!initialOng) return undefined;
+    if (!initialKycSummary) return initialOng;
+    return {
+      ...initialOng,
+      asaasAccountStatus: initialKycSummary.asaasAccountStatus,
+      hasAsaasSubaccount: initialKycSummary.hasSubaccount,
+      verificationStatus: initialKycSummary.verificationStatus || initialOng.verificationStatus,
+    };
+  });
+  const [reviews, setReviews] = useState<OngReviewRecord[]>(initialReviews);
+  const [donations, setDonations] = useState<DonationRecord[]>(initialDonations);
+  const [bankAccount, setBankAccount] = useState<BankAccountData | null>(initialBankAccount);
+  const [kycSummary, setKycSummary] = useState<OngAsaasKycSummary | null>(initialKycSummary);
   const [loadingKycSummary, setLoadingKycSummary] = useState(false);
+
+  // Guard de autenticação e proteção contra restauração via BFCache no navegador
+  useEffect(() => {
+    if (!authLoading && (!isAuthenticated || (userRole !== "ong" && userRole !== "admin"))) {
+      window.location.replace("/login");
+    }
+  }, [authLoading, isAuthenticated, userRole]);
+
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        refreshSession();
+      }
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, [refreshSession]);
 
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -182,9 +237,9 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
     doc.save(`doacao_protocolo_${donation.id}.pdf`);
   };
 
-  const applyKycSummary = (summary: OngAsaasKycSummary) => {
+  const applyKycSummary = useCallback((summary: OngAsaasKycSummary) => {
     setKycSummary(summary);
-    setOng((prev: Record<string, unknown> | null) =>
+    setOng((prev) =>
       prev
         ? {
             ...prev,
@@ -194,7 +249,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
           }
         : prev,
     );
-  };
+  }, []);
 
   async function loadKycSummary() {
     try {
@@ -232,7 +287,7 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
     }
   }
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
     try {
       const profileData = await OngsProfileService.getMyProfile();
       setOng(profileData);
@@ -272,11 +327,13 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [applyKycSummary]);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (!hasServerData) {
+      void Promise.resolve().then(() => loadData());
+    }
+  }, [hasServerData, loadData]);
 
   const handleConfirmAction = async () => {
     if (!confirmModal) return;
@@ -302,6 +359,17 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
       setLoading(false);
     }
   };
+
+  if (loading && !ong) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-3">
+        <Loader2 className="animate-spin text-[#6B39A7]" size={40} />
+        <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
+          Carregando painel...
+        </span>
+      </div>
+    );
+  }
 
   if ((!ong || !ong.description) && !dismissSetupPrompt) {
     return (
@@ -337,6 +405,10 @@ export default function OngDashboard({ ong: initialOng }: OngDashboardProps) {
         </motion.div>
       </div>
     );
+  }
+
+  if (!ong) {
+    return null;
   }
 
   return (

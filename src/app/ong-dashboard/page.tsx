@@ -1,73 +1,82 @@
-"use client";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import OngDashboard, { type OngReviewRecord } from "@/components/specific/OngDashboard/ong-dashboard";
+import {
+  OngsProfileService,
+  type OngAsaasKycSummary,
+  type OngMyProfile,
+} from "@/services/ongs-profile.service";
+import { DonationService, type DonationService as DonationRecord } from "@/services/donations.service";
+import type { BankAccountData } from "@/services/bank-account.service";
+import { decodeJwtRole, ssrFetchJson } from "@/utils/ssrFetch";
 
-import React, { useEffect, useState } from "react";
-import OngDashboard from "@/components/specific/OngDashboard/ong-dashboard";
-import { OngsProfileService } from "@/services/ongs-profile.service";
-import { Loader2 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+export const dynamic = "force-dynamic";
 
-export default function OngDashboardPage() {
-    const { isAuthenticated, isLoading: authLoading, userRole, refreshSession } = useAuth();
-    const [ong, setOng] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
+export default async function OngDashboardPage() {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("access_token")?.value;
+  const refreshToken = cookieStore.get("refresh_token")?.value;
+  const roleCookie = cookieStore.get("user_role")?.value?.toLowerCase();
 
-    // Guard de autenticação para usuário deslogado ou sem role de ONG
-    useEffect(() => {
-        if (!authLoading && (!isAuthenticated || (userRole !== "ong" && userRole !== "admin"))) {
-            window.location.replace("/login");
-        }
-    }, [authLoading, isAuthenticated, userRole]);
+  if (!accessToken && !refreshToken) {
+    redirect("/login");
+  }
 
-    // Previne restauração deslogada via BFCache (botão voltar do navegador)
-    useEffect(() => {
-        const handlePageShow = (e: PageTransitionEvent) => {
-            if (e.persisted) {
-                refreshSession();
-            }
-        };
-        window.addEventListener("pageshow", handlePageShow);
-        return () => window.removeEventListener("pageshow", handlePageShow);
-    }, [refreshSession]);
+  const resolvedRole = roleCookie || decodeJwtRole(accessToken);
+  if (resolvedRole === "donor") {
+    redirect("/home");
+  }
+  if (resolvedRole && resolvedRole !== "ong" && resolvedRole !== "admin") {
+    redirect("/login");
+  }
 
-    useEffect(() => {
-        async function fetchProfile() {
-            try {
-                const data = await OngsProfileService.getMyProfile().catch((err: any) => {
-                    if (err?.status === 401 || err?.status === 403) {
-                        window.location.replace("/login");
-                    }
-                    return null;
-                });
-                if (!data) {
-                    window.location.replace("/login");
-                    return;
-                }
-                setOng(data);
-            } catch (error: any) {
-                if (error?.status === 401 || error?.status === 403) {
-                    window.location.replace("/login");
-                    return;
-                }
-                console.error("Erro ao carregar perfil:", error);
-            } finally {
-                setLoading(false);
-            }
-        }
-        if (!authLoading && isAuthenticated) {
-            fetchProfile();
-        }
-    }, [authLoading, isAuthenticated]);
+  let initialOng: OngMyProfile | null = null;
+  let initialReviews: OngReviewRecord[] = [];
+  let initialDonations: DonationRecord[] = [];
+  let initialBankAccount: BankAccountData | null = null;
+  let initialKycSummary: OngAsaasKycSummary | null = null;
 
-    if (authLoading || loading || !isAuthenticated || (userRole !== "ong" && userRole !== "admin")) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-3">
-                <Loader2 className="animate-spin text-[#6B39A7]" size={40} />
-                <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                    Carregando painel...
-                </span>
-            </div>
-        );
+  if (accessToken) {
+    const [profileRes, donationsRes, kycRes, bankRes] = await Promise.all([
+      ssrFetchJson<Record<string, unknown>>("/ongs/me/profile", accessToken),
+      ssrFetchJson<unknown>("/donations/me/received", accessToken),
+      ssrFetchJson<OngAsaasKycSummary>("/ongs/me/asaas-status", accessToken),
+      ssrFetchJson<BankAccountData | BankAccountData[]>("/ongs/bank-account/me", accessToken),
+    ]);
+
+    if ((profileRes.status === 401 || profileRes.status === 403) && !refreshToken) {
+      redirect("/login");
     }
 
-    return <OngDashboard ong={ong} />;
+    if (profileRes.data) {
+      initialOng = OngsProfileService.mapMyProfile(profileRes.data);
+      initialDonations = DonationService.mapReceivedDonations(donationsRes.data);
+      initialKycSummary = kycRes.data ?? null;
+      initialBankAccount = Array.isArray(bankRes.data)
+        ? (bankRes.data[0] ?? null)
+        : (bankRes.data ?? null);
+
+      if (initialOng?.id) {
+        const ratingsRes = await ssrFetchJson<
+          OngReviewRecord[] | { data?: OngReviewRecord[] }
+        >(`/ongs/${initialOng.id}/ratings`, accessToken);
+        if (Array.isArray(ratingsRes.data)) {
+          initialReviews = ratingsRes.data;
+        } else if (Array.isArray(ratingsRes.data?.data)) {
+          initialReviews = ratingsRes.data.data;
+        }
+      }
+    }
+  }
+
+  return (
+    <OngDashboard
+      ong={initialOng}
+      initialReviews={initialReviews}
+      initialDonations={initialDonations}
+      initialBankAccount={initialBankAccount}
+      initialKycSummary={initialKycSummary}
+      hasServerData={Boolean(initialOng)}
+    />
+  );
 }

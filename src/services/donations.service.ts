@@ -66,6 +66,46 @@ export const DonationService = {
     }
   },
 
+  mapReceivedDonations(payload: any): DonationService[] {
+    const rawArray = Array.isArray(payload)
+      ? payload
+      : payload?.data?.data || payload?.data || [];
+
+    if (!Array.isArray(rawArray)) return [];
+
+    const baseApiUrl = API_URL || 'http://localhost:3001';
+
+    return rawArray.map((item: any) => {
+      let formattedProofUrl = item.proofOfPaymentUrl || item.proofUrl;
+      if (formattedProofUrl && !formattedProofUrl.startsWith('http')) {
+        const cleanPath = formattedProofUrl.replace(/\\/g, '/').replace(/^\/+/, '');
+        formattedProofUrl = `${baseApiUrl}/${cleanPath}`;
+      }
+
+      return {
+        id: item.id,
+        type: item.donationType?.toLowerCase() || 'material',
+        status: item.donationStatus?.toUpperCase() || 'PENDING',
+        amount: item.monetaryAmount,
+        materialDescription: item.materialDescription,
+        materialQuantity: item.materialQuantity,
+        proofUrl: formattedProofUrl,
+        createdAt: item.createdAt,
+        isAnonymous: item.isAnonymous,
+        donor: {
+          user: {
+            name: item.isAnonymous
+              ? "Doador Anônimo"
+              : (item.donor?.user?.name || item.guestName || "Doador Anônimo")
+          },
+          profile: {
+            contactNumber: item.donor?.profile?.contactNumber || item.guestPhone || ""
+          }
+        }
+      };
+    }) as DonationService[];
+  },
+
   async getReceivedDonations(params?: { type?: 'monetary' | 'material'; skip?: number; take?: number }) {
     try {
       const queryString = params && Object.keys(params).length > 0
@@ -73,39 +113,7 @@ export const DonationService = {
         : '';
 
       const response = await api<any>(`/donations/me/received${queryString}`);
-      const rawArray = response?.data?.data?.data || response?.data?.data || response?.data || [];
-
-      if (!Array.isArray(rawArray)) return [];
-
-      return rawArray.map((item: any) => {
-        let formattedProofUrl = item.proofOfPaymentUrl || item.proofUrl;
-        if (formattedProofUrl && !formattedProofUrl.startsWith('http')) {
-          const cleanPath = formattedProofUrl.replace(/\\/g, '/').replace(/^\/+/, '');
-          formattedProofUrl = `${API_URL}/${cleanPath}`;
-        }
-
-        return {
-          id: item.id,
-          type: item.donationType?.toLowerCase() || 'material',
-          status: item.donationStatus?.toUpperCase() || 'PENDING',
-          amount: item.monetaryAmount,
-          materialDescription: item.materialDescription,
-          materialQuantity: item.materialQuantity,
-          proofUrl: formattedProofUrl,
-          createdAt: item.createdAt,
-          isAnonymous: item.isAnonymous,
-          donor: {
-            user: {
-              name: item.isAnonymous
-                ? "Doador Anônimo"
-                : (item.donor?.user?.name || item.guestName || "Doador Anônimo")
-            },
-            profile: {
-              contactNumber: item.donor?.profile?.contactNumber || item.guestPhone || ""
-            }
-          }
-        };
-      }) as DonationService[];
+      return this.mapReceivedDonations(response?.data);
     } catch (error) {
       console.error("Erro ao buscar doações:", error);
       return [];

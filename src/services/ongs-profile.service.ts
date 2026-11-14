@@ -52,6 +52,63 @@ export interface SendAsaasKycDocumentResponse {
   summary: OngAsaasKycSummary;
 }
 
+export interface OngProfileCategory {
+  id: number;
+  name: string;
+}
+
+export interface OngMyProfile {
+  id: number;
+  name: string;
+  description: string;
+  website: string;
+  websiteUrl: string;
+  websiteUrls?: string[];
+  instagramUrl: string;
+  facebookUrl: string;
+  whatsappNumber: string;
+  contactNumber?: string | null;
+  foundedAt: string | null;
+  yearsOfOperation?: number | null;
+  avatarUrl: string;
+  bannerUrl: string;
+  bannerPosition?: string;
+  displayYears: string | number;
+  hasAsaasSubaccount?: boolean;
+  asaasAccountStatus?: string;
+  verificationStatus?: string;
+  hasEstatuto?: boolean;
+  hasAta?: boolean;
+  isRestricted?: boolean;
+  cnpj?: string;
+  categories?: OngProfileCategory[];
+  primaryCategory?: OngProfileCategory | null;
+  primaryCategoryId?: number | null;
+  address?: {
+    street?: string;
+    number?: string;
+    complement?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  } | null;
+  user?: {
+    name?: string | null;
+    email?: string | null;
+  } | null;
+  rating?: {
+    average?: number | string;
+    count?: number;
+  } | null;
+  stats: {
+    donations: number;
+    ratingAverage: number;
+  };
+  [key: string]: unknown;
+}
+
 export const OngsProfileService = {
   _formatImageUrl(path: string | null) {
     return DonorService._formatImageUrl(path) ?? "";
@@ -130,37 +187,67 @@ export const OngsProfileService = {
     }
   },
 
-  async getMyProfile() {
-    const { data } = await api<any>('/ongs/me/profile');
+  mapMyProfile(raw: Record<string, unknown> | null | undefined): OngMyProfile | null {
+    if (!raw) return null;
 
-    let websiteValue = data.websiteUrl || "";
-    if (!websiteValue && data.websiteUrls && Array.isArray(data.websiteUrls) && data.websiteUrls.length > 0) {
-      websiteValue = data.websiteUrls[0];
-    } else if (!websiteValue && data.website && Array.isArray(data.website)) {
-      websiteValue = data.website[0] || "";
+    const websiteUrls = Array.isArray(raw.websiteUrls)
+      ? raw.websiteUrls.filter((u): u is string => typeof u === "string")
+      : undefined;
+    const legacyWebsiteArr = Array.isArray(raw.website)
+      ? raw.website.filter((u): u is string => typeof u === "string")
+      : undefined;
+
+    let websiteValue = typeof raw.websiteUrl === "string" ? raw.websiteUrl : "";
+    if (!websiteValue && websiteUrls && websiteUrls.length > 0) {
+      websiteValue = websiteUrls[0];
+    } else if (!websiteValue && legacyWebsiteArr && legacyWebsiteArr.length > 0) {
+      websiteValue = legacyWebsiteArr[0] || "";
     }
 
+    const ratingObj =
+      raw.rating && typeof raw.rating === "object"
+        ? (raw.rating as { average?: number | string; count?: number })
+        : null;
+
+    const foundedAtValue = typeof raw.foundedAt === "string" ? raw.foundedAt : null;
+    const createdAtValue =
+      typeof raw.createdAt === "string" || raw.createdAt instanceof Date
+        ? raw.createdAt
+        : new Date();
+
     return {
-      ...data,
-      name: data.name || "Minha ONG",
-      description: data.description || data.about || data.bio || "",
+      ...(raw as Record<string, unknown>),
+      id: Number(raw.id || 0),
+      name: (typeof raw.name === "string" && raw.name) || "Minha ONG",
+      description:
+        (typeof raw.description === "string" && raw.description) ||
+        (typeof raw.about === "string" && raw.about) ||
+        (typeof raw.bio === "string" && raw.bio) ||
+        "",
       website: websiteValue,
-      websiteUrl: data.websiteUrl || websiteValue || "",
-      instagramUrl: data.instagramUrl || "",
-      facebookUrl: data.facebookUrl || "",
-      whatsappNumber: data.whatsappNumber || "",
-      foundedAt: data.foundedAt || null,
-      avatarUrl: this._formatImageUrl(data.avatarUrl),
-      bannerUrl: this._formatImageUrl(data.bannerUrl),
+      websiteUrl:
+        (typeof raw.websiteUrl === "string" && raw.websiteUrl) || websiteValue || "",
+      websiteUrls,
+      instagramUrl: typeof raw.instagramUrl === "string" ? raw.instagramUrl : "",
+      facebookUrl: typeof raw.facebookUrl === "string" ? raw.facebookUrl : "",
+      whatsappNumber: typeof raw.whatsappNumber === "string" ? raw.whatsappNumber : "",
+      foundedAt: foundedAtValue,
+      avatarUrl: this._formatImageUrl(typeof raw.avatarUrl === "string" ? raw.avatarUrl : null),
+      bannerUrl: this._formatImageUrl(typeof raw.bannerUrl === "string" ? raw.bannerUrl : null),
       displayYears:
-        typeof data.yearsOfOperation === "number"
-          ? data.yearsOfOperation
-          : this._calculateYears(data.foundedAt || data.createdAt || new Date()),
+        typeof raw.yearsOfOperation === "number"
+          ? raw.yearsOfOperation
+          : this._calculateYears(foundedAtValue || createdAtValue),
       stats: {
-        donations: data.receivedDonations || 0,
-        ratingAverage: Number(data.rating?.average) || 0,
-      }
+        donations: Number(raw.receivedDonations || 0),
+        ratingAverage: Number(ratingObj?.average) || 0,
+      },
     };
+  },
+
+  async getMyProfile(): Promise<OngMyProfile> {
+    const { data } = await api<Record<string, unknown>>('/ongs/me/profile');
+    return this.mapMyProfile(data) as OngMyProfile;
   },
 
   async postReview(ongId: number, score: number, comment: string) {
