@@ -136,17 +136,17 @@ export default function OngKycSelfieStep({
   return (
     <div className="flex flex-col gap-6">
       <div className="text-left">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold uppercase tracking-wider mb-3">
-          <CheckCircle2 size={14} /> Pré-cadastro enviado
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm sm:text-base font-bold mb-3.5">
+          <CheckCircle2 size={16} /> Pré-cadastro enviado
         </div>
-        <h1 className="text-3xl sm:text-[2.2rem] font-extrabold text-gray-900 leading-tight mb-2">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 leading-tight mb-2.5 tracking-tight">
           {onboardingUrl
             ? "Confirme a identidade com uma selfie"
             : isInconclusiveOrManual
               ? "Cadastro em análise manual"
               : "Preparando verificação biométrica"}
         </h1>
-        <p className="text-gray-600 text-base font-medium leading-relaxed">
+        <p className="text-gray-600 text-base sm:text-lg font-medium leading-relaxed">
           {ongName}, confira abaixo os últimos passos para liberar repasses financeiros e exibir sua ONG na plataforma.
         </p>
       </div>
@@ -158,12 +158,12 @@ export default function OngKycSelfieStep({
             <Loader2 size={30} className="animate-spin" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-1">
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1.5">
               {hasSubaccount
                 ? "Gerando link oficial de biometria..."
                 : "Validando dados públicos e regulatórios..."}
             </h3>
-            <p className="text-sm text-gray-600 leading-relaxed">
+            <p className="text-base sm:text-lg text-gray-600 font-medium leading-relaxed">
               Isso leva apenas alguns segundos. Assim que estiver pronto, o QR Code aparecerá aqui
               automaticamente e também será enviado para{" "}
               <strong className="text-gray-800">{email}</strong>.
@@ -174,9 +174,9 @@ export default function OngKycSelfieStep({
               type="button"
               onClick={() => pollStatus(false)}
               disabled={isRefreshing}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-purple-200 text-[#6B39A7] text-sm font-bold hover:bg-purple-50 transition-colors cursor-pointer disabled:opacity-60"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-purple-200 text-[#6B39A7] text-base font-bold hover:bg-purple-50 transition-colors cursor-pointer disabled:opacity-60"
             >
-              <RefreshCw size={15} className={isRefreshing ? "animate-spin" : ""} />
+              <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
               Atualizar agora
             </button>
           )}
@@ -187,74 +187,74 @@ export default function OngKycSelfieStep({
       {onboardingUrl && (
         <div className="p-6 rounded-2xl bg-white border-2 border-[#6B39A7]/25 shadow-sm flex flex-col gap-5">
           <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-[#F3E8FF] text-[#6B39A7] flex items-center justify-center shrink-0">
-                <Smartphone size={20} />
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-[#F3E8FF] text-[#6B39A7] flex items-center justify-center shrink-0">
+                <Smartphone size={22} />
               </div>
               <div>
-                <h3 className="text-base font-extrabold text-gray-900">
-                  Verificação Facial do Presidente
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
+                  Verificação facial do presidente
                 </h3>
-                <p className="text-xs font-medium text-gray-500">
+                <p className="text-sm sm:text-base font-medium text-gray-600 mt-0.5">
                   Escaneie com a câmera do celular ou abra o link oficial abaixo
                 </p>
               </div>
             </div>
             {isSelfieSubmitted ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold shrink-0">
-                <ShieldCheck size={13} />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-sm font-bold shrink-0">
+                <ShieldCheck size={15} />
                 {asaasStatus === "approved" || selfieDocStatusUpper === "APPROVED"
                   ? "Aprovado"
                   : "Enviado"}
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold shrink-0">
-                <Clock size={13} /> Pendente
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-sm font-bold shrink-0">
+                <Clock size={15} /> Pendente
               </span>
             )}
           </div>
 
-          <div className="flex flex-col items-center justify-center py-4 px-4 rounded-2xl bg-gray-50 border border-gray-200">
+          <div className="flex flex-col items-center justify-center py-5 px-4 rounded-2xl bg-gray-50 border border-gray-200">
             <div className="p-3 bg-white rounded-2xl shadow-sm border border-gray-100">
               <QRCodeSVG value={onboardingUrl} size={184} level="M" includeMargin={false} />
             </div>
-            <p className="text-xs text-gray-500 font-medium mt-3 text-center max-w-xs leading-relaxed">
+            <p className="text-sm sm:text-base text-gray-600 font-medium mt-4 text-center max-w-md leading-relaxed">
               O presidente deve fotografar o documento (RG ou CNH) e realizar a selfie no ambiente seguro do nosso parceiro financeiro (Asaas).
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-2.5">
+          <div className="flex flex-col sm:flex-row gap-3">
             <a
               href={onboardingUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-[#6B39A7] hover:bg-[#582c8c] text-white font-bold text-sm shadow-sm transition-all"
+              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-4 rounded-xl bg-[#6B39A7] hover:bg-[#582c8c] text-white font-bold text-base sm:text-lg shadow-sm transition-all"
             >
-              <ExternalLink size={16} />
-              Abrir Verificação Agora
+              <ExternalLink size={18} />
+              Abrir verificação agora
             </a>
             <button
               type="button"
               onClick={handleCopyLink}
-              className="inline-flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-sm transition-colors cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-4 py-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-base sm:text-lg transition-colors cursor-pointer"
             >
-              <Copy size={15} />
+              <Copy size={18} />
               {copied ? "Copiado!" : "Copiar link"}
             </button>
           </div>
 
-          <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs text-gray-500">
+          <div className="flex items-center justify-between gap-2 flex-wrap pt-3 border-t border-gray-100 text-sm sm:text-base text-gray-600 font-medium">
             <span>
-              Link também enviado para <strong className="text-gray-700">{email}</strong>
+              Link também enviado para <strong className="text-gray-800">{email}</strong>
             </span>
             {!tokenExpired && onboardingKycToken && (
               <button
                 type="button"
                 onClick={() => pollStatus(false)}
                 disabled={isRefreshing}
-                className="inline-flex items-center gap-1 font-bold text-[#6B39A7] hover:underline cursor-pointer disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 font-bold text-[#6B39A7] hover:underline cursor-pointer disabled:opacity-60"
               >
-                <RefreshCw size={12} className={isRefreshing ? "animate-spin" : ""} />
+                <RefreshCw size={15} className={isRefreshing ? "animate-spin" : ""} />
                 Verificar status
               </button>
             )}
@@ -264,15 +264,15 @@ export default function OngKycSelfieStep({
 
       {/* ESTADO 3: Compliance inconclusivo, restrito ou encaminhado para revisão manual */}
       {isInconclusiveOrManual && (
-        <div className="p-5 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3.5">
-          <ShieldAlert size={22} className="text-amber-600 shrink-0 mt-0.5" />
+        <div className="p-5 sm:p-6 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-4">
+          <ShieldAlert size={24} className="text-amber-600 shrink-0 mt-0.5" />
           <div className="text-left">
-            <h3 className="text-sm font-extrabold text-amber-950 mb-1">
+            <h3 className="text-lg sm:text-xl font-bold text-amber-950 mb-1.5">
               {provisionError
                 ? "Ativação financeira aguardando ajuste"
-                : "Encaminhado para Revisão da Equipe"}
+                : "Encaminhado para revisão da equipe"}
             </h3>
-            <p className="text-sm text-amber-900/90 leading-relaxed">
+            <p className="text-base sm:text-lg text-amber-900 font-medium leading-relaxed">
               {provisionError ||
                 initialOnboarding?.message ||
                 "Seus dados e documentos foram recebidos com segurança. Nossa equipe finalizará a conferência manual antes de liberar a biometria e a exibição pública."}
@@ -282,14 +282,14 @@ export default function OngKycSelfieStep({
       )}
 
       {/* AVISO OBRIGATÓRIO: Gate final do Administrador para aparecer no /home */}
-      <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-start gap-3">
-        <ShieldCheck size={20} className="text-[#6B39A7] shrink-0 mt-0.5" />
+      <div className="p-5 sm:p-6 rounded-2xl bg-slate-50 border border-slate-200 flex items-start gap-4">
+        <ShieldCheck size={24} className="text-[#6B39A7] shrink-0 mt-0.5" />
         <div className="text-left">
-          <p className="text-xs font-extrabold text-slate-800 uppercase tracking-wide mb-0.5">
-            Última etapa: Aprovação da Curadoria
-          </p>
-          <p className="text-xs text-slate-600 leading-relaxed">
-            A liberação pública na vitrine (<strong>/home</strong>) sempre depende da aprovação final do Administrador do DoeCerto. Você já pode acessar sua conta para completar fotos, redes sociais e itens necessários enquanto concluímos a revisão.
+          <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-1.5">
+            Última etapa: aprovação da curadoria
+          </h3>
+          <p className="text-base sm:text-lg text-slate-700 font-medium leading-relaxed">
+            A exibição pública da ONG na plataforma passa pela aprovação final da curadoria do DoeCerto. Enquanto concluímos a revisão, você já pode acessar sua conta para completar fotos, redes sociais e itens necessários.
           </p>
         </div>
       </div>
@@ -297,7 +297,7 @@ export default function OngKycSelfieStep({
       <button
         type="button"
         onClick={() => window.location.replace("/login")}
-        className="w-full py-4 px-6 bg-[#4A2675] hover:bg-[#3b1a66] text-white rounded-xl font-bold text-lg shadow-md active:scale-[0.98] transition-all cursor-pointer"
+        className="w-full h-[60px] px-6 bg-[#4A2675] hover:bg-[#3b1a66] text-white rounded-xl font-bold text-lg sm:text-xl shadow-md active:scale-[0.98] transition-all cursor-pointer"
       >
         Acessar minha conta
       </button>
