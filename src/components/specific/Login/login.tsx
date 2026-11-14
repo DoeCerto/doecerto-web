@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef, useEffect, Suspense } from "react";
+import { useState, useRef, useEffect, useId, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation"; 
 import toast, { Toaster } from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -56,64 +56,115 @@ function GoogleAuthenticatorIcon({ size = 36 }: { size?: number }) {
     <svg
       width={size}
       height={size}
-      viewBox="0 0 48 48"
+      viewBox="0 0 512 512"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
       className="shrink-0"
     >
-      <rect x="2" y="2" width="44" height="44" rx="12" fill="#F8FAFC" stroke="#E2E8F0" strokeWidth="1.5" />
-      <rect x="21" y="8" width="6" height="17" rx="3" fill="#EA4335" />
-      <rect x="21" y="23" width="6" height="17" rx="3" fill="#34A853" />
-      <g transform="rotate(60 24 24)">
-        <rect x="21" y="8" width="6" height="17" rx="3" fill="#FBBC05" />
-        <rect x="21" y="23" width="6" height="17" rx="3" fill="#4285F4" />
-      </g>
-      <g transform="rotate(120 24 24)">
-        <rect x="21" y="8" width="6" height="17" rx="3" fill="#4285F4" />
-        <rect x="21" y="23" width="6" height="17" rx="3" fill="#34A853" />
-      </g>
-      <circle cx="24" cy="24" r="4.5" fill="#F8FAFC" />
-      <circle cx="24" cy="24" r="2.5" fill="#4285F4" />
+      <path
+        fill="#1A73E8"
+        d="M440,255.99997v0.00006C440,273.12085,426.12085,287,409.00003,287H302l-46-93.01001l49.6507-85.9951c8.56021-14.82629,27.51834-19.9065,42.34518-11.34724l0.00586,0.0034c14.82776,8.55979,19.90875,27.51928,11.34857,42.34682L309.70001,225h99.30002C426.12085,225,440,238.87917,440,255.99997z"
+      />
+      <path
+        fill="#EA4335"
+        d="M348.00174,415.34897l-0.00586,0.00339c-14.82684,8.55927-33.78497,3.47903-42.34518-11.34723L256,318.01001l-49.65065,85.99509c-8.5602,14.82629-27.51834,19.90652-42.34517,11.34729l-0.00591-0.00342c-14.82777-8.55978-19.90875-27.51929-11.34859-42.34683L202.29999,287L256,285l53.70001,2l49.6503,86.00214C367.91049,387.82968,362.8295,406.78918,348.00174,415.34897z"
+      />
+      <path
+        fill="#FBBC04"
+        d="M256,193.98999L242,232l-39.70001-7l-49.6503-86.00212c-8.56017-14.82755-3.47919-33.78705,11.34859-42.34684l0.00591-0.00341c14.82683-8.55925,33.78497-3.47903,42.34517,11.34726L256,193.98999z"
+      />
+      <path
+        fill="#34A853"
+        d="M248,225l-36,62H102.99997C85.87916,287,72,273.12085,72,256.00003v-0.00006C72,238.87917,85.87916,225,102.99997,225H248z"
+      />
+      <polygon fill="#185DB7" points="309.70001,287 202.29999,287 256,193.98999" />
     </svg>
   );
 }
 
 function MicrosoftAuthenticatorIcon({ size = 36 }: { size?: number }) {
+  const uid = useId();
+  const bodyGradId = `${uid}-ms-body`;
+  const clipId = `${uid}-ms-clip`;
+  const headGradId = `${uid}-ms-head`;
+  const torsoGradId = `${uid}-ms-torso`;
+
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 48 48"
+      viewBox="0 0 18 18"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
       className="shrink-0"
     >
-      <rect x="2" y="2" width="44" height="44" rx="12" fill="#EFF6FF" stroke="#BFDBFE" strokeWidth="1.5" />
-      <path
-        d="M24 9L12 13.8V23.2C12 31.1 17.1 38.2 24 40C30.9 38.2 36 31.1 36 23.2V13.8L24 9Z"
-        fill="#0078D4"
-      />
-      <path
-        d="M24 9V40C30.9 38.2 36 31.1 36 23.2V13.8L24 9Z"
-        fill="#50E6FF"
-        fillOpacity="0.28"
-      />
-      <rect x="19" y="21.5" width="10" height="8.5" rx="2.2" fill="#FFFFFF" />
-      <path
-        d="M21 21.5V19C21 17.3431 22.3431 16 24 16C25.6569 16 27 17.3431 27 19V21.5"
-        stroke="#FFFFFF"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-      />
-      <circle cx="24" cy="25.6" r="1.4" fill="#0078D4" />
-      <g transform="translate(29, 29)">
-        <rect width="14" height="14" rx="3.5" fill="#FFFFFF" stroke="#E2E8F0" strokeWidth="1" />
-        <rect x="2.5" y="2.5" width="4" height="4" rx="0.6" fill="#F25022" />
-        <rect x="7.5" y="2.5" width="4" height="4" rx="0.6" fill="#7FBA00" />
-        <rect x="2.5" y="7.5" width="4" height="4" rx="0.6" fill="#00A4EF" />
-        <rect x="7.5" y="7.5" width="4" height="4" rx="0.6" fill="#FFB900" />
+      <defs>
+        <linearGradient
+          id={bodyGradId}
+          x1="-262"
+          y1="843.65"
+          x2="-262"
+          y2="856.5"
+          gradientTransform="translate(271 -839)"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop offset="0" stopColor="#0078d4" />
+          <stop offset="1" stopColor="#1a508b" />
+        </linearGradient>
+        <clipPath id={clipId}>
+          <path
+            d="M15.929,7.908a2.971,2.971,0,0,0-2.546-2.94c-.072-.018-.126-.018-.2-.036a31.217,31.217,0,0,0-8.373,0c-.072.018-.143.018-.2.036A2.957,2.957,0,0,0,2.07,7.908a10.336,10.336,0,0,0,5.038,9.054,3.564,3.564,0,0,0,3.765,0A10.208,10.208,0,0,0,15.929,7.908Z"
+            fill="none"
+          />
+        </clipPath>
+        <linearGradient
+          id={headGradId}
+          x1="-261.938"
+          y1="844.8"
+          x2="-261.938"
+          y2="849.987"
+          gradientTransform="translate(271 -839)"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop offset="0.297" stopColor="#40c4f5" />
+          <stop offset="1" stopColor="#0095e6" />
+        </linearGradient>
+        <linearGradient
+          id={torsoGradId}
+          x1="-261.938"
+          y1="849.895"
+          x2="-261.938"
+          y2="859.786"
+          gradientTransform="translate(271 -839)"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop offset="0.193" stopColor="#40c4f5" />
+          <stop offset="1" stopColor="#0095e6" />
+        </linearGradient>
+      </defs>
+      <g>
+        <path
+          d="M4.806,5.025c.068-.018.119-.018.187-.035.391-.054.782-.107,1.173-.143A2.968,2.968,0,0,1,9.022,2.478a2.967,2.967,0,0,1,2.855,2.369c.391.036.782.089,1.173.143.068.017.136.017.187.035a3.909,3.909,0,0,1,.612.161,4.82,4.82,0,0,0-9.637,0A3.22,3.22,0,0,1,4.806,5.025Z"
+          fill="#215694"
+        />
+        <path
+          d="M15.929,7.908a2.971,2.971,0,0,0-2.546-2.94c-.072-.018-.126-.018-.2-.036a31.217,31.217,0,0,0-8.373,0c-.072.018-.143.018-.2.036A2.957,2.957,0,0,0,2.07,7.908a10.336,10.336,0,0,0,5.038,9.054,3.564,3.564,0,0,0,3.765,0A10.208,10.208,0,0,0,15.929,7.908Z"
+          fill={`url(#${bodyGradId})`}
+        />
+        <g clipPath={`url(#${clipId})`}>
+          <g>
+            <g opacity="0.4">
+              <ellipse cx="9.063" cy="7.999" rx="2.331" ry="2.211" fill="#004795" />
+            </g>
+            <g opacity="0.4">
+              <ellipse cx="9.062" cy="15.696" rx="4.661" ry="4.554" fill="#004795" />
+            </g>
+            <circle cx="9.062" cy="8.415" r="2.331" fill={`url(#${headGradId})`} />
+            <circle cx="9.062" cy="16.124" r="4.661" fill={`url(#${torsoGradId})`} />
+          </g>
+        </g>
       </g>
     </svg>
   );
