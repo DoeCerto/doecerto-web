@@ -382,6 +382,30 @@ function FileDropzone({ title, subtitle, file, setFile }: { title: string, subti
   );
 }
 
+const LOWERCASE_WORDS_PT = new Set([
+  "da", "de", "do", "das", "dos", "e", "em", "na", "no", "nas", "nos", "para", "por", "com", "sem", "sob", "sobre", "a", "o", "as", "os",
+]);
+
+function formatAddressCase(value?: string | null): string {
+  if (!value) return "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  const letters = trimmed.replace(/[^a-zA-ZÀ-ÿ]/g, "");
+  const upperLetters = trimmed.replace(/[^A-ZÀ-Ý]/g, "");
+  if (letters.length > 0 && upperLetters.length / letters.length < 0.7) {
+    return trimmed;
+  }
+  return trimmed
+    .toLowerCase()
+    .split(/\s+/)
+    .map((word, index) => {
+      if (word === "s/n") return "S/N";
+      if (index > 0 && LOWERCASE_WORDS_PT.has(word)) return word;
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(" ");
+}
+
 // ==========================================
 // 3. CUSTOM HOOK
 // ==========================================
@@ -637,9 +661,9 @@ function useRegisterForm() {
       if (removeFormatting(form.getValues("documento") || "") !== expectedCnpj) return;
 
       lastLookedUpCepRef.current = cleanCep;
-      if (!form.getValues("rua")?.trim() && cepData.street) form.setValue("rua", cepData.street);
-      if (!form.getValues("bairro")?.trim() && cepData.neighborhood) form.setValue("bairro", cepData.neighborhood);
-      if (!form.getValues("cidade")?.trim() && cepData.city) form.setValue("cidade", cepData.city);
+      if (cepData.street) form.setValue("rua", formatAddressCase(cepData.street));
+      if (cepData.neighborhood) form.setValue("bairro", formatAddressCase(cepData.neighborhood));
+      if (cepData.city) form.setValue("cidade", formatAddressCase(cepData.city));
       if (!form.getValues("uf")?.trim() && cepData.state) form.setValue("uf", cepData.state.toUpperCase());
       setCepGeoVerified(typeof cepData.latitude === "number" && typeof cepData.longitude === "number");
     } catch {
@@ -705,17 +729,17 @@ function useRegisterForm() {
           if (!hasManualAddress && res.address?.zipCode) {
             const cleanZip = removeFormatting(res.address.zipCode);
             form.setValue("cep", formatCEP(res.address.zipCode));
-            if (res.address.street) form.setValue("rua", res.address.street);
+            if (res.address.street) form.setValue("rua", formatAddressCase(res.address.street));
             if (res.address.number) form.setValue("numero", res.address.number);
             if (
               res.address.complement &&
               res.address.complement.trim().toLowerCase() !== "undefined" &&
               res.address.complement.trim().toLowerCase() !== "null"
             ) {
-              form.setValue("complemento", res.address.complement.trim());
+              form.setValue("complemento", formatAddressCase(res.address.complement));
             }
-            if (res.address.neighborhood) form.setValue("bairro", res.address.neighborhood);
-            if (res.address.city) form.setValue("cidade", res.address.city);
+            if (res.address.neighborhood) form.setValue("bairro", formatAddressCase(res.address.neighborhood));
+            if (res.address.city) form.setValue("cidade", formatAddressCase(res.address.city));
             if (res.address.state) form.setValue("uf", res.address.state.toUpperCase());
             form.clearErrors(["cep", "rua", "numero", "complemento", "bairro", "cidade", "uf"]);
 
@@ -829,9 +853,9 @@ function useRegisterForm() {
       const data = await lookupCep(cleanCep);
       lastLookedUpCepRef.current = cleanCep;
       form.setValue("cep", formatCEP(data.zipCode || cleanCep));
-      if (data.street) form.setValue("rua", data.street);
-      if (data.neighborhood) form.setValue("bairro", data.neighborhood);
-      if (data.city) form.setValue("cidade", data.city);
+      if (data.street) form.setValue("rua", formatAddressCase(data.street));
+      if (data.neighborhood) form.setValue("bairro", formatAddressCase(data.neighborhood));
+      if (data.city) form.setValue("cidade", formatAddressCase(data.city));
       if (data.state) form.setValue("uf", data.state.toUpperCase());
       form.clearErrors(["cep", "rua", "bairro", "cidade", "uf"]);
       setCepGeoVerified(typeof data.latitude === "number" && typeof data.longitude === "number");
@@ -1593,16 +1617,9 @@ export default function Register() {
               <form onSubmit={(e) => { e.preventDefault(); handleNextOperationalStep(); }} className="flex flex-col gap-5">
                 {/* CEP + Endereço */}
                 <div className="p-5 sm:p-6 bg-gray-50/80 border border-gray-200 rounded-2xl flex flex-col gap-4">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <h3 className="text-base sm:text-lg font-extrabold text-gray-800 uppercase tracking-wider flex items-center gap-2">
-                      <MapPin size={18} className="text-[#6B39A7]" /> Endereço da Sede
-                    </h3>
-                    {cepGeoVerified && (
-                      <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
-                        <CheckCircle2 size={14} /> Mapa e CEP verificados
-                      </span>
-                    )}
-                  </div>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <MapPin size={20} className="text-[#6B39A7]" /> Endereço da sede
+                  </h3>
 
                   {cnpjAutoFilledAddress && (
                     <div className="p-3.5 rounded-xl bg-purple-50/80 border border-purple-200 text-sm sm:text-base text-purple-950 font-medium leading-relaxed">
@@ -1615,6 +1632,7 @@ export default function Register() {
                       <InputField
                         label="CEP" icon={MapPin} placeholder="00000-000" maxLength={9}
                         isLoading={isLookingUpCep}
+                        isValid={cepGeoVerified && !isLookingUpCep && !errors.cep}
                         {...register("cep")}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           handleCepChange(e.target.value);
@@ -1689,8 +1707,8 @@ export default function Register() {
                 {/* Contatos */}
                 <div className="p-5 sm:p-6 bg-gray-50/80 border border-gray-200 rounded-2xl flex flex-col gap-4">
                   <div>
-                    <h3 className="text-base sm:text-lg font-extrabold text-gray-800 uppercase tracking-wider flex items-center gap-2">
-                      <Phone size={18} className="text-[#6B39A7]" /> Contatos Oficiais
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
+                      <Phone size={20} className="text-[#6B39A7]" /> Contatos oficiais
                     </h3>
                     <p className="text-sm sm:text-base text-gray-600 font-medium mt-1">
                       Usado na abertura da conta de repasse e para doadores falarem com sua equipe.
@@ -1738,8 +1756,8 @@ export default function Register() {
                 {/* Chave Pix DICT */}
                 <div className="p-5 sm:p-6 bg-purple-50/50 border border-purple-200 rounded-2xl flex flex-col gap-4">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <h3 className="text-base sm:text-lg font-extrabold text-gray-800 uppercase tracking-wider flex items-center gap-2">
-                      <KeyRound size={18} className="text-[#6B39A7]" /> Chave Pix para Repasses
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
+                      <KeyRound size={20} className="text-[#6B39A7]" /> Chave Pix para repasses
                     </h3>
                     {watchedCnpj && (
                       <button
@@ -1854,7 +1872,7 @@ export default function Register() {
               <form onSubmit={(e) => { e.preventDefault(); handleFinalSubmit(); }} className="flex flex-col gap-8">
                 <div className="p-6 bg-gray-50 border border-gray-200 rounded-2xl flex flex-col gap-5">
                   <div>
-                    <h3 className="text-base sm:text-lg font-extrabold text-gray-800 uppercase tracking-wider">Representante Legal (Presidente / Diretor)</h3>
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900">Representante legal (Presidente / Diretor)</h3>
                     <p className="text-sm sm:text-base text-gray-600 font-medium mt-1 leading-relaxed">
                       Deve constar na Ata ou Estatuto — será a pessoa que fará a selfie com documento na etapa seguinte.
                     </p>
