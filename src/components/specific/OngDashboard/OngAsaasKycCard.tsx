@@ -11,6 +11,7 @@ import {
   ExternalLink,
   FileText,
   Loader2,
+  Mail,
   RefreshCw,
   ShieldAlert,
   ShieldCheck,
@@ -24,7 +25,9 @@ import {
 
 interface OngAsaasKycCardProps {
   ong: {
+    name?: string;
     verificationStatus?: string;
+    rejectionReason?: string | null;
     asaasAccountStatus?: string;
     hasEstatuto?: boolean;
     hasAta?: boolean;
@@ -140,6 +143,7 @@ export function OngAsaasKycCard({
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const verificationStatus = summary?.verificationStatus || ong.verificationStatus || "pending";
+  const rejectionReason = summary?.rejectionReason ?? ong.rejectionReason ?? null;
   const asaasStatus = (summary?.asaasAccountStatus || ong.asaasAccountStatus || "pending").toLowerCase();
   const hasSubaccount = summary?.hasSubaccount ?? Boolean(ong.hasAsaasSubaccount);
   const displayProvisionError = activationError || summary?.provisionError || null;
@@ -203,7 +207,61 @@ export function OngAsaasKycCard({
   };
 
   if (verificationStatus === "rejected") {
-    return null;
+    const contactSubject = encodeURIComponent(
+      `Revisão de Cadastro - ${ong.name || "ONG Parceira"}`,
+    );
+    return (
+      <div className="rounded-[24px] p-5 sm:p-7 border border-rose-200 bg-gradient-to-br from-rose-50/90 via-white to-rose-50/40 shadow-sm">
+        <div className="flex items-start gap-3.5 sm:gap-4">
+          <div className="p-3 rounded-2xl bg-rose-100 text-rose-600 border border-rose-200 shrink-0">
+            <ShieldAlert size={24} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-rose-700 bg-rose-100/80 px-3 py-1 rounded-full border border-rose-200">
+              Revisão Cadastral · Não Aprovado
+            </span>
+            <h3 className="text-lg sm:text-xl font-bold text-slate-900 mt-2">
+              Cadastro não aprovado na curadoria
+            </h3>
+            <p className="text-sm sm:text-base text-slate-600 mt-1.5 leading-relaxed">
+              Nossa equipe de Compliance e Curadoria concluiu a análise da sua instituição e identificou pendências que impediram a aprovação da conta neste momento.
+            </p>
+
+            <div className="mt-4 p-4 sm:p-5 rounded-2xl bg-white border border-rose-200/80">
+              <p className="text-xs font-bold uppercase tracking-wider text-rose-700">
+                Motivo informado pela administração
+              </p>
+              <p className="text-sm sm:text-base font-medium text-slate-800 mt-1.5 leading-relaxed whitespace-pre-line">
+                {rejectionReason?.trim() ||
+                  "Identificamos inconsistências nos dados ou documentos comprobatórios enviados durante o cadastro."}
+              </p>
+            </div>
+
+            <div className="mt-3 p-4 rounded-2xl bg-slate-50/90 border border-slate-200/80 text-sm sm:text-base text-slate-700 leading-relaxed">
+              Você pode revisar as informações e documentos da instituição ou entrar em contato diretamente com nossa equipe para entender melhor os detalhes e solicitar uma nova análise.
+            </div>
+
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <a
+                href={`mailto:contato@doecerto.net.br?subject=${contactSubject}`}
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm sm:text-base font-bold shadow-sm active:scale-[0.98] transition-all cursor-pointer"
+              >
+                <Mail size={18} />
+                Entrar em contato com a equipe
+              </a>
+              <button
+                type="button"
+                onClick={onCompleteProfile}
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-sm sm:text-base font-bold active:scale-[0.98] transition-all cursor-pointer"
+              >
+                Revisar dados e documentos
+                <ArrowRight size={17} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Estado 1: Ainda aguardando aprovação administrativa do DoeCerto (Trava 1)

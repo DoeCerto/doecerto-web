@@ -25,6 +25,7 @@ export interface OngAsaasKycDocument {
 export interface OngAsaasKycSummary {
   ongId: number;
   verificationStatus: string;
+  rejectionReason?: string | null;
   hasSubaccount: boolean;
   asaasAccountId: string | null;
   asaasWalletId: string | null;
@@ -112,6 +113,7 @@ export interface OngMyProfile {
   hasAsaasSubaccount?: boolean;
   asaasAccountStatus?: string;
   verificationStatus?: string;
+  rejectionReason?: string | null;
   hasEstatuto?: boolean;
   hasAta?: boolean;
   isRestricted?: boolean;
@@ -330,6 +332,10 @@ export const OngsProfileService = {
       facebookUrl: typeof raw.facebookUrl === "string" ? raw.facebookUrl : "",
       whatsappNumber: typeof raw.whatsappNumber === "string" ? raw.whatsappNumber : "",
       foundedAt: foundedAtValue,
+      rejectionReason:
+        typeof raw.rejectionReason === "string" && raw.rejectionReason.trim()
+          ? raw.rejectionReason
+          : null,
       avatarUrl: this._formatImageUrl(typeof raw.avatarUrl === "string" ? raw.avatarUrl : null),
       bannerUrl: this._formatImageUrl(typeof raw.bannerUrl === "string" ? raw.bannerUrl : null),
       displayYears:

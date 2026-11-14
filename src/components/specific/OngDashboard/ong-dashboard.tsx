@@ -6,7 +6,7 @@ import {
   MapPin, Heart, Award, X, Phone, Home, Star, Pencil,
   History, Package, CheckCircle2, Clock, FileText, ArrowRight,
   Camera, AlertCircle, Tag, MessageSquare, AlertTriangle, ExternalLink,
-  LogOut, Download, Trash2, ShieldAlert, Globe, Loader2
+  LogOut, Download, Trash2, ShieldAlert, Globe, Loader2, Mail
 } from "lucide-react";
 import { FaInstagram, FaFacebook, FaWhatsapp } from "react-icons/fa";
 import { useRouter } from "next/navigation";
@@ -81,6 +81,7 @@ export default function OngDashboard({
       asaasAccountStatus: initialKycSummary.asaasAccountStatus,
       hasAsaasSubaccount: initialKycSummary.hasSubaccount,
       verificationStatus: initialKycSummary.verificationStatus || initialOng.verificationStatus,
+      rejectionReason: initialKycSummary.rejectionReason ?? initialOng.rejectionReason ?? null,
     };
   });
   const [reviews, setReviews] = useState<OngReviewRecord[]>(initialReviews);
@@ -139,6 +140,11 @@ export default function OngDashboard({
     setDismissSetupPrompt(true);
   };
 
+  const effectiveVerificationStatus =
+    kycSummary?.verificationStatus || ong?.verificationStatus || "pending";
+  const effectiveRejectionReason =
+    kycSummary?.rejectionReason ?? ong?.rejectionReason ?? null;
+  const isAdminRejected = effectiveVerificationStatus === "rejected";
   const hasAsaasSubaccount = kycSummary?.hasSubaccount ?? Boolean(ong?.hasAsaasSubaccount);
   const effectiveAsaasStatus = (
     kycSummary?.asaasAccountStatus ||
@@ -146,7 +152,8 @@ export default function OngDashboard({
     "pending"
   ).toLowerCase();
   const isAsaasMissingProfile =
-    ong?.verificationStatus === "verified" && !hasAsaasSubaccount;
+    effectiveVerificationStatus === "verified" && !hasAsaasSubaccount;
+  const isAsaasRejected = !isAdminRejected && effectiveAsaasStatus === "rejected";
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -246,6 +253,7 @@ export default function OngDashboard({
             asaasAccountStatus: summary.asaasAccountStatus,
             hasAsaasSubaccount: summary.hasSubaccount,
             verificationStatus: summary.verificationStatus || prev.verificationStatus,
+            rejectionReason: summary.rejectionReason ?? prev.rejectionReason ?? null,
           }
         : prev,
     );
@@ -371,7 +379,7 @@ export default function OngDashboard({
     );
   }
 
-  if ((!ong || !ong.description) && !dismissSetupPrompt) {
+  if ((!ong || (!ong.description && !isAdminRejected)) && !dismissSetupPrompt) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6 text-gray-900">
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white p-8 rounded-[32px] shadow-xl border border-gray-100 max-w-md w-full text-center">
@@ -414,7 +422,7 @@ export default function OngDashboard({
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-32">
       <Toaster position="top-center" />
-      {(!ong?.hasEstatuto || !ong?.hasAta) && (
+      {(!ong?.hasEstatuto || !ong?.hasAta) && !isAdminRejected && (
         <button
           onClick={() => setIsDocsModalOpen(true)}
           className="w-full bg-amber-500 hover:bg-amber-600 text-white px-4 sm:px-6 py-2.5 flex items-center justify-center gap-2 sm:gap-3 z-50 text-xs sm:text-sm shadow-md relative transition-colors cursor-pointer group"
@@ -425,7 +433,18 @@ export default function OngDashboard({
           </span>
         </button>
       )}
-      {ong.verificationStatus === 'verified' && ong.isRestricted && (
+      {isAdminRejected && (
+        <button
+          onClick={() => setShowPendingModal(true)}
+          className="w-full bg-rose-50 hover:bg-rose-100 text-rose-800 border-b border-rose-200 px-4 sm:px-6 py-3 flex items-center justify-center gap-2 sm:gap-3 z-50 text-xs sm:text-sm shadow-sm relative transition-colors cursor-pointer group"
+        >
+          <ShieldAlert size={18} className="shrink-0 text-rose-600 group-hover:scale-110 transition-transform" />
+          <span className="font-semibold text-center leading-tight">
+            Seu cadastro não foi aprovado na curadoria. <span className="underline font-bold text-rose-700">Clique para ver o motivo e entrar em contato com a equipe</span>.
+          </span>
+        </button>
+      )}
+      {effectiveVerificationStatus === 'verified' && ong.isRestricted && (
         <button
           onClick={() => setShowRestrictedModal(true)}
           className="w-full bg-red-50 hover:bg-red-100 text-red-800 border-b border-red-200 px-4 sm:px-6 py-2.5 flex items-center justify-center gap-2 sm:gap-3 z-50 text-xs sm:text-sm shadow-sm relative transition-colors cursor-pointer group"
@@ -533,40 +552,44 @@ export default function OngDashboard({
               <AlertTriangle size={14} strokeWidth={2.5} className="sm:w-4 sm:h-4 text-red-600" />
               Restringida
             </button>
-          ) : (ong.verificationStatus !== 'verified' || effectiveAsaasStatus !== 'approved') ? (
+          ) : (effectiveVerificationStatus !== 'verified' || effectiveAsaasStatus !== 'approved') ? (
             <button
               onClick={() => setShowPendingModal(true)}
               className={`inline-flex items-center justify-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold shadow-sm hover:scale-[1.02] transition-all active:scale-95 shrink-0 cursor-pointer translate-y-0.5 sm:translate-y-1 ${
-                effectiveAsaasStatus === 'rejected'
-                  ? "bg-rose-100 text-rose-700 hover:bg-rose-200"
+                isAdminRejected || isAsaasRejected
+                  ? "bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200"
                   : isAsaasMissingProfile
                     ? "bg-purple-100 text-[#6B39A7] hover:bg-purple-200"
                     : "bg-amber-100 text-amber-700 hover:bg-amber-200"
               }`}
               title={
-                isAsaasMissingProfile
-                  ? "Complete endereço e telefone no perfil para abrir a subconta no Asaas"
-                  : effectiveAsaasStatus === 'rejected'
-                    ? "Há pendências documentais recusadas no Asaas"
-                    : ong.verificationStatus === 'verified'
-                      ? "Aguardando aprovação do serviço de pagamentos (Asaas)"
-                      : "Sua conta está em análise de auditoria e conformidade"
+                isAdminRejected
+                  ? "Cadastro não aprovado na curadoria — clique para ver o motivo"
+                  : isAsaasMissingProfile
+                    ? "Complete endereço e telefone no perfil para abrir a subconta no Asaas"
+                    : isAsaasRejected
+                      ? "Há pendências documentais recusadas no Asaas"
+                      : effectiveVerificationStatus === 'verified'
+                        ? "Aguardando aprovação do serviço de pagamentos (Asaas)"
+                        : "Sua conta está em análise de auditoria e conformidade"
               }
             >
-              {effectiveAsaasStatus === 'rejected' ? (
+              {isAdminRejected || isAsaasRejected ? (
                 <ShieldAlert size={14} strokeWidth={2.5} className="sm:w-4 sm:h-4" />
               ) : (
                 <Clock size={14} strokeWidth={3} className="sm:w-4 sm:h-4" />
               )}
-              {isAsaasMissingProfile
-                ? "Completar Cadastro"
-                : effectiveAsaasStatus === 'rejected'
-                  ? "Ajuste Bancário (KYC)"
-                  : ong.verificationStatus === 'verified'
-                    ? "Aprovação Bancária"
-                    : "Em Análise"}
+              {isAdminRejected
+                ? "Cadastro Recusado"
+                : isAsaasMissingProfile
+                  ? "Completar Cadastro"
+                  : isAsaasRejected
+                    ? "Ajuste Bancário (KYC)"
+                    : effectiveVerificationStatus === 'verified'
+                      ? "Aprovação Bancária"
+                      : "Em Análise"}
             </button>
-          ) : (ong.verificationStatus === 'verified' && effectiveAsaasStatus === 'approved') ? (
+          ) : (effectiveVerificationStatus === 'verified' && effectiveAsaasStatus === 'approved') ? (
             <motion.img
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -601,7 +624,7 @@ export default function OngDashboard({
           </div>
         )}
 
-        {!ong?.description && (
+        {!ong?.description && !isAdminRejected && (
           <div className="mt-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-50 via-indigo-50/60 to-purple-50 border border-purple-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
             <div className="flex items-center gap-3.5 text-purple-900">
               <div className="w-11 h-11 rounded-2xl bg-purple-100 text-[#6B39A7] flex items-center justify-center shrink-0 shadow-sm">
@@ -1045,21 +1068,56 @@ export default function OngDashboard({
                 <X size={20} strokeWidth={2.5} />
               </button>
 
-              <div className="w-20 h-20 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mb-6 shadow-inner ring-4 ring-amber-50">
-                <Clock size={40} strokeWidth={2.5} />
+              <div
+                className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 shadow-inner ring-4 ${
+                  isAdminRejected || isAsaasRejected
+                    ? "bg-rose-100 text-rose-600 ring-rose-50"
+                    : "bg-amber-100 text-amber-600 ring-amber-50"
+                }`}
+              >
+                {isAdminRejected || isAsaasRejected ? (
+                  <ShieldAlert size={40} strokeWidth={2.5} />
+                ) : (
+                  <Clock size={40} strokeWidth={2.5} />
+                )}
               </div>
 
               <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 tracking-tight">
-                {isAsaasMissingProfile
-                  ? "Complete Seu Cadastro Bancário"
-                  : effectiveAsaasStatus === 'rejected'
-                    ? "Pendência na Homologação Bancária"
-                    : ong.verificationStatus === 'verified' && effectiveAsaasStatus !== 'approved'
-                      ? "Homologação de Pagamento"
-                      : "Conta em Análise"}
+                {isAdminRejected
+                  ? "Cadastro Não Aprovado"
+                  : isAsaasMissingProfile
+                    ? "Complete Seu Cadastro Bancário"
+                    : isAsaasRejected
+                      ? "Pendência na Homologação Bancária"
+                      : effectiveVerificationStatus === 'verified' && effectiveAsaasStatus !== 'approved'
+                        ? "Homologação de Pagamento"
+                        : "Conta em Análise"}
               </h2>
-              <div className="text-base sm:text-lg text-slate-600 font-medium leading-relaxed mb-8 px-2 space-y-3">
-                {isAsaasMissingProfile ? (
+              <div className="w-full text-base sm:text-lg text-slate-600 font-medium leading-relaxed mb-8 px-1 space-y-4">
+                {isAdminRejected ? (
+                  <>
+                    <p>
+                      Nossa equipe de <strong className="text-rose-700 font-bold">Curadoria e Compliance</strong> avaliou os dados da sua instituição e não pôde aprovar o cadastro neste momento.
+                    </p>
+                    <div className="w-full bg-rose-50 border border-rose-200 rounded-2xl p-4 sm:p-5 text-left space-y-1.5">
+                      <span className="text-xs font-bold uppercase tracking-wider text-rose-700">
+                        Motivo informado pela administração
+                      </span>
+                      <p className="text-sm sm:text-base text-rose-950 font-semibold leading-relaxed whitespace-pre-line">
+                        {effectiveRejectionReason?.trim() ||
+                          "Não foi informado um motivo detalhado na análise. Entre em contato com nossa equipe para verificar o que aconteceu."}
+                      </p>
+                    </div>
+                    <div className="w-full bg-slate-50 border border-slate-200/80 rounded-2xl p-4 sm:p-5 text-left space-y-1.5">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                        Como podemos ajudar?
+                      </span>
+                      <p className="text-sm sm:text-base text-slate-700 leading-relaxed">
+                        Caso queira entender melhor o ocorrido, esclarecer alguma informação ou enviar correções para nova avaliação, fale com o nosso suporte ou revise seus dados cadastrais.
+                      </p>
+                    </div>
+                  </>
+                ) : isAsaasMissingProfile ? (
                   <>
                     <p>
                       Sua instituição já foi <strong className="text-emerald-700 font-bold">aprovada pela auditoria do DoeCerto</strong>! Para abrir automaticamente sua subconta no <strong className="text-[#6B39A7] font-bold">Asaas</strong>, falta apenas completar seu endereço e telefone em Editar Perfil.
@@ -1070,7 +1128,7 @@ export default function OngDashboard({
                       </p>
                     )}
                   </>
-                ) : effectiveAsaasStatus === 'rejected' ? (
+                ) : isAsaasRejected ? (
                   <>
                     <p>
                       O <strong className="text-rose-700 font-bold">serviço de pagamentos (Asaas)</strong> solicitou ajustes nos documentos da sua subconta antes de liberar os recebimentos via Pix.
@@ -1081,7 +1139,7 @@ export default function OngDashboard({
                       </p>
                     )}
                   </>
-                ) : ong.verificationStatus === 'verified' && effectiveAsaasStatus !== 'approved' ? (
+                ) : effectiveVerificationStatus === 'verified' && effectiveAsaasStatus !== 'approved' ? (
                   <p>
                     Sua instituição já foi <strong className="text-emerald-700 font-bold">aprovada pela auditoria do DoeCerto</strong>! No momento, sua subconta exclusiva está em fase de homologação cadastral (KYC) pelo <strong className="text-amber-600 font-bold">serviço de pagamentos da plataforma (Asaas)</strong>. Após o envio dos documentos/selfie solicitados no card abaixo, a análise leva em média <strong className="text-slate-800">1 a 2 dias úteis</strong>.
                   </p>
@@ -1092,50 +1150,80 @@ export default function OngDashboard({
                 )}
               </div>
 
-              {isAsaasMissingProfile && (
-                <button
-                  onClick={() => {
-                    setShowPendingModal(false);
-                    router.push('/ong-profilesetup');
-                  }}
-                  className="w-full mb-3 py-4 bg-[#6B39A7] hover:bg-[#582a8c] text-white rounded-2xl font-bold text-base shadow-lg shadow-purple-200 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <span>Completar Endereço e Telefone</span>
-                  <ArrowRight size={18} />
-                </button>
-              )}
+              {isAdminRejected ? (
+                <div className="w-full space-y-3">
+                  <a
+                    href={`mailto:contato@doecerto.net.br?subject=${encodeURIComponent(`Revisão de Cadastro - ${ong.name || "ONG"}`)}`}
+                    className="w-full py-3.5 sm:py-4 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-bold text-base shadow-lg shadow-rose-600/20 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <Mail size={18} />
+                    <span>Falar com o Suporte</span>
+                  </a>
+                  <button
+                    onClick={() => {
+                      setShowPendingModal(false);
+                      router.push('/ong-profilesetup');
+                    }}
+                    className="w-full py-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-2xl font-bold text-base active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <span>Revisar Dados e Documentos</span>
+                    <ArrowRight size={18} />
+                  </button>
+                  <button
+                    onClick={() => setShowPendingModal(false)}
+                    className="w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold text-base active:scale-[0.98] transition-all cursor-pointer"
+                  >
+                    Fechar
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {isAsaasMissingProfile && (
+                    <button
+                      onClick={() => {
+                        setShowPendingModal(false);
+                        router.push('/ong-profilesetup');
+                      }}
+                      className="w-full mb-3 py-4 bg-[#6B39A7] hover:bg-[#582a8c] text-white rounded-2xl font-bold text-base shadow-lg shadow-purple-200 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <span>Completar Endereço e Telefone</span>
+                      <ArrowRight size={18} />
+                    </button>
+                  )}
 
-              {ong.verificationStatus === 'verified' && kycSummary?.onboardingUrl && (
-                <a
-                  href={kycSummary.onboardingUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setShowPendingModal(false)}
-                  className="w-full mb-3 py-4 bg-[#6B39A7] hover:bg-[#582a8c] text-white rounded-2xl font-bold text-base shadow-lg shadow-purple-200 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <span>Abrir Selfie / Validação no Asaas</span>
-                  <ExternalLink size={18} />
-                </a>
-              )}
+                  {effectiveVerificationStatus === 'verified' && kycSummary?.onboardingUrl && (
+                    <a
+                      href={kycSummary.onboardingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setShowPendingModal(false)}
+                      className="w-full mb-3 py-4 bg-[#6B39A7] hover:bg-[#582a8c] text-white rounded-2xl font-bold text-base shadow-lg shadow-purple-200 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <span>Abrir Selfie / Validação no Asaas</span>
+                      <ExternalLink size={18} />
+                    </a>
+                  )}
 
-              {(!ong?.hasEstatuto || !ong?.hasAta) && (
-                <button
-                  onClick={() => {
-                    setShowPendingModal(false);
-                    setIsDocsModalOpen(true);
-                  }}
-                  className="w-full mb-3 py-4 bg-[#6B39A7] hover:bg-[#582a8c] text-white rounded-2xl font-bold text-base shadow-lg shadow-purple-200 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <FileText size={18} />
-                  <span>Enviar Documentos para Homologação</span>
-                </button>
+                  {(!ong?.hasEstatuto || !ong?.hasAta) && (
+                    <button
+                      onClick={() => {
+                        setShowPendingModal(false);
+                        setIsDocsModalOpen(true);
+                      }}
+                      className="w-full mb-3 py-4 bg-[#6B39A7] hover:bg-[#582a8c] text-white rounded-2xl font-bold text-base shadow-lg shadow-purple-200 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <FileText size={18} />
+                      <span>Enviar Documentos para Homologação</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowPendingModal(false)}
+                    className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-bold text-base sm:text-lg shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all cursor-pointer"
+                  >
+                    Entendi
+                  </button>
+                </>
               )}
-              <button
-                onClick={() => setShowPendingModal(false)}
-                className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-bold text-base sm:text-lg shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all cursor-pointer"
-              >
-                Entendi
-              </button>
             </motion.div>
           </div>
         )}
