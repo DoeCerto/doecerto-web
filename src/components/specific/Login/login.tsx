@@ -7,11 +7,18 @@ import toast, { Toaster } from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   login,
+  loginWithGoogle,
+  persistClientSession,
+  extractApiErrorMessage,
   verify2FALogin,
   generate2FA,
   enable2FA,
   Generate2FAResponse,
+  type LoginResponse,
+  type GoogleProfileSummary,
 } from "@/services/login.service";
+import GoogleAuthButton from "@/components/ui/GoogleAuthButton";
+import GoogleDonorOnboardingCard from "@/components/shared/GoogleDonorOnboardingCard";
 import {
   Eye,
   EyeClosed,
@@ -29,11 +36,15 @@ import {
   QrCode,
   ShieldAlert,
 } from "lucide-react";
-import { SecureStorageService } from "@/services/secure-storage.service";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
-type AuthStep = "credentials" | "2fa_verify" | "2fa_setup" | "2fa_backup_codes";
+type AuthStep =
+  | "credentials"
+  | "google_onboarding"
+  | "2fa_verify"
+  | "2fa_setup"
+  | "2fa_backup_codes";
 
 function LoginContent() {
   const router = useRouter();
@@ -66,6 +77,11 @@ function LoginContent() {
   const [showManualKey, setShowManualKey] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(true);
 
+  // Estados do onboarding via Google
+  const [isGooglePending, setIsGooglePending] = useState(false);
+  const [googleOnboardingToken, setGoogleOnboardingToken] = useState<string>("");
+  const [googleProfile, setGoogleProfile] = useState<GoogleProfileSummary | null>(null);
+
   // Refs para o GSAP
   const mainWrapperRef = useRef(null);
   const imageRef = useRef(null);
@@ -82,7 +98,7 @@ function LoginContent() {
 
   // Verifica se já está logado usando o AuthContext (Padrão Ouro /me)
   useEffect(() => {
-    if (!isLoading && isAuthenticated && !isPending && step === "credentials") {
+    if (!isLoading && isAuthenticated && !isPending && !isGooglePending && step === "credentials") {
       const roleLower = userRole?.toLowerCase() || "";
       let defaultRedirect = "/home";
       if (roleLower === "admin") {
@@ -94,7 +110,7 @@ function LoginContent() {
       const redirect = getSafeRedirectUrl(searchParams?.get("from"), defaultRedirect);
       router.replace(redirect);
     }
-  }, [isLoading, isAuthenticated, userRole, isPending, step, router, searchParams]);
+  }, [isLoading, isAuthenticated, userRole, isPending, isGooglePending, step, router, searchParams]);
 
   // Inicializa o GSAP para animar os itens da tela
   useGSAP(() => {
@@ -112,49 +128,8 @@ function LoginContent() {
 
   // Função auxiliar para salvar a sessão e redirecionar
   const saveSessionAndRedirect = async (data: any, accountEmail?: string) => {
-    const token = data?.accessToken || data?.access_token || data?.token;
-    if (token) {
-      try {
-        await SecureStorageService.setAccessToken(token);
-      } catch (capacitorError) { }
-    }
-
-    const targetEmail = accountEmail || data?.user?.email || data?.email || email;
-    if (data?.trustedDeviceToken) {
-      try {
-        await SecureStorageService.setTrustedDeviceToken(data.trustedDeviceToken, targetEmail);
-      } catch { }
-    }
-
-    localStorage.setItem("registration_completed", "true");
-    
-    const apiUserRole = data?.user?.role || data?.role;
-    if (apiUserRole) {
-      try {
-        await SecureStorageService.setUserRole(apiUserRole);
-      } catch { }
-    }
-    const userAvatar = data?.user?.avatarUrl || data?.avatarUrl;
-    const userName = data?.user?.name || data?.name;
-
-    if (userAvatar) {
-      localStorage.setItem("userAvatar", userAvatar);
-      document.cookie = `user_avatar=${encodeURIComponent(userAvatar)}; path=/; max-age=604800; SameSite=Lax`;
-    }
-    if (userName) {
-      localStorage.setItem("userName", userName);
-      document.cookie = `user_name=${encodeURIComponent(userName)}; path=/; max-age=604800; SameSite=Lax`;
-    }
-
+    const finalRole = await persistClientSession(data, accountEmail || email);
     toast.success("Autenticado com sucesso!");
-
-    let finalRole = apiUserRole;
-    if (!finalRole && token && token.includes(".")) {
-      try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        finalRole = payload?.role;
-      } catch (e) { }
-    }
 
     await refreshSession();
 
@@ -224,6 +199,47 @@ function LoginContent() {
     }
   }
 
+  const handlePostAuthData = async (data: LoginResponse, fallbackEmail?: string) => {
+    if (data?.requiresOnboarding && data?.onboardingToken && data?.googleProfile) {
+      setGoogleOnboardingToken(data.onboardingToken);
+      setGoogleProfile(data.googleProfile);
+      setPendingUser({ email: data.googleProfile.email, role: "donor" });
+      setStep("google_onboarding");
+      setIsPending(false);
+      setIsGooglePending(false);
+      return;
+    }
+
+    // Caso 1: Usuário precisa configurar 2FA obrigatório (Admin / ONG no primeiro acesso)
+    if (data?.requires2FASetup && data?.tempToken) {
+      setTempToken(data.tempToken);
+      setPendingUser({ email: data.email || fallbackEmail, role: data.role });
+      setTotpCode("");
+      setError2FA(null);
+      setStep("2fa_setup");
+      setIsPending(false);
+      setIsGooglePending(false);
+      await load2FASetup(data.tempToken);
+      return;
+    }
+
+    // Caso 2: Usuário já possui 2FA ativo -> Desafio de TOTP
+    if (data?.requires2FA && data?.tempToken) {
+      setTempToken(data.tempToken);
+      setPendingUser({ email: data.email || fallbackEmail, role: data.role });
+      setTotpCode("");
+      setError2FA(null);
+      setUseBackupCode(false);
+      setStep("2fa_verify");
+      setIsPending(false);
+      setIsGooglePending(false);
+      return;
+    }
+
+    // Caso 3: Login direto (Doador sem 2FA ou dispositivo confiável)
+    await saveSessionAndRedirect(data, data?.user?.email || fallbackEmail);
+  };
+
   // 1. Fluxo de Login Inicial (Credenciais)
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -248,35 +264,8 @@ function LoginContent() {
       const response = await login({ email, password });
       if (!response) throw new Error("Sem resposta do servidor");
 
-      const data = (response?.data || response) as any;
-
-      // Caso 1: Usuário precisa configurar 2FA obrigatório (Admin / ONG no primeiro acesso)
-      if (data?.requires2FASetup && data?.tempToken) {
-        setTempToken(data.tempToken);
-        setPendingUser({ email: data.email || email, role: data.role });
-        setTotpCode("");
-        setError2FA(null);
-        setStep("2fa_setup");
-        setIsPending(false);
-        await load2FASetup(data.tempToken);
-        return;
-      }
-
-      // Caso 2: Usuário já possui 2FA ativo -> Desafio de TOTP
-      if (data?.requires2FA && data?.tempToken) {
-        setTempToken(data.tempToken);
-        setPendingUser({ email: data.email || email, role: data.role });
-        setTotpCode("");
-        setError2FA(null);
-        setUseBackupCode(false);
-        setStep("2fa_verify");
-        setIsPending(false);
-        return;
-      }
-
-      // Caso 3: Login direto (Doador sem 2FA ou legacy)
-      await saveSessionAndRedirect(data, email);
-    } catch (err: any) {
+      await handlePostAuthData(response.data, email);
+    } catch (err: unknown) {
       const friendlyMsg = translateAuthError(err);
       if (friendlyMsg.toLowerCase().includes("pelo menos 8 caracteres")) {
         setPasswordError(friendlyMsg);
@@ -284,6 +273,21 @@ function LoginContent() {
         setLoginError(friendlyMsg);
       }
       setIsPending(false);
+    }
+  }
+
+  async function handleGoogleAuthSuccess(accessToken: string) {
+    setLoginError(null);
+    setPasswordError(null);
+    setIsGooglePending(true);
+    try {
+      const response = await loginWithGoogle({ accessToken });
+      await handlePostAuthData(response.data, response.data?.user?.email);
+    } catch (err: unknown) {
+      setLoginError(
+        extractApiErrorMessage(err, "Não foi possível entrar com o Google."),
+      );
+      setIsGooglePending(false);
     }
   }
 
@@ -522,8 +526,8 @@ function LoginContent() {
 
                 <button
                   type="submit"
-                  disabled={isPending}
-                  className="w-full flex justify-center items-center h-[60px] mt-2 bg-purple-700 hover:bg-purple-800 text-white font-bold text-lg rounded-xl transition-all duration-300 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed shadow-[0_8px_20px_-6px_rgba(74,38,117,0.5)]"
+                  disabled={isPending || isGooglePending}
+                  className="w-full flex justify-center items-center h-[60px] mt-2 bg-purple-700 hover:bg-purple-800 text-white font-bold text-lg rounded-xl transition-all duration-300 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed shadow-[0_8px_20px_-6px_rgba(74,38,117,0.5)] cursor-pointer"
                 >
                   {isPending ? (
                     <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -533,7 +537,23 @@ function LoginContent() {
                 </button>
               </form>
 
-              <div className="animate-item opacity-0 relative flex items-center justify-center mt-8 mb-6">
+              <div className="animate-item opacity-0 relative flex items-center justify-center my-5">
+                <div className="absolute border-t border-gray-200 w-full"></div>
+                <span className="bg-[#F9FAFB] lg:bg-white px-4 text-xs uppercase tracking-wider text-gray-400 font-bold relative">
+                  ou
+                </span>
+              </div>
+
+              <div className="animate-item opacity-0">
+                <GoogleAuthButton
+                  onSuccess={handleGoogleAuthSuccess}
+                  onError={(msg) => setLoginError(msg)}
+                  disabled={isPending}
+                  isLoading={isGooglePending}
+                />
+              </div>
+
+              <div className="animate-item opacity-0 relative flex items-center justify-center mt-7 mb-5">
                 <div className="absolute border-t border-gray-200 w-full"></div>
                 <span className="bg-[#F9FAFB] lg:bg-white px-4 text-sm text-gray-500 font-medium relative">
                   Ou prefere dar uma olhadinha antes?
@@ -543,8 +563,8 @@ function LoginContent() {
               <button
                 type="button"
                 onClick={() => router.push('/home')}
-                disabled={isPending}
-                className="animate-item opacity-0 w-full flex justify-center items-center gap-3 h-[60px] bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-lg rounded-xl transition-all shadow-sm active:scale-[0.98] disabled:opacity-70"
+                disabled={isPending || isGooglePending}
+                className="animate-item opacity-0 w-full flex justify-center items-center gap-3 h-[56px] bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-base sm:text-lg rounded-xl transition-all shadow-sm active:scale-[0.98] disabled:opacity-70 cursor-pointer"
               >
                 <Compass className="w-6 h-6 text-[#6B39A7]" />
                 Conhecer ONGs e causas
@@ -571,6 +591,24 @@ function LoginContent() {
                 </Link>
               </div>
             </>
+          )}
+
+          {/* ============================================================ */}
+          {/* STEP 1B: ONBOARDING PROGRESSIVO COM GOOGLE (APENAS CPF)      */}
+          {/* ============================================================ */}
+          {step === "google_onboarding" && googleProfile && googleOnboardingToken && (
+            <GoogleDonorOnboardingCard
+              onboardingToken={googleOnboardingToken}
+              googleProfile={googleProfile}
+              onBack={() => {
+                setStep("credentials");
+                setGoogleOnboardingToken("");
+                setGoogleProfile(null);
+              }}
+              onCompleted={async (data, accountEmail) => {
+                await saveSessionAndRedirect(data, accountEmail);
+              }}
+            />
           )}
 
           {/* ============================================================ */}

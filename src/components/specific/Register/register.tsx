@@ -23,9 +23,19 @@ import {
   type OngOnboardingSummary,
 } from "@/services/register-ong.service";
 import { registerDonor, checkAvailability } from "@/services/register.service";
+import {
+  loginWithGoogle,
+  persistClientSession,
+  extractApiErrorMessage,
+  type GoogleProfileSummary,
+  type LoginResponse,
+} from "@/services/login.service";
+import { useAuth } from "@/contexts/AuthContext";
 import { formatCNPJ, removeFormatting, validateCNPJ, formatCPF, validateCPF, formatCEP, formatBrazilianPhone } from "@/utils/documentValidation";
 import TermosModal from "@/components/shared/TermosModal";
 import OngKycSelfieStep from "@/components/specific/Register/OngKycSelfieStep";
+import GoogleAuthButton from "@/components/ui/GoogleAuthButton";
+import GoogleDonorOnboardingCard from "@/components/shared/GoogleDonorOnboardingCard";
 
 // ==========================================
 // 1. TIPAGENS E SCHEMAS
@@ -371,11 +381,17 @@ function FileDropzone({ title, subtitle, file, setFile }: { title: string, subti
 // ==========================================
 function useRegisterForm() {
   const router = useRouter();
+  const { refreshSession } = useAuth();
   const [isChecking, setIsChecking] = useState(true);
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [accountType, setAccountType] = useState<AccountType>(null);
   const [modalAberto, setModalAberto] = useState(false);
   const [isPending, setIsPending] = useState(false);
+  const [isGooglePending, setIsGooglePending] = useState(false);
+  const [googleOnboardingSession, setGoogleOnboardingSession] = useState<{
+    onboardingToken: string;
+    googleProfile: GoogleProfileSummary;
+  } | null>(null);
   const [successModalAberto, setSuccessModalAberto] = useState(false);
 
   const [fileEstatuto, setFileEstatuto] = useState<File | null>(null);
@@ -497,6 +513,7 @@ function useRegisterForm() {
     setPixLookupResult(null);
     setSameWhatsappAsPhone(true);
     setKycSession(null);
+    setGoogleOnboardingSession(null);
     form.reset({
       accountType: null,
       nome: "",
@@ -1162,8 +1179,64 @@ function useRegisterForm() {
     }
   };
 
+  const handleGoogleSessionCompleted = async (
+    data: LoginResponse,
+    email?: string,
+    toastMessage: string = "Conta criada com sucesso! Bem-vindo ao DoeCerto.",
+  ) => {
+    const finalRole = await persistClientSession(data, email);
+    sessionStorage.removeItem("register_draft");
+    await refreshSession();
+    toast.success(toastMessage);
+
+    const roleLower = (finalRole || "").toLowerCase();
+    let target = "/home";
+    if (roleLower === "admin") target = "/adm-dashboard";
+    else if (roleLower === "ong") target = "/ong-dashboard";
+
+    setTimeout(() => {
+      router.replace(target);
+    }, 900);
+  };
+
+  const handleGoogleDonorAuth = async (accessToken: string) => {
+    setIsGooglePending(true);
+    try {
+      const response = await loginWithGoogle({ accessToken });
+      const data = response.data;
+
+      if (data?.requiresOnboarding && data?.onboardingToken && data?.googleProfile) {
+        setGoogleOnboardingSession({
+          onboardingToken: data.onboardingToken,
+          googleProfile: data.googleProfile,
+        });
+        setIsGooglePending(false);
+        return;
+      }
+
+      if (data?.requires2FA || data?.requires2FASetup) {
+        setIsGooglePending(false);
+        toast("Esta conta possui autenticação em 2 etapas (2FA). Finalize seu acesso pela tela de login.");
+        router.push("/login");
+        return;
+      }
+
+      await handleGoogleSessionCompleted(
+        data,
+        data?.user?.email,
+        "Bem-vindo de volta! Você já possuía uma conta e foi conectado.",
+      );
+    } catch (err: unknown) {
+      toast.error(
+        extractApiErrorMessage(err, "Não foi possível conectar sua conta do Google."),
+      );
+      setIsGooglePending(false);
+    }
+  };
+
   return {
     form, step, setStep, accountType, isChecking, modalAberto, setModalAberto, isPending, successModalAberto, setSuccessModalAberto,
+    isGooglePending, googleOnboardingSession, setGoogleOnboardingSession, handleGoogleDonorAuth, handleGoogleSessionCompleted,
     clearDraft, handleSelectType, handleNextStep, handleNextOperationalStep, handleFinalSubmit, submitToApi,
     isCheckingEmail, isCheckingDocumento, isLookingUpCnpj, isLookingUpCep, isCheckingPhone, isLookingUpPix,
     cnpjMeta, cnpjAutoFilledAddress, cepGeoVerified, pixLookupResult, setPixLookupResult, sameWhatsappAsPhone, setSameWhatsappAsPhone, kycSession,
@@ -1178,6 +1251,7 @@ function useRegisterForm() {
 export default function Register() {
   const {
     form, step, setStep, accountType, isChecking, modalAberto, setModalAberto, isPending, successModalAberto, setSuccessModalAberto,
+    isGooglePending, googleOnboardingSession, setGoogleOnboardingSession, handleGoogleDonorAuth, handleGoogleSessionCompleted,
     clearDraft, handleSelectType, handleNextStep, handleNextOperationalStep, handleFinalSubmit, submitToApi,
     isCheckingEmail, isCheckingDocumento, isLookingUpCnpj, isLookingUpCep, isCheckingPhone, isLookingUpPix,
     cnpjMeta, cnpjAutoFilledAddress, cepGeoVerified, pixLookupResult, setPixLookupResult, sameWhatsappAsPhone, setSameWhatsappAsPhone, kycSession,
@@ -1193,6 +1267,7 @@ export default function Register() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const isGoogleOnboarding = Boolean(googleOnboardingSession);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
@@ -1203,7 +1278,7 @@ export default function Register() {
       { opacity: 0, y: 15 },
       { opacity: 1, y: 0, duration: 0.4, ease: "power2.out", clearProps: "all" }
     );
-  }, [step, isChecking]);
+  }, [step, isChecking, isGoogleOnboarding]);
 
   if (isChecking) return <div className="min-h-[100dvh] w-full bg-[#F9FAFB] lg:bg-white"></div>;
 
@@ -1298,7 +1373,23 @@ export default function Register() {
           )}
 
           {/* STEP 2 */}
-          {step === 2 && (
+          {step === 2 && accountType === "donor" && googleOnboardingSession && (
+            <GoogleDonorOnboardingCard
+              onboardingToken={googleOnboardingSession.onboardingToken}
+              googleProfile={googleOnboardingSession.googleProfile}
+              backLabel="Voltar para opções de cadastro"
+              onBack={() => setGoogleOnboardingSession(null)}
+              onCompleted={(data, accountEmail) =>
+                handleGoogleSessionCompleted(
+                  data,
+                  accountEmail,
+                  "Cadastro concluído com o Google! Bem-vindo ao DoeCerto.",
+                )
+              }
+            />
+          )}
+
+          {step === 2 && !(accountType === "donor" && googleOnboardingSession) && (
             <>
               <button type="button" onClick={() => { clearDraft(); }} className="flex items-center text-gray-500 hover:text-[#6B39A7] font-semibold mb-6 transition-colors group w-fit cursor-pointer">
                 <ArrowLeft size={20} className="mr-2 group-hover:-translate-x-1 transition-transform" /> Trocar perfil
@@ -1310,9 +1401,27 @@ export default function Register() {
                 <p className="text-gray-500 text-lg font-medium leading-relaxed">
                   {accountType === 'ong'
                     ? 'Digite o CNPJ da instituição para preenchermos os dados oficiais automaticamente.'
-                    : 'Preencha seus dados básicos para começar a doar com segurança.'}
+                    : 'Entre em segundos com o Google ou preencha seus dados abaixo para doar com segurança.'}
                 </p>
               </div>
+
+              {accountType === 'donor' && (
+                <div className="mb-6">
+                  <GoogleAuthButton
+                    label="Continuar com o Google"
+                    onSuccess={handleGoogleDonorAuth}
+                    onError={(msg) => toast.error(msg)}
+                    disabled={isPending}
+                    isLoading={isGooglePending}
+                  />
+                  <div className="relative flex items-center justify-center mt-6 mb-2">
+                    <div className="absolute border-t border-gray-200 w-full"></div>
+                    <span className="bg-[#F9FAFB] lg:bg-white px-4 text-xs uppercase tracking-wider text-gray-400 font-bold relative">
+                      ou preencha manualmente
+                    </span>
+                  </div>
+                </div>
+              )}
 
               <form onSubmit={(e) => { e.preventDefault(); handleNextStep(); }} className="flex flex-col gap-5">
 
