@@ -158,13 +158,13 @@ const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
 
     return (
       <div className="flex flex-col gap-2">
-        {label && <label className="text-gray-800 text-base font-bold tracking-wide">{label}</label>}
+        {label && <label className="text-gray-800 text-base sm:text-lg font-bold tracking-wide">{label}</label>}
         <div className="relative group">
           <Icon className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${error ? 'text-red-500' : 'text-gray-400 group-focus-within:text-[#6B39A7]'}`} size={22} />
           <input
             ref={ref}
             type={inputType}
-            className={`w-full bg-white border text-gray-900 rounded-xl pl-12 ${isPassword || isLoading ? 'pr-12' : 'pr-4'} py-4 focus:outline-none focus:ring-2 transition-all placeholder:text-gray-400 text-lg font-medium shadow-sm ${error ? "border-red-400 focus:border-red-500 ring-red-100 ring-2 animate-[shake_0.5s_ease-in-out]" : "border-gray-200 focus:ring-[#6B39A7]/20 focus:border-[#6B39A7]"}`}
+            className={`w-full bg-white border text-gray-900 rounded-xl pl-12 ${isPassword || isLoading ? 'pr-12' : 'pr-4'} py-4 focus:outline-none focus:ring-2 transition-all placeholder:text-gray-400 text-lg sm:text-xl font-medium shadow-sm ${error ? "border-red-400 focus:border-red-500 ring-red-100 ring-2 animate-[shake_0.5s_ease-in-out]" : "border-gray-200 focus:ring-[#6B39A7]/20 focus:border-[#6B39A7]"}`}
             {...props}
           />
           {isLoading && (
@@ -184,7 +184,7 @@ const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
           )}
         </div>
         {error && (
-          <span className="text-red-500 text-sm font-bold mt-1">{error}</span>
+          <span className="text-red-500 text-sm sm:text-base font-bold mt-1">{error}</span>
         )}
       </div>
     );
@@ -212,22 +212,22 @@ function AccountTypeSelection({ onSelect }: { onSelect: (type: AccountType) => v
   return (
     <>
       <div className="mb-10 text-left">
-        <h1 className="text-4xl sm:text-[3rem] font-bold text-gray-900 mb-2 tracking-tight leading-tight">
+        <h1 className="text-4xl sm:text-[3rem] font-extrabold text-gray-900 mb-3 tracking-tight leading-tight">
           Crie sua conta no DoeCerto
         </h1>
-        <p className="text-gray-500 text-lg font-medium leading-relaxed">
+        <p className="text-gray-600 text-lg sm:text-xl font-medium leading-relaxed">
           Escolha seu perfil para liberarmos as etapas certas para você.
         </p>
       </div>
       <div className="flex flex-col gap-4">
         {options.map((opt) => (
-          <button key={opt.type} onClick={() => onSelect(opt.type as AccountType)} className="group relative flex items-center p-6 bg-white border-2 border-gray-100 rounded-2xl hover:border-[#6B39A7] hover:shadow-[0_8px_30px_-10px_rgba(107,57,167,0.2)] transition-all duration-300 text-left active:scale-[0.98]">
+          <button key={opt.type} onClick={() => onSelect(opt.type as AccountType)} className="group relative flex items-center p-6 bg-white border-2 border-gray-100 rounded-2xl hover:border-[#6B39A7] hover:shadow-[0_8px_30px_-10px_rgba(107,57,167,0.2)] transition-all duration-300 text-left active:scale-[0.98] cursor-pointer">
             <div className="w-14 h-14 rounded-full bg-[#F3E8FF] flex items-center justify-center mr-5 shrink-0 group-hover:bg-[#6B39A7] transition-colors duration-300">
               <opt.icon className="text-[#6B39A7] group-hover:text-white transition-colors duration-300" size={28} />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-gray-900 mb-1">{opt.title}</h3>
-              <p className="text-gray-500 text-sm font-medium">{opt.desc}</p>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">{opt.title}</h3>
+              <p className="text-gray-600 text-base font-medium leading-relaxed">{opt.desc}</p>
             </div>
           </button>
         ))}
@@ -303,7 +303,7 @@ function FileDropzone({ title, subtitle, file, setFile }: { title: string, subti
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-gray-800 text-base font-bold tracking-wide">{title}</label>
+      <label className="text-gray-800 text-base sm:text-lg font-bold tracking-wide">{title}</label>
       <div
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
@@ -322,22 +322,22 @@ function FileDropzone({ title, subtitle, file, setFile }: { title: string, subti
             <div className={`p-4 rounded-full mb-3 transition-all duration-500 ease-out ${isDragging ? 'bg-[#6B39A7] text-white scale-110 -translate-y-2' : 'bg-purple-100 text-[#6B39A7]'}`}>
               <UploadCloud size={32} strokeWidth={2.2} />
             </div>
-            <p className="text-base font-bold text-gray-800 mb-1 transition-colors">{isDragging ? "Solte o arquivo agora" : subtitle}</p>
-            <p className="text-sm text-gray-500 font-medium">PDF, PNG ou JPG (Máx 10MB)</p>
+            <p className="text-base sm:text-lg font-bold text-gray-800 mb-1 transition-colors">{isDragging ? "Solte o arquivo agora" : subtitle}</p>
+            <p className="text-sm sm:text-base text-gray-600 font-medium">PDF, PNG ou JPG (Máx 10MB)</p>
           </div>
         )}
 
         {uploadState === 'uploading' && file && (
           <div className="w-full h-full p-6 flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-500 bg-gray-50/60">
-            <p className="text-sm font-bold text-[#6B39A7] mb-4 animate-pulse">Processando arquivo...</p>
+            <p className="text-base font-bold text-[#6B39A7] mb-4 animate-pulse">Processando arquivo...</p>
             <div className="w-full bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex flex-col gap-3">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-[#F3E8FF] text-[#6B39A7] rounded-lg flex items-center justify-center shrink-0 animate-bounce">
                   <FileText size={20} strokeWidth={2.2} />
                 </div>
                 <div className="flex-1 flex flex-col text-left overflow-hidden">
-                  <span className="text-sm font-bold text-gray-800 truncate">{file.name}</span>
-                  <span className="text-xs text-gray-500 font-medium">{formatFileSize(file.size)}</span>
+                  <span className="text-base font-bold text-gray-800 truncate">{file.name}</span>
+                  <span className="text-sm text-gray-600 font-medium">{formatFileSize(file.size)}</span>
                 </div>
               </div>
               <div className="w-full flex items-center gap-3 mt-1">
@@ -346,7 +346,7 @@ function FileDropzone({ title, subtitle, file, setFile }: { title: string, subti
                     <div className="absolute top-0 left-0 bottom-0 right-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[pulse_1.5s_infinite]"></div>
                   </div>
                 </div>
-                <span className="text-xs font-bold text-gray-600 w-8 text-right tabular-nums">{uploadProgress}%</span>
+                <span className="text-sm font-bold text-gray-600 w-10 text-right tabular-nums">{uploadProgress}%</span>
               </div>
             </div>
           </div>
@@ -362,8 +362,8 @@ function FileDropzone({ title, subtitle, file, setFile }: { title: string, subti
                 </div>
               </div>
               <div className="flex flex-col text-left overflow-hidden">
-                <span className="text-base font-bold text-gray-800 truncate max-w-[220px]">{file.name}</span>
-                <span className="text-sm text-emerald-600 font-semibold">{formatFileSize(file.size)} • Concluído</span>
+                <span className="text-base sm:text-lg font-bold text-gray-800 truncate max-w-[260px]">{file.name}</span>
+                <span className="text-sm sm:text-base text-emerald-600 font-semibold">{formatFileSize(file.size)} • Concluído</span>
               </div>
             </div>
             <button type="button" onClick={handleRemove} className="p-3 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Remover arquivo">
@@ -1280,12 +1280,29 @@ export default function Register() {
     );
   }, [step, isChecking, isGoogleOnboarding]);
 
+  const isSplitLayout = step === 1;
+
   if (isChecking) return <div className="min-h-[100dvh] w-full bg-[#F9FAFB] lg:bg-white"></div>;
 
   return (
-    <div className="flex h-[100dvh] w-full font-sans selection:bg-[#6B39A7] selection:text-white bg-[#F9FAFB] lg:bg-white overflow-hidden relative">
+    <div
+      className={`flex h-[100dvh] w-full font-sans selection:bg-[#6B39A7] selection:text-white overflow-hidden relative ${
+        isSplitLayout ? "bg-[#F9FAFB] lg:bg-white" : "bg-[#F4F5F7]"
+      }`}
+    >
       <Toaster position="top-center" />
       <TermosModal isOpen={modalAberto} onConfirm={submitToApi} onCancel={() => setModalAberto(false)} isLoading={isPending} />
+
+      {!isSplitLayout && (
+        <div
+          aria-hidden="true"
+          className="fixed inset-0 overflow-hidden pointer-events-none select-none"
+        >
+          <div className="absolute -top-28 -left-24 w-[460px] h-[460px] rounded-[4.5rem] bg-[#EAECEF] rotate-12" />
+          <div className="absolute -bottom-32 left-1/4 w-[520px] h-[520px] rounded-[5rem] bg-[#EAECEF]/80 -rotate-12" />
+          <div className="absolute top-12 -right-28 w-[500px] h-[500px] rounded-[4.5rem] bg-[#EDE9F5]/80 rotate-[24deg]" />
+        </div>
+      )}
 
       {/* MODAL DE SUCESSO FINTECH */}
       <AnimatePresence>
@@ -1337,9 +1354,23 @@ export default function Register() {
         )}
       </AnimatePresence>
 
-      {/* COLUNA ESQUERDA */}
-      <div ref={scrollRef} className="w-full lg:w-1/2 h-full overflow-y-auto flex flex-col items-center px-6 sm:px-12 py-10 sm:py-12 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div ref={contentRef} className={`w-full max-w-[460px] shrink-0 ${step === 1 ? 'my-auto' : 'pb-12'}`}>
+      {/* COLUNA ESQUERDA / CONTEÚDO CENTRALIZADO NOS STEPS >= 2 */}
+      <div
+        ref={scrollRef}
+        className={`relative z-10 h-full overflow-y-auto flex flex-col items-center [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
+          isSplitLayout
+            ? "w-full lg:w-1/2 px-6 sm:px-12 py-10 sm:py-12"
+            : "w-full px-4 sm:px-6 py-8 sm:py-12"
+        }`}
+      >
+        <div
+          ref={contentRef}
+          className={`w-full shrink-0 my-auto ${
+            isSplitLayout
+              ? "max-w-[520px]"
+              : "max-w-[600px] bg-white rounded-[28px] shadow-[0_20px_60px_-15px_rgba(15,23,42,0.12)] border border-gray-100 p-7 sm:p-10"
+          }`}
+        >
 
           {/* STEP 1 */}
           {step === 1 && (
@@ -1348,7 +1379,7 @@ export default function Register() {
 
           {/* BARRA DE PROGRESSO ONG (STEPS 2 a 4) */}
           {accountType === 'ong' && step >= 2 && step <= 4 && (
-            <div className="mb-6 flex items-center gap-2 text-xs font-bold">
+            <div className="mb-7 flex items-center gap-2 text-sm sm:text-base font-bold">
               {[
                 { id: 2, label: "1. Acesso e CNPJ" },
                 { id: 3, label: "2. Endereço e Pix" },
@@ -1356,17 +1387,17 @@ export default function Register() {
               ].map((s, idx) => (
                 <div key={s.id} className="flex items-center gap-2 flex-1">
                   <div
-                    className={`flex-1 py-2 px-2.5 rounded-xl text-center transition-all border ${
+                    className={`flex-1 py-2.5 px-3 rounded-xl text-center transition-all border ${
                       step === s.id
                         ? "bg-[#6B39A7] text-white border-[#6B39A7] shadow-sm"
                         : step > s.id
                           ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : "bg-gray-100 text-gray-500 border-gray-200"
+                          : "bg-gray-100 text-gray-600 border-gray-200"
                     }`}
                   >
                     {s.label}
                   </div>
-                  {idx < 2 && <div className="w-2 h-0.5 bg-gray-200 shrink-0 hidden sm:block" />}
+                  {idx < 2 && <div className="w-2.5 h-0.5 bg-gray-200 shrink-0 hidden sm:block" />}
                 </div>
               ))}
             </div>
@@ -1391,14 +1422,14 @@ export default function Register() {
 
           {step === 2 && !(accountType === "donor" && googleOnboardingSession) && (
             <>
-              <button type="button" onClick={() => { clearDraft(); }} className="flex items-center text-gray-500 hover:text-[#6B39A7] font-semibold mb-6 transition-colors group w-fit cursor-pointer">
+              <button type="button" onClick={() => { clearDraft(); }} className="flex items-center text-gray-600 hover:text-[#6B39A7] text-base sm:text-lg font-semibold mb-6 transition-colors group w-fit cursor-pointer">
                 <ArrowLeft size={20} className="mr-2 group-hover:-translate-x-1 transition-transform" /> Trocar perfil
               </button>
               <div className="mb-8 text-left">
-                <h1 className="text-4xl sm:text-[2.5rem] font-bold text-gray-900 mb-2 leading-tight">
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2.5 tracking-tight leading-tight">
                   {accountType === 'ong' ? 'Identidade e acesso da ONG' : 'Criar conta de Doador'}
                 </h1>
-                <p className="text-gray-500 text-lg font-medium leading-relaxed">
+                <p className="text-gray-600 text-base sm:text-lg font-medium leading-relaxed">
                   {accountType === 'ong'
                     ? 'Digite o CNPJ da instituição para preenchermos os dados oficiais automaticamente.'
                     : 'Entre em segundos com o Google ou preencha seus dados abaixo para doar com segurança.'}
@@ -1416,7 +1447,7 @@ export default function Register() {
                   />
                   <div className="relative flex items-center justify-center mt-6 mb-2">
                     <div className="absolute border-t border-gray-200 w-full"></div>
-                    <span className="bg-[#F9FAFB] lg:bg-white px-4 text-xs uppercase tracking-wider text-gray-400 font-bold relative">
+                    <span className="bg-white px-4 text-xs sm:text-sm uppercase tracking-wider text-gray-500 font-bold relative">
                       ou preencha manualmente
                     </span>
                   </div>
@@ -1442,21 +1473,21 @@ export default function Register() {
                 />
 
                 {accountType === 'ong' && isLookingUpCnpj && (
-                  <p className="-mt-3 text-xs font-semibold text-[#6B39A7] flex items-center gap-1.5">
-                    <Loader2 size={13} className="animate-spin" />
+                  <p className="-mt-3 text-sm sm:text-base font-semibold text-[#6B39A7] flex items-center gap-2">
+                    <Loader2 size={16} className="animate-spin" />
                     Consultando situação cadastral e endereço oficial na Receita Federal...
                   </p>
                 )}
 
                 {accountType === 'ong' && !isLookingUpCnpj && cnpjMeta?.found && (
-                  <div className={`-mt-2 p-3.5 rounded-xl border text-xs font-medium flex items-start gap-2.5 ${cnpjMeta.isAtiva ? "bg-emerald-50 border-emerald-200 text-emerald-900" : "bg-amber-50 border-amber-200 text-amber-900"}`}>
-                    <Sparkles size={16} className={`shrink-0 mt-0.5 ${cnpjMeta.isAtiva ? "text-emerald-600" : "text-amber-600"}`} />
+                  <div className={`-mt-2 p-4 rounded-xl border text-sm sm:text-base font-medium flex items-start gap-3 ${cnpjMeta.isAtiva ? "bg-emerald-50 border-emerald-200 text-emerald-900" : "bg-amber-50 border-amber-200 text-amber-900"}`}>
+                    <Sparkles size={18} className={`shrink-0 mt-0.5 ${cnpjMeta.isAtiva ? "text-emerald-600" : "text-amber-600"}`} />
                     <div>
                       <p className="font-bold">
                         Receita Federal: {cnpjMeta.situacaoCadastral || (cnpjMeta.isAtiva ? "ATIVA" : "Situação pendente")}
                         {cnpjMeta.yearsOfOperation !== null && ` • ${cnpjMeta.yearsOfOperation} ${cnpjMeta.yearsOfOperation === 1 ? "ano" : "anos"} de atuação`}
                       </p>
-                      <p className="opacity-85 mt-0.5 leading-relaxed">
+                      <p className="opacity-85 mt-1 leading-relaxed">
                         {cnpjMeta.isAtiva
                           ? "Razão social e endereço atualizados pelo CNPJ."
                           : "Pendências fiscais podem impedir a abertura da subconta financeira."}
@@ -1499,16 +1530,16 @@ export default function Register() {
                   error={errors.senha?.message}
                 />
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 -mt-2 px-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 -mt-1 px-1">
                   {passwordChecks.map((check) => (
                     <div
                       key={check.key}
-                      className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
-                        check.met ? "text-emerald-600" : "text-gray-500"
+                      className={`flex items-center gap-2 text-sm sm:text-base font-medium transition-colors ${
+                        check.met ? "text-emerald-600" : "text-gray-600"
                       }`}
                     >
                       <CheckCircle2
-                        size={14}
+                        size={18}
                         className={check.met ? "text-emerald-600 shrink-0" : "text-gray-300 shrink-0"}
                       />
                       <span>{check.label}</span>
@@ -1524,7 +1555,7 @@ export default function Register() {
                   error={errors.confirmarSenha?.message}
                 />
 
-                <button type="submit" disabled={isPending || isLookingUpCnpj} className="w-full flex justify-center items-center gap-2 h-[60px] mt-4 bg-purple-700 hover:bg-purple-800 text-white font-bold text-lg rounded-xl shadow-md active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60">
+                <button type="submit" disabled={isPending || isLookingUpCnpj} className="w-full flex justify-center items-center gap-2 h-[60px] mt-4 bg-purple-700 hover:bg-purple-800 text-white font-bold text-lg sm:text-xl rounded-xl shadow-md active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60">
                   {isPending || isLookingUpCnpj ? (
                     <>
                       <Loader2 size={20} className="animate-spin" />
@@ -1545,33 +1576,33 @@ export default function Register() {
           {/* STEP 3 (Apenas ONG: Endereço com CEP + Contato + Chave Pix DICT) */}
           {step === 3 && accountType === 'ong' && (
             <>
-              <button type="button" onClick={() => setStep(2)} className="flex items-center text-gray-500 hover:text-[#6B39A7] font-semibold mb-6 transition-colors group w-fit cursor-pointer">
+              <button type="button" onClick={() => setStep(2)} className="flex items-center text-gray-600 hover:text-[#6B39A7] text-base sm:text-lg font-semibold mb-6 transition-colors group w-fit cursor-pointer">
                 <ArrowLeft size={20} className="mr-2 group-hover:-translate-x-1 transition-transform" /> Voltar para Acesso e CNPJ
               </button>
 
               <div className="mb-7 text-left">
-                <h1 className="text-3xl sm:text-[2.3rem] font-bold text-gray-900 mb-2 leading-tight">Endereço, Contato e Pix</h1>
-                <p className="text-gray-500 text-base font-medium leading-relaxed">
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2.5 tracking-tight leading-tight">Endereço, Contato e Pix</h1>
+                <p className="text-gray-600 text-base sm:text-lg font-medium leading-relaxed">
                   Esses dados posicionam sua ONG no mapa por proximidade e habilitam repasses financeiros seguros.
                 </p>
               </div>
 
               <form onSubmit={(e) => { e.preventDefault(); handleNextOperationalStep(); }} className="flex flex-col gap-5">
                 {/* CEP + Endereço */}
-                <div className="p-5 bg-gray-50/80 border border-gray-200 rounded-2xl flex flex-col gap-4">
+                <div className="p-5 sm:p-6 bg-gray-50/80 border border-gray-200 rounded-2xl flex flex-col gap-4">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <h3 className="text-sm font-extrabold text-gray-800 uppercase tracking-wider flex items-center gap-2">
-                      <MapPin size={16} className="text-[#6B39A7]" /> Endereço da Sede
+                    <h3 className="text-base sm:text-lg font-extrabold text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                      <MapPin size={18} className="text-[#6B39A7]" /> Endereço da Sede
                     </h3>
                     {cepGeoVerified && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                        <CheckCircle2 size={12} /> Mapa e CEP verificados
+                      <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
+                        <CheckCircle2 size={14} /> Mapa e CEP verificados
                       </span>
                     )}
                   </div>
 
                   {cnpjAutoFilledAddress && (
-                    <div className="p-3 rounded-xl bg-purple-50/80 border border-purple-200 text-xs text-purple-950 font-medium leading-relaxed">
+                    <div className="p-3.5 rounded-xl bg-purple-50/80 border border-purple-200 text-sm sm:text-base text-purple-950 font-medium leading-relaxed">
                       Endereço preenchido automaticamente a partir do CNPJ informado. Confira o número ou edite caso a sede funcione em outro local.
                     </div>
                   )}
@@ -1596,7 +1627,7 @@ export default function Register() {
                       type="button"
                       onClick={() => handleCepLookup(watchedCep, true)}
                       disabled={isLookingUpCep || removeFormatting(watchedCep).length !== 8}
-                      className="h-[58px] px-4 rounded-xl bg-white border border-gray-200 hover:border-[#6B39A7] text-[#6B39A7] font-bold text-sm transition-colors cursor-pointer disabled:opacity-50"
+                      className="h-[60px] px-5 rounded-xl bg-white border border-gray-200 hover:border-[#6B39A7] text-[#6B39A7] font-bold text-base transition-colors cursor-pointer disabled:opacity-50"
                     >
                       Atualizar CEP
                     </button>
@@ -1653,12 +1684,12 @@ export default function Register() {
                 </div>
 
                 {/* Contatos */}
-                <div className="p-5 bg-gray-50/80 border border-gray-200 rounded-2xl flex flex-col gap-4">
+                <div className="p-5 sm:p-6 bg-gray-50/80 border border-gray-200 rounded-2xl flex flex-col gap-4">
                   <div>
-                    <h3 className="text-sm font-extrabold text-gray-800 uppercase tracking-wider flex items-center gap-2">
-                      <Phone size={16} className="text-[#6B39A7]" /> Contatos Oficiais
+                    <h3 className="text-base sm:text-lg font-extrabold text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                      <Phone size={18} className="text-[#6B39A7]" /> Contatos Oficiais
                     </h3>
-                    <p className="text-xs text-gray-500 font-medium mt-1">
+                    <p className="text-sm sm:text-base text-gray-600 font-medium mt-1">
                       Usado na abertura da conta de repasse e para doadores falarem com sua equipe.
                     </p>
                   </div>
@@ -1678,12 +1709,12 @@ export default function Register() {
                     error={errors.telefone?.message}
                   />
 
-                  <label className="flex items-center gap-2.5 text-sm font-semibold text-gray-700 cursor-pointer select-none">
+                  <label className="flex items-center gap-3 text-base font-semibold text-gray-700 cursor-pointer select-none">
                     <input
                       type="checkbox"
                       checked={sameWhatsappAsPhone}
                       onChange={(e) => setSameWhatsappAsPhone(e.target.checked)}
-                      className="w-4 h-4 accent-[#6B39A7] rounded"
+                      className="w-5 h-5 accent-[#6B39A7] rounded cursor-pointer"
                     />
                     Usar este mesmo número como WhatsApp público no perfil
                   </label>
@@ -1702,10 +1733,10 @@ export default function Register() {
                 </div>
 
                 {/* Chave Pix DICT */}
-                <div className="p-5 bg-purple-50/50 border border-purple-200 rounded-2xl flex flex-col gap-4">
+                <div className="p-5 sm:p-6 bg-purple-50/50 border border-purple-200 rounded-2xl flex flex-col gap-4">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <h3 className="text-sm font-extrabold text-gray-800 uppercase tracking-wider flex items-center gap-2">
-                      <KeyRound size={16} className="text-[#6B39A7]" /> Chave Pix para Repasses
+                    <h3 className="text-base sm:text-lg font-extrabold text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                      <KeyRound size={18} className="text-[#6B39A7]" /> Chave Pix para Repasses
                     </h3>
                     {watchedCnpj && (
                       <button
@@ -1715,14 +1746,14 @@ export default function Register() {
                           clearErrors("pixKey");
                           handlePixKeyLookup(watchedCnpj);
                         }}
-                        className="text-xs font-bold text-[#6B39A7] bg-white border border-purple-200 hover:bg-purple-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                        className="text-sm font-bold text-[#6B39A7] bg-white border border-purple-200 hover:bg-purple-50 px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
                       >
                         Preencher com CNPJ da ONG
                       </button>
                     )}
                   </div>
 
-                  <p className="text-xs text-gray-600 font-medium leading-relaxed -mt-2">
+                  <p className="text-sm sm:text-base text-gray-600 font-medium leading-relaxed -mt-1">
                     Informe a chave Pix vinculada à conta da instituição (CNPJ, e-mail, telefone ou chave aleatória). Para segurança financeira, <strong>chaves de CPF pessoal não são aceitas</strong>.
                   </p>
 
@@ -1748,34 +1779,34 @@ export default function Register() {
                       type="button"
                       onClick={() => handlePixKeyLookup()}
                       disabled={isLookingUpPix || !watchedPixKey.trim()}
-                      className="h-[58px] px-4 rounded-xl bg-white border border-purple-200 hover:border-[#6B39A7] text-[#6B39A7] font-bold text-sm transition-colors cursor-pointer disabled:opacity-50 shrink-0"
+                      className="h-[60px] px-5 rounded-xl bg-white border border-purple-200 hover:border-[#6B39A7] text-[#6B39A7] font-bold text-base transition-colors cursor-pointer disabled:opacity-50 shrink-0"
                     >
                       Verificar chave
                     </button>
                   </div>
 
                   {pixLookupResult?.found && (
-                    <div className="p-4 rounded-xl bg-white border border-emerald-200 flex flex-col gap-2 text-xs">
+                    <div className="p-4 rounded-xl bg-white border border-emerald-200 flex flex-col gap-2.5 text-sm sm:text-base">
                       <div className="flex items-center justify-between text-emerald-700 font-bold">
-                        <span className="flex items-center gap-1.5">
-                          <Landmark size={15} /> Conta Bancária Localizada
+                        <span className="flex items-center gap-2">
+                          <Landmark size={18} /> Conta Bancária Localizada
                         </span>
                         <span className="uppercase">{pixLookupResult.keyType}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-gray-700">
-                        <div><span className="text-gray-400">Banco:</span> <strong>{pixLookupResult.bankName || "—"} {pixLookupResult.bankCode ? `(${pixLookupResult.bankCode})` : ""}</strong></div>
-                        <div><span className="text-gray-400">Tipo:</span> <strong>{pixLookupResult.accountType || "—"}</strong></div>
-                        <div><span className="text-gray-400">Agência:</span> <strong>{pixLookupResult.agencyNumber || "—"}</strong></div>
-                        <div><span className="text-gray-400">Conta:</span> <strong>{pixLookupResult.accountNumber || "—"}</strong></div>
+                        <div><span className="text-gray-500">Banco:</span> <strong>{pixLookupResult.bankName || "—"} {pixLookupResult.bankCode ? `(${pixLookupResult.bankCode})` : ""}</strong></div>
+                        <div><span className="text-gray-500">Tipo:</span> <strong>{pixLookupResult.accountType || "—"}</strong></div>
+                        <div><span className="text-gray-500">Agência:</span> <strong>{pixLookupResult.agencyNumber || "—"}</strong></div>
+                        <div><span className="text-gray-500">Conta:</span> <strong>{pixLookupResult.accountNumber || "—"}</strong></div>
                       </div>
                       {pixLookupResult.ownerName && (
-                        <div className="text-gray-600 pt-1 border-t border-gray-100">
+                        <div className="text-gray-600 pt-2 border-t border-gray-100">
                           Titular: <strong>{pixLookupResult.ownerName}</strong>
                         </div>
                       )}
                       {pixLookupResult.ownerMatchesCnpj === false && (
-                        <div className="mt-1 p-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 font-semibold flex items-center gap-1.5">
-                          <AlertTriangle size={14} className="shrink-0" />
+                        <div className="mt-1 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 font-semibold flex items-center gap-2">
+                          <AlertTriangle size={16} className="shrink-0" />
                           Atenção: a titularidade desta chave diverge do CNPJ cadastrado. Recomendamos chave vinculada ao CNPJ da ONG.
                         </div>
                       )}
@@ -1783,8 +1814,8 @@ export default function Register() {
                   )}
 
                   {pixLookupResult && !pixLookupResult.found && pixLookupResult.validFormat && (
-                    <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
-                      <CheckCircle2 size={15} className="shrink-0" />
+                    <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm sm:text-base font-semibold flex items-center gap-2">
+                      <CheckCircle2 size={18} className="shrink-0" />
                       <span>
                         Chave Pix ({pixLookupResult.keyType}) validada ({pixLookupResult.maskedPixKey}). Os dados bancários são sincronizados automaticamente após a ativação da conta.
                       </span>
@@ -1795,7 +1826,7 @@ export default function Register() {
                 <button
                   type="submit"
                   disabled={isLookingUpPix || isLookingUpCep}
-                  className="w-full flex justify-center items-center gap-2 h-[60px] mt-2 bg-purple-700 hover:bg-purple-800 text-white font-bold text-lg rounded-xl shadow-md active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60"
+                  className="w-full flex justify-center items-center gap-2 h-[60px] mt-2 bg-purple-700 hover:bg-purple-800 text-white font-bold text-lg sm:text-xl rounded-xl shadow-md active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60"
                 >
                   Continuar para Documentos <ArrowRight size={20} />
                 </button>
@@ -1806,13 +1837,13 @@ export default function Register() {
           {/* STEP 4 (Apenas ONG: Documentação Legal & Representante) */}
           {step === 4 && accountType === 'ong' && (
             <>
-              <button type="button" onClick={() => setStep(3)} className="flex items-center text-gray-500 hover:text-[#6B39A7] font-semibold mb-6 transition-colors group w-fit cursor-pointer">
+              <button type="button" onClick={() => setStep(3)} className="flex items-center text-gray-600 hover:text-[#6B39A7] text-base sm:text-lg font-semibold mb-6 transition-colors group w-fit cursor-pointer">
                 <ArrowLeft size={20} className="mr-2 group-hover:-translate-x-1 transition-transform" /> Voltar para Endereço e Pix
               </button>
 
               <div className="mb-8 text-left">
-                <h1 className="text-4xl sm:text-[2.5rem] font-bold text-gray-900 mb-2 leading-tight">Responsável e Documentos</h1>
-                <p className="text-gray-500 text-lg font-medium leading-relaxed">
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2.5 tracking-tight leading-tight">Responsável e Documentos</h1>
+                <p className="text-gray-600 text-base sm:text-lg font-medium leading-relaxed">
                   Identifique quem assina pela ONG e anexe os documentos oficiais para nossa análise de segurança.
                 </p>
               </div>
@@ -1820,8 +1851,8 @@ export default function Register() {
               <form onSubmit={(e) => { e.preventDefault(); handleFinalSubmit(); }} className="flex flex-col gap-8">
                 <div className="p-6 bg-gray-50 border border-gray-200 rounded-2xl flex flex-col gap-5">
                   <div>
-                    <h3 className="text-base font-bold text-gray-800 uppercase tracking-wider">Representante Legal (Presidente / Diretor)</h3>
-                    <p className="text-xs text-gray-500 font-medium mt-1 leading-relaxed">
+                    <h3 className="text-base sm:text-lg font-extrabold text-gray-800 uppercase tracking-wider">Representante Legal (Presidente / Diretor)</h3>
+                    <p className="text-sm sm:text-base text-gray-600 font-medium mt-1 leading-relaxed">
                       Deve constar na Ata ou Estatuto — será a pessoa que fará a selfie com documento na etapa seguinte.
                     </p>
                   </div>
@@ -1852,7 +1883,7 @@ export default function Register() {
                   <FileDropzone title="Cartão CNPJ" subtitle="Comprovante oficial emitido pela Receita Federal" file={files.fileCartaoCnpj} setFile={files.setFileCartaoCnpj} />
                 </div>
 
-                <button type="submit" disabled={isPending} className="w-full h-[60px] mt-2 bg-[#4A2675] hover:bg-[#3b1a66] text-white font-bold text-lg rounded-xl shadow-md active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60">
+                <button type="submit" disabled={isPending} className="w-full h-[60px] mt-2 bg-[#4A2675] hover:bg-[#3b1a66] text-white font-bold text-lg sm:text-xl rounded-xl shadow-md active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60">
                   Revisar Termos e Enviar Cadastro
                 </button>
               </form>
@@ -1872,7 +1903,7 @@ export default function Register() {
           {/* RODAPÉ UNIFICADO */}
           {step < 5 && (
             <div className="text-center mt-8 border-t border-gray-100 pt-6">
-              <span className="text-lg text-gray-500 font-medium">Já tem uma conta? </span>
+              <span className="text-lg text-gray-600 font-medium">Já tem uma conta? </span>
               <Link href="/login" onClick={clearDraft} className="text-lg font-bold text-[#6B39A7] hover:text-purple-800 transition-colors">
                 Entrar
               </Link>
@@ -1882,13 +1913,15 @@ export default function Register() {
         </div>
       </div>
 
-      {/* COLUNA DIREITA */}
-      <div className="hidden lg:block w-1/2 h-full relative bg-transparent">
-        <div className="absolute inset-y-0 right-0 left-0 rounded-l-[3.5rem] overflow-hidden shadow-[-20px_0_40px_rgba(0,0,0,0.05)]">
-          <Image src="/fotocrianca1.png" alt="Criança Sorrindo" fill priority className="object-cover object-center" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#4A2675]/30 via-transparent to-transparent mix-blend-multiply"></div>
+      {/* COLUNA DIREITA (Exibida apenas na tela de escolha de perfil - Step 1) */}
+      {isSplitLayout && (
+        <div className="hidden lg:block w-1/2 h-full relative bg-transparent">
+          <div className="absolute inset-y-0 right-0 left-0 rounded-l-[3.5rem] overflow-hidden shadow-[-20px_0_40px_rgba(0,0,0,0.05)]">
+            <Image src="/fotocrianca1.png" alt="Criança Sorrindo" fill priority className="object-cover object-center" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#4A2675]/30 via-transparent to-transparent mix-blend-multiply"></div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
