@@ -12,8 +12,23 @@ import {
   getOngsByStatus,
   getUnderReviewDonations
 } from '@/services/admin.service';
+import { useAuth } from '@/contexts/AuthContext';
 
 type ViewType = 'home' | 'pending' | 'approved' | 'rejected' | 'restricted';
+
+export interface AdminStatsSummary {
+  pending: number;
+  approved: number;
+  rejected: number;
+  restricted: number;
+}
+
+interface AdminDashboardProps {
+  initialAdminName?: string;
+  initialStats?: AdminStatsSummary;
+  initialUnderReviewCount?: number;
+  hasServerData?: boolean;
+}
 
 async function fetchDashboardStats() {
   const [pendingRes, approvedRes, rejectedRes, restrictedRes, underReviewRes] =
@@ -36,17 +51,39 @@ async function fetchDashboardStats() {
   };
 }
 
-export default function AdminDashboard() {
-  const [activeMenu, setActiveMenu] = useState<AdminMenu>('home');
-  const [currentView, setCurrentView] = useState<ViewType>('home');
-  const [stats, setStats] = useState({
+export default function AdminDashboard({
+  initialAdminName = 'Administrador',
+  initialStats = {
     pending: 0,
     approved: 0,
     rejected: 0,
     restricted: 0
-  });
-  const [underReviewCount, setUnderReviewCount] = useState(0);
-  const [adminName, setAdminName] = useState<string>('');
+  },
+  initialUnderReviewCount = 0,
+  hasServerData = false,
+}: AdminDashboardProps) {
+  const { isAuthenticated, isLoading: authLoading, userRole, refreshSession } = useAuth();
+  const [activeMenu, setActiveMenu] = useState<AdminMenu>('home');
+  const [currentView, setCurrentView] = useState<ViewType>('home');
+  const [stats, setStats] = useState<AdminStatsSummary>(initialStats);
+  const [underReviewCount, setUnderReviewCount] = useState(initialUnderReviewCount);
+  const [adminName, setAdminName] = useState<string>(initialAdminName);
+
+  useEffect(() => {
+    if (!authLoading && (!isAuthenticated || userRole !== 'admin')) {
+      window.location.replace('/login');
+    }
+  }, [authLoading, isAuthenticated, userRole]);
+
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        refreshSession();
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, [refreshSession]);
 
   const loadStats = useCallback(async () => {
     try {
@@ -59,6 +96,8 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
+    if (hasServerData) return;
+
     let active = true;
 
     (async () => {
@@ -89,7 +128,7 @@ export default function AdminDashboard() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [hasServerData]);
 
   const handleMenuChange = (menu: AdminMenu) => {
     setActiveMenu(menu);
