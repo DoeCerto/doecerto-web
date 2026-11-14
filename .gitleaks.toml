@@ -1,0 +1,11 @@
+title = "DoeCerto Web Gitleaks Configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Global allowlist for harmless mock seeds, examples and tests"
+paths = [
+  '^\.env\.example$',
+  '^package-lock\.json$',
+]

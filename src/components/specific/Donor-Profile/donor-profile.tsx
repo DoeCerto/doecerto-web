@@ -20,63 +20,75 @@ import {
   Loader2,
   AlertCircle,
   FileText,
-  MapPin
+  MapPin,
+  ShieldCheck
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { MonetaryDonationDetails } from "@/components/ui/MonetaryDonationDetails";
 import { MaterialDonationDetails } from "@/components/ui/MaterialDonationDetails";
-import { DonorService, type UpdateProfileDTO, type DonationHistory, Address } from "@/services/donor.service";
+import {
+  DonorService,
+  cacheUserAvatar,
+  type UpdateProfileDTO,
+  type DonationHistory,
+  type DonorProfileData,
+  Address,
+} from "@/services/donor.service";
+import { useAuth } from "@/contexts/AuthContext";
+import { LgpdSecurityZone } from "@/components/specific/Lgpd/LgpdSecurityZone";
 
-export default function DonorProfile() {
+interface DonorProfileProps {
+  initialProfile?: DonorProfileData | null;
+  initialHistory?: DonationHistory[];
+  initialAddress?: Address | null;
+  initialTab?: "info" | "history";
+  hasServerProfile?: boolean;
+}
+
+export default function DonorProfile({
+  initialProfile,
+  initialHistory,
+  initialAddress,
+  initialTab = "info",
+  hasServerProfile = false,
+}: DonorProfileProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"info" | "history">("info");
+  const { userAvatar, userName, refreshSession } = useAuth();
+  const [activeTab, setActiveTab] = useState<"info" | "history">(initialTab);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
 
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(initialProfile?.avatarUrl ?? null);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [donationHistory, setDonationHistory] = useState<DonationHistory[]>([]);
+  const [donationHistory, setDonationHistory] = useState<DonationHistory[]>(initialHistory ?? []);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
-  
   const [address, setAddress] = useState<Address>({
-    zipCode: "",
-    street: "",
-    number: "",
-    complement: "",
-    neighborhood: "",
-    city: "",
-    state: "",
-    country: "Brasil",
+    zipCode: initialAddress?.zipCode || "",
+    street: initialAddress?.street || "",
+    number: initialAddress?.number || "",
+    complement: initialAddress?.complement || "",
+    neighborhood: initialAddress?.neighborhood || "",
+    city: initialAddress?.city || "",
+    state: initialAddress?.state || "",
+    country: initialAddress?.country || "Brasil",
   });
 
   const [donorData, setDonorData] = useState({
-    name: "Carregando...",
-    email: "",
-    cpf: "",
-    phone: "", 
-    description: "",
+    name: initialProfile?.name || "",
+    email: initialProfile?.email || "",
+    cpf: initialProfile?.cpf || "",
+    phone: initialProfile?.phone || "",
+    description: initialProfile?.description || "",
   });
-
-  // Estados de Backup para restaurar ao clicar no botão de cancelar (X)
-  const [profileBackup, setProfileBackup] = useState<{ donor: typeof donorData; addr: Address } | null>(null);
-
-  // Estados locais para controle de erros visuais inline
-  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
-  const [imageError, setImageError] = useState<string | null>(null);
 
   const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const cep = e.target.value.replace(/\D/g, "");
 
-    setAddress(prev => ({ ...prev, zipCode: cep }));
-
-    // Limpa o erro de CEP se o usuário voltou a digitar
-    if (formErrors.zipCode) {
-      setFormErrors(prev => {
-        const { zipCode, ...rest } = prev;
-        return rest;
-      });
-    }
+    setAddress(prev => ({
+      ...prev,
+      zipCode: cep
+    }));
 
     if (cep.length !== 8) return;
 
@@ -86,7 +98,6 @@ export default function DonorProfile() {
 
       if (data.erro) {
         toast.error("CEP não encontrado");
-        setFormErrors(prev => ({ ...prev, zipCode: "CEP inválido ou não encontrado." }));
         return;
       }
 
@@ -99,12 +110,6 @@ export default function DonorProfile() {
         country: "Brasil"
       }));
 
-      // Limpa os erros de campos de endereço auto-preenchidos
-      setFormErrors(prev => {
-        const { street, neighborhood, city, state, ...rest } = prev;
-        return rest;
-      });
-
       toast.success("Endereço preenchido automaticamente!");
     } catch {
       toast.error("Erro ao buscar CEP");
@@ -113,10 +118,15 @@ export default function DonorProfile() {
 
   // CARREGAR PERFIL E HISTÓRICO
   useEffect(() => {
+    if (initialProfile?.avatarUrl) {
+      cacheUserAvatar(initialProfile.avatarUrl);
+    }
+
     async function loadAllData() {
       try {
-        setIsLoading(true);
-        setIsHistoryLoading(true);
+        if (!hasServerProfile) {
+          setIsHistoryLoading(true);
+        }
 
         const [profile, history, addressRes] = await Promise.allSettled([
           DonorService.getMyProfile(),
@@ -124,14 +134,19 @@ export default function DonorProfile() {
           DonorService.getMyAddress(),
         ]);
 
-        const profileData = profile.status === "fulfilled" ? profile.value : null;
-        const historyData = history.status === "fulfilled" ? history.value : [];
-        const addressData = addressRes.status === "fulfilled" ? addressRes.value : null;
+        const profileData =
+          profile.status === "fulfilled" ? profile.value : null;
+
+        const historyData =
+          history.status === "fulfilled" ? history.value : [];
+
+        const addressData =
+          addressRes.status === "fulfilled" ? addressRes.value : null;
 
         // PROFILE
         if (profileData) {
           setDonorData({
-            name: profileData.name || "",
+           name: (profileData.name || "").replace("undefined", "").trim(),
             email: profileData.email || "",
             cpf: profileData.cpf || "",
             phone: profileData.phone || "",
@@ -140,6 +155,7 @@ export default function DonorProfile() {
 
           if (profileData.avatarUrl) {
             setProfileImage(profileData.avatarUrl);
+            cacheUserAvatar(profileData.avatarUrl);
           }
 
           if (!profileData.phone) {
@@ -174,66 +190,19 @@ export default function DonorProfile() {
     }
 
     loadAllData();
-  }, []);
-
-  // Entra no modo de edição salvando uma cópia idêntica do estado atual
-  const handleStartEditing = () => {
-    setProfileBackup({
-      donor: { ...donorData },
-      addr: { ...address }
-    });
-    setFormErrors({});
-    setIsEditingProfile(true);
-  };
-
-  // Cancela e reverte todo o formulário para o backup original
-  const handleCancelEditing = () => {
-    if (profileBackup) {
-      setDonorData(profileBackup.donor);
-      setAddress(profileBackup.addr);
-    }
-    setFormErrors({});
-    setIsEditingProfile(false);
-  };
+  }, [hasServerProfile, initialProfile?.avatarUrl]);
 
   // SALVAR ALTERAÇÕES
   const handleUpdateInfo = async () => {
-    const errors: { [key: string]: string } = {};
     const rawPhone = donorData.phone.replace(/\D/g, "");
 
-    // Validações de campos obrigatórios vazios ou inválidos
-    if (!donorData.name || donorData.name.trim().length < 2 || donorData.name === "Carregando...") {
-      errors.name = "O campo nome completo é obrigatório.";
-    }
     if (!rawPhone || rawPhone === "55" || rawPhone.length < 12) {
-      errors.phone = "Informe um número de telefone celular válido com DDD.";
-    }
-    if (!address.zipCode) {
-      errors.zipCode = "O CEP residencial é obrigatório.";
-    }
-    if (!address.street) {
-      errors.street = "A rua é obrigatória.";
-    }
-    if (!address.neighborhood) {
-      errors.neighborhood = "O bairro é obrigatório.";
-    }
-    if (!address.city) {
-      errors.city = "A cidade é obrigatória.";
-    }
-    if (!address.state) {
-      errors.state = "O estado (UF) é obrigatório.";
-    }
-
-    // Se houver algum erro, atualiza o estado visual e impede o fluxo de envio
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      toast.error("Por favor, preencha todos os campos obrigatórios corretamente.");
+      toast.error("Por favor, informe um número de telefone válido com o DDD.");
       return;
     }
 
     try {
       setIsLoading(true);
-      setFormErrors({}); // Limpa erros se passar da validação
 
       // 1. Atualizar Nome
       const isNameValid = donorData.name &&
@@ -242,6 +211,9 @@ export default function DonorProfile() {
 
       if (isNameValid) {
         await DonorService.updateAccountName(donorData.name.trim());
+        document.cookie = `user_name=${encodeURIComponent(donorData.name.trim())}; path=/; max-age=604800; SameSite=Lax`;
+        localStorage.setItem("userName", donorData.name.trim());
+        refreshSession();
       }
 
       if (address) {
@@ -284,24 +256,18 @@ export default function DonorProfile() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    setImageError(null);
-
-    // Validação estrita do tipo do arquivo de imagem
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
-    if (!allowedTypes.includes(file.type)) {
-      setImageError("Tipo de arquivo inválido. Por favor, envie uma imagem nos formatos JPG, PNG ou WEBP.");
-      toast.error("Formato de imagem não permitido.");
-      return;
-    }
-
     try {
       setIsUploading(true);
       const formData = new FormData();
       formData.append("file", file);
       const updatedProfile = await DonorService.updateProfile(formData as any);
       setProfileImage(updatedProfile.avatarUrl ?? null);
-      toast.success("Foto de perfil updated!");
+      if (updatedProfile.avatarUrl) {
+        document.cookie = `user_avatar=${encodeURIComponent(updatedProfile.avatarUrl)}; path=/; max-age=604800; SameSite=Lax`;
+        localStorage.setItem("userAvatar", updatedProfile.avatarUrl);
+        await refreshSession();
+      }
+      toast.success("Foto de perfil atualizada!");
     } catch (error) {
       toast.error("Erro ao salvar imagem.");
     } finally {
@@ -334,6 +300,7 @@ export default function DonorProfile() {
     .filter(d => d.donationType === "monetary" && d.donationStatus === "completed")
     .reduce((sum, d) => sum + (Number(d.monetaryAmount) || 0), 0);
 
+  // Helper para exibir no input apenas o número sem o prefixo 55
   const getDisplayPhone = (fullPhone: string) => {
     const clean = fullPhone.replace(/\D/g, "");
     if (clean.startsWith("55")) {
@@ -342,14 +309,9 @@ export default function DonorProfile() {
     return clean;
   };
 
-  // Helper CSS para destacar inputs inválidos mantendo o padrão do seu layout
-  const getInputClass = (fieldName: string) => {
-    const baseClass = "w-full mt-1 px-3 py-2 border rounded-xl outline-none transition-all";
-    if (formErrors[fieldName]) {
-      return `${baseClass} border-red-400 focus:ring-2 focus:ring-red-400 focus:border-red-400 bg-red-50/20`;
-    }
-    return `${baseClass} focus:ring-2 focus:ring-purple-500 border-gray-100`;
-  };
+  const resolvedAvatar =
+    profileImage || (userAvatar ? DonorService._formatImageUrl(userAvatar) : null);
+  const resolvedName = (donorData.name || userName || "").replace("undefined", "").trim();
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 pb-20">
@@ -367,8 +329,8 @@ export default function DonorProfile() {
         <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 z-20">
           <div className="relative group">
             <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-2xl bg-white flex items-center justify-center">
-              {profileImage ? (
-                <img src={profileImage} alt="Perfil" className="w-full h-full object-cover" />
+              {resolvedAvatar ? (
+                <img src={resolvedAvatar} alt="Perfil" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
               ) : (
                 <User size={48} className="text-gray-300" />
               )}
@@ -389,54 +351,44 @@ export default function DonorProfile() {
         </div>
       </div>
 
-      {/* BOX DE ERRO DE FORMATO DE IMAGEM */}
-      {imageError && (
-        <div className="max-w-md mx-auto mt-20 px-6">
-          <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2 text-red-700 text-xs font-semibold">
-            <AlertCircle size={16} className="shrink-0" />
-            <span>{imageError}</span>
-          </div>
-        </div>
-      )}
-
       {/* RESUMO */}
-      <div className={`${imageError ? "mt-4" : "mt-20"} px-6 text-center`}>
-        <h1 className="text-3xl font-bold text-gray-900">{donorData.name || "Doador"}</h1>
-        <p className="text-gray-500 font-medium">{donorData.email}</p>
+      <div className="mt-20 px-6 text-center max-w-4xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">{resolvedName || "Doador"}</h1>
+        <p className="text-base sm:text-lg text-gray-500 font-medium mt-1">{donorData.email}</p>
 
-        <div className="grid grid-cols-2 gap-4 mt-6 max-w-md mx-auto">
-          <motion.div whileHover={{ scale: 1.02 }} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col items-center">
-            <div className="flex items-center justify-center gap-2 text-rose-500 mb-1">
-              <Heart size={20} />
+        <div className="grid grid-cols-2 gap-4 mt-6 max-w-lg mx-auto">
+          <motion.div whileHover={{ scale: 1.02 }} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+            <div className="flex items-center justify-center gap-1.5 text-rose-500 mb-1">
+              <Heart size={22} />
             </div>
-            <p className="text-2xl font-bold text-gray-900">{totalDonations}</p>
-            <p className="text-xs text-gray-500 uppercase font-bold tracking-tight">Doações</p>
+            <p className="text-3xl font-extrabold text-gray-900">{totalDonations}</p>
+            <p className="text-xs sm:text-sm font-bold text-gray-400 uppercase tracking-wider mt-1">Doações</p>
           </motion.div>
 
-          <motion.div whileHover={{ scale: 1.02 }} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col items-center">
-            <div className="flex items-center justify-center gap-2 text-emerald-500 mb-1">
-              <DollarSign size={20} />
+          <motion.div whileHover={{ scale: 1.02 }} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+            <div className="flex items-center justify-center gap-1.5 text-emerald-500 mb-1">
+              <DollarSign size={22} />
             </div>
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-3xl font-extrabold text-gray-900">
               R$ {totalAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
-            <p className="text-xs text-gray-500 uppercase font-bold tracking-tight">Doado</p>
+            <p className="text-xs sm:text-sm font-bold text-gray-400 uppercase tracking-wider mt-1">Total Doado</p>
           </motion.div>
         </div>
       </div>
 
       {/* TABS */}
       <div className="mt-8 px-6">
-        <div className="flex gap-2 bg-white rounded-2xl p-1 shadow-sm max-w-md mx-auto">
+        <div className="flex gap-2 bg-white rounded-2xl p-1.5 shadow-sm max-w-lg mx-auto border border-gray-100">
           <button
             onClick={() => setActiveTab("info")}
-            className={`flex-1 py-3 rounded-xl font-semibold transition-all ${activeTab === "info" ? "bg-purple-600 text-white shadow-md" : "text-gray-600 hover:bg-gray-50"}`}
+            className={`flex-1 py-3 rounded-xl text-base font-bold transition-all cursor-pointer ${activeTab === "info" ? "bg-[#6B39A7] text-white shadow-sm" : "text-gray-600 hover:bg-gray-50"}`}
           >
             Informações
           </button>
           <button
             onClick={() => setActiveTab("history")}
-            className={`flex-1 py-3 rounded-xl font-semibold transition-all ${activeTab === "history" ? "bg-purple-600 text-white shadow-md" : "text-gray-600 hover:bg-gray-50"}`}
+            className={`flex-1 py-3 rounded-xl text-base font-bold transition-all cursor-pointer ${activeTab === "history" ? "bg-[#6B39A7] text-white shadow-sm" : "text-gray-600 hover:bg-gray-50"}`}
           >
             Histórico
           </button>
@@ -450,227 +402,239 @@ export default function DonorProfile() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="mt-6 px-6 space-y-4 max-w-2xl mx-auto"
+            className="mt-8 px-4 sm:px-6 max-w-3xl sm:max-w-4xl mx-auto space-y-8"
           >
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-bold text-gray-900">Sobre você</h2>
+            {/* SEÇÃO 1: DETALHES DA CONTA */}
+            <div>
+              <div className="flex items-center justify-between mb-4 px-1">
+                <div>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">Detalhes da conta</h2>
+                  <p className="text-base sm:text-lg text-gray-600 font-medium mt-1">Suas informações cadastrais e de contato</p>
+                </div>
 
                 {isEditingProfile ? (
                   <div className="flex gap-2">
-                    <button onClick={handleCancelEditing} className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors" title="Cancelar alterações"><X size={20} /></button>
-                    <button onClick={handleUpdateInfo} disabled={isLoading} className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors" title="Salvar alterações">
-                      {isLoading ? <Loader2 className="animate-spin" size={20} /> : <Check size={20} />}
+                    <button onClick={() => setIsEditingProfile(false)} className="p-2.5 text-red-500 hover:bg-red-50 rounded-full transition-colors cursor-pointer" title="Cancelar"><X size={22} /></button>
+                    <button onClick={handleUpdateInfo} disabled={isLoading} className="p-2.5 text-green-600 hover:bg-green-50 rounded-full transition-colors cursor-pointer" title="Salvar">
+                      {isLoading ? <Loader2 className="animate-spin" size={22} /> : <Check size={22} />}
                     </button>
                   </div>
                 ) : (
-                  <button onClick={handleStartEditing} className="flex items-center gap-2 text-sm font-medium text-purple-600 hover:bg-purple-50 px-3 py-1.5 rounded-lg transition-colors">
-                    <Edit2 size={16} /> Editar Perfil
+                  <button onClick={() => setIsEditingProfile(true)} className="flex items-center gap-2 text-base font-bold text-[#6B39A7] bg-purple-50 hover:bg-purple-100 px-4 py-2.5 rounded-xl transition-all active:scale-95 cursor-pointer">
+                    <Edit2 size={18} /> Editar Perfil
                   </button>
                 )}
               </div>
 
-              <div className="space-y-6">
-                {/* Biografia */}
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-gray-50 rounded-lg"><FileText size={20} className="text-gray-400" /></div>
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Biografia</p>
-                    {isEditingProfile ? (
-                      <textarea
-                        className="w-full mt-1 px-3 py-2 border rounded-xl outline-none min-h-[100px] resize-none focus:ring-2 focus:ring-purple-500 border-gray-100"
-                        placeholder="Conte um pouco sobre você..."
-                        value={donorData.description}
-                        onChange={(e) => setDonorData({ ...donorData, description: e.target.value })}
-                      />
-                    ) : (
-                      <p className="text-gray-700 italic leading-relaxed">
-                        {donorData.description || "Nenhuma biografia informada."}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <hr className="border-gray-50" />
-
+              <div className="bg-white rounded-2xl border border-gray-200/90 shadow-sm overflow-hidden divide-y divide-gray-100">
                 {/* Nome Completo */}
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-gray-50 rounded-lg"><User size={20} className="text-gray-400" /></div>
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">
-                      Nome Completo {isEditingProfile && <span className="text-red-500">*</span>}
-                    </p>
-                    {isEditingProfile ? (
-                      <div>
-                        <input 
-                          className={getInputClass("name")} 
-                          value={donorData.name} 
-                          onChange={(e) => {
-                            setDonorData({ ...donorData, name: e.target.value });
-                            if (formErrors.name) setFormErrors(prev => { const { name, ...r } = prev; return r; });
-                          }} 
+                <div className="flex items-start sm:items-center justify-between gap-4 p-5 sm:p-6">
+                  <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0">
+                      <User size={24} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-lg sm:text-xl font-bold text-gray-900">Nome completo</h4>
+                      {isEditingProfile ? (
+                        <input
+                          className="w-full mt-2 px-4 py-3 text-lg border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200 text-gray-900"
+                          value={donorData.name}
+                          onChange={(e) => setDonorData({ ...donorData, name: e.target.value })}
+                          placeholder="Seu nome completo"
                         />
-                        {formErrors.name && <span className="text-xs text-red-500 mt-1 block font-medium">{formErrors.name}</span>}
-                      </div>
-                    ) : (
-                      <p className="font-medium text-gray-900">{donorData.name}</p>
-                    )}
+                      ) : (
+                        <p className="text-lg sm:text-xl text-gray-800 font-medium mt-1">
+                          {resolvedName || "Não informado"}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Endereço */}
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-gray-50 rounded-lg">
-                    <MapPin size={20} className="text-gray-400" />
-                  </div>
-
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2">
-                      Endereço {isEditingProfile && <span className="text-red-500">*</span>}
-                    </p>
-
-                    {isEditingProfile ? (
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="col-span-2">
-                          <input
-                            placeholder="CEP *"
-                            className={getInputClass("zipCode")}
-                            value={address.zipCode}
-                            onChange={handleCepChange}
-                          />
-                          {formErrors.zipCode && <span className="text-xs text-red-500 mt-1 block font-medium">{formErrors.zipCode}</span>}
-                        </div>
-
-                        <div className="col-span-2">
-                          <input
-                            placeholder="Rua *"
-                            className={getInputClass("street")}
-                            value={address.street}
-                            onChange={(e) => {
-                              setAddress({ ...address, street: e.target.value });
-                              if (formErrors.street) setFormErrors(prev => { const { street, ...r } = prev; return r; });
-                            }}
-                          />
-                          {formErrors.street && <span className="text-xs text-red-500 mt-1 block font-medium">{formErrors.street}</span>}
-                        </div>
-
-                        <input
-                          placeholder="Número"
-                          className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
-                          value={address.number}
-                          onChange={(e) => setAddress({ ...address, number: e.target.value })}
-                        />
-
-                        <input
-                          placeholder="Complemento"
-                          className="w-full mt-1 px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-100"
-                          value={address.complement}
-                          onChange={(e) => setAddress({ ...address, complement: e.target.value })}
-                        />
-
-                        <div className="col-span-2">
-                          <input
-                            placeholder="Bairro *"
-                            className={getInputClass("neighborhood")}
-                            value={address.neighborhood}
-                            onChange={(e) => {
-                              setAddress({ ...address, neighborhood: e.target.value });
-                              if (formErrors.neighborhood) setFormErrors(prev => { const { neighborhood, ...r } = prev; return r; });
-                            }}
-                          />
-                          {formErrors.neighborhood && <span className="text-xs text-red-500 mt-1 block font-medium">{formErrors.neighborhood}</span>}
-                        </div>
-
-                        <div>
-                          <input
-                            placeholder="Cidade *"
-                            className={getInputClass("city")}
-                            value={address.city}
-                            onChange={(e) => {
-                              setAddress({ ...address, city: e.target.value });
-                              if (formErrors.city) setFormErrors(prev => { const { city, ...r } = prev; return r; });
-                            }}
-                          />
-                          {formErrors.city && <span className="text-xs text-red-500 mt-1 block font-medium">{formErrors.city}</span>}
-                        </div>
-
-                        <div>
-                          <input
-                            placeholder="Estado *"
-                            className={getInputClass("state")}
-                            value={address.state}
-                            onChange={(e) => {
-                              setAddress({ ...address, state: e.target.value });
-                              if (formErrors.state) setFormErrors(prev => { const { state, ...r } = prev; return r; });
-                            }}
-                          />
-                          {formErrors.state && <span className="text-xs text-red-500 mt-1 block font-medium">{formErrors.state}</span>}
-                        </div>
+                {/* E-mail */}
+                <div className="flex items-start sm:items-center justify-between gap-4 p-5 sm:p-6">
+                  <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0">
+                      <Mail size={24} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        <h4 className="text-lg sm:text-xl font-bold text-gray-900">E-mail</h4>
+                        <span className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-800 bg-emerald-50 border border-emerald-300 px-3 py-0.5 rounded-full">
+                          ✓ Verificado
+                        </span>
                       </div>
-                    ) : address.street ? (
-                      <p className="text-gray-900 leading-relaxed">
-                        {address.street}, {address.number || "S/N"} <br />
-                        {address.neighborhood} - {address.city}/{address.state}
-                      </p>
-                    ) : (
-                      <p className="text-gray-400">Não informado</p>
-                    )}
+                      <p className="text-lg sm:text-xl text-gray-800 font-medium mt-1">{donorData.email}</p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Telefone */}
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-gray-50 rounded-lg">
-                    <Phone size={20} className="text-gray-400" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">
-                      Telefone / WhatsApp {isEditingProfile && <span className="text-red-500">*</span>}
-                    </p>
-                    {isEditingProfile ? (
-                      <div>
-                        <div className={`flex mt-1 rounded-xl border overflow-hidden transition-all bg-white ${formErrors.phone ? "border-red-400 focus-within:ring-2 focus-within:ring-red-400" : "border-gray-200 focus-within:ring-2 focus-within:ring-purple-500"}`}>
-                          <span className="flex items-center justify-center bg-gray-100 text-gray-500 px-3 border-r border-gray-200 text-sm font-semibold select-none">
+                {/* Celular / WhatsApp */}
+                <div className="flex items-start sm:items-center justify-between gap-4 p-5 sm:p-6">
+                  <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0">
+                      <Phone size={24} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-lg sm:text-xl font-bold text-gray-900">Celular / WhatsApp</h4>
+                      {isEditingProfile ? (
+                        <div className="flex mt-2 rounded-xl border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-purple-500 transition-all bg-white max-w-md">
+                          <span className="flex items-center justify-center bg-gray-100 text-gray-700 px-4 border-r border-gray-200 text-lg font-semibold select-none">
                             +55
                           </span>
                           <input
                             type="text"
-                            className="w-full px-3 py-2 outline-none border-none text-sm bg-transparent"
+                            className="w-full px-4 py-3 outline-none border-none text-lg text-gray-900 bg-transparent font-normal"
                             value={getDisplayPhone(donorData.phone)}
                             placeholder="(DDD) 99999-9999"
                             onChange={(e) => {
                               const digits = e.target.value.replace(/\D/g, "");
                               setDonorData({ ...donorData, phone: `55${digits}` });
-                              if (formErrors.phone) setFormErrors(prev => { const { phone, ...r } = prev; return r; });
                             }}
                           />
                         </div>
-                        {formErrors.phone && <span className="text-xs text-red-500 mt-1 block font-medium">{formErrors.phone}</span>}
-                      </div>
-                    ) : (
-                      <p className="font-medium text-gray-900">
-                        {donorData.phone ? `+${donorData.phone}` : "Não informado"}
+                      ) : (
+                        <p className={`text-lg sm:text-xl mt-1 ${donorData.phone ? "text-gray-800 font-medium" : "text-gray-500 italic font-medium"}`}>
+                          {donorData.phone ? `+${donorData.phone}` : "Não informado"}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* CPF */}
+                <div className="flex items-start sm:items-center justify-between gap-4 p-5 sm:p-6">
+                  <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0">
+                      <ShieldCheck size={24} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-lg sm:text-xl font-bold text-gray-900">CPF</h4>
+                      <p className={`text-lg sm:text-xl mt-1 ${donorData.cpf ? "text-gray-800 font-medium" : "text-gray-500 italic font-medium"}`}>
+                        {donorData.cpf || "Não informado"}
                       </p>
-                    )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Email e CPF */}
-                <div className="flex items-start gap-3 opacity-60">
-                  <div className="p-2 bg-gray-50 rounded-lg"><Mail size={20} className="text-gray-400" /></div>
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Email da Conta</p>
-                    <p className="font-medium text-gray-900">{donorData.email}</p>
+                {/* Endereço */}
+                <div className="flex items-start justify-between gap-4 p-5 sm:p-6">
+                  <div className="flex items-start gap-4 flex-1 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0 mt-0.5">
+                      <MapPin size={24} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-lg sm:text-xl font-bold text-gray-900">Endereço</h4>
+                      {isEditingProfile ? (
+                        <div className="grid grid-cols-2 gap-3 mt-3">
+                          <input
+                            placeholder="CEP"
+                            className="col-span-2 px-4 py-3 text-lg border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                            value={address.zipCode}
+                            onChange={handleCepChange}
+                          />
+
+                          <input
+                            placeholder="Rua"
+                            className="col-span-2 px-4 py-3 text-lg border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                            value={address.street}
+                            onChange={(e) =>
+                              setAddress({ ...address, street: e.target.value })
+                            }
+                          />
+
+                          <input
+                            placeholder="Número"
+                            className="px-4 py-3 text-lg border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                            value={address.number}
+                            onChange={(e) =>
+                              setAddress({ ...address, number: e.target.value })
+                            }
+                          />
+
+                          <input
+                            placeholder="Complemento"
+                            className="px-4 py-3 text-lg border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                            value={address.complement}
+                            onChange={(e) =>
+                              setAddress({ ...address, complement: e.target.value })
+                            }
+                          />
+
+                          <input
+                            placeholder="Bairro"
+                            className="col-span-2 px-4 py-3 text-lg border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                            value={address.neighborhood}
+                            onChange={(e) =>
+                              setAddress({ ...address, neighborhood: e.target.value })
+                            }
+                          />
+
+                          <input
+                            placeholder="Cidade"
+                            className="px-4 py-3 text-lg border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                            value={address.city}
+                            onChange={(e) =>
+                              setAddress({ ...address, city: e.target.value })
+                            }
+                          />
+
+                          <input
+                            placeholder="Estado"
+                            className="px-4 py-3 text-lg border rounded-xl outline-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                            value={address.state}
+                            onChange={(e) =>
+                              setAddress({ ...address, state: e.target.value })
+                            }
+                          />
+                        </div>
+                      ) : address.street ? (
+                        <p className="text-lg sm:text-xl text-gray-800 font-medium mt-1 leading-relaxed">
+                          {address.street}, {address.number || "S/N"} {address.complement ? `(${address.complement})` : ""} <br />
+                          {address.neighborhood} - {address.city}/{address.state} • CEP {address.zipCode}
+                        </p>
+                      ) : (
+                        <p className="text-lg text-gray-500 italic font-medium mt-1">Não informado</p>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 opacity-60">
-                  <div className="p-2 bg-gray-50 rounded-lg"><AlertCircle size={20} className="text-gray-400" /></div>
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">CPF</p>
-                    <p className="font-medium text-gray-900">{donorData.cpf}</p>
+                {/* Biografia */}
+                <div className="flex items-start justify-between gap-4 p-5 sm:p-6">
+                  <div className="flex items-start gap-4 flex-1 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-purple-50 text-[#6B39A7] flex items-center justify-center shrink-0 mt-0.5">
+                      <FileText size={24} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-lg sm:text-xl font-bold text-gray-900">Biografia</h4>
+                      {isEditingProfile ? (
+                        <textarea
+                          className="w-full mt-2 px-4 py-3 text-lg border rounded-xl outline-none min-h-[120px] resize-none focus:ring-2 focus:ring-purple-500 border-gray-200"
+                          placeholder="Conte um pouco sobre você..."
+                          value={donorData.description}
+                          onChange={(e) => setDonorData({ ...donorData, description: e.target.value })}
+                        />
+                      ) : (
+                        <p className={`text-lg sm:text-xl mt-1 leading-relaxed ${donorData.description ? "text-gray-800 italic font-medium" : "text-gray-500 italic font-medium"}`}>
+                          {donorData.description || "Nenhuma biografia informada."}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* SEÇÃO 2: ACESSO E PRIVACIDADE (ESTILO NETFLIX) */}
+            <div>
+              <div className="mb-4 px-1">
+                <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">Acesso e privacidade</h3>
+                <p className="text-base sm:text-lg text-gray-600 font-medium mt-1">Gerencie a segurança e a privacidade da sua conta conforme a LGPD</p>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-gray-200/90 shadow-sm overflow-hidden p-6 sm:p-7">
+                <LgpdSecurityZone userRole="donor" userName={donorData.name} className="" />
               </div>
             </div>
           </motion.div>
@@ -682,7 +646,7 @@ export default function DonorProfile() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="mt-6 px-6 space-y-4 max-w-2xl mx-auto pb-10"
+            className="mt-8 px-4 sm:px-6 space-y-6 max-w-3xl sm:max-w-4xl mx-auto pb-12"
           >
             {isHistoryLoading ? (
               <div className="flex flex-col items-center justify-center py-20 text-gray-400">

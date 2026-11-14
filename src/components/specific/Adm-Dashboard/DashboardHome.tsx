@@ -3,18 +3,19 @@
 import { Clock, CheckCircle, XCircle } from 'lucide-react';
 
 type DashboardHomeProps = {
-  onNavigate: (view: 'pending' | 'approved' | 'rejected') => void;
+  onNavigate: (view: 'pending' | 'approved' | 'rejected' | 'restricted') => void;
   stats: {
     pending: number;
     approved: number;
     rejected: number;
+    restricted: number;
   };
   adminName: string;
 };
 
 export default function DashboardHome({ onNavigate, stats, adminName }: DashboardHomeProps) {
   return (
-    <div className="max-w-[1200px] mx-auto w-full px-8">
+    <div className="max-w-[1400px] mx-auto w-full px-8">
       {/* Texto de Bem-vindo */}
       <div className="pt-24 pb-16 text-center md:text-left">
         <h1 className="text-5xl font-black text-[#6B39A7] tracking-tighter mb-4">
@@ -27,7 +28,7 @@ export default function DashboardHome({ onNavigate, stats, adminName }: Dashboar
 
       {/* Grid de Cards */}
       <div className="pb-16 flex justify-center md:justify-start">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 w-full max-w-[1040px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full max-w-[1400px]">
           <StatusCard
             title="ONGs Pendentes"
             count={stats.pending.toString()}
@@ -57,6 +58,16 @@ export default function DashboardHome({ onNavigate, stats, adminName }: Dashboar
             innerColor="bg-[#B30000]"
             btnColor="bg-[#990000]"
             onClick={() => onNavigate('rejected')}
+          />
+          <StatusCard
+            title="ONGs Restritas"
+            count={stats.restricted.toString()}
+            label="Ação Exigida"
+            icon={<XCircle size={48} className="text-white" />}
+            bgColor="bg-gray-800"
+            innerColor="bg-gray-900"
+            btnColor="bg-black"
+            onClick={() => onNavigate('restricted')}
           />
         </div>
       </div>

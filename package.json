@@ -3,41 +3,56 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "pix:confirm": "wsl -d Ubuntu-24.04 bash -c \"export NVM_DIR=/home/vini/.nvm && . /home/vini/.nvm/nvm.sh && cd /home/vini/doecerto-api && node scripts/confirm-pix.js\""
   },
   "dependencies": {
     "@capacitor/android": "^7.4.4",
     "@capacitor/core": "^7.4.4",
     "@capacitor/preferences": "^7.0.0",
-    "framer-motion": "^12.23.24",
+    "@gsap/react": "^2.1.2",
+    "@hookform/resolvers": "^5.6.0",
+    "@lottiefiles/dotlottie-react": "^0.19.13",
+    "@studio-freight/lenis": "^1.0.42",
+    "capacitor-secure-storage-plugin": "^0.12.0",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.43.0",
+    "gsap": "^3.15.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.553.0",
+    "motion": "^12.43.0",
     "next": "^16.0.10",
     "qrcode.react": "^4.2.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "react-hook-form": "^7.84.0",
     "react-hot-toast": "^2.6.0",
     "react-icons": "^5.5.0",
-    "react-qr-code": "^2.0.18"
+    "react-qr-code": "^2.0.18",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.4.4",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
+    "@types/node": "20.19.43",
+    "@types/react": "19.3.0",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
-    "eslint-config-next": "16.0.1",
+    "eslint-config-next": "^16.4.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
   "overrides": {
-    "tar": "^7.5.4"
+    "tar": "^7.5.4",
+    "fast-glob": "^3.3.3",
+    "braces": "^3.0.3",
+    "micromatch": "^4.0.8"
   }
 }

@@ -1,0 +1,609 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  MapPin, HeartHandshake, Award, Phone, Home,
+  Star, ArrowLeft, Image as ImageIcon, MessageSquare, X, Tag,
+  Globe, CheckCircle2, Copy, Heart, Send, AlertCircle, User, ExternalLink
+} from "lucide-react";
+import { FaInstagram, FaFacebook, FaWhatsapp } from "react-icons/fa";
+import { useRouter } from "next/navigation";
+import DonateModal from "@/components/specific/DonateModal";
+import { OngsProfileService } from "@/services/ongs-profile.service";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  buildWebsiteHref,
+  formatWebsiteLabel,
+  buildInstagramHref,
+  formatInstagramLabel,
+  buildFacebookHref,
+  formatFacebookLabel,
+  buildWhatsappHref,
+  formatWhatsappLabel,
+} from "@/utils/socialChannels";
+
+// --- INTERFACES ---
+export interface Review {
+  score: number;
+  comment: string;
+  createdAt: string;
+  donor: { user: { name: string } };
+}
+
+export interface OngProfileData {
+  id: number;
+  name: string;
+  banner: string;
+  logo: string;
+  description: string;
+  phone: string;
+  whatsappNumber?: string | null;
+  websiteUrl?: string | null;
+  instagramUrl?: string | null;
+  facebookUrl?: string | null;
+  website?: string;
+  instagram?: string;
+  foundedAt?: string | null;
+  address: string;
+  distance: string;
+  yearsOfOperation: number;
+  numberOfRatings: number;
+  rating: number;
+  donations: number;
+  categories: any[];
+  canReview?: boolean;
+}
+
+// AQUI ESTAVA O SEU ERRO! A assinatura da função agora aceita o initialData
+export default function OngPublicProfileClient({
+  ongId,
+  initialData
+}: {
+  ongId: number;
+  initialData: { ong: OngProfileData; reviews: Review[] } | null;
+}) {
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [isReviewBlockedOpen, setIsReviewBlockedOpen] = useState(false);
+  const [guestModal, setGuestModal] = useState<{ isOpen: boolean; type: 'donate' | 'location' }>({ isOpen: false, type: 'donate' });
+
+  // INICIA COM OS DADOS DO SERVIDOR
+  const [data, setData] = useState<{ ong: OngProfileData; reviews: Review[] } | null>(initialData);
+  const [notFound, setNotFound] = useState(false);
+  const [errors, setErrors] = useState({ banner: false, logo: false });
+
+  const loadData = async () => {
+    if (!ongId) return;
+    try {
+      const result = await OngsProfileService.getPublicProfile(ongId);
+      setNotFound(false);
+      setData({
+        ong: {
+          ...result,
+          categories: result.categories.map((c: any) => (typeof c === 'string' ? c : c.name))
+        },
+        reviews: result.reviews || []
+      });
+    } catch (err) {
+      if (!initialData) setNotFound(true);
+      console.error("❌ Erro ao carregar perfil:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (!initialData || isAuthenticated) {
+      loadData().catch(() => { if (!initialData) setNotFound(true); });
+    }
+  }, [ongId, isAuthenticated]);
+
+  if (notFound) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4 px-4 text-center">
+      <h1 className="text-2xl font-bold text-slate-700">ONG não encontrada.</h1>
+      <button onClick={() => router.push("/home")} className="px-6 py-3 bg-[#6B39A7] text-white rounded-xl font-bold hover:bg-[#582d8c] transition-colors cursor-pointer">Voltar para o Início</button>
+    </div>
+  );
+
+  if (!data) return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
+
+  const { ong, reviews } = data;
+
+  const handleReviewClick = () => {
+    if (ong.canReview === false) {
+      setIsReviewBlockedOpen(true);
+    } else {
+      setIsReviewModalOpen(true);
+    }
+  };
+
+  // Garante que o último termo do nome e o selo fiquem sempre juntos (sem quebra órfã nem flutuação lateral)
+  const nameTrimmed = (ong.name || "").trim();
+  const lastSpaceIndex = nameTrimmed.lastIndexOf(" ");
+  const firstPart = lastSpaceIndex !== -1 ? nameTrimmed.substring(0, lastSpaceIndex) : "";
+  const lastWord = lastSpaceIndex !== -1 ? nameTrimmed.substring(lastSpaceIndex + 1) : nameTrimmed;
+
+  return (
+    <div className="min-h-screen bg-slate-50 pb-20 sm:pb-36 font-sans text-slate-900">
+      <div className="relative w-full h-[200px] sm:h-[250px] md:h-[300px] bg-slate-200">
+        {ong.banner && !errors.banner ? (
+          <img src={ong.banner} className="w-full h-full object-cover" alt="Capa" onError={() => setErrors(prev => ({ ...prev, banner: true }))} />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-[#411b6f] via-[#6B39A7] to-[#8643c7] flex items-center justify-center relative overflow-hidden">
+            <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+          </div>
+        )}
+
+        <button 
+          onClick={() => router.push("/home")} 
+          aria-label="Voltar para a página inicial"
+          title="Voltar para a página inicial"
+          className="absolute top-4 sm:top-6 left-4 sm:left-6 bg-white/90 p-2.5 sm:p-3 rounded-full z-30 shadow-sm hover:bg-white transition-all active:scale-95 cursor-pointer"
+        >
+          <ArrowLeft size={24} className="text-purple-600" />
+        </button>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 -mt-16 sm:-mt-24 relative z-10 flex flex-col gap-4 sm:gap-6">
+
+        <div className="bg-white rounded-3xl p-5 sm:p-8 lg:p-12 shadow-sm border border-slate-100 flex flex-col items-center text-center">
+
+          <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl shadow-md mb-4 sm:mb-6 flex items-center justify-center overflow-hidden bg-slate-100 border-4 border-white ring-1 ring-slate-100 shrink-0">
+            {ong.logo && !errors.logo ? (
+              <img src={ong.logo} className="w-full h-full object-cover" alt="Logo" onError={() => setErrors(prev => ({ ...prev, logo: true }))} />
+            ) : (
+              <span className="text-4xl sm:text-5xl font-black text-purple-600">{ong.name?.charAt(0).toUpperCase()}</span>
+            )}
+          </div>
+
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 leading-snug text-center max-w-2xl mx-auto">
+            {firstPart && <span>{firstPart} </span>}
+            <span className="inline-block whitespace-nowrap">
+              {lastWord}
+              <motion.img
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 200, delay: 0.3 }}
+                src="/iconeselo.svg"
+                alt="Selo DoeCerto"
+                title="ONG Verificada Oficialmente"
+                className="inline-block w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 ml-1.5 align-middle -mt-1 shrink-0 drop-shadow-sm cursor-help"
+              />
+            </span>
+          </h1>
+
+          <div className="text-slate-500 mt-4 sm:mt-6 flex flex-wrap justify-center gap-x-4 sm:gap-x-6 gap-y-2 text-xs sm:text-sm lg:text-base font-semibold items-center">
+            <span className="flex items-center gap-1.5 sm:gap-2"><MapPin size={16} className="text-purple-600 sm:w-[18px]" /> {ong.address || "Localização não informada"}</span>
+            <span className="flex items-center gap-1.5 sm:gap-2"><Award size={16} className="text-purple-600 sm:w-[18px]" /> {ong.yearsOfOperation} Anos de atuação</span>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-2 mt-5 sm:mt-6">
+            {ong.categories.map((cat, idx) => (
+              <span key={idx} className="px-3 sm:px-4 py-1.5 sm:py-2 bg-purple-50 text-purple-600 text-[11px] sm:text-xs lg:text-sm font-bold rounded-xl flex items-center gap-1.5 shadow-sm">
+                <Tag size={12} className="text-purple-400 sm:w-[14px]" /> {cat}
+              </span>
+            ))}
+          </div>
+
+          <div className="w-full grid grid-cols-3 gap-2 sm:gap-3 lg:gap-6 mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-slate-100">
+            <StatItem icon={<Star className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" fill="#facc15" />} value={ong.rating?.toFixed(1) || "0.0"} label="Nota Geral" />
+            <StatItem icon={<MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />} value={ong.numberOfRatings} label="Feedbacks" />
+            <StatItem icon={<HeartHandshake className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />} value={ong.donations} label="Doações" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-3xl p-5 sm:p-8 lg:p-10 shadow-sm border border-slate-100">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-5 sm:gap-6">
+            <div className="text-center md:text-left w-full">
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900">Faça a diferença hoje</h3>
+              <p className="text-sm sm:text-base text-slate-500 mt-1.5 sm:mt-2 font-medium">Seu apoio ajuda a ONG a continuar seu trabalho incrível.</p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row w-full md:w-auto gap-3 sm:gap-4 shrink-0">
+              {isAuthenticated && (
+                <button
+                  onClick={handleReviewClick}
+                  className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 border border-slate-200 rounded-2xl text-slate-600 text-sm sm:text-base font-bold hover:border-purple-600 hover:bg-purple-50 hover:text-purple-700 transition-all cursor-pointer hover:scale-105 active:scale-95 text-center flex items-center justify-center gap-2"
+                >
+                  <Star size={18} />
+                  Avaliar ONG
+                </button>
+              )}
+
+              <button
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    setGuestModal({ isOpen: true, type: 'donate' });
+                  } else {
+                    setIsModalOpen(true);
+                  }
+                }}
+                className="w-full sm:w-auto px-6 sm:px-10 py-3.5 sm:py-4 bg-purple-600 text-white text-sm sm:text-base font-black rounded-2xl shadow-md hover:bg-purple-500 hover:scale-105 cursor-pointer transition-all duration-300 active:scale-95 flex items-center justify-center gap-2"
+              >
+                <Heart size={18} className="sm:w-5 sm:h-5" fill="currentColor" />
+                Doar Agora
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-5 sm:p-8 lg:p-10 rounded-3xl bg-white shadow-sm border border-slate-100">
+          <h2 className="text-lg sm:text-xl font-black text-purple-600 mb-4 sm:mb-6">Sobre a instituição</h2>
+          <p className="text-sm sm:text-base lg:text-lg text-slate-700 leading-relaxed">{ong.description}</p>
+
+          <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+            <ContactInfo
+              icon={<Phone size={18} className="text-purple-600 sm:w-5 sm:h-5" />}
+              label="Telefone"
+              text={ong.phone}
+              copyable
+            />
+            {ong.whatsappNumber && (
+              <ContactInfo
+                icon={<FaWhatsapp size={19} className="text-emerald-600 sm:w-5 sm:h-5" />}
+                label="WhatsApp"
+                text={formatWhatsappLabel(ong.whatsappNumber)}
+                href={buildWhatsappHref(ong.whatsappNumber)}
+                copyable
+              />
+            )}
+            {ong.websiteUrl && (
+              <ContactInfo
+                icon={<Globe size={18} className="text-purple-600 sm:w-5 sm:h-5" />}
+                label="Site oficial"
+                text={formatWebsiteLabel(ong.websiteUrl)}
+                href={buildWebsiteHref(ong.websiteUrl)}
+              />
+            )}
+            {ong.instagramUrl && (
+              <ContactInfo
+                icon={<FaInstagram size={19} className="text-pink-600 sm:w-5 sm:h-5" />}
+                label="Instagram"
+                text={formatInstagramLabel(ong.instagramUrl)}
+                href={buildInstagramHref(ong.instagramUrl)}
+              />
+            )}
+            {ong.facebookUrl && (
+              <ContactInfo
+                icon={<FaFacebook size={19} className="text-blue-600 sm:w-5 sm:h-5" />}
+                label="Facebook"
+                text={formatFacebookLabel(ong.facebookUrl)}
+                href={buildFacebookHref(ong.facebookUrl)}
+              />
+            )}
+            <ContactInfo
+              icon={<Home size={18} className="text-slate-600 sm:w-5 sm:h-5" />}
+              label="Localização"
+              text={ong.address}
+            />
+          </div>
+        </div>
+
+        <div className="p-5 sm:p-8 lg:p-10 rounded-3xl bg-white shadow-sm border border-slate-100">
+          <h3 className="text-lg sm:text-xl font-black text-purple-600 mb-4 sm:mb-6">Comentários de Doadores</h3>
+          <div className="space-y-3 sm:space-y-4 max-h-[350px] sm:max-h-[400px] overflow-y-auto pr-1 sm:pr-2">
+            {reviews.length > 0 ? reviews.map((rev, i) => (
+              <div key={i} className="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-100">
+                <div className="flex justify-between items-center mb-2 sm:mb-3">
+                  <span className="font-bold text-sm sm:text-base text-slate-800">{rev.donor?.user?.name || "Doador"}</span>
+                  <div className="flex text-yellow-400">
+                    {Array.from({ length: 5 }).map((_, idx) => (
+                      <Star key={idx} size={12} className="sm:w-[14px] sm:h-[14px]" fill={idx < rev.score ? "currentColor" : "none"} color={idx < rev.score ? "currentColor" : "#e5e7eb"} />
+                    ))}
+                  </div>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-600 italic">"{rev.comment || "Sem comentário."}"</p>
+              </div>
+            )) : <p className="text-slate-400 text-center py-4 sm:py-6 text-sm sm:text-base font-medium">Nenhum comentário ainda. Seja o primeiro a apoiar e avaliar!</p>}
+          </div>
+        </div>
+
+      </div>
+
+      <AnimatePresence>
+        {guestModal.isOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setGuestModal({ ...guestModal, isOpen: false })} />
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-white w-full max-w-md rounded-[2rem] overflow-hidden shadow-2xl p-8 flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-6">
+                {guestModal.type === 'donate' ? (
+                  <User size={32} className="text-purple-700" />
+                ) : (
+                  <MapPin size={32} className="text-purple-700" />
+                )}
+              </div>
+
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 tracking-tight">
+                {guestModal.type === 'donate' ? 'Fazer o bem faz bem!' : 'Precisamos da sua localização'}
+              </h2>
+              <p className="text-base sm:text-lg text-slate-600 mb-8 font-medium leading-relaxed">
+                {guestModal.type === 'donate'
+                  ? 'Você pode criar uma conta para acompanhar o impacto das suas doações, ou seguir de forma anônima.'
+                  : 'Faça login ou cadastre-se para informar seu endereço e descobrir quais ONGs estão perto de você.'}
+              </p>
+
+              <div className="w-full flex flex-col gap-3">
+                <button onClick={() => router.push("/register")} className="w-full bg-purple-600 text-white font-black py-4 rounded-xl shadow-lg shadow-purple-200 active:scale-95 transition-all cursor-pointer">
+                  Criar Conta / Entrar
+                </button>
+
+                {guestModal.type === 'donate' && (
+                  <button onClick={() => { setGuestModal({ ...guestModal, isOpen: false }); setIsModalOpen(true); }} className="w-full py-3.5 text-purple-600 border-2 border-purple-100 font-bold rounded-xl hover:bg-purple-50 active:scale-95 transition-all cursor-pointer">
+                    Doar Anonimamente
+                  </button>
+                )}
+
+                <button onClick={() => setGuestModal({ ...guestModal, isOpen: false })} className="mt-3 text-slate-400 font-bold text-sm hover:text-slate-600 transition-colors cursor-pointer">
+                  Cancelar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {isModalOpen && (
+        <DonateModal
+          onClose={() => setIsModalOpen(false)}
+          ongName={ong.name}
+          onDonateMoney={() => router.push(`/pix?id=${ong.id}`)}
+          onDonateItems={() => router.push(`/donation?ongId=${ong.id}&ong=${encodeURIComponent(ong.name)}`)}
+        />
+      )}
+
+      <AnimatePresence>
+        {isReviewModalOpen && <ReviewPostModal ongId={ongId} onClose={() => setIsReviewModalOpen(false)} onSuccess={loadData} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isReviewBlockedOpen && (
+          <ReviewBlockedModal
+            onClose={() => setIsReviewBlockedOpen(false)}
+            onDonateClick={() => {
+              setIsReviewBlockedOpen(false);
+              setIsModalOpen(true);
+            }}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// --- COMPONENTES AUXILIARES ---
+
+function ContactInfo({
+  icon,
+  text,
+  href,
+  label,
+  copyable,
+}: {
+  icon: React.ReactNode;
+  text: string;
+  href?: string;
+  label?: string;
+  copyable?: boolean;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (!text || text === "Não informado") return;
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <div className="flex items-center justify-between text-slate-700 text-xs sm:text-sm lg:text-base font-bold bg-slate-50 p-3 sm:p-4 rounded-2xl border border-slate-100">
+      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+        <div className="shrink-0">{icon}</div>
+        <div className="min-w-0 flex flex-col">
+          {label && (
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              {label}
+            </span>
+          )}
+          {href ? (
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="truncate text-[#6B39A7] hover:text-[#582d8c] hover:underline inline-flex items-center gap-1.5"
+            >
+              <span className="truncate">{text || "Não informado"}</span>
+              <ExternalLink size={13} className="shrink-0 opacity-70" />
+            </a>
+          ) : (
+            <span className="truncate">{text || "Não informado"}</span>
+          )}
+        </div>
+      </div>
+      {copyable && text && text !== "Não informado" && (
+        <button
+          onClick={handleCopy}
+          title="Copiar"
+          className="flex-shrink-0 ml-2 sm:ml-3 p-1.5 sm:p-2 rounded-xl transition-all cursor-pointer hover:bg-slate-200 active:scale-95 text-slate-400 hover:text-purple-600"
+        >
+          {copied ? <CheckCircle2 size={16} className="text-green-600 sm:w-[18px]" /> : <Copy size={16} className="sm:w-[18px]" />}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function StatItem({ icon, value, label }: { icon: React.ReactNode, value: number | string, label: string }) {
+  return (
+    <div className="p-3 sm:p-4 lg:p-6 rounded-2xl bg-slate-50 text-center border border-slate-100 flex flex-col items-center justify-center transition-all hover:bg-slate-100">
+      <div className="mb-1.5 sm:mb-3">{icon}</div>
+      <p className="text-lg sm:text-xl lg:text-3xl font-black text-slate-900">{value}</p>
+      <p className="text-[9px] sm:text-[10px] lg:text-xs text-slate-500 font-bold uppercase tracking-widest mt-1 sm:mt-1.5 truncate w-full px-1">{label}</p>
+    </div>
+  );
+}
+
+function ReviewPostModal({ ongId, onClose, onSuccess }: { ongId: number, onClose: () => void, onSuccess: () => void }) {
+  const [score, setScore] = useState(0);
+  const [hoveredScore, setHoveredScore] = useState(0);
+  const [comment, setComment] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    if (score === 0) {
+      alert("Por favor, selecione uma nota de 1 a 5 estrelas antes de enviar.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await OngsProfileService.postReview(ongId, score, comment);
+      onSuccess();
+      onClose();
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || err.message || "Erro desconhecido ao enviar avaliação.";
+      alert(`Ops! ${errorMessage}`);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        className="bg-white w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl relative flex flex-col"
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-full transition-colors cursor-pointer"
+        >
+          <X size={20} />
+        </button>
+
+        <div className="text-center mb-6 mt-2">
+          <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            Avalie a Instituição
+          </h3>
+          <p className="text-base text-slate-600 mt-2 font-medium leading-relaxed px-2">
+            Sua opinião ajuda a dar mais transparência e credibilidade para o trabalho da ONG.
+          </p>
+        </div>
+
+        <div className="flex justify-center gap-2 sm:gap-3 mb-6">
+          {[1, 2, 3, 4, 5].map((s) => (
+            <button
+              key={s}
+              type="button"
+              onMouseEnter={() => setHoveredScore(s)}
+              onMouseLeave={() => setHoveredScore(0)}
+              onClick={() => setScore(s)}
+              className="transition-transform hover:scale-110 active:scale-95 cursor-pointer p-1"
+            >
+              <Star
+                size={36}
+                strokeWidth={1.5}
+                className="sm:w-10 sm:h-10 transition-colors duration-200"
+                fill={s <= (hoveredScore || score) ? "#facc15" : "transparent"}
+                color={s <= (hoveredScore || score) ? "#facc15" : "#cbd5e1"}
+              />
+            </button>
+          ))}
+        </div>
+
+        <div className="text-center h-4 mb-4">
+          <span className="text-sm font-bold text-yellow-500 uppercase tracking-widest">
+            {score === 1 && "Muito Ruim"}
+            {score === 2 && "Ruim"}
+            {score === 3 && "Razoável"}
+            {score === 4 && "Muito Bom"}
+            {score === 5 && "Excelente!"}
+          </span>
+        </div>
+
+        <div className="relative mb-6">
+          <textarea
+            className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 sm:p-5 text-base font-medium h-28 sm:h-32 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-500/10 outline-none resize-none transition-all placeholder:text-slate-400"
+            placeholder="Conte o que achou do trabalho da ONG..."
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+          />
+        </div>
+
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="w-full py-4 bg-[#6B39A7] hover:bg-[#582d8c] text-white text-base font-black rounded-2xl shadow-lg shadow-purple-500/20 cursor-pointer transition-all active:scale-[0.98] flex items-center justify-center gap-2.5 group disabled:opacity-70 disabled:cursor-not-allowed"
+        >
+          {loading ? (
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          ) : (
+            <>
+              <Send size={18} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+              Enviar Avaliação
+            </>
+          )}
+        </button>
+      </motion.div>
+    </div>
+  );
+}
+
+function ReviewBlockedModal({ onClose, onDonateClick }: { onClose: () => void, onDonateClick: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        className="bg-white w-full max-w-lg rounded-3xl sm:rounded-[2rem] p-8 sm:p-10 shadow-2xl relative flex flex-col items-center text-center"
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2.5 rounded-full transition-colors cursor-pointer"
+        >
+          <X size={24} />
+        </button>
+
+        <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mb-6 ring-4 ring-amber-50">
+          <AlertCircle size={40} className="text-amber-600" strokeWidth={2.5} />
+        </div>
+
+        <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mb-4 tracking-tight">
+          Avaliação Bloqueada
+        </h3>
+
+        <div className="text-base text-slate-600 font-medium leading-relaxed mb-8 space-y-3 px-2">
+          <p>Para manter as avaliações reais e transparentes, <strong className="text-slate-900 font-bold">é necessário realizar uma doação</strong> para esta instituição antes de avaliá-la.</p>
+          <p className="text-sm sm:text-base text-slate-500 font-medium">Já doou e avaliou? Faça uma nova doação para liberar uma nova avaliação.</p>
+        </div>
+
+        <div className="w-full flex flex-col gap-3">
+          <button
+            onClick={onDonateClick}
+            className="w-full py-4 bg-[#6B39A7] hover:bg-[#582d8c] text-white text-base font-black rounded-2xl shadow-lg shadow-purple-500/20 cursor-pointer transition-all active:scale-[0.98] flex justify-center items-center gap-2"
+          >
+            <Heart size={20} fill="currentColor" />
+            Fazer uma Doação
+          </button>
+
+          <button
+            onClick={onClose}
+            className="w-full py-3 rounded-2xl text-base font-bold text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+          >
+            Entendi
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}

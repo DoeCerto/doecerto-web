@@ -58,38 +58,38 @@ export function CategoryModal({ isOpen, onClose, onSuccess, editingCategory }: C
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl border border-gray-100">
         <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-purple-100 rounded-2xl">
-              <Tag size={24} className="text-purple-600" />
+          <div className="flex items-center gap-3.5">
+            <div className="p-3 bg-purple-100 text-purple-600 rounded-2xl">
+              <Tag size={26} />
             </div>
-            <h3 className="text-2xl font-black text-gray-900">
+            <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
             </h3>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-all">
-            <X size={24} className="text-gray-500" />
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-all text-gray-500">
+            <X size={24} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
           <div>
-            <label className="block text-xs font-black text-purple-400 uppercase tracking-wider mb-3">Nome da Categoria</label>
+            <label className="block text-xs font-black text-purple-700 uppercase tracking-wider mb-2.5">Nome da Categoria</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex: Educação, Saúde..."
-              className="w-full px-5 py-4 border-2 border-gray-100 rounded-2xl focus:border-purple-200 focus:outline-none font-bold text-gray-900 transition-all"
+              className="w-full px-5 py-4 border-2 border-slate-100 rounded-2xl focus:border-purple-300 focus:outline-none font-bold text-base text-slate-900 transition-all"
               required
               autoFocus
             />
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 bg-gray-100 text-gray-700 py-4 rounded-2xl font-black hover:bg-gray-200 transition-all">
+            <button type="button" onClick={onClose} className="flex-1 bg-slate-100 text-slate-700 py-4 rounded-2xl font-black text-base hover:bg-slate-200 transition-all">
               Cancelar
             </button>
-            <button type="submit" disabled={loading} className="flex-1 bg-[#6B39A7] text-white py-4 rounded-2xl font-black hover:bg-[#5a2d8f] disabled:opacity-50 shadow-lg shadow-purple-200 transition-all">
+            <button type="submit" disabled={loading} className="flex-1 bg-[#6B39A7] text-white py-4 rounded-2xl font-black text-base hover:bg-[#5a2d8f] disabled:opacity-50 shadow-lg shadow-purple-500/20 transition-all active:scale-[0.98]">
               {loading ? 'Salvando...' : editingCategory ? 'Atualizar' : 'Cadastrar'}
             </button>
           </div>
@@ -121,16 +121,14 @@ export function DeleteCategoryModal({ isOpen, onClose, onSuccess, category }: De
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-      <div className="bg-white rounded-3xl max-w-sm w-full p-8 shadow-2xl border border-red-50 text-center">
-        <div className="flex justify-center mb-6">
-          <div className="p-4 bg-red-100 rounded-3xl text-red-600">
-            <AlertTriangle size={40} />
-          </div>
+      <div className="bg-white rounded-3xl max-w-md w-full p-8 text-center shadow-2xl border border-gray-100">
+        <div className="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-red-50">
+          <AlertTriangle size={40} strokeWidth={2.5} />
         </div>
 
-        <h3 className="text-2xl font-black text-gray-900 mb-2">Excluir Categoria?</h3>
-        <p className="text-gray-500 font-medium mb-8 leading-relaxed">
-          Você está prestes a apagar <span className="text-red-600 font-bold">"{category.name}"</span>. 
+        <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 tracking-tight">Excluir Categoria?</h3>
+        <p className="text-base sm:text-lg text-slate-600 font-medium mb-8 leading-relaxed">
+          Você está prestes a apagar <strong className="text-red-600 font-bold">"{category.name}"</strong>. 
           Esta ação não pode ser desfeita.
         </p>
 
@@ -138,7 +136,7 @@ export function DeleteCategoryModal({ isOpen, onClose, onSuccess, category }: De
           <button
             onClick={handleDelete}
             disabled={loading}
-            className="w-full bg-red-600 text-white py-4 rounded-2xl font-black hover:bg-red-700 disabled:opacity-50 shadow-lg shadow-red-100 transition-all flex items-center justify-center gap-2"
+            className="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-base hover:bg-red-700 disabled:opacity-50 shadow-lg shadow-red-600/20 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
           >
             {loading ? 'Apagando...' : <><Trash2 size={20} /> Sim, excluir</>}
           </button>
@@ -146,7 +144,7 @@ export function DeleteCategoryModal({ isOpen, onClose, onSuccess, category }: De
           <button
             onClick={onClose}
             disabled={loading}
-            className="w-full bg-gray-100 text-gray-700 py-4 rounded-2xl font-black hover:bg-gray-200 transition-all"
+            className="w-full bg-slate-100 text-slate-700 py-3.5 rounded-2xl font-bold text-base hover:bg-slate-200 transition-colors"
           >
             Cancelar
           </button>
