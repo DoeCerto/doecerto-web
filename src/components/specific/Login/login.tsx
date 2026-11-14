@@ -35,6 +35,11 @@ import {
   ArrowLeft,
   QrCode,
   ShieldAlert,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+  HelpCircle,
 } from "lucide-react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -45,6 +50,325 @@ type AuthStep =
   | "2fa_verify"
   | "2fa_setup"
   | "2fa_backup_codes";
+
+function GoogleAuthenticatorIcon({ size = 36 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 48 48"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className="shrink-0"
+    >
+      <rect x="2" y="2" width="44" height="44" rx="12" fill="#F8FAFC" stroke="#E2E8F0" strokeWidth="1.5" />
+      <rect x="21" y="8" width="6" height="17" rx="3" fill="#EA4335" />
+      <rect x="21" y="23" width="6" height="17" rx="3" fill="#34A853" />
+      <g transform="rotate(60 24 24)">
+        <rect x="21" y="8" width="6" height="17" rx="3" fill="#FBBC05" />
+        <rect x="21" y="23" width="6" height="17" rx="3" fill="#4285F4" />
+      </g>
+      <g transform="rotate(120 24 24)">
+        <rect x="21" y="8" width="6" height="17" rx="3" fill="#4285F4" />
+        <rect x="21" y="23" width="6" height="17" rx="3" fill="#34A853" />
+      </g>
+      <circle cx="24" cy="24" r="4.5" fill="#F8FAFC" />
+      <circle cx="24" cy="24" r="2.5" fill="#4285F4" />
+    </svg>
+  );
+}
+
+function MicrosoftAuthenticatorIcon({ size = 36 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 48 48"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className="shrink-0"
+    >
+      <rect x="2" y="2" width="44" height="44" rx="12" fill="#EFF6FF" stroke="#BFDBFE" strokeWidth="1.5" />
+      <path
+        d="M24 9L12 13.8V23.2C12 31.1 17.1 38.2 24 40C30.9 38.2 36 31.1 36 23.2V13.8L24 9Z"
+        fill="#0078D4"
+      />
+      <path
+        d="M24 9V40C30.9 38.2 36 31.1 36 23.2V13.8L24 9Z"
+        fill="#50E6FF"
+        fillOpacity="0.28"
+      />
+      <rect x="19" y="21.5" width="10" height="8.5" rx="2.2" fill="#FFFFFF" />
+      <path
+        d="M21 21.5V19C21 17.3431 22.3431 16 24 16C25.6569 16 27 17.3431 27 19V21.5"
+        stroke="#FFFFFF"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+      <circle cx="24" cy="25.6" r="1.4" fill="#0078D4" />
+      <g transform="translate(29, 29)">
+        <rect width="14" height="14" rx="3.5" fill="#FFFFFF" stroke="#E2E8F0" strokeWidth="1" />
+        <rect x="2.5" y="2.5" width="4" height="4" rx="0.6" fill="#F25022" />
+        <rect x="7.5" y="2.5" width="4" height="4" rx="0.6" fill="#7FBA00" />
+        <rect x="2.5" y="7.5" width="4" height="4" rx="0.6" fill="#00A4EF" />
+        <rect x="7.5" y="7.5" width="4" height="4" rx="0.6" fill="#FFB900" />
+      </g>
+    </svg>
+  );
+}
+
+const AUTH_TUTORIAL_STEPS = [
+  {
+    key: "download",
+    title: "Baixe um aplicativo autenticador",
+    description:
+      "Instale gratuitamente o Google Authenticator ou o Microsoft Authenticator pela loja de aplicativos (Google Play ou App Store) do seu celular.",
+  },
+  {
+    key: "scan",
+    title: "Escaneie o QR Code da tela",
+    description:
+      'Abra o aplicativo no celular, toque no botão "+" (Adicionar conta), escolha "Ler código QR" e aponte a câmera para o QR Code exibido.',
+  },
+  {
+    key: "code",
+    title: "Digite o código de 6 dígitos",
+    description:
+      "O aplicativo gera um código temporário de 6 números a cada 30 segundos. Digite esses dígitos no campo da tela para ativar seu 2FA.",
+  },
+] as const;
+
+function AuthenticatorTutorialModal({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const [stepIndex, setStepIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [dontShowAgain, setDontShowAgain] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return localStorage.getItem("hide2FATutorial") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const handleCloseModal = () => {
+    setStepIndex(0);
+    setIsTransitioning(false);
+    onClose();
+  };
+
+  const handleToggleDontShowAgain = (checked: boolean) => {
+    setDontShowAgain(checked);
+    try {
+      if (checked) {
+        localStorage.setItem("hide2FATutorial", "true");
+      } else {
+        localStorage.removeItem("hide2FATutorial");
+      }
+    } catch {
+      /* noop */
+    }
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setStepIndex(0);
+        setIsTransitioning(false);
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
+
+  const handleStepChange = (newIndex: number) => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setStepIndex(newIndex);
+      setIsTransitioning(false);
+    }, 150);
+  };
+
+  if (!open) return null;
+
+  const currentStep = AUTH_TUTORIAL_STEPS[stepIndex];
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={handleCloseModal}
+    >
+      <div
+        className="bg-white w-full max-w-lg rounded-3xl sm:rounded-[2rem] overflow-hidden shadow-[0_25px_80px_rgba(0,0,0,0.25)] relative flex flex-col max-h-[calc(100vh-2rem)] border border-gray-100"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* HEADER */}
+        <div className="p-6 sm:p-7 border-b border-gray-100 shrink-0 bg-gray-50/50">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <span className="inline-flex items-center gap-2 bg-purple-100 text-[#6B39A7] text-sm font-bold px-3.5 py-1 rounded-full">
+                Guia rápido
+              </span>
+
+              <h2 className="mt-3 text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight tracking-tight">
+                Como configurar o Autenticador (2FA)?
+              </h2>
+
+              <p className="text-base text-gray-600 mt-1.5 font-medium">
+                Leva menos de 1 minuto no seu celular.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleCloseModal}
+              className="text-gray-400 hover:text-gray-700 transition-colors p-2 hover:bg-gray-100 rounded-full cursor-pointer"
+              aria-label="Fechar guia"
+            >
+              <X size={22} />
+            </button>
+          </div>
+        </div>
+
+        {/* CONTEÚDO DO PASSO */}
+        <div className="overflow-y-auto flex-1 min-h-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div
+            className={`px-6 sm:px-8 py-6 sm:py-8 flex flex-col items-center text-center min-h-[300px] sm:min-h-[340px] justify-center transition-opacity duration-200 ${
+              isTransitioning ? "opacity-0" : "opacity-100"
+            }`}
+          >
+            {stepIndex === 0 && (
+              <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                <div className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50 border border-gray-200 text-left shadow-2xs">
+                  <GoogleAuthenticatorIcon size={44} />
+                  <div className="min-w-0">
+                    <p className="text-base font-bold text-gray-900 leading-tight">
+                      Google Authenticator
+                    </p>
+                    <p className="text-sm text-gray-600 font-medium mt-0.5">
+                      Android e iOS
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50 border border-gray-200 text-left shadow-2xs">
+                  <MicrosoftAuthenticatorIcon size={44} />
+                  <div className="min-w-0">
+                    <p className="text-base font-bold text-gray-900 leading-tight">
+                      Microsoft Authenticator
+                    </p>
+                    <p className="text-sm text-gray-600 font-medium mt-0.5">
+                      Android e iOS
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {stepIndex === 1 && (
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-purple-50 flex items-center justify-center mb-6 shadow-sm shrink-0">
+                <QrCode className="text-[#6B39A7] w-12 h-12 sm:w-14 sm:h-14" />
+              </div>
+            )}
+
+            {stepIndex === 2 && (
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-emerald-50 flex items-center justify-center mb-6 shadow-sm shrink-0">
+                <Smartphone className="text-emerald-600 w-12 h-12 sm:w-14 sm:h-14" />
+              </div>
+            )}
+
+            <span className="bg-purple-100 text-[#6B39A7] px-4 py-1.5 rounded-full text-sm font-bold">
+              Passo {stepIndex + 1} de {AUTH_TUTORIAL_STEPS.length}
+            </span>
+
+            <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mt-4 leading-tight tracking-tight">
+              {currentStep.title}
+            </h3>
+
+            <p className="text-gray-600 text-base sm:text-lg leading-relaxed mt-3 max-w-md font-medium">
+              {currentStep.description}
+            </p>
+
+            <div className="flex items-center gap-2 mt-6 sm:mt-8">
+              {AUTH_TUTORIAL_STEPS.map((s, index) => (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => handleStepChange(index)}
+                  className={`transition-all duration-300 rounded-full h-2.5 cursor-pointer ${
+                    index === stepIndex
+                      ? "w-10 bg-[#6B39A7]"
+                      : "w-2.5 bg-purple-200 hover:bg-purple-300"
+                  }`}
+                  aria-label={`Ir para o passo ${index + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* FOOTER */}
+        <div className="border-t border-gray-100 p-5 sm:p-6 bg-gray-50/50 flex flex-col gap-4 shrink-0">
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => handleStepChange(stepIndex - 1)}
+              disabled={stepIndex === 0}
+              className={`flex items-center gap-2 font-bold text-base transition-colors cursor-pointer ${
+                stepIndex === 0
+                  ? "text-gray-300 cursor-not-allowed"
+                  : "text-[#6B39A7] hover:text-purple-800"
+              }`}
+            >
+              <ChevronLeft size={20} />
+              Voltar
+            </button>
+
+            {stepIndex < AUTH_TUTORIAL_STEPS.length - 1 ? (
+              <button
+                type="button"
+                onClick={() => handleStepChange(stepIndex + 1)}
+                className="bg-[#6B39A7] hover:bg-[#582d8c] text-white px-6 py-3.5 rounded-2xl font-bold text-base flex items-center gap-2 transition-all shadow-lg shadow-purple-200 cursor-pointer active:scale-[0.98]"
+              >
+                Próximo
+                <ChevronRight size={20} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3.5 rounded-2xl font-bold text-base flex items-center gap-2 transition-all shadow-lg shadow-emerald-200 cursor-pointer active:scale-[0.98]"
+              >
+                <CheckCircle2 size={20} />
+                Entendi, configurar agora
+              </button>
+            )}
+          </div>
+
+          <label className="flex items-center justify-center gap-2.5 py-0.5 text-gray-600 hover:text-gray-800 cursor-pointer select-none transition-colors group">
+            <input
+              type="checkbox"
+              checked={dontShowAgain}
+              onChange={(e) => handleToggleDontShowAgain(e.target.checked)}
+              className="w-4 h-4 rounded border-gray-300 text-[#6B39A7] focus:ring-[#6B39A7] cursor-pointer accent-[#6B39A7]"
+            />
+            <span className="text-sm font-semibold group-hover:underline">
+              Não mostrar este guia automaticamente
+            </span>
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function LoginContent() {
   const router = useRouter();
@@ -76,6 +400,8 @@ function LoginContent() {
   const [confirmedSavedCodes, setConfirmedSavedCodes] = useState(false);
   const [showManualKey, setShowManualKey] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(true);
+  const [is2FATutorialOpen, setIs2FATutorialOpen] = useState(false);
+  const isSplitLayout = step === "credentials";
 
   // Estados do onboarding via Google
   const [isGooglePending, setIsGooglePending] = useState(false);
@@ -114,6 +440,7 @@ function LoginContent() {
 
   // Inicializa o GSAP para animar os itens da tela
   useGSAP(() => {
+    if (step !== "credentials") return;
     const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
     tl.fromTo(".animate-item",
@@ -217,6 +544,13 @@ function LoginContent() {
       setTotpCode("");
       setError2FA(null);
       setStep("2fa_setup");
+      try {
+        if (localStorage.getItem("hide2FATutorial") !== "true") {
+          setIs2FATutorialOpen(true);
+        }
+      } catch {
+        /* noop */
+      }
       setIsPending(false);
       setIsGooglePending(false);
       await load2FASetup(data.tempToken);
@@ -399,17 +733,40 @@ function LoginContent() {
   return (
     <div
       ref={mainWrapperRef}
-      className="flex h-screen max-h-screen w-full font-sans selection:bg-[#6B39A7] selection:text-white bg-[#F9FAFB] lg:bg-white overflow-hidden"
+      className={`flex h-[100dvh] w-full font-sans selection:bg-[#6B39A7] selection:text-white overflow-hidden relative ${
+        isSplitLayout ? "bg-[#F9FAFB] lg:bg-white" : "bg-[#F4F5F7]"
+      }`}
     >
       <Toaster position="top-center" />
+      <AuthenticatorTutorialModal
+        open={is2FATutorialOpen}
+        onClose={() => setIs2FATutorialOpen(false)}
+      />
 
-      {/* LADO ESQUERDO: CONTEÚDO PRINCIPAL / STEPS */}
-      <div className="w-full lg:w-1/2 h-full overflow-y-auto flex flex-col relative items-center justify-start px-6 sm:px-10 lg:px-12 py-4 sm:py-6 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+      {!isSplitLayout && (
         <div
-          className={`w-full shrink-0 transition-all duration-300 ${
-            step === "credentials"
-              ? "max-w-[480px] my-auto"
-              : "max-w-[560px] py-1"
+          aria-hidden="true"
+          className="fixed inset-0 overflow-hidden pointer-events-none select-none"
+        >
+          <div className="absolute -top-28 -left-24 w-[460px] h-[460px] rounded-[4.5rem] bg-[#EAECEF] rotate-12" />
+          <div className="absolute -bottom-32 left-1/4 w-[520px] h-[520px] rounded-[5rem] bg-[#EAECEF]/80 -rotate-12" />
+          <div className="absolute top-12 -right-28 w-[500px] h-[500px] rounded-[4.5rem] bg-[#EDE9F5]/80 rotate-[24deg]" />
+        </div>
+      )}
+
+      {/* LADO ESQUERDO / CARD CENTRALIZADO NOS STEPS DE 2FA */}
+      <div
+        className={`relative z-10 h-full overflow-y-auto flex flex-col items-center [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
+          isSplitLayout
+            ? "w-full lg:w-1/2 px-6 sm:px-12 py-8 sm:py-10"
+            : "w-full px-4 sm:px-6 py-8 sm:py-12"
+        }`}
+      >
+        <div
+          className={`w-full shrink-0 my-auto transition-all duration-300 ${
+            isSplitLayout
+              ? "max-w-[480px]"
+              : "max-w-[600px] bg-white rounded-[28px] shadow-[0_20px_60px_-15px_rgba(15,23,42,0.12)] border border-gray-100 p-7 sm:p-10"
           }`}
         >
 
@@ -617,21 +974,21 @@ function LoginContent() {
                   setStep("credentials");
                   setError2FA(null);
                 }}
-                className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors w-fit -ml-1 cursor-pointer"
+                className="inline-flex items-center gap-2 text-base sm:text-lg font-semibold text-gray-600 hover:text-gray-900 transition-colors w-fit -ml-1 cursor-pointer"
               >
-                <ArrowLeft size={18} />
+                <ArrowLeft size={20} />
                 Voltar ao login
               </button>
 
               <div className="text-left">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-50 border border-purple-200/80 rounded-full text-xs font-bold uppercase tracking-wider text-purple-700 mb-4">
-                  <ShieldCheck size={16} className="text-purple-600" />
-                  Verificação em Duas Etapas
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-purple-50 border border-purple-200/80 rounded-full text-sm sm:text-base font-bold text-[#6B39A7] mb-3.5">
+                  <ShieldCheck size={18} className="text-[#6B39A7]" />
+                  Verificação em duas etapas
                 </div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2 tracking-tight">
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2.5 tracking-tight">
                   Código de Autenticação
                 </h1>
-                <p className="text-gray-500 text-base font-medium">
+                <p className="text-gray-600 text-base sm:text-lg font-medium leading-relaxed">
                   {useBackupCode
                     ? "Digite um dos seus códigos de recuperação de 8 dígitos."
                     : `Abra seu aplicativo autenticador e insira o código de 6 dígitos gerado para ${pendingUser?.email || email}.`}
@@ -640,14 +997,14 @@ function LoginContent() {
 
               <form onSubmit={handleVerify2FA} className="flex flex-col gap-6">
                 {error2FA && (
-                  <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm font-semibold animate-in fade-in">
+                  <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm sm:text-base font-semibold animate-in fade-in">
                     <AlertCircle size={20} className="shrink-0 text-red-500" />
                     <span>{error2FA}</span>
                   </div>
                 )}
 
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="totpCode" className="text-gray-800 text-sm font-bold tracking-wide">
+                  <label htmlFor="totpCode" className="text-gray-800 text-base sm:text-lg font-bold tracking-wide">
                     {useBackupCode ? "Código de Recuperação (Backup Code)" : "Código TOTP (6 dígitos)"}
                   </label>
                   <div className="relative">
@@ -668,10 +1025,10 @@ function LoginContent() {
                         setTotpCode(val);
                         if (error2FA) setError2FA(null);
                       }}
-                      className="w-full bg-white border border-gray-200 text-gray-900 rounded-xl pl-12 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-[#6B39A7]/20 focus:border-[#6B39A7] transition-all text-xl font-mono font-bold tracking-widest text-center shadow-sm"
+                      className="w-full bg-white border-2 border-gray-200 text-gray-900 rounded-xl pl-12 pr-4 py-4 focus:outline-none focus:ring-4 focus:ring-[#6B39A7]/15 focus:border-[#6B39A7] transition-all text-2xl sm:text-3xl font-mono font-bold tracking-widest text-center shadow-sm"
                     />
                   </div>
-                  <span className="text-xs text-gray-400 mt-1">
+                  <span className="text-sm sm:text-base text-gray-600 font-medium mt-1">
                     {useBackupCode
                       ? "Cada código de recuperação só pode ser usado uma única vez."
                       : "O código expira a cada 30 segundos no seu aplicativo autenticador."}
@@ -679,19 +1036,19 @@ function LoginContent() {
                 </div>
 
                 {/* Checkbox Dispositivo Confiável (Padrão Fintech / 30 dias) */}
-                <label className="flex items-start gap-3 p-3.5 rounded-xl bg-purple-50/60 hover:bg-purple-50 border border-purple-100/90 hover:border-purple-200 cursor-pointer transition-all select-none text-left">
+                <label className="flex items-start gap-3.5 p-4 rounded-xl bg-purple-50/60 hover:bg-purple-50 border border-purple-100/90 hover:border-purple-200 cursor-pointer transition-all select-none text-left">
                   <input
                     type="checkbox"
                     checked={rememberDevice}
                     onChange={(e) => setRememberDevice(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 rounded text-[#6B39A7] focus:ring-[#6B39A7] border-gray-300 cursor-pointer accent-[#6B39A7]"
+                    className="mt-1 w-5 h-5 rounded text-[#6B39A7] focus:ring-[#6B39A7] border-gray-300 cursor-pointer accent-[#6B39A7]"
                   />
                   <div className="flex flex-col">
-                    <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-                      <ShieldCheck size={14} className="text-[#6B39A7] shrink-0" />
+                    <span className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
+                      <ShieldCheck size={18} className="text-[#6B39A7] shrink-0" />
                       Lembrar deste dispositivo por 30 dias
                     </span>
-                    <span className="text-[11px] text-gray-500 font-medium mt-0.5 leading-snug">
+                    <span className="text-sm sm:text-base text-gray-600 font-medium mt-0.5 leading-snug">
                       Não solicitar código neste navegador nos próximos logins.
                     </span>
                   </div>
@@ -700,7 +1057,7 @@ function LoginContent() {
                 <button
                   type="submit"
                   disabled={isSubmitting2FA}
-                  className="w-full flex justify-center items-center h-[56px] bg-purple-700 hover:bg-purple-800 text-white font-bold text-lg rounded-xl transition-all duration-300 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed shadow-[0_8px_20px_-6px_rgba(74,38,117,0.5)] cursor-pointer"
+                  className="w-full flex justify-center items-center h-[60px] bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold text-lg sm:text-xl rounded-xl transition-all duration-300 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed shadow-[0_8px_20px_-6px_rgba(74,38,117,0.5)] cursor-pointer"
                 >
                   {isSubmitting2FA ? (
                     <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -717,7 +1074,7 @@ function LoginContent() {
                       setTotpCode("");
                       setError2FA(null);
                     }}
-                    className="text-sm font-semibold text-[#6B39A7] hover:underline cursor-pointer"
+                    className="text-base font-bold text-[#6B39A7] hover:underline cursor-pointer"
                   >
                     {useBackupCode
                       ? "Voltar para o código de 6 dígitos do aplicativo"
@@ -732,29 +1089,30 @@ function LoginContent() {
           {/* STEP 3: SETUP OBRIGATÓRIO DE 2FA (ADMIN / ONG)               */}
           {/* ============================================================ */}
           {step === "2fa_setup" && (
-            <div className="flex flex-col gap-5 sm:gap-6 animate-in fade-in duration-300">
+            <div className="flex flex-col gap-6 animate-in fade-in duration-300">
               <button
                 type="button"
                 onClick={() => {
+                  setIs2FATutorialOpen(false);
                   setStep("credentials");
                   setError2FA(null);
                 }}
-                className="inline-flex items-center gap-2 text-sm sm:text-base font-bold text-slate-500 hover:text-slate-900 transition-colors w-fit -ml-1 cursor-pointer outline-none focus:outline-none"
+                className="inline-flex items-center gap-2 text-base sm:text-lg font-semibold text-gray-600 hover:text-gray-900 transition-colors w-fit -ml-1 cursor-pointer outline-none focus:outline-none"
               >
-                <ArrowLeft size={18} />
+                <ArrowLeft size={20} />
                 Cancelar e voltar ao login
               </button>
 
               <div className="text-left">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-purple-50 border border-purple-200/80 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B39A7] mb-2.5 shadow-2xs">
-                  <ShieldCheck size={16} className="text-[#6B39A7]" />
-                  Segurança Institucional Obrigatória
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-purple-50 border border-purple-200/80 rounded-full text-sm sm:text-base font-bold text-[#6B39A7] mb-3 shadow-2xs">
+                  <ShieldCheck size={18} className="text-[#6B39A7]" />
+                  Segurança institucional obrigatória
                 </div>
-                <h1 className="text-3xl sm:text-4xl font-black text-slate-900 mb-2 tracking-tight">
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2.5 tracking-tight">
                   Ativar Autenticador (2FA)
                 </h1>
-                <p className="text-slate-600 text-sm sm:text-base font-normal leading-relaxed">
-                  Contas de <strong>Administradores e ONGs</strong> gerenciam transações financeiras.
+                <p className="text-gray-600 text-base sm:text-lg font-medium leading-relaxed">
+                  Contas de <strong className="text-gray-800">Administradores e ONGs</strong> gerenciam transações financeiras.
                   Configure seu aplicativo autenticador para proteger sua conta.
                 </p>
               </div>
@@ -766,32 +1124,68 @@ function LoginContent() {
                 </div>
               )}
 
-              {/* Card de Configuração Fintech */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col gap-4 sm:gap-5">
-                {/* Passo 1: QR Code */}
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-start gap-3">
-                    <span className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#6B39A7] text-white text-xs sm:text-sm font-black shadow-xs shrink-0 mt-0.5">
+              {/* Passo 1: Aplicativos + QR Code */}
+              <div className="bg-gray-50/70 border border-gray-200/90 rounded-2xl p-5 sm:p-6 flex flex-col gap-6">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-start gap-3.5">
+                    <span className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#6B39A7] text-white text-sm sm:text-base font-extrabold shadow-xs shrink-0 mt-0.5">
                       1
                     </span>
                     <div>
-                      <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                      <h2 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight">
                         Escaneie o QR Code com seu aplicativo
                       </h2>
-                      <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
-                        Abra o Google Authenticator, Microsoft Authenticator ou 1Password.
+                      <p className="text-sm sm:text-base text-gray-600 font-medium mt-0.5">
+                        Use um dos aplicativos compatíveis abaixo ou qualquer autenticador TOTP.
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-center gap-5 p-4 sm:p-5 bg-slate-50/80 rounded-xl border border-slate-100">
+                  {/* Mini-cards dos autenticadores principais + botão de guia passo a passo */}
+                  <div className="flex flex-col gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white border border-gray-200 shadow-2xs">
+                        <GoogleAuthenticatorIcon size={38} />
+                        <div className="min-w-0">
+                          <p className="text-sm sm:text-base font-bold text-gray-900 leading-tight truncate">
+                            Google Authenticator
+                          </p>
+                          <p className="text-xs sm:text-sm text-gray-500 font-medium mt-0.5">
+                            Android e iOS
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white border border-gray-200 shadow-2xs">
+                        <MicrosoftAuthenticatorIcon size={38} />
+                        <div className="min-w-0">
+                          <p className="text-sm sm:text-base font-bold text-gray-900 leading-tight truncate">
+                            Microsoft Authenticator
+                          </p>
+                          <p className="text-xs sm:text-sm text-gray-500 font-medium mt-0.5">
+                            Android e iOS
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setIs2FATutorialOpen(true)}
+                      className="inline-flex items-center gap-2 text-sm sm:text-base font-bold text-[#6B39A7] hover:text-[#582d8c] bg-purple-50 hover:bg-purple-100/80 border border-purple-200/80 px-4 py-2.5 rounded-xl transition-colors w-fit cursor-pointer"
+                    >
+                      <HelpCircle size={18} />
+                      Como funciona? Ver passo a passo
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center gap-5 p-4 sm:p-5 bg-white rounded-xl border border-gray-200/90 shadow-2xs">
                     {isLoadingSetup || !setupData ? (
                       <div className="w-36 h-36 sm:w-40 sm:h-40 flex flex-col items-center justify-center gap-2 shrink-0">
                         <div className="w-8 h-8 border-3 border-purple-200 border-t-[#6B39A7] rounded-full animate-spin"></div>
-                        <span className="text-xs sm:text-sm text-slate-400 font-medium">Carregando QR...</span>
+                        <span className="text-sm text-gray-500 font-medium">Carregando QR...</span>
                       </div>
                     ) : (
-                      <div className="relative p-2.5 bg-white rounded-xl shadow-xs border border-slate-200 shrink-0">
+                      <div className="relative p-2.5 bg-white rounded-xl shadow-xs border border-gray-200 shrink-0">
                         <img
                           src={setupData.qrCodeDataUrl}
                           alt="QR Code de Configuração 2FA"
@@ -800,8 +1194,8 @@ function LoginContent() {
                       </div>
                     )}
 
-                    <div className="flex flex-col gap-2.5 text-center sm:text-left flex-1 min-w-0">
-                      <span className="text-sm sm:text-base text-slate-700 font-medium leading-relaxed">
+                    <div className="flex flex-col gap-3 text-center sm:text-left flex-1 min-w-0">
+                      <span className="text-base sm:text-lg text-gray-700 font-medium leading-relaxed">
                         Aponte a câmera do seu aplicativo autenticador para o código ao lado.
                       </span>
 
@@ -811,24 +1205,24 @@ function LoginContent() {
                           <button
                             type="button"
                             onClick={() => setShowManualKey(!showManualKey)}
-                            className="text-xs sm:text-sm font-bold text-[#6B39A7] hover:text-[#582d8c] transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                            className="text-sm sm:text-base font-bold text-[#6B39A7] hover:text-[#582d8c] transition-colors cursor-pointer inline-flex items-center gap-1.5"
                           >
                             {showManualKey ? "Ocultar chave manual" : "Não consegue escanear? Inserir chave"}
                           </button>
 
                           {showManualKey && (
-                            <div className="mt-2.5 p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-2 text-left animate-in fade-in shadow-xs">
+                            <div className="mt-3 p-3.5 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-between gap-2 text-left animate-in fade-in shadow-2xs">
                               <div className="flex flex-col overflow-hidden">
-                                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Chave Manual</span>
-                                <span className="font-mono text-sm sm:text-base font-bold text-slate-800 truncate select-all">{setupData.secret}</span>
+                                <span className="text-xs sm:text-sm font-bold text-gray-500">Chave manual</span>
+                                <span className="font-mono text-base sm:text-lg font-bold text-gray-900 truncate select-all">{setupData.secret}</span>
                               </div>
                               <button
                                 type="button"
                                 onClick={handleCopySecret}
-                                className="shrink-0 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-700 hover:text-slate-900 transition-colors font-bold text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer"
+                                className="shrink-0 px-3 py-2 bg-white hover:bg-gray-100 border border-gray-200 rounded-lg text-gray-800 hover:text-gray-900 transition-colors font-bold text-sm sm:text-base flex items-center gap-1.5 cursor-pointer"
                                 title="Copiar chave"
                               >
-                                {copiedSecret ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
+                                {copiedSecret ? <Check size={16} className="text-emerald-600" /> : <Copy size={16} />}
                                 <span>{copiedSecret ? "Copiado" : "Copiar"}</span>
                               </button>
                             </div>
@@ -840,19 +1234,19 @@ function LoginContent() {
                 </div>
 
                 {/* Divisor */}
-                <div className="border-t border-slate-100"></div>
+                <div className="border-t border-gray-200"></div>
 
                 {/* Passo 2: Digitar código de confirmação */}
-                <form onSubmit={handleEnable2FA} className="flex flex-col gap-3.5 sm:gap-4">
-                  <div className="flex items-start gap-3">
-                    <span className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#6B39A7] text-white text-xs sm:text-sm font-black shadow-xs shrink-0 mt-0.5">
+                <form onSubmit={handleEnable2FA} className="flex flex-col gap-4">
+                  <div className="flex items-start gap-3.5">
+                    <span className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#6B39A7] text-white text-sm sm:text-base font-extrabold shadow-xs shrink-0 mt-0.5">
                       2
                     </span>
                     <div>
-                      <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                      <h2 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight">
                         Insira o código de 6 dígitos gerado
                       </h2>
-                      <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
+                      <p className="text-sm sm:text-base text-gray-600 font-medium mt-0.5">
                         Digite o código temporário exibido no seu aplicativo autenticador.
                       </p>
                     </div>
@@ -871,24 +1265,24 @@ function LoginContent() {
                         setTotpCode(val);
                         if (error2FA) setError2FA(null);
                       }}
-                      className="w-full bg-slate-50/60 border-2 border-slate-200 text-slate-900 rounded-xl h-14 sm:h-15 px-4 focus:outline-none focus:ring-4 focus:ring-[#6B39A7]/10 focus:border-[#6B39A7] focus:bg-white transition-all text-2xl sm:text-3xl font-mono font-bold tracking-[0.45em] text-center shadow-xs"
+                      className="w-full bg-white border-2 border-gray-200 text-gray-900 rounded-xl h-15 sm:h-16 px-4 focus:outline-none focus:ring-4 focus:ring-[#6B39A7]/15 focus:border-[#6B39A7] transition-all text-2xl sm:text-3xl font-mono font-bold tracking-[0.45em] text-center shadow-2xs"
                     />
                   </div>
 
                   {/* Checkbox Dispositivo Confiável */}
-                  <label className="flex items-start gap-3.5 p-3 sm:p-3.5 rounded-xl bg-slate-50/80 hover:bg-purple-50/40 border border-slate-200 hover:border-purple-200/80 cursor-pointer transition-all select-none text-left">
+                  <label className="flex items-start gap-3.5 p-4 rounded-xl bg-white hover:bg-purple-50/40 border border-gray-200 hover:border-purple-200/80 cursor-pointer transition-all select-none text-left">
                     <input
                       type="checkbox"
                       checked={rememberDevice}
                       onChange={(e) => setRememberDevice(e.target.checked)}
-                      className="mt-0.5 w-5 h-5 rounded border-slate-300 text-[#6B39A7] focus:ring-[#6B39A7] cursor-pointer accent-[#6B39A7]"
+                      className="mt-1 w-5 h-5 rounded border-gray-300 text-[#6B39A7] focus:ring-[#6B39A7] cursor-pointer accent-[#6B39A7]"
                     />
                     <div className="flex flex-col">
-                      <span className="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-1.5">
-                        <ShieldCheck size={16} className="text-[#6B39A7] shrink-0" />
+                      <span className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <ShieldCheck size={18} className="text-[#6B39A7] shrink-0" />
                         Lembrar deste dispositivo por 30 dias
                       </span>
-                      <span className="text-xs sm:text-sm text-slate-500 font-normal mt-0.5 leading-snug">
+                      <span className="text-sm sm:text-base text-gray-600 font-medium mt-0.5 leading-snug">
                         Permanecer conectado com segurança neste navegador sem exigir código a cada login.
                       </span>
                     </div>
@@ -897,12 +1291,12 @@ function LoginContent() {
                   <button
                     type="submit"
                     disabled={isSubmitting2FA || totpCode.length !== 6}
-                    className="w-full flex justify-center items-center h-[52px] sm:h-[56px] bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold text-base sm:text-lg rounded-xl transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-purple-900/15 cursor-pointer outline-none focus:outline-none"
+                    className="w-full flex justify-center items-center h-[60px] bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold text-lg sm:text-xl rounded-xl transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-purple-900/15 cursor-pointer outline-none focus:outline-none"
                   >
                     {isSubmitting2FA ? (
                       <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
                     ) : (
-                      "Validar e Ativar 2FA"
+                      "Validar e ativar 2FA"
                     )}
                   </button>
                 </form>
@@ -915,48 +1309,48 @@ function LoginContent() {
           {/* STEP 4: SALVAR CÓDIGOS DE BACKUP (APÓS ATIVAÇÃO)             */}
           {/* ============================================================ */}
           {step === "2fa_backup_codes" && (
-            <div className="flex flex-col gap-7 animate-in fade-in duration-300">
+            <div className="flex flex-col gap-6 animate-in fade-in duration-300">
               <div className="text-left">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-emerald-50 border border-emerald-200/80 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider text-emerald-800 mb-3.5 shadow-2xs">
-                  <Check size={16} className="text-emerald-600" />
-                  2FA Ativado com Sucesso
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-emerald-50 border border-emerald-200/80 rounded-full text-sm sm:text-base font-bold text-emerald-800 mb-3.5 shadow-2xs">
+                  <Check size={18} className="text-emerald-600" />
+                  2FA ativado com sucesso
                 </div>
-                <h1 className="text-3xl sm:text-4xl font-black text-slate-900 mb-2.5 tracking-tight">
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2.5 tracking-tight">
                   Guarde seus Códigos
                 </h1>
-                <p className="text-slate-600 text-base sm:text-lg font-normal leading-relaxed">
-                  Estes <strong>8 códigos de uso único</strong> são a sua garantia caso perca o celular.
+                <p className="text-gray-600 text-base sm:text-lg font-medium leading-relaxed">
+                  Estes <strong className="text-gray-800">8 códigos de uso único</strong> são a sua garantia caso perca o celular.
                   Cada código só pode ser usado uma vez para recuperar o acesso.
                 </p>
               </div>
 
               {/* Grid dos 8 Códigos */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 shadow-sm flex flex-col gap-5">
+              <div className="bg-gray-50/70 border border-gray-200/90 rounded-2xl p-5 sm:p-6 flex flex-col gap-5">
                 <div className="grid grid-cols-2 gap-3">
                   {backupCodes.map((code, idx) => (
                     <div
                       key={idx}
-                      className="bg-slate-50 border border-slate-200 rounded-xl py-3 px-3 text-center font-mono font-bold text-base sm:text-lg text-slate-900 tracking-wider shadow-2xs select-all"
+                      className="bg-white border border-gray-200 rounded-xl py-3.5 px-3 text-center font-mono font-bold text-lg sm:text-xl text-gray-900 tracking-wider shadow-2xs select-all"
                     >
                       {code}
                     </div>
                   ))}
                 </div>
 
-                <div className="flex gap-3 pt-2">
+                <div className="flex gap-3 pt-1">
                   <button
                     type="button"
                     onClick={handleCopyAllCodes}
-                    className="flex-1 flex items-center justify-center gap-2 h-12 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-sm sm:text-base rounded-xl transition-all cursor-pointer shadow-xs active:scale-98"
+                    className="flex-1 flex items-center justify-center gap-2 h-13 bg-white border border-gray-200 hover:bg-gray-100 text-gray-800 font-bold text-base rounded-xl transition-all cursor-pointer shadow-2xs active:scale-98"
                   >
-                    {copiedCodes ? <Check size={18} className="text-green-600" /> : <Copy size={18} />}
+                    {copiedCodes ? <Check size={18} className="text-emerald-600" /> : <Copy size={18} />}
                     <span>Copiar Todos</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={handleDownloadCodes}
-                    className="flex-1 flex items-center justify-center gap-2 h-12 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-sm sm:text-base rounded-xl transition-all cursor-pointer shadow-xs active:scale-98"
+                    className="flex-1 flex items-center justify-center gap-2 h-13 bg-white border border-gray-200 hover:bg-gray-100 text-gray-800 font-bold text-base rounded-xl transition-all cursor-pointer shadow-2xs active:scale-98"
                   >
                     <Download size={18} />
                     <span>Baixar (.txt)</span>
@@ -971,11 +1365,11 @@ function LoginContent() {
                   id="confirmBackup"
                   checked={confirmedSavedCodes}
                   onChange={(e) => setConfirmedSavedCodes(e.target.checked)}
-                  className="w-5 h-5 mt-0.5 rounded border-slate-300 text-[#6B39A7] focus:ring-[#6B39A7] cursor-pointer accent-[#6B39A7]"
+                  className="w-5 h-5 mt-1 rounded border-gray-300 text-[#6B39A7] focus:ring-[#6B39A7] cursor-pointer accent-[#6B39A7]"
                 />
                 <label
                   htmlFor="confirmBackup"
-                  className="text-sm sm:text-base text-slate-700 font-medium cursor-pointer select-none leading-relaxed"
+                  className="text-base text-gray-700 font-medium cursor-pointer select-none leading-relaxed"
                 >
                   Confirmo que copiei ou baixei meus 8 códigos de emergência e os guardei em um local seguro.
                 </label>
@@ -986,7 +1380,7 @@ function LoginContent() {
                 type="button"
                 disabled={!confirmedSavedCodes}
                 onClick={() => saveSessionAndRedirect(savedSessionData, pendingUser?.email || email)}
-                className="w-full flex justify-center items-center h-[56px] sm:h-[60px] bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold text-base sm:text-lg rounded-xl transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-purple-900/15 cursor-pointer outline-none focus:outline-none"
+                className="w-full flex justify-center items-center h-[60px] bg-[#6B39A7] hover:bg-[#582d8c] text-white font-bold text-lg sm:text-xl rounded-xl transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-purple-900/15 cursor-pointer outline-none focus:outline-none"
               >
                 Concluir e Acessar Dashboard
               </button>
@@ -996,20 +1390,22 @@ function LoginContent() {
         </div>
       </div>
 
-      {/* LADO DIREITO: IMAGEM HERO / BRANDING */}
-      <div className="hidden lg:block w-1/2 relative h-screen bg-transparent">
-        <div
-          ref={imageRef}
-          className="absolute inset-y-0 right-0 left-0 rounded-l-[2.5rem] overflow-hidden shadow-[-20px_0_40px_rgba(0,0,0,0.05)] opacity-0"
-        >
-          <img
-            src="/fotocrianca1.png"
-            alt="DoeCerto Segurança"
-            className="w-full h-full object-cover object-center"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#4A2675]/40 via-transparent to-transparent mix-blend-multiply"></div>
+      {/* LADO DIREITO: IMAGEM HERO / BRANDING (APENAS CREDENCIAIS) */}
+      {isSplitLayout && (
+        <div className="hidden lg:block w-1/2 relative h-screen bg-transparent">
+          <div
+            ref={imageRef}
+            className="absolute inset-y-0 right-0 left-0 rounded-l-[2.5rem] overflow-hidden shadow-[-20px_0_40px_rgba(0,0,0,0.05)] opacity-0"
+          >
+            <img
+              src="/fotocrianca1.png"
+              alt="DoeCerto Segurança"
+              className="w-full h-full object-cover object-center"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#4A2675]/40 via-transparent to-transparent mix-blend-multiply"></div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
