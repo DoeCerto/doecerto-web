@@ -771,9 +771,9 @@ function LoginContent() {
         }`}
       >
         <div
-          className={`w-full shrink-0 my-auto ${
+          className={`w-full shrink-0 my-auto transition-all duration-300 ease-out ${
             isSplitLayout
-              ? "max-w-[480px]"
+              ? "max-w-[480px] rounded-[28px] border border-transparent shadow-none bg-transparent"
               : "max-w-[600px] bg-white rounded-[28px] shadow-[0_20px_60px_-15px_rgba(15,23,42,0.12)] border border-gray-100 p-7 sm:p-10"
           }`}
         >
