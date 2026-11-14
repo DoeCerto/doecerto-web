@@ -408,9 +408,16 @@ function LoginContent() {
   const [googleOnboardingToken, setGoogleOnboardingToken] = useState<string>("");
   const [googleProfile, setGoogleProfile] = useState<GoogleProfileSummary | null>(null);
 
-  // Refs para o GSAP
+  // Refs para o GSAP e rolagem entre steps
   const mainWrapperRef = useRef(null);
   const imageRef = useRef(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [step]);
 
   // WEB-02: Sanitiza destino de redirecionamento pós-login contra Open Redirect
   const getSafeRedirectUrl = (rawFrom: string | null | undefined, fallback: string): string => {
@@ -756,6 +763,7 @@ function LoginContent() {
 
       {/* LADO ESQUERDO / CARD CENTRALIZADO NOS STEPS DE 2FA */}
       <div
+        ref={scrollContainerRef}
         className={`relative z-10 h-full overflow-y-auto flex flex-col items-center [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
           isSplitLayout
             ? "w-full lg:w-1/2 px-6 sm:px-12 py-8 sm:py-10"
@@ -763,7 +771,7 @@ function LoginContent() {
         }`}
       >
         <div
-          className={`w-full shrink-0 my-auto transition-all duration-300 ${
+          className={`w-full shrink-0 my-auto ${
             isSplitLayout
               ? "max-w-[480px]"
               : "max-w-[600px] bg-white rounded-[28px] shadow-[0_20px_60px_-15px_rgba(15,23,42,0.12)] border border-gray-100 p-7 sm:p-10"
