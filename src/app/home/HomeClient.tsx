@@ -606,7 +606,7 @@ export default function HomeClient({
                     </span>
                     <div className="w-9 h-9 shrink-0 rounded-full overflow-hidden ring-2 ring-purple-100">
                       {displayAvatar && displayAvatar !== "/default-avatar.png" ? (
-                        <img src={displayAvatar} alt="avatar" className="w-full h-full object-cover" />
+                        <img src={displayAvatar} alt="avatar" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full bg-purple-100 flex items-center justify-center">
                           <FiUser size={18} className="text-purple-700" />
@@ -627,7 +627,7 @@ export default function HomeClient({
                     className="w-8 h-8 shrink-0 rounded-full overflow-hidden ring-2 ring-purple-100 cursor-pointer active:scale-95 transition-transform"
                   >
                     {displayAvatar && displayAvatar !== "/default-avatar.png" ? (
-                      <img src={displayAvatar} alt="avatar" className="w-full h-full object-cover" />
+                      <img src={displayAvatar} alt="avatar" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-purple-100 flex items-center justify-center">
                         <FiUser size={16} className="text-purple-700" />

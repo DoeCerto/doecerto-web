@@ -537,7 +537,9 @@ function LoginContent() {
                 </button>
               </form>
 
-              <div className="animate-item opacity-0 mt-3">
+              <div className="animate-item opacity-0 my-6 border-t border-gray-200" />
+
+              <div className="animate-item opacity-0">
                 <GoogleAuthButton
                   onSuccess={handleGoogleAuthSuccess}
                   onError={(msg) => setLoginError(msg)}

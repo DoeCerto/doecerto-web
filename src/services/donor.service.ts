@@ -43,10 +43,32 @@ export interface DonationHistory {
   };
 }
 
+export function sanitizeMediaUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  const cleanPath = path.replace(/\\/g, "/").trim();
+  if (!cleanPath) return null;
+  const httpsIdx = cleanPath.indexOf("https://", 5);
+  const httpIdx = cleanPath.indexOf("http://", 5);
+  const embeddedUrlIdx =
+    httpsIdx !== -1 && httpIdx !== -1
+      ? Math.min(httpsIdx, httpIdx)
+      : Math.max(httpsIdx, httpIdx);
+  return embeddedUrlIdx !== -1 ? cleanPath.slice(embeddedUrlIdx) : cleanPath;
+}
+
+export function cacheUserAvatar(avatarUrl: string): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("userAvatar", avatarUrl);
+  document.cookie = `user_avatar=${encodeURIComponent(avatarUrl)}; path=/; max-age=604800; SameSite=Lax`;
+}
+
 export const DonorService = {
   _formatImageUrl(path: string | null): string | null {
-    if (!path) return null;
-    const cleanPath = path.replace(/\\/g, "/");
+    const cleanPath = sanitizeMediaUrl(path);
+    if (!cleanPath) return null;
+    if (cleanPath.startsWith("http://") || cleanPath.startsWith("https://")) {
+      return cleanPath;
+    }
     return `${API_URL}${cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`}`;
   },
 

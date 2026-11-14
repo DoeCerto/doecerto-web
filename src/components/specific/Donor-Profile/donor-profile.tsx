@@ -26,13 +26,13 @@ import {
 import { useRouter } from "next/navigation";
 import { MonetaryDonationDetails } from "@/components/ui/MonetaryDonationDetails";
 import { MaterialDonationDetails } from "@/components/ui/MaterialDonationDetails";
-import { DonorService, type UpdateProfileDTO, type DonationHistory, Address } from "@/services/donor.service";
+import { DonorService, cacheUserAvatar, type UpdateProfileDTO, type DonationHistory, Address } from "@/services/donor.service";
 import { useAuth } from "@/contexts/AuthContext";
 import { LgpdSecurityZone } from "@/components/specific/Lgpd/LgpdSecurityZone";
 
 export default function DonorProfile() {
   const router = useRouter();
-  const { refreshSession } = useAuth();
+  const { userAvatar, refreshSession } = useAuth();
   const [activeTab, setActiveTab] = useState<"info" | "history">("info");
   const [showCompleteModal, setShowCompleteModal] = useState(false);
 
@@ -137,6 +137,7 @@ export default function DonorProfile() {
 
           if (profileData.avatarUrl) {
             setProfileImage(profileData.avatarUrl);
+            cacheUserAvatar(profileData.avatarUrl);
           }
 
           if (!profileData.phone) {
@@ -290,6 +291,9 @@ export default function DonorProfile() {
     return clean;
   };
 
+  const resolvedAvatar =
+    profileImage || (userAvatar ? DonorService._formatImageUrl(userAvatar) : null);
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 pb-20">
       <Toaster position="top-center" reverseOrder={false} />
@@ -306,8 +310,8 @@ export default function DonorProfile() {
         <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 z-20">
           <div className="relative group">
             <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-2xl bg-white flex items-center justify-center">
-              {profileImage ? (
-                <img src={profileImage} alt="Perfil" className="w-full h-full object-cover" />
+              {resolvedAvatar ? (
+                <img src={resolvedAvatar} alt="Perfil" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
               ) : (
                 <User size={48} className="text-gray-300" />
               )}

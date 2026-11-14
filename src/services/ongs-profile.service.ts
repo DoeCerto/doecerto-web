@@ -1,6 +1,5 @@
 import { api } from './api';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { DonorService } from './donor.service';
 
 export interface OngAsaasKycSubDocument {
   id: string;
@@ -55,10 +54,7 @@ export interface SendAsaasKycDocumentResponse {
 
 export const OngsProfileService = {
   _formatImageUrl(path: string | null) {
-    if (!path) return "";
-    if (path.startsWith('http')) return path;
-    const cleanPath = path.replace(/\\/g, "/");
-    return `${API_URL}${cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`}`;
+    return DonorService._formatImageUrl(path) ?? "";
   },
 
   _calculateYears(createdAt: string | Date) {

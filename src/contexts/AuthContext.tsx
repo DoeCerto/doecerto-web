@@ -1,7 +1,15 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import { getMe } from "@/services/login.service";
+import { cacheUserAvatar, sanitizeMediaUrl } from "@/services/donor.service";
+
+const emptySubscribe = () => () => {};
+const getClientCachedAvatar = () =>
+  typeof window !== "undefined" ? sanitizeMediaUrl(localStorage.getItem("userAvatar")) : null;
+const getClientCachedName = () =>
+  typeof window !== "undefined" ? localStorage.getItem("userName") : null;
+const getServerNull = () => null;
 
 type AuthContextType = {
   isAuthenticated: boolean;
@@ -21,6 +29,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const cachedAvatar = useSyncExternalStore(emptySubscribe, getClientCachedAvatar, getServerNull);
+  const cachedName = useSyncExternalStore(emptySubscribe, getClientCachedName, getServerNull);
 
   const refreshSession = useCallback(async () => {
     try {
@@ -31,11 +41,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsAuthenticated(true);
         setUserRole(user.role);
         setUserName(user.name || localStorage.getItem("userName"));
-        const avatar = user.avatarUrl || localStorage.getItem("userAvatar");
+        const sanitizedUserAvatar = sanitizeMediaUrl(user.avatarUrl);
+        const sanitizedStoredAvatar = sanitizeMediaUrl(localStorage.getItem("userAvatar"));
+        const avatar = sanitizedUserAvatar || sanitizedStoredAvatar;
         setUserAvatar(avatar);
-        if (user.avatarUrl) {
-          localStorage.setItem("userAvatar", user.avatarUrl);
-          document.cookie = `user_avatar=${encodeURIComponent(user.avatarUrl)}; path=/; max-age=604800; SameSite=Lax`;
+        if (sanitizedUserAvatar) {
+          cacheUserAvatar(sanitizedUserAvatar);
+        } else if (sanitizedStoredAvatar && sanitizedStoredAvatar !== localStorage.getItem("userAvatar")) {
+          cacheUserAvatar(sanitizedStoredAvatar);
         }
         if (user.name) {
           localStorage.setItem("userName", user.name);
@@ -106,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    refreshSession();
+    void Promise.resolve().then(() => refreshSession());
 
     const handleStorageChange = () => refreshSession();
     window.addEventListener("storage", handleStorageChange);
@@ -127,8 +140,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [refreshSession]);
 
+  const effectiveAvatar = userAvatar ?? (isLoading ? cachedAvatar : null);
+  const effectiveName = userName ?? (isLoading ? cachedName : null);
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userRole, userAvatar, userName, isLoading, refreshSession, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, userRole, userAvatar: effectiveAvatar, userName: effectiveName, isLoading, refreshSession, logout }}>
       {children}
     </AuthContext.Provider>
   );
