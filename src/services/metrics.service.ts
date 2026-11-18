@@ -97,3 +97,44 @@ export async function getMetrics(): Promise<MetricsData> {
     };
   }
 }
+
+// --- Métricas Públicas de Impacto Social (Padrão Ouro) ---
+
+export interface PublicImpactBreakdown {
+  category: string;
+  lives: number;
+  icon: string;
+}
+
+export interface PublicImpactMetrics {
+  totalLivesImpacted: number;
+  totalDonations: number;
+  totalMonetaryRaised: number;
+  totalVerifiedOngs: number;
+  totalDonors: number;
+  breakdown: PublicImpactBreakdown[];
+}
+
+export async function getPublicImpactMetrics(): Promise<PublicImpactMetrics> {
+  try {
+    const { data } = await api<PublicImpactMetrics>('/metrics/public');
+    return {
+      totalLivesImpacted: data?.totalLivesImpacted ?? 0,
+      totalDonations: data?.totalDonations ?? 0,
+      totalMonetaryRaised: data?.totalMonetaryRaised ?? 0,
+      totalVerifiedOngs: data?.totalVerifiedOngs ?? 0,
+      totalDonors: data?.totalDonors ?? 0,
+      breakdown: data?.breakdown || [],
+    };
+  } catch (error) {
+    console.warn('Erro ao carregar métricas públicas de impacto:', error);
+    return {
+      totalLivesImpacted: 0,
+      totalDonations: 0,
+      totalMonetaryRaised: 0,
+      totalVerifiedOngs: 0,
+      totalDonors: 0,
+      breakdown: [],
+    };
+  }
+}

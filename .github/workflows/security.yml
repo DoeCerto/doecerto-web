@@ -1,0 +1,93 @@
+name: Security Scan & Dependency Audit
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  schedule:
+    # Varredura periódica toda segunda-feira às 06:00 UTC
+    - cron: '0 6 * * 1'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  npm-audit:
+    name: Dependency Vulnerability Audit (npm audit)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Run npm audit (Production)
+        run: |
+          npm audit --omit=dev
+
+  gitleaks:
+    name: Secret Scanning (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks Secret Detector (CLI)
+        run: |
+          set -euo pipefail
+          GITLEAKS_VERSION="8.30.1"
+          GITLEAKS_SHA256="551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+          mkdir -p /tmp/gitleaks
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" -o /tmp/gitleaks/gitleaks.tar.gz
+          echo "${GITLEAKS_SHA256}  /tmp/gitleaks/gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/gitleaks/gitleaks.tar.gz -C /tmp/gitleaks gitleaks
+          /tmp/gitleaks/gitleaks detect --source . --config .gitleaks.toml --redact --verbose --no-banner
+
+  semgrep:
+    name: SAST Code Analysis (Semgrep)
+    runs-on: ubuntu-latest
+    container:
+      image: returntocorp/semgrep
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Run Semgrep Rulesets
+        run: |
+          semgrep scan \
+            --config "p/owasp-top-ten" \
+            --config "p/javascript" \
+            --config "p/typescript" \
+            --config "p/react" \
+            --config "p/security-audit" \
+            --error
+
+  codeql:
+    name: CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@9418214df1f2c4b8128c770156c409013b07d6b9 # v3
+        with:
+          languages: javascript-typescript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@9418214df1f2c4b8128c770156c409013b07d6b9 # v3
+        with:
+          category: "/language:javascript-typescript"

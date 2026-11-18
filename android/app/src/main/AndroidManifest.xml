@@ -10,6 +10,8 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
 
+        <!-- MainActivity requer android:exported="true" no Android 12+ (API 31+) para o intent-filter MAIN/LAUNCHER -->
+        <!-- nosemgrep: java.android.security.exported_activity.exported_activity -->
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation"
             android:name=".MainActivity"

@@ -1,0 +1,157 @@
+"use client";
+
+import React, { createContext, useContext, useState, useEffect, useCallback, useSyncExternalStore } from "react";
+import { getMe } from "@/services/login.service";
+import { cacheUserAvatar, sanitizeMediaUrl } from "@/services/donor.service";
+
+const emptySubscribe = () => () => {};
+const getClientCachedAvatar = () =>
+  typeof window !== "undefined" ? sanitizeMediaUrl(localStorage.getItem("userAvatar")) : null;
+const getClientCachedName = () =>
+  typeof window !== "undefined" ? localStorage.getItem("userName") : null;
+const getServerNull = () => null;
+
+type AuthContextType = {
+  isAuthenticated: boolean;
+  userRole: string | null;
+  userAvatar: string | null;
+  userName: string | null;
+  isLoading: boolean;
+  refreshSession: () => Promise<void>;
+  logout: (redirectTo?: string) => Promise<void>;
+};
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const cachedAvatar = useSyncExternalStore(emptySubscribe, getClientCachedAvatar, getServerNull);
+  const cachedName = useSyncExternalStore(emptySubscribe, getClientCachedName, getServerNull);
+
+  const refreshSession = useCallback(async () => {
+    try {
+      // O Padrão Ouro: pergunta ao backend quem está logado!
+      const response = await getMe();
+      if (response && response.data && response.data.user) {
+        const user = response.data.user;
+        setIsAuthenticated(true);
+        setUserRole(user.role);
+        setUserName(user.name || localStorage.getItem("userName"));
+        const sanitizedUserAvatar = sanitizeMediaUrl(user.avatarUrl);
+        const sanitizedStoredAvatar = sanitizeMediaUrl(localStorage.getItem("userAvatar"));
+        const avatar = sanitizedUserAvatar || sanitizedStoredAvatar;
+        setUserAvatar(avatar);
+        if (sanitizedUserAvatar) {
+          cacheUserAvatar(sanitizedUserAvatar);
+        } else if (sanitizedStoredAvatar && sanitizedStoredAvatar !== localStorage.getItem("userAvatar")) {
+          cacheUserAvatar(sanitizedStoredAvatar);
+        }
+        if (user.name) {
+          localStorage.setItem("userName", user.name);
+          document.cookie = `user_name=${encodeURIComponent(user.name)}; path=/; max-age=604800; SameSite=Lax`;
+        }
+      } else {
+        setIsAuthenticated(false);
+        setUserRole(null);
+        setUserName(null);
+        setUserAvatar(null);
+      }
+    } catch (error) {
+      setIsAuthenticated(false);
+      setUserRole(null);
+      setUserName(null);
+      setUserAvatar(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const logout = useCallback(async (redirectTo: string = "/login") => {
+    // 1. Limpeza síncrona imediata de tokens e dados de sessão
+    try {
+      const { SecureStorageService } = await import("@/services/secure-storage.service");
+      await SecureStorageService.removeAccessToken();
+      await SecureStorageService.removeUserRole();
+    } catch { }
+
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("CapacitorStorage.access_token");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userAvatar");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("registration_completed");
+    localStorage.removeItem("hideDonationTutorial");
+    sessionStorage.removeItem("dismiss_ong_setup_prompt");
+    if (typeof window !== "undefined") {
+      try {
+        Object.keys(sessionStorage).forEach((key) => {
+          if (key.startsWith("dc_dynpix_") || key.startsWith("dc_pix_exp_")) {
+            sessionStorage.removeItem(key);
+          }
+        });
+      } catch { }
+    }
+
+    if (typeof document !== "undefined") {
+      document.cookie = "user_avatar=; path=/; max-age=0";
+      document.cookie = "user_name=; path=/; max-age=0";
+    }
+
+    // 2. Notifica o backend para invalidar refresh token e limpar cookies httpOnly
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+      await fetch(`${apiUrl}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+        keepalive: true,
+      });
+    } catch { }
+
+    // 3. Padrão Ouro: Navegação imediata SEM esperar refreshSession()
+    // Isso elimina o piscar/re-render deslogado da página atual
+    if (typeof window !== "undefined") {
+      window.location.replace(redirectTo);
+    }
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(() => refreshSession());
+
+    const handleStorageChange = () => refreshSession();
+    window.addEventListener("storage", handleStorageChange);
+
+    const handleAuthExpired = () => {
+      setIsAuthenticated(false);
+      setUserRole(null);
+      setUserName(null);
+      setUserAvatar(null);
+      document.cookie = "user_avatar=; path=/; max-age=0";
+      document.cookie = "user_name=; path=/; max-age=0";
+    };
+    window.addEventListener("auth_expired", handleAuthExpired);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("auth_expired", handleAuthExpired);
+    };
+  }, [refreshSession]);
+
+  const effectiveAvatar = userAvatar ?? (isLoading ? cachedAvatar : null);
+  const effectiveName = userName ?? (isLoading ? cachedName : null);
+
+  return (
+    <AuthContext.Provider value={{ isAuthenticated, userRole, userAvatar: effectiveAvatar, userName: effectiveName, isLoading, refreshSession, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) throw new Error("useAuth deve ser usado dentro de um AuthProvider");
+  return context;
+};

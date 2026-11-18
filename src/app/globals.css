@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #f9fafb; /* Fundo cinza claro */
+}
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -49,4 +53,53 @@ body {
 
 .shake {
   animation: shake 0.5s;
+}
+
+/* Scrollbar moderna, sutil e integrada ao design */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #CBD5E1;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #94A3B8;
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+}
+
+/* Seleção de texto global da marca (estilo roxinho da landing page) */
+::selection {
+  background-color: #d8b4fe;
+  color: #1e1b4b;
+}
+
+.text-\[\#6B21A8\]::selection,
+.text-\[\#6B39A7\]::selection {
+  background-color: #6B39A7 !important;
+  color: #ffffff !important;
+}
+
+.bg-\[\#6B21A8\] ::selection,
+.bg-\[\#6B39A7\] ::selection,
+.bg-purple-600 ::selection,
+.bg-purple-700 ::selection {
+  background-color: #f8fafc;
+  color: #6B39A7;
 }

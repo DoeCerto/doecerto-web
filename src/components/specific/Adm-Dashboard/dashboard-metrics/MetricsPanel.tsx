@@ -83,26 +83,25 @@ export default function MetricsPanel() {
   }
 
   return (
-    <div className="p-8 space-y-8 bg-[#F8F9FA] min-h-screen">
+    <div className="p-6 md:p-8 space-y-8 min-h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-black text-[#6B39A7] tracking-tight">Painel de Métricas</h1>
-          <p className="text-gray-500 font-bold mt-2">Gerenciamento de Engajamento e Categorias</p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Painel de Métricas</h1>
+        <p className="text-slate-500 font-medium mt-1">Gerenciamento de Engajamento e Categorias</p>
       </div>
 
-      {/* ... (Estatísticas Gerais e Rankings permanecem iguais) ... */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <StatCard icon={<Building2 size={32} />} title="ONGs Cadastradas" value={metrics?.generalStats.totalOngs.toString() || '0'} color="bg-blue-500" />
-        <StatCard icon={<Users size={32} />} title="Total de Doadores" value={metrics?.generalStats.totalDonors.toLocaleString('pt-BR') || '0'} color="bg-purple-500" />
+      {/* Estatísticas Gerais */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <StatCard icon={<Building2 size={22} strokeWidth={2.5} />} title="ONGs Cadastradas" value={metrics?.generalStats.totalOngs.toString() || '0'} />
+        <StatCard icon={<Users size={22} strokeWidth={2.5} />} title="Total de Doadores" value={metrics?.generalStats.totalDonors.toLocaleString('pt-BR') || '0'} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RankingCard title="ONGs: Mais Doadas (Qtd)" icon={<Heart size={24} />} items={metrics?.topOngsByDonationCount || []} color="text-red-600" bgColor="bg-red-50" valueFormatter={(val: number) => `${val} doações`} />
-        <RankingCard title="Maiores Doadores (Frequência)" icon={<Award size={24} />} items={metrics?.topDonorsByFrequency || []} color="text-blue-600" bgColor="bg-blue-50" valueFormatter={(val: number) => `${val} contribuições`} />
-        <RankingCard title="Melhores Avaliadas" icon={<Star size={24} />} items={metrics?.topPositiveRatings || []} color="text-yellow-600" bgColor="bg-yellow-50" valueFormatter={(val: number) => `${val.toFixed(1)} ⭐`} />
-        <RankingCard title="Avaliações Baixas" icon={<TrendingDown size={24} />} items={metrics?.topNegativeRatings || []} color="text-red-500" bgColor="bg-red-50" valueFormatter={(val: number) => `${val.toFixed(1)} ⭐`} />
+      {/* Rankings */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <RankingCard title="ONGs: Mais Doadas" icon={<Heart size={20} strokeWidth={2.5} />} items={metrics?.topOngsByDonationCount || []} accent="purple" valueFormatter={(val: number) => `${val} doações`} />
+        <RankingCard title="Maiores Doadores" icon={<Award size={20} strokeWidth={2.5} />} items={metrics?.topDonorsByFrequency || []} accent="purple" valueFormatter={(val: number) => `${val} contribuições`} />
+        <RankingCard title="Melhores Avaliadas" icon={<Star size={20} strokeWidth={2.5} />} items={metrics?.topPositiveRatings || []} accent="yellow" valueFormatter={(val: number) => <span className="flex items-center gap-1.5">{val.toFixed(1)} <Star size={14} className="fill-yellow-500 text-yellow-500" /></span>} />
+        <RankingCard title="Avaliações Baixas" icon={<TrendingDown size={20} strokeWidth={2.5} />} items={metrics?.topNegativeRatings || []} accent="red" valueFormatter={(val: number) => <span className="flex items-center gap-1.5">{val.toFixed(1)} <Star size={14} className="fill-red-400 text-red-400" /></span>} />
       </div>
 
       {/* Análise de Categorias */}
@@ -225,48 +224,66 @@ export default function MetricsPanel() {
 
 // --- COMPONENTES AUXILIARES (Cole no final do arquivo) ---
 
-function StatCard({ icon, title, value, color }: { icon: React.ReactNode, title: string, value: string, color: string }) {
+function StatCard({ icon, title, value }: { icon: React.ReactNode, title: string, value: string }) {
   return (
-    <div className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all">
+    <div className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-200 hover:shadow-md hover:border-purple-200 transition-all duration-300">
       <div className="flex items-center gap-4">
-        <div className={`${color} w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-lg`}>
+        <div className="bg-purple-50 w-12 h-12 rounded-xl flex items-center justify-center text-purple-700 border border-purple-100">
           {icon}
         </div>
         <div>
-          <p className="text-xs font-black text-gray-400 uppercase tracking-wider">{title}</p>
-          <p className="text-3xl font-black text-gray-900 mt-1">{value}</p>
+          <p className="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">{title}</p>
+          <p className="text-2xl font-extrabold text-slate-900 mt-0.5">{value}</p>
         </div>
       </div>
     </div>
   );
 }
 
-function RankingCard({ title, icon, items, color, bgColor, valueFormatter }: any) {
+function RankingCard({ title, icon, items, accent, valueFormatter }: any) {
+  const accentMap: Record<string, { iconBg: string; iconText: string; valueTxt: string; rankBg: string; rankText: string }> = {
+    purple: { iconBg: 'bg-purple-50', iconText: 'text-purple-700', valueTxt: 'text-purple-700', rankBg: 'bg-purple-50', rankText: 'text-purple-700' },
+    yellow: { iconBg: 'bg-yellow-50', iconText: 'text-yellow-600', valueTxt: 'text-yellow-600', rankBg: 'bg-yellow-50', rankText: 'text-yellow-700' },
+    red:    { iconBg: 'bg-red-50',    iconText: 'text-red-500',    valueTxt: 'text-red-500',    rankBg: 'bg-red-50',    rankText: 'text-red-600' },
+  };
+  const a = accentMap[accent] || accentMap.purple;
+
   return (
-    <div className="bg-white rounded-3xl shadow-lg p-8 border border-gray-100">
-      <div className="flex items-center gap-3 mb-6">
-        <div className={`p-3 ${bgColor} rounded-2xl`}>
-          {React.cloneElement(icon, { className: color })}
+    <div className="bg-white rounded-[20px] shadow-sm border border-slate-200 overflow-hidden">
+      {/* Card header */}
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-100">
+        <div className={`p-2.5 ${a.iconBg} rounded-xl border border-slate-100`}>
+          {React.cloneElement(icon, { className: a.iconText })}
         </div>
-        <h2 className="text-2xl font-black text-gray-900">{title}</h2>
+        <h2 className="text-lg font-extrabold text-slate-900">{title}</h2>
       </div>
-      <div className="space-y-3">
+
+      {/* Rows */}
+      <div className="divide-y divide-slate-100">
         {items.map((item: any, idx: number) => (
-          <div key={item.id || idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-all border border-transparent hover:border-gray-200">
-            <div className="flex items-center gap-4">
-              <span className={`text-2xl font-black ${color}`}>#{idx + 1}</span>
-              <div>
-                <p className="font-black text-gray-900 leading-tight">{item.name}</p>
-                <p className="text-sm text-gray-400 font-bold lowercase italic">
-                  {item.email || 'contato@ong.org'}
-                </p>
+          <div key={item.id || idx} className="flex items-center justify-between px-6 py-3.5 hover:bg-slate-50 transition-colors">
+            <div className="flex items-center gap-4 min-w-0">
+              <span className={`w-8 h-8 flex items-center justify-center rounded-lg ${a.rankBg} ${a.rankText} text-sm font-extrabold shrink-0`}>
+                #{idx + 1}
+              </span>
+              <div className="min-w-0">
+                <p className="font-bold text-slate-900 text-sm leading-tight truncate">{item.name}</p>
+                {item.email && (
+                  <p className="text-xs text-slate-400 font-medium truncate mt-0.5">{item.email}</p>
+                )}
               </div>
             </div>
-            <span className={`text-xl font-black ${color} whitespace-nowrap ml-4`}>
+            <span className={`text-sm font-extrabold ${a.valueTxt} whitespace-nowrap ml-4`}>
               {valueFormatter(item.value)}
             </span>
           </div>
         ))}
+
+        {items.length === 0 && (
+          <div className="px-6 py-8 text-center">
+            <p className="text-slate-400 font-medium text-sm">Nenhum dado disponível</p>
+          </div>
+        )}
       </div>
     </div>
   );

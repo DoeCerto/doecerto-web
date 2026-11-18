@@ -8,10 +8,11 @@ export async function generateStaticParams() {
   }));
 }
 
-export default function DonatePage({
+export default async function DonatePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  return <DonateClient id={params.id} />;
+  const { id } = await params;
+  return <DonateClient id={id} />;
 }
