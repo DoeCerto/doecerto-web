@@ -141,30 +141,16 @@ function PixPageContent({ initialOngData = null }: PixClientProps) {
     return "amount";
   });
 
-  const { isAuthenticated, userRole } = useAuth();
+  const { isAuthenticated, userRole, isLoading: isAuthLoading } = useAuth();
   const isOngUser = isAuthenticated && userRole === "ong";
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // Estados de identificação rápida do visitante (Guest Checkout - Padrão Fintech Enterprise)
-  const [guestName, setGuestName] = useState(() => {
-    if (typeof window !== "undefined") {
-      return sessionStorage.getItem("dc_guest_name") || "";
-    }
-    return "";
-  });
-  const [guestEmailInput, setGuestEmailInput] = useState(() => {
-    if (typeof window !== "undefined") {
-      return sessionStorage.getItem("dc_guest_email") || "";
-    }
-    return "";
-  });
-  const [guestCpf, setGuestCpf] = useState(() => {
-    if (typeof window !== "undefined") {
-      return sessionStorage.getItem("dc_guest_cpf") || "";
-    }
-    return "";
-  });
+  const [guestName, setGuestName] = useState("");
+  const [guestEmailInput, setGuestEmailInput] = useState("");
+  const [guestCpf, setGuestCpf] = useState("");
   const [guestFormError, setGuestFormError] = useState<string | null>(null);
   const [guestAcceptedTerms, setGuestAcceptedTerms] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string>("");
@@ -180,64 +166,89 @@ function PixPageContent({ initialOngData = null }: PixClientProps) {
   const valoresRapidos = ["5", "10", "20", "50", "100"];
 
   // Estados do Tip Model (Apoio voluntário à plataforma DoeCerto)
-  const [tipOption, setTipOption] = useState<"0" | "5" | "10" | "15" | "custom">(() => {
-    if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem("dc_tip_option");
-      if (saved === "0" || saved === "5" || saved === "10" || saved === "15" || saved === "custom") {
-        return saved;
-      }
-    }
-    return "10";
-  });
-  const [customTip, setCustomTip] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      return sessionStorage.getItem("dc_custom_tip") || "";
-    }
-    return "";
-  });
+  const [tipOption, setTipOption] = useState<"0" | "5" | "10" | "15" | "custom">("10");
+  const [customTip, setCustomTip] = useState<string>("");
+  const [restoredBaseAmount, setRestoredBaseAmount] = useState<number | null>(null);
+  const [restoredTipAmount, setRestoredTipAmount] = useState<number | null>(null);
+
+  // Estados Asaas (Pix Dinâmico) - inicializados sem sessionStorage para manter SSR e hidratação idênticos
+  const [dynamicPix, setDynamicPix] = useState<DynamicPixData | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      try {
-        sessionStorage.setItem("dc_tip_option", tipOption);
-        if (customTip) sessionStorage.setItem("dc_custom_tip", customTip);
-        else sessionStorage.removeItem("dc_custom_tip");
-      } catch (e) { }
+    if (typeof window === "undefined") return;
+    try {
+      const savedGuestName = sessionStorage.getItem("dc_guest_name");
+      if (savedGuestName) setGuestName(savedGuestName);
+
+      const savedGuestEmail = sessionStorage.getItem("dc_guest_email");
+      if (savedGuestEmail) setGuestEmailInput(savedGuestEmail);
+
+      const savedGuestCpf = sessionStorage.getItem("dc_guest_cpf");
+      if (savedGuestCpf) setGuestCpf(savedGuestCpf);
+
+      const savedTip = sessionStorage.getItem("dc_tip_option");
+      if (
+        savedTip === "0" ||
+        savedTip === "5" ||
+        savedTip === "10" ||
+        savedTip === "15" ||
+        savedTip === "custom"
+      ) {
+        setTipOption(savedTip);
+      }
+
+      const savedCustomTip = sessionStorage.getItem("dc_custom_tip");
+      if (savedCustomTip) setCustomTip(savedCustomTip);
+
+      if (ongId) {
+        const savedBase = sessionStorage.getItem("dc_base_val_" + ongId);
+        if (savedBase) {
+          const parsedBase = parseFloat(savedBase);
+          if (!isNaN(parsedBase) && parsedBase > 0) setRestoredBaseAmount(parsedBase);
+        }
+
+        const savedTipVal = sessionStorage.getItem("dc_tip_val_" + ongId);
+        if (savedTipVal !== null) {
+          const parsedTipVal = parseFloat(savedTipVal);
+          if (!isNaN(parsedTipVal) && parsedTipVal >= 0) setRestoredTipAmount(parsedTipVal);
+        }
+
+        const activeCached = sessionStorage.getItem("dc_dynpix_active_" + ongId);
+        const cached = sessionStorage.getItem("dc_dynpix_" + ongId + "_" + initialValor);
+        const rawDynPix = activeCached || cached;
+        if (rawDynPix) {
+          const parsed = JSON.parse(rawDynPix) as DynamicPixData;
+          if (parsed && parsed.copyPaste) {
+            setDynamicPix(parsed);
+          }
+        }
+      }
+    } catch {
+      // noop
+    } finally {
+      setIsHydrated(true);
     }
-  }, [tipOption, customTip]);
+  }, [ongId, initialValor]);
+
+  useEffect(() => {
+    if (!isHydrated || typeof window === "undefined") return;
+    try {
+      sessionStorage.setItem("dc_tip_option", tipOption);
+      if (customTip) sessionStorage.setItem("dc_custom_tip", customTip);
+      else sessionStorage.removeItem("dc_custom_tip");
+    } catch (e) { }
+  }, [tipOption, customTip, isHydrated]);
 
   // Persiste o valor base inserido pelo usuário na etapa de seleção
   useEffect(() => {
-    if (typeof window !== "undefined" && ongId && step !== "payment") {
-      try {
-        const num = parseFloat(valor);
-        if (!isNaN(num) && num > 0) {
-          sessionStorage.setItem("dc_base_val_" + ongId, String(num));
-        }
-      } catch (e) { }
-    }
-  }, [valor, ongId, step]);
-
-  // Estados Asaas (Pix Dinâmico)
-  const [dynamicPix, setDynamicPix] = useState<DynamicPixData | null>(() => {
-    if (typeof window !== "undefined" && ongId) {
-      try {
-        const activeCached = sessionStorage.getItem("dc_dynpix_active_" + ongId);
-        if (activeCached) {
-          const parsed = JSON.parse(activeCached) as DynamicPixData;
-          if (parsed && parsed.copyPaste) return parsed;
-        }
-        const cached = sessionStorage.getItem("dc_dynpix_" + ongId + "_" + initialValor);
-        if (cached) {
-          const parsed = JSON.parse(cached) as DynamicPixData;
-          if (parsed && parsed.copyPaste) return parsed;
-        }
-      } catch (e) {
-        // noop
+    if (!isHydrated || typeof window === "undefined" || !ongId || step === "payment") return;
+    try {
+      const num = parseFloat(valor);
+      if (!isNaN(num) && num > 0) {
+        sessionStorage.setItem("dc_base_val_" + ongId, String(num));
       }
-    }
-    return null;
-  });
+    } catch (e) { }
+  }, [valor, ongId, step, isHydrated]);
 
   // Cálculos do valor base para a ONG, gorjeta voluntária e valor total
   const baseAmount = useMemo(() => {
@@ -245,12 +256,8 @@ function PixPageContent({ initialOngData = null }: PixClientProps) {
       if (dynamicPix?.baseAmount && dynamicPix.baseAmount > 0) {
         return dynamicPix.baseAmount;
       }
-      if (typeof window !== "undefined" && ongId) {
-        const savedBase = sessionStorage.getItem("dc_base_val_" + ongId);
-        if (savedBase) {
-          const parsed = parseFloat(savedBase);
-          if (!isNaN(parsed) && parsed > 0) return parsed;
-        }
+      if (restoredBaseAmount && restoredBaseAmount > 0) {
+        return restoredBaseAmount;
       }
       // Se dynamicPix existir mas baseAmount não estiver explícito no objeto:
       if (dynamicPix?.amount && dynamicPix.amount > 0) {
@@ -264,19 +271,15 @@ function PixPageContent({ initialOngData = null }: PixClientProps) {
     }
     const num = parseFloat(valor);
     return isNaN(num) || num < 0 ? 0 : num;
-  }, [step, dynamicPix?.baseAmount, dynamicPix?.amount, tipOption, valor, ongId]);
+  }, [step, dynamicPix?.baseAmount, dynamicPix?.amount, restoredBaseAmount, tipOption, valor]);
 
   const tipAmount = useMemo(() => {
     if (step === "payment") {
       if (dynamicPix?.tipAmount !== undefined) {
         return dynamicPix.tipAmount;
       }
-      if (typeof window !== "undefined" && ongId) {
-        const savedTip = sessionStorage.getItem("dc_tip_val_" + ongId);
-        if (savedTip !== null) {
-          const parsed = parseFloat(savedTip);
-          if (!isNaN(parsed) && parsed >= 0) return parsed;
-        }
+      if (restoredTipAmount !== null) {
+        return restoredTipAmount;
       }
       if (dynamicPix?.amount && baseAmount > 0) {
         return Math.max(0, Math.round((dynamicPix.amount - baseAmount) * 100) / 100);
@@ -290,7 +293,7 @@ function PixPageContent({ initialOngData = null }: PixClientProps) {
     const pct = parseInt(tipOption, 10);
     if (isNaN(pct) || pct <= 0) return 0;
     return Math.round(baseAmount * pct) / 100;
-  }, [step, dynamicPix?.tipAmount, dynamicPix?.amount, baseAmount, tipOption, customTip, ongId]);
+  }, [step, dynamicPix?.tipAmount, dynamicPix?.amount, restoredTipAmount, baseAmount, tipOption, customTip]);
 
   const totalAmount = useMemo(() => {
     if (step === "payment" && dynamicPix?.amount) {
@@ -376,17 +379,19 @@ function PixPageContent({ initialOngData = null }: PixClientProps) {
     return 1199;
   };
 
-  const [timeLeft, setTimeLeft] = useState<number>(() => calculateRemainingSeconds(initialValor));
+  const [timeLeft, setTimeLeft] = useState<number>(1199);
   const isExpired = timeLeft <= 0;
 
   const displayCode = useMemo(() => {
     if (dynamicPix?.trackingId) return String(dynamicPix.trackingId);
     if (dynamicPix?.donationId) return String(dynamicPix.donationId);
-    if (ongId) return `${ongId}${String(Date.now()).slice(-4)}`;
+    if (ongId) return String(ongId);
     return "1024";
   }, [dynamicPix?.trackingId, dynamicPix?.donationId, ongId]);
 
   const clearPixSessionData = () => {
+    setRestoredBaseAmount(null);
+    setRestoredTipAmount(null);
     if (typeof window === "undefined") return;
     try {
       sessionStorage.removeItem("doecerto:guestDonorEmail");
@@ -485,7 +490,7 @@ function PixPageContent({ initialOngData = null }: PixClientProps) {
   }, []);
 
   useEffect(() => {
-    if (step !== "payment") return;
+    if (!isHydrated || step !== "payment") return;
 
     const syncRemaining = () => {
       const remaining = calculateRemainingSeconds(valor, dynamicPix);
@@ -504,7 +509,7 @@ function PixPageContent({ initialOngData = null }: PixClientProps) {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [step, ongId, valor, dynamicPix]);
+  }, [isHydrated, step, ongId, valor, dynamicPix]);
 
   const formattedCountdown = useMemo(() => {
     if (timeLeft <= 0) return "00:00";
@@ -727,7 +732,7 @@ function PixPageContent({ initialOngData = null }: PixClientProps) {
 
   // Garante que se o usuário recarregar (F5) na etapa de pagamento, o QR Code é restaurado do cache ou gerado imediatamente
   useEffect(() => {
-    if (step !== "payment" || initialLoading) return;
+    if (!isHydrated || step !== "payment" || initialLoading) return;
 
     if (totalAmount < 5) return;
 
@@ -762,11 +767,11 @@ function PixPageContent({ initialOngData = null }: PixClientProps) {
       generateDynamicPix(baseAmount, tipAmount, isAnonymous).catch((err) => {
         console.error("Erro ao gerar Pix ao atualizar a página:", err);
       });
-    } else if (!isGeneratingPix && !isAuthenticated && !dynamicPix) {
+    } else if (!isAuthLoading && !isGeneratingPix && !isAuthenticated && !dynamicPix) {
       // Se não há cobrança em cache e o usuário é visitante, redireciona para identificação para não ficar preso
       navigateToStep("identification", String(baseAmount));
     }
-  }, [step, dynamicPix, isGeneratingPix, initialLoading, totalAmount, baseAmount, tipAmount, ongId, isAnonymous, isAuthenticated, userRole]);
+  }, [isHydrated, step, dynamicPix, isGeneratingPix, initialLoading, totalAmount, baseAmount, tipAmount, ongId, isAnonymous, isAuthenticated, isAuthLoading, userRole]);
 
   // Polling automático de compensação Pix (imediato + a cada 3 segundos)
   useEffect(() => {
